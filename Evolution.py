@@ -28,7 +28,7 @@ from PIL import Image, ImageFilter
 #######################################################################################################################################################
 # Global values
 super_dig = False
-movement_speed_toggle, toggle_list = 0, ['Default', 'Fast', 'Slow']
+movement_speed_toggle, toggle_list = 0, ['Default', 'Fast', 'Fixed']
 last_press_time, cooldown_time = 0, 0.5
 
 #######################################################################################################################################################
@@ -227,7 +227,6 @@ def main_menu():
                         if choice == 1:
                             load_account()
                             if not pyg.startup_toggle2:
-                                print(True)
                                 play_game()
                         
                         # >>SAVE<<
@@ -306,14 +305,14 @@ def new_menu(header, options, options_categories=None, position='top left', back
         tab_x, tab_y         = 0, 0
 
     # Set initial position of each text type
-    header_position    = {'top left': [5,        10],       'center': [int((pyg.screen_width - game_title.get_width())/2), 85],
-                          'bottom left': [5, 10], 'bottom right': [60 ,70]}
-    cursor_position    = {'top left': [50+tab_x, 38+tab_y], 'center': [50, 300],
+    header_position    = {'top left':    [5, 10], 'center': [int((pyg.screen_width - game_title.get_width())/2), 85],
+                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
+    cursor_position    = {'top left':    [50+tab_x, 38+tab_y], 'center':       [50, 300],
                           'bottom left': [50+tab_x, 65-tab_y], 'bottom right': [60 ,70]}
-    options_positions  = {'top left': [80+tab_x, 34],       'center': [80, 300],
-                          'bottom left': [5, 10], 'bottom right': [60 ,70]}
-    category_positions = {'top left': [5,        34],       'center': [80, 300],
-                          'bottom left': [5, 10], 'bottom right': [60 ,70]}
+    options_positions  = {'top left':    [80+tab_x, 34],       'center':       [80, 300],
+                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
+    category_positions = {'top left':    [5, 34],              'center':       [80, 300],
+                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
 
     # Set mutable copies of text positions
     cursor_position_mutable    = cursor_position[position].copy()
@@ -597,9 +596,8 @@ def new_game():
     global questlog
 
     # Clear prior data
-    new_game_trigger = True
-    #friend_quest(init=True)
     player_obj.envs['garden'] = build_garden()
+    #mech.movement_speed(toggle=False, custom=0)
 
     # Prepare player
     player_obj.ent.role         = 'player'
@@ -632,11 +630,12 @@ def play_game():
     global player_action, msg_toggle, stairs, last_press_time
     
     player_move = False
-    movement_speed(toggle=False)
+    mech.movement_speed(toggle=False)
     player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
     
     # Start loop
-    while True:
+    running = True
+    while running:
         pyg.clock.tick(30)
         event = pygame.event.get()
         if event:
@@ -658,6 +657,7 @@ def play_game():
                         pyg.last_press_time = float(time.time())
                         pygame.key.set_repeat(0, 0)
                         player_obj.ent.env.camera.zoom_in(custom=1)
+                        running = False
                         return
                     
                     # ! (this is just ugly)
@@ -726,7 +726,7 @@ def play_game():
                             chosen_item.use()
                             pyg.update_gui()
                         
-                        movement_speed(toggle=False)
+                        mech.movement_speed(toggle=False)
                         player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
                     
                     # >>DROP ITEM<<
@@ -742,7 +742,7 @@ def play_game():
                                 chosen_item.drop()
                                 pygame.event.clear()
                         
-                        movement_speed(toggle=False)
+                        mech.movement_speed(toggle=False)
                         player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
                     
                     # >>VIEW QUESTLOG<<
@@ -750,18 +750,14 @@ def play_game():
                         pygame.key.set_repeat(250, 150)
                         player_obj.ent.env.camera.zoom_in(custom=1)
                         
-                        try:
-                            questlog.questlog_menu()
-                        except:
-                            questlog = Questlog()
-                            questlog.questlog_menu()
+                        questlog.questlog_menu()
                         
-                        movement_speed(toggle=False)
+                        mech.movement_speed(toggle=False)
                         player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
                     
                     # >>MOVEMENT SPEED<<
                     elif event[0].key in pyg.key_5 and (time.time()-last_press_time > cooldown_time):
-                        movement_speed()
+                        mech.movement_speed()
                         last_press_time = float(time.time())
                     
                     # >>SCREENSHOT<<
@@ -777,7 +773,7 @@ def play_game():
                         
                         dev.select_item()
                         
-                        movement_speed(toggle=False)
+                        mech.movement_speed(toggle=False)
 
                     # >>DEV TOOLS<<
                     elif event[0].key in pyg.key_8:
@@ -818,6 +814,7 @@ def play_game():
                         pyg.last_press_time = float(time.time())
                         pygame.key.set_repeat(0, 0)
                         player_obj.ent.env.camera.zoom_in(custom=1)
+                        running = False
                         return
                         
                 # >>TOGGLE MESSAGES<<
@@ -914,15 +911,16 @@ def render_all(size='display', visible=False, gui=True):
             pyg.display.blit(mech.impact_image, mech.impact_image_pos)
         
         # Print messages
-        if gui:
-            if pyg.msg_toggle: 
-                y = 10
-                for message in pyg.msg:
-                    pyg.display.blit(message, (10, y))
-                    y += 16
-            if pyg.gui_toggle:
-                pyg.display.blit(pyg.gui, (10, 453))
-        pygame.display.flip()
+        if pyg.zoom == 1:
+            if gui:
+                if pyg.msg_toggle: 
+                    y = 10
+                    for message in pyg.msg:
+                        pyg.display.blit(message, (10, y))
+                        y += 16
+                if pyg.gui_toggle:
+                    pyg.display.blit(pyg.gui, (10, 453))
+            pygame.display.flip()
 
 #######################################################################################################################################################
 # Classes
@@ -1587,6 +1585,25 @@ class Mechanics:
         self.impact_image.blit(image, (x,y))
         return self.impact_image
 
+    def movement_speed(self, toggle=True, custom=None):
+        global movement_speed_toggle
+        
+        speed_list = [
+            ['Default', (250, 150)],
+            ['Fast',    (110, 120)],
+            ['Fixed',   (0, 0)]]
+        
+        if toggle:
+            if movement_speed_toggle == len(toggle_list)-1: 
+                movement_speed_toggle = 0
+            else: movement_speed_toggle += 1
+        elif custom: movement_speed_toggle = custom
+        
+        (hold_time, repeat_time) = speed_list[movement_speed_toggle][1]
+        pygame.key.set_repeat(hold_time, repeat_time)
+        
+        if toggle: pyg.update_gui(f"Movement speed: {speed_list[movement_speed_toggle][0]}", pyg.white)
+
 class Tile:
     """ Defines a tile of the map and its parameters. Sight is blocked if a tile is blocked. """
     
@@ -1612,8 +1629,9 @@ class Tile:
             setattr(self, key, value)
 
     def draw(self, surface):
-        #image = img.static(img_names=self.img_names, offset=100, rate=100)
-        surface.blit(img.dict[self.img_names[0]][self.img_names[1]], (self.x-player_obj.ent.env.camera.x, self.y-player_obj.ent.env.camera.y))
+        if self.biome in img.biomes['sea']: image = img.static(img_names=self.img_names, offset=100, rate=100)
+        else:                               image = img.dict[self.img_names[0]][self.img_names[1]]
+        surface.blit(image, (self.x-player_obj.ent.env.camera.x, self.y-player_obj.ent.env.camera.y))
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -1797,7 +1815,7 @@ class Entity:
             death          : 
             follow         : bool or Entity object; sets entity as follower
             aggression     : int; toggles attack functions
-            questline      : """
+            dialogue       : list or tuple of strings; quest or general dialogue """
         
         # Import parameters
         for key, value in kwargs.items():
@@ -1825,7 +1843,8 @@ class Entity:
         self.inventory  = {'weapon': [], 'armor': [], 'potion': [], 'scroll': [], 'drug': [], 'other': []}
         self.equipment  = {'head': None, 'body': None, 'dominant hand': None, 'non-dominant hand': None}
         self.dead       = False
-        self.questline  = None
+        self.dialogue   = None
+        self.quest      = None
 
     def ai(self):
         """ Preset movements. """
@@ -1875,8 +1894,17 @@ class Entity:
             if not random.randint(0, self.lethargy//chance):
                 self.move(dx, dy)
 
+    def activate(self):
+        pass
+
     def move(self, dx, dy):
-        """ Moves the player by the given amount if the destination is not blocked. """
+        """ Moves the player by the given amount if the destination is not blocked.
+            May activate any of the following:
+            - motion
+            - floor effects
+            - dialogue
+            - combat
+            - digging """
         
         # Determine direction
         if dy > 0:   self.direction = 'front'
@@ -1898,7 +1926,7 @@ class Entity:
                 y = int((self.y + dy)/pyg.tile_height)
                 if not is_blocked(self.env, [x, y]):
                     
-                    # Move player and update map
+                    ## Move player and update map
                     self.x                      += dx
                     self.y                      += dy
                     self.tile.entity            = None
@@ -1907,17 +1935,27 @@ class Entity:
                     self.env.player_coordinates = [x, y]
                     check_tile(x, y)
                     
-                    # Trigger floor effects
+                    ## Trigger floor effects
                     if self.env.map[x][y].item:
                         floor_effects(self.env.map[x][y].item.effect)
                 
-                # Attack target
-                elif self.env.map[x][y].entity: 
+                # Interact with an entity
+                elif self.env.map[x][y].entity:
+                    ent = self.env.map[x][y].entity
+                    
+                    ## Dialogue
+                    if ent.dialogue:
+                        pyg.update_gui(ent.dialogue[0], pyg.white)
+                        
+                        # Quests
+                        if type(ent.dialogue) == list:
+                            ent.quest.dialogue(ent)
+
+                    ## Attack
                     if self.env.name != 'home':
-                        target = self.env.map[x][y].entity
-                        self.attack_target(target)
+                        self.attack_target(ent)
                 
-                # Dig tunnel
+                ## Dig tunnel
                 elif self.equipment['dominant hand'] is not None:
                     if self.equipment['dominant hand'].name in ['shovel', 'super shovel']:
                         # Move player and reveal tiles
@@ -2130,6 +2168,11 @@ class Entity:
                         if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (x, y))
                         else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (x, y))
                 else: pass
+        
+        # Blit dialogue bubble
+            if self.dialogue:
+                if type(self.dialogue) == list:
+                    pyg.display.blit(img.dict['decor']['bubble'], (x, y-16))
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -2646,6 +2689,16 @@ def build_home():
     x, y = 9, 18
     ent = create_entity('friend')
     place_object(ent, [x, y], player_obj.envs['home'])
+    ent.dialogue = ["... The creature seems curious."]
+    ent.quest = Quest(
+        name     = "Making a friend",
+        notes    = ["I wonder who this is. Maybe I should say hello."],
+        tasks    = ["☐ Say hello to the creature.",
+                    "☐ Get to know them."],
+        category = 'Side',
+        function = lambda dialogue: friend_quest(dialogue, ent))
+    questlog.quests[ent.quest.name] = ent.quest
+    questlog.update_questlog()
     
     # Generate door
     x, y                    = 0, 15
@@ -4206,7 +4259,7 @@ def active_effects():
 class Quest:
     """ Holds quest information. """
 
-    def __init__(self, name='', notes=[], tasks=[], category='main'):
+    def __init__(self, name, notes, tasks, category, function=None):
         """ name     : string; title of quest
             content  : list of strings; notes and checklists
             category : string in ['main', 'side']; organizes quest priority
@@ -4218,9 +4271,17 @@ class Quest:
         self.category = category
         self.finished = False
         
-        self.content  = notes + tasks
-        self.categories    = ['Notes' for i in range(len(notes))]
-        self.categories    += ['Tasks' for i in range(len(tasks))]
+        self.categories = ['Notes' for i in range(len(notes))]
+        self.categories += ['Tasks' for i in range(len(tasks))]
+        
+        self.function = function
+
+    def dialogue(self, ent):
+        """ Sends dialogue from the entity to the quest's function, then updates
+            the entity's dialogue if needed. """
+        
+        message = self.function(ent.dialogue.pop(0))
+        if message: ent.dialogue.append(message)
 
 class Questlog:
     """ Manages quest menu and modifies Quest objects. """
@@ -4254,21 +4315,21 @@ class Questlog:
                                     notes=['I should make my way into town.'],
                                     tasks=['☐ Wander east.'],
                                     category='Main')
-
-        making_a_friend     = Quest(name='Making a friend',
-                                    notes=['I wonder who this is. Maybe I should say hello.'],
-                                    tasks=['☐ Say hello to the creature.',
-                                           '☐ Get to know them.'],
-                                    category='Side')
-
+        
         furnishing_a_home   = Quest(name='Furnishing a home',
                                     notes=['My house is empty. Maybe I can spruce it up.'],
                                     tasks=['☐ Use the shovel to build new rooms.',
                                            '☐ Drop items to be saved for later use.',
                                            '☐ Look for anything interesting.'],
                                     category='Side')
+        gathering_supplies.content = gathering_supplies.notes + gathering_supplies.tasks
+        finding_a_future.content   = finding_a_future.notes + finding_a_future.tasks
+        furnishing_a_home.content  = furnishing_a_home.notes + furnishing_a_home.tasks
 
-        self.quests = [gathering_supplies, finding_a_future, making_a_friend, furnishing_a_home]
+        self.quests = {
+            gathering_supplies.name: gathering_supplies,
+            finding_a_future.name:   finding_a_future,
+            furnishing_a_home.name:  furnishing_a_home}
         self.update_questlog()
 
     def back_to_menu(self):
@@ -4277,40 +4338,49 @@ class Questlog:
         if self.menu_index == 0: self.menu_index += 1
         else:                    self.menu_index = 0
     
-    def update_questlog(self):
-        """ Updates data containers used in menu. """
+    def update_questlog(self, name=None):
+        """ Updates main quests and side quest lists and tasks. """
+        
+        if name:
+            quest = self.quests[name]
+            for i in range(len(quest.tasks)):
+                task = quest.tasks[i]
+                if task[0] == "☐":
+                    quest.tasks[i] = task.replace("☐", "☑")
+                    pyg.update_gui(quest.tasks[i], pyg.white)
+                    quest.content = quest.notes + quest.tasks
+                    break
         
         self.main_quests = []
         self.side_quests = []
-        self.quest_names = []
         self.categories  = []
         
-        for quest in self.quests:
-            
-            if quest.category == 'Main': self.main_quests.append(quest)
-            else:                        self.side_quests.append(quest)
-            
-            self.quest_names.append(quest.name)
-            self.categories.append(quest.category)
+        for quest in self.quests.values():
+            if not quest.finished:
+                if quest.category == 'Main': self.main_quests.append(quest)
+                else:                        self.side_quests.append(quest)
+                self.categories.append(quest.category)
 
     def questlog_menu(self):
         """ Manages menu for quest titles and details. """
         
-        # Show lsit of quests
+        # Show list of quests
         if self.menu_index == 0:
         
             # List of quests
             quest_index = new_menu(header='Questlog',
-                                   options=self.quest_names,
+                                   options=list(self.quests.keys()),
                                    options_categories=self.categories)
             
             # Description of selected quest
             if type(quest_index) == int:
-                self.selected_quest = self.quests[quest_index]
+                self.selected_quest = self.quests[list(self.quests.keys())[quest_index]]
                 self.update_questlog()
-                selected_index = new_menu(header=self.selected_quest.name,
-                                          options=self.selected_quest.content,
-                                          options_categories=self.selected_quest.categories)
+                
+                selected_index = new_menu(
+                    header             = self.selected_quest.name,
+                    options            = self.selected_quest.content,
+                    options_categories = self.selected_quest.categories)
                 
                 # Go back to list of quests
                 if type(selected_index) != int:
@@ -4329,100 +4399,52 @@ class Questlog:
                 questlog.back_to_menu()
 
 @debug_call
-def friend_quest(init=False, NPC_name=None):
+def friend_quest(dialogue, ent):
     """ Manages friend quest, including initialization and dialogue. """
     
-    global friend_messages, friend_level, NPC_names
-
-    # Initialize dialogue
-    if init:
+    # Initialization
+    if dialogue == "... The creature seems curious.":
+        ent.quest.dialogue_list = [
+            "... The creature seems curious.",
+            "A creakng sound reverberates from its body.",
+            "The creature seems affectionate.",
+            "Your friend looks happy to see you.",
+            "Your friend seems friendlier now.",
+            "Who is this, anyways?",
+            "You give your friend a playful nudge.",
+            "Your friend feels calmer in your presence.",
+            "Your friend fidgets but seems content."]
         
-        # Set NPC names
-        NPC_names = ['friend']
-        
-        # Initialize friend dialogue
-        friend_messages, friend_level = {}, 1
-        
-        # Friend: level 1
-        cache_list = []
-        for i in range(34):
-            if i < 30:
-                cache_list.append("Who is this, anyways?")
-                cache_list.append("")
-                cache_list.append("")
-            else:
-                cache_list.append("Your new friend seems bored.")
-                cache_list.append("Your new friend gazes deeply into the distance.")
-                cache_list.append("Your new friend looks nervous.")
-                cache_list.append("You give your new friend a playful nudge.")
-        friend_messages['level 1'] = cache_list
-        
-        # Friend: level 2
-        cache_list = []
-        for i in range(34):
-            if i < 30:
-                cache_list.append("Your friend looks happy to see you.")
-                cache_list.append("")
-                cache_list.append("")
-            else:
-                cache_list.append("Why are you here?")
-                cache_list.append("Your friend seems friendlier now.")
-                cache_list.append("Who is this, anyways?")
-                cache_list.append("You give your friend a playful nudge.")
-        friend_messages['level 2'] = cache_list
-
-        # Friend: level 3
-        cache_list = []
-        for i in range(34):
-            if i < 30:
-                cache_list.append("Your friend seems excited.")
-                cache_list.append("")
-                cache_list.append("")
-            else:
-                cache_list.append("Your friend feels calmer in your presence.")
-                cache_list.append("Your friend fidgets but seems content.")
-                cache_list.append("Who is this, anyways?")
-                cache_list.append("You give your friend a playful nudge.")
-        friend_messages['level 3'] = cache_list
+    # Increase friendship level
+    ent.quest.dialogue_list.remove(dialogue)
+    friend_level = 9 - len(ent.quest.dialogue_list)
     
-    elif NPC_name == 'friend':
+    if friend_level == 1:
+        questlog.update_questlog(name="Making a friend")
+    
+    if friend_level == 9:
+        questlog.update_questlog(name="Making a friend")
         
-        # Increase friendship
-        friend_level += 0.1
-        if friend_level == 1.1:
-            pyg.update_gui("☑ You say hello to your new friend.", pyg.white)
-            questlog.update_questlog(name="Making a friend")
-        
-        if int(friend_level) <= 3:
-            pyg.update_gui(friend_messages[f'level {int(friend_level)}'][random.randint(0, len(friend_messages[f'level {int(friend_level)}']))], pyg.white)
-        else:
-            if random.randint(0,10) != 1:
-                pyg.update_gui(friend_messages[f'level {int(friend_level)}'][random.randint(0, len(friend_messages[f'level {int(friend_level)}']))], pyg.white)
-            else:
-            
-                # Start quest
-                pyg.update_gui("Woah! What's that?", pyg.white)
-                x = lambda dx : int((player_obj.ent.x + dx)/pyg.tile_width)
-                y = lambda dy : int((player_obj.ent.y + dy)/pyg.tile_height)
+        pyg.update_gui("Woah! What's that?", pyg.white)
+        x = lambda dx : int((player_obj.ent.x + dx)/pyg.tile_width)
+        y = lambda dy : int((player_obj.ent.y + dy)/pyg.tile_height)
 
-                found = False
-                for i in range(3):
-                    if found:
-                        break
-                    x_test = x(pyg.tile_width*(i-1))
-                    for j in range(3):
-                        y_test = y(pyg.tile_height*(j-1))
-                        if not player_obj.ent.env.map[x_test][y_test].entity:
-                            item_component = Item(use_function=mysterious_note)
-                            item = Object(0,
-                                          0,
-                                          img.other['scrolls']['closed'],
-                                          name="mysterious note", category='scrolls', image_num=0,
-                                          item=item_component)
-                            player_obj.ent.env.map[x_test][y_test].item = item
-                            found = True
-                            break
-        pygame.event.clear()
+        found = False
+        for i in range(3):
+            if found: break
+            x_test = x(pyg.tile_width*(i-1))
+            for j in range(3):
+                y_test = y(pyg.tile_height*(j-1))
+                if not player_obj.ent.env.map[x_test][y_test].entity:
+                    place_object(
+                        obj = create_item('scroll of death'),
+                        loc = [x_test, y_test],
+                        env = ent.env)
+                    found = True
+                    break
+    
+    if ent.quest.dialogue_list:
+        return ent.quest.dialogue_list[0]
 
 def mysterious_note():
     global questlog
@@ -4448,11 +4470,6 @@ def is_blocked(env, loc):
     
     # Check for monsters
     if env.map[loc[0]][loc[1]].entity: 
-    
-        # Triggers dialogue for friend
-        #if env.map[loc[0]][loc[1]].entity.name in NPC_names:
-            #friend_quest(NPC_name=env.map[loc[0]][loc[1]].entity.name)
-        
         return True
     
     # Triggers message for hidden passages
@@ -4481,25 +4498,6 @@ def sort_inventory():
     sorted(inventory_cache['other'],  key=lambda x: x.name)
 
     player_obj.ent.inventory = inventory_cache
-
-def movement_speed(toggle=True):
-    global movement_speed_toggle
-    
-    if toggle:
-        if movement_speed_toggle == len(toggle_list)-1: 
-            movement_speed_toggle = 0
-        else:
-            movement_speed_toggle += 1
-    
-    if toggle_list[movement_speed_toggle] == 'Fast':
-        pygame.key.set_repeat(120, 120)
-        if toggle: pyg.update_gui(f"Movement speed: Fast", pyg.red)
-    elif toggle_list[movement_speed_toggle] == 'Slow':
-        pygame.key.set_repeat(0, 0)
-        if toggle: pyg.update_gui(f"Movement speed: Fixed", pyg.white)
-    else:
-        pygame.key.set_repeat(250, 150)
-        if toggle: pyg.update_gui(f"Movement speed: Default", pyg.blue)
 
 def from_dungeon_level(table):
     """ Returns a value that depends on the dungeon level. Runs in groups.
