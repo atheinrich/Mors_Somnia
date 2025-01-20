@@ -5,22 +5,70 @@
 #######################################################################################################################################################
 
 #######################################################################################################################################################
+# Plot
+""" Overview
+    --------
+    There are many paths, but (almost) all lead to death.
+    Sleep and drug use lead to roguelike dreams.
+    Death is the only way to wake up from a dream or hallucination and return to the Overworld.
+    Only some items and player modifications are retained upon death in a dream.
+    If the player dies in the Overworld, the game ends without recovery (unless the Path 1 is followed).
+    
+    Path 1: With the aid of drugs, experience, and the church questline, the player can become effectively immortal through cloning.
+    - This is the most difficult path to achieve and leads to the endgame.
+    - The church must look favorably on the player, and the player must have sufficient experience and evolutions.
+    
+    Path 2: With the aid of drugs and experience, the player can defeat the church and live in harmony in the Overworld.
+    - The player can still die in the Overworld, in which they do not proceed to the endgame.
+    
+    Path 3: With the aid of experience and the church questline (but no drugs), the player is doomed to death.
+    - The church will eventually reject the player for not following their creed.
+    - There is no endgame or bonus content.
+    
+    Path 4: With the aid of experience alone, the player will perish after the church's revolt.
+    - This happens after a fixed number of days.
+    - New customization options are available for runs following this path.
+    
+    Path 5: With the aid of the church questline alone, all life in the overworld will end.
+    - This is only achieved if the church questline is completed at Rank 1.
+    - Something special happens, but I don't know what yet. """
+
+""" Environments
+    ------------
+    Through requisite means, the player can access their Home, the Overworld, the Dungeons, the Abyssal Gallery, and the Garden.
+    
+    Home            : Nothing special happens here; it is a place of refuge.
+    Overworld       : The main questline occurs here.
+    Dungeons        : This is mostly a placeholder for dream/drug environments that haven't been programmed yet.
+    Abyssal Gallery : This is the beginning and the end; strong monsters and powerful items, etc. """
+
+""" NPCs
+    ----
+    Townsfolk : Average settlers of the Overworld.
+    Bloodkin  : Worshipers of the Sigil of Thanato. They rarely leave the church but can be found in dreams.
+    Kyrio     : A powerful leader of the Bloodkin. He is a deviant that masquerades as a confused old man.
+    Kapno     : The brother of Kyrio and the store manager of the Overworld. He is a pleasant old man that knows nothing of his brother's plot.
+    Chameno   : A former leader of the Bloodkin that fled persecution to live in dreams.
+    Louloud   : The player's best friend. She lives with her mother and likes to garden.
+    Giatro    : The doctor of the Overworld. He is optionally converted to a Bloodkin by the player and attained as a follower.
+    Erasti    : An unsuspecting member of the Townsfolk. She may be conscripted as a follower.
+    Ypno      : The drug dealer of the Townsfolk. They can be found in the Overworld and in dreams.
+    Thanato   : Death itself. They have no physical form but can imbue inanimate objects with deadly prowess.
+    Vit       : Life itself. Idk yet. """
+
+#######################################################################################################################################################
 # Imports
 ## Game mechanics
 import pygame
-from pygame.locals import *
+from   pygame.locals import *
 import random
-import textwrap
 import time
 
-## File saving
+## Utility
 import pickle
-import os
 import copy
-
-## Debugging
 import sys
-import inspect
+import textwrap
 
 # Aesthetics
 from PIL import Image, ImageFilter, ImageOps
@@ -28,12 +76,9 @@ from PIL import Image, ImageFilter, ImageOps
 #######################################################################################################################################################
 # Global values
 super_dig = False
-toggle_list = ['Default', 'Fast', 'Fixed']
-last_press_time, cooldown_time = 0, 1
 
 #######################################################################################################################################################
 # Core
-## Initialization
 def debug_call(func):
     """ Just a print statement for debugging. Shows which function is called alongside variable details. """
 
@@ -45,7 +90,8 @@ def debug_call(func):
 def main():
     """ Initializes the essentials and opens the main menu. """
     
-    global pyg, mech, img, aud, player_obj, dev
+    global pyg, mech, img, aud, player_obj, dev, inv
+    global main_menu_obj, play_game_obj, new_game_obj, new_menu_obj, files_obj, save_account_obj, load_account_obj
     
     # Initialize pygame (parameters, display, clock, etc.)
     pyg  = Pygame()
@@ -60,7 +106,8 @@ def main():
 
     # Initialize pygame audio and development tools
     aud = Audio()
-    dev  = Inventory()
+    inv = Inventory()
+    dev = DevTools()
     
     # Create player
     player_obj = Player()
@@ -71,364 +118,91 @@ def main():
     place_player(player_obj.envs['garden'], player_obj.envs['garden'].center)
     
     # Open the main menu
-    main_menu()
+    main_menu_obj = MainMenu()
+    play_game_obj = PlayGame()
+    new_game_obj = NewGame()
+    new_menu_obj  = NewMenu(
+        name      = 'controls',
+        header    = "Controls", 
+        options   = ["Move:                                       Arrow keys or WASD",
+                     "Descend stairs or grab item:    Enter",
+                     "Ascend stairs to home:            Shift",
+                     "Check stats:                             1",
+                     "Use item in inventory:              2",
+                     "Drop item from inventory:        3",
+                     "Open questlog:                        4",
+                     "Toggle movement speed:         5",
+                     "Take screenshot:                      6",
+                     "Construct items:                         7",
+                     "Unused:                                   8",
+                     "Unused:                                   9",
+                     "Toggle messages:                     /"])
+    save_account_obj = NewMenu(
+        name        = 'save',
+        header      = "Save",
+        options     = ["File 1",
+                       "File 2",
+                       "File 3"],
+        backgrounds = ["Data/File_1/screenshot.png",
+                       "Data/File_2/screenshot.png",
+                       "Data/File_3/screenshot.png"])
+    load_account_obj = NewMenu(
+        name        = 'load',
+        header      = "Load",
+        options     = ["File 1",
+                       "File 2",
+                       "File 3"],
+        backgrounds = ["Data/File_1/screenshot.png",
+                       "Data/File_2/screenshot.png",
+                       "Data/File_3/screenshot.png"])
+    game_states()
 
-@debug_call
-def main_menu():
-    """ Manages the menu. Handles player input. Only active when the main menu is open. """
-    
-    global game_title, last_press_time, cooldown_time
-    
-    # -------------------------------------- INIT --------------------------------------    
-    # Initialize title
-    title_font = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
-    game_title = title_font.render("MORS SOMNIA", True, pyg.green)
-    game_title_pos = (int((pyg.screen_width - game_title.get_width())/2), 85)
-    
-    # Initialize cursor
-    cursor_img = pygame.Surface((16, 16)).convert()
-    cursor_img.set_colorkey(cursor_img.get_at((0, 0)))
-    pygame.draw.polygon(cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-    cursor_pos = [50, 304]
-    
-    # Initialize menu options
-    menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
-    menu_choices_surfaces = []
-    for i in range(len(menu_choices)):
-        if i == 0:                       color = pyg.green
-        elif i == len(menu_choices) - 1: color = pyg.red
-        else:                            color = pyg.gray
-        menu_choices_surfaces.append(pyg.font.render(menu_choices[i], True, color))
-    choice, choices_length = 0, len(menu_choices) - 1
-    
-    # Allows access to garden
-    menu_toggle = True
+def game_states():
 
-    # -------------------------------------- STARTUP --------------------------------------
-    # Fade in at startup
-    if pyg.startup_toggle:
+    pyg.game_state = 'startup'
+    pyg.running    = True
+    while pyg.running:
         
-        # Startup background
-        background_image = pygame.image.load("Data/garden.png").convert()
-        background_image = pygame.transform.scale(background_image, (pyg.screen_width, pyg.screen_height))
-
-        # Fade details
-        alpha = 0
-        fade_speed = 10
-        fade_surface = pygame.Surface((pyg.screen_width, pyg.screen_height))
-        fade_surface.fill(pyg.black)
+        ## Primary
+        if pyg.game_state == 'startup':
+            main_menu_obj.startup()
         
-        # Apply fade
-        while alpha < 255:
-            pyg.clock.tick(30)
-            fade_surface.set_alpha(255 - alpha)
-            
-            # Set menu background to the custom image
-            pyg.screen.blit(background_image, (0, 0))
-
-            # Draw the menu elements during the fade
-            pyg.screen.blit(game_title, game_title_pos)
-
-            # Apply the fade effect
-            pyg.screen.blit(fade_surface, (0, 0))
-            
-            pygame.display.flip()
-            
-            # Increase alpha for the next frame
-            alpha += fade_speed
-            
-        pyg.startup_toggle = False
-
-    # -------------------------------------- ACTIONS --------------------------------------
-    # Wait for command
-    pyg.main_menu = True
-    while pyg.main_menu:
-        pyg.clock.tick(25)
-        pygame.key.set_repeat(0, 0)
+        elif pyg.game_state == 'play_game':
+            play_game_obj.run()
+            play_game_obj.render()
         
-        # Automate the Garden
-        if menu_toggle and (player_obj.ent.env.name == 'garden'):
-            player_obj.ent.role = 'NPC'
-            player_obj.ent.ai()
-            render_all(gui=False)
-            if menu_toggle:
-                Y = 300
-                for menu_choice_surface in menu_choices_surfaces:
-                    pyg.display.blit(menu_choice_surface, (80, Y))
-                    Y += 24
-                
-                # Customize main icon (Garden floor)
-                ## Regular text
-                if pyg.startup_toggle2: pyg.display.blit(game_title, game_title_pos)
-                pyg.display.blit(cursor_img, cursor_pos)
-            pygame.display.flip()
-        else:
-            player_obj.ent.role = 'player'
+        elif pyg.game_state == 'new_game':
+            new_game_obj.run()
+            new_game_obj.render()
         
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-                
-                # ---------------------------- GARDEN -----------------------------
-                if not menu_toggle:
-                    
-                    # >>MOVE/ATTACK<<
-                    if   event.key in pyg.key_UP:    player_obj.ent.move(0, -pyg.tile_height)
-                    elif event.key in pyg.key_DOWN:  player_obj.ent.move(0, pyg.tile_height)
-                    elif event.key in pyg.key_LEFT:  player_obj.ent.move(-pyg.tile_width, 0)
-                    elif event.key in pyg.key_RIGHT: player_obj.ent.move(pyg.tile_width, 0)
-                    
-                    # >>MENU<<
-                    elif event.key in pyg.key_SLASH and (time.time()-last_press_time > pyg.cooldown_time):
-                        pyg.last_press_time = float(time.time())
-                        pygame.key.set_repeat(0, 0)
-                        menu_toggle = True
-                
-                # ---------------------------- MENU -----------------------------
-                if menu_toggle:
-                
-                    # >>SELECT MENU ITEM<<
-                    if event.key in pyg.key_UP:
-                        cursor_pos[1] -= 24
-                        choice -= 1
-                        if choice < 0:
-                            choice = choices_length
-                            cursor_pos[1] = 304 + (len(menu_choices) - 1) * 24
-                    elif event.key in pyg.key_DOWN:
-                        cursor_pos[1] += 24
-                        choice += 1
-                        if choice > choices_length:
-                            choice = 0
-                            cursor_pos[1] = 304
-                    
-                    # >>MUSIC<<
-                    elif event.key in pyg.key_PLUS:
-                        aud.pause(paused=False)
-                    elif event.key in pyg.key_MINUS:
-                        aud.pause(paused=True)
-                    elif event.key in pyg.key_9:
-                        aud.play_track()
-                    
-                    # >>RESUME<<
-                    elif (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                        pyg.last_press_time = float(time.time())
-                        if not pyg.startup_toggle2:
-                            play_game()
-                    
-                    elif event.key in pyg.key_RETURN:
-                        
-                        # >>NEW GAME<<
-                        if choice == 0:
-                            pyg.startup_toggle2 = True  # when false, prevents returning to character creation menu after initialization
-                            character_creation()
-                            if not pyg.startup_toggle2:
-                                new_game()
-                                play_game()
-                        
-                        # >>LOAD<<
-                        elif choice == 1:
-                            load_account()
-                            if not pyg.startup_toggle2:
-                                aud.control(soundtrack=player_obj.ent.env.soundtrack)
-                                play_game()
-                        
-                        # >>SAVE<<
-                        elif choice == 2:
-                            save_account()
-
-                        # >>CONTROLS<<
-                        elif choice == 3:
-                            new_menu(header='Controls', 
-                                     options=['Move:                                       Arrow keys or WASD',
-                                              'Descend stairs or grab item:    Enter',
-                                              'Ascend stairs to home:            Shift',
-                                              'Check stats:                             1',
-                                              'Use item in inventory:              2',
-                                              'Drop item from inventory:        3',
-                                              'Open questlog:                        4',
-                                              'Toggle movement speed:         5',
-                                              'Take screenshot:                      6',
-                                              'Construct items:                         7',
-                                              'Unused:                                   8',
-                                              'Unused:                                   9',
-                                              'Toggle messages:                     /'])
-                        
-                        # >>QUIT<<
-                        elif choice == 4:
-                            pygame.quit()
-                            sys.exit()
-                    
-                    # >>GARDEN<<
-                    elif event.key in pyg.key_SLASH and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                        pyg.last_press_time = float(time.time())
-                        menu_toggle = False
-                        if player_obj.ent.env.name != 'garden':
-                            menu_toggle = True
-                            pyg.play_game = False
-                            place_player(env=player_obj.envs['garden'], loc=player_obj.envs['garden'].player_coordinates)
-                        elif not pyg.startup_toggle2:
-                            place_player(env=player_obj.ent.last_env, loc=player_obj.ent.last_env.player_coordinates)
-
-                # -------------------------------------- RENDER --------------------------------------
-                render_all(gui=False)
-                if menu_toggle:
-                    Y = 300
-                    for menu_choice_surface in menu_choices_surfaces:
-                        pyg.display.blit(menu_choice_surface, (80, Y))
-                        Y += 24
-                    
-                    # Customize main icon (Garden floor)
-                    ## Regular text
-                    if pyg.startup_toggle2: pyg.display.blit(game_title, game_title_pos)
-                    pyg.display.blit(cursor_img, cursor_pos)
-                pygame.display.flip()
-        pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
-        pygame.display.update()
-
-def new_menu(header, options, options_categories=None, position='top left', backgrounds=None):
-    """ IMPORTANT. Creates cursor, background, and menu options, then returns index of choice.
-
-        header             : string; top line of text
-        options            : list of strings; menu choices
-        options_categories : list of strings; categorization; same length as options
-        position           : chooses layout preset """
-
-    global game_title
-    
-    # -------------------------------------- INIT --------------------------------------
-    # Initialize temporary data containers
-    choice                   = 0              # holds index of option pointed at by cursor
-    choices_length           = len(options)-1 # number of choices
-    options_categories_cache = ''             # holds current category
-    options_render = options.copy()
-    
-    # Alter layout if categories are present
-    if options_categories: 
-        tab_X, tab_Y         = 70, 10
-        options_categories_cache_2 = options_categories[0]
-    else:
-        tab_X, tab_Y         = 0, 0
-
-    # Set initial position of each text type
-    header_position    = {'top left':    [5, 10], 'center': [int((pyg.screen_width - game_title.get_width())/2), 85],
-                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
-    cursor_position    = {'top left':    [50+tab_X, 38+tab_Y], 'center':       [50, 300],
-                          'bottom left': [50+tab_X, 65-tab_Y], 'bottom right': [60 ,70]}
-    options_positions  = {'top left':    [80+tab_X, 34],       'center':       [80, 300],
-                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
-    category_positions = {'top left':    [5, 34],              'center':       [80, 300],
-                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
-
-    # Set mutable copies of text positions
-    cursor_position_mutable    = cursor_position[position].copy()
-    options_positions_mutable  = options_positions[position].copy()
-    category_positions_mutable = category_positions[position].copy()
-
-    # Initialize cursor
-    cursor_img = pygame.Surface((16, 16)).convert()
-    cursor_img.set_colorkey(cursor_img.get_at((0,0)))
-    pygame.draw.polygon(cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-    
-    # Initialize menu options
-    header = pyg.font.render(header, True, pyg.yellow)
-    for i in range(len(options)):
-        color = pyg.gray
-        options_render[i] = pyg.font.render(options[i], True, color)
-    
-    # Initialize backgrounds
-    if backgrounds:
-        for i in range(len(backgrounds)):
-            backgrounds[i] = pygame.image.load(backgrounds[i]).convert()
-
-    # -------------------------------------- MENU --------------------------------------
-    # Allow player to select menu option
-    running = True
-    while running: # while True
-        pygame.time.Clock().tick(30)
+        ## Overlays
+        if pyg.overlay == 'menu':
+            game_state = main_menu_obj.run()
+            main_menu_obj.render()
         
-        # Render menu background
-        if backgrounds:
-            pyg.display.fill(pyg.black)
-            pyg.display.blit(backgrounds[choice], (0, 0))
-        else:
-            pyg.display.fill(pyg.black)
+        elif pyg.overlay == 'controls':
+            choice = new_menu_obj.run()
+            new_menu_obj.render()
         
-        # Render header and cursor
-        pyg.display.blit(header, header_position[position])
-        pyg.display.blit(cursor_img, cursor_position_mutable)
+        elif pyg.overlay == 'load':
+            choice = load_account_obj.run()
+            load_account_obj.render()
         
-        # Render categories and options
-        for i in range(len(options_render)):
-            
-            # Render category text if it is not present 
-            if options_categories:
-                if options_categories[i] != options_categories_cache:
-                    options_categories_cache = options_categories[i]
-                    text = pyg.font.render(f'{options_categories_cache.upper()}:', True, pyg.gray)
-                    options_positions_mutable[1] += tab_Y
-                    pyg.display.blit(text, (category_positions_mutable[0], options_positions_mutable[1]))
-                
-            # Render option text
-            pyg.display.blit(options_render[i], options_positions_mutable)
-            options_positions_mutable[1] += 24
-        options_positions_mutable = options_positions[position].copy()
-        category_positions_mutable = category_positions[position].copy()
+        elif pyg.overlay == 'save':
+            choice = save_account_obj.run()
+            save_account_obj.render()
+        
+        elif pyg.overlay == 'inv':
+            inv.run()
+            inv.render()
+        
+        elif pyg.overlay == 'dev':
+            dev.run()
+            dev.render()
+        
         pygame.display.flip()
-        
-        # Called when the user inputs a command
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-
-                # >>RESUME<<
-                if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                    pyg.last_press_time = float(time.time())
-                    running = False
-                    return None
-                
-                # >>SELECT MENU ITEM<<
-                if event.key in pyg.key_UP:
-                
-                    # Move cursor up
-                    cursor_position_mutable[1]     -= 24
-                    choice                         -= 1
-                    
-                    # Move to lowest option
-                    if choice < 0:
-                        choice                     = choices_length
-                        cursor_position_mutable[1] = cursor_position[position][1] + (len(options)-1) * 24
-                        if options_categories:
-                            cursor_position_mutable[1] += tab_Y * (len(set(options_categories)) - 1)
-                            options_categories_cache_2 = options_categories[choice]
-                    
-                    # Move cursor again if there are categories
-                    elif options_categories:
-                        if options_categories[choice] != options_categories_cache_2:
-                            options_categories_cache_2 = options_categories[choice]
-                            cursor_position_mutable[1] -= tab_Y
-                
-                elif event.key in pyg.key_DOWN:
-                
-                    # Move cursor down
-                    cursor_position_mutable[1]     += 24
-                    choice                         += 1
-                    
-                    # Move to highest option
-                    if choice > choices_length:
-                        choice                     = 0
-                        cursor_position_mutable[1] = cursor_position[position][1]
-                        if options_categories:
-                            options_categories_cache_2 = options_categories[choice]
-                    
-                    # Move cursor again if there are categories
-                    elif options_categories:
-                        if options_categories[choice] != options_categories_cache_2:
-                            options_categories_cache_2 = options_categories[choice]
-                            cursor_position_mutable[1] += tab_Y
-                            
-                elif event.key in pyg.key_RETURN:
-                    running = False
-                    return choice
         pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
-        pygame.display.update()
+        pyg.clock.tick(60)
 
 def inventory_menu(header):
     """ Calls a menu with each item of the inventory as an option, then returns an item if it is chosen. """
@@ -454,442 +228,6 @@ def inventory_menu(header):
     # Generate menu and return selected option
     index = new_menu(header, options, options_categories=options_categories, position="top left")
     if index is not None: return item_cache[index]
-
-## Gameplay
-def character_creation():
-    """ Manages the character creation menu. Handles player input. Only active when menu is open.
-        Called when starting a new game.
-    
-        HAIR:       sets hair by altering hair_index, which is used in new_game to add hair as an Object hidden in the inventory
-        HANDEDNESS: mirrors player/equipment tiles, which are saved in img.dict and img.cache
-        ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
-    
-    # -------------------------------------- INIT --------------------------------------
-    # Reset character
-    player_obj.create_player()
-    place_player(player_obj.envs['garden'], player_obj.envs['garden'].center)
-    player_obj.ent.env.camera = Camera(player_obj.ent)
-    player_obj.ent.env.camera.fixed = True
-    player_obj.ent.env.camera.zoom_in(custom=1)
-    
-    # Initialize cursor
-    cursor_img = pygame.Surface((16, 16)).convert()
-    cursor_img.set_colorkey(cursor_img.get_at((0, 0)))
-    pygame.draw.polygon(cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-    
-    # Set character background
-    background_image = pygame.image.load("Data/room.png")
-    
-    # Initialize menu options
-    menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]   
-    for i in range(len(menu_choices)):
-        if   i == len(menu_choices)-2:  color = pyg.green
-        elif i == len(menu_choices)-1:  color = pyg.red
-        else:                           color = pyg.gray
-        menu_choices[i] = pyg.font.render(menu_choices[i], True, color)
-    choice, choices_length = 0, len(menu_choices)-1
-    cursor_pos, top_choice = [50, 424-len(menu_choices)*24], [50, 424-len(menu_choices)*24]
-    
-    # Begins with default settings (ideally)
-    orientations = ['front', 'right', 'back', 'left']
-    last_press_time = 0
-    cooldown_time = 0.7
-
-    # -------------------------------------- INPUT --------------------------------------
-    running = True
-    while running: # while True
-        pyg.clock.tick(30)
-        
-        # Prevent escape from going back to character creation
-        if not pyg.startup_toggle2:
-            running = False
-            return
-        
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-            
-                # >>MAIN MENU<<
-                if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                    pyg.last_press_time = float(time.time())
-                    running = False
-                    return
-                
-                # >>SELECT MENU ITEM<<
-                elif event.key in pyg.key_UP:   # Up
-                    cursor_pos[1]     -= 24
-                    choice            -= 1
-                    
-                    # Go to the top menu choice
-                    if choice < 0:
-                        choice         = choices_length
-                        cursor_pos[1]  = top_choice[1] + (len(menu_choices)-1) * 24
-                    
-                    # Skip a blank line
-                    elif choice == (choices_length - 2):
-                        choice         = choices_length - 3
-                        cursor_pos[1]  = top_choice[1] + (len(menu_choices)-4) * 24
-                
-                elif event.key in pyg.key_DOWN: # Down
-                    cursor_pos[1]     += 24
-                    choice            += 1
-                    
-                    if choice > choices_length:
-                        choice         = 0
-                        cursor_pos[1]  = top_choice[1]
-                    
-                    elif choice == (choices_length - 2):
-                        choice         = choices_length - 1
-                        cursor_pos[1]  = top_choice[1] + (len(menu_choices)-2) * 24
-                
-                # Apply option
-                elif event.key in pyg.key_RETURN:
-                
-                    # >>HAIR and FACE<<
-                    if choice in [0, 1, 2]:
-                        
-                        # Hair or face
-                        if choice == 0:
-                            role     = 'head'
-                            img_dict = img.hair_options
-                        elif choice == 1:
-                            role     = 'face'
-                            img_dict = img.face_options
-                        elif choice == 2:
-                            role     = 'chest'
-                            img_dict = img.chest_options
-                        
-                        # Find next option and dequip last option
-                        index = (img_dict.index(player_obj.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
-                        img_name = img_dict[index]
-                        player_obj.ent.equipment[role].toggle_equip(player_obj.ent)
-                        
-                        # Equip next option if already generated
-                        if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in player_obj.ent.inventory.values()]:
-                            player_obj.ent.inventory[img_name][0].toggle_equip(player_obj.ent)
-                        
-                        # Generate option before equip
-                        else:
-                            item = create_item(img_name)
-                            player_obj.ent.inventory['armor'].append(item)
-                            item.toggle_equip(player_obj.ent)
-                    
-                    # >>SKIN<<
-                    if choice == 3:
-                        if player_obj.ent.img_names[0] == 'white':   player_obj.ent.img_names[0] = 'black'
-                        elif player_obj.ent.img_names[0] == 'black': player_obj.ent.img_names[0] = 'white'
-                    
-                    # >>HANDEDNESS<<
-                    if choice == 4:
-                        if player_obj.ent.handedness == 'left':
-                            player_obj.ent.handedness = 'right'
-                        elif player_obj.ent.handedness == 'right':
-                            player_obj.ent.handedness = 'left'
-                    
-                    # >>ACCEPT<<
-                    if choice == 6:
-                        pyg.startup_toggle2 = False
-                        running = False
-                        return
-                    
-                    # >>MAIN MENU<<
-                    if choice == 7:
-                        running = False
-                        return
-        
-        # -------------------------------------- RENDER --------------------------------------
-        # Implement timed rotation of character
-        if time.time()-last_press_time > cooldown_time:
-            last_press_time = float(time.time()) 
-            player_obj.ent.img_names[1] = orientations[orientations.index(player_obj.ent.img_names[1]) - 1]
-
-        # Set menu background
-        pyg.display.fill(pyg.black)
-        
-        # Renders menu to update cursor location
-        Y = top_choice[1] - 4
-        for menu_choice in menu_choices:
-            pyg.display.blit(menu_choice, (80, Y))
-            Y += 24
-        pyg.display.blit(cursor_img, cursor_pos)
-        pyg.display.blit(background_image, (400, 200))
-        player_obj.ent.draw(pyg.display, loc=(464, 264))
-        pygame.display.flip()
-        pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
-        pygame.display.update()
-
-@debug_call
-def new_game():
-    """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
-        Called when starting a new game or loading a previous game.
-
-        new:  creates player as Object with Fighter stats, calls make_home(), then loads initial inventory
-        else: calls load_objects_from_file() to load player, inventory, and current floor """
-    
-    # Clear prior data
-    player_obj.envs = {}
-    player_obj.ents = {}
-    player_obj.questlog = None
-    player_obj.envs['garden'] = build_garden()
-    mech.movement_speed(toggle=False, custom=0)
-    pyg.zoom_cache = 1
-
-    # Prepare player
-    player_obj.ent.role         = 'player'
-    player_obj.ent.img_names[1] = 'front'
-    player_obj.questlog         = Questlog()
-    
-    player_obj.envs['home'] = build_home()
-    place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].center)
-    
-    # Create items
-    if player_obj.ent.equipment['chest'].img_names[0] == 'bra': name = 'yellow dress'
-    else: name = 'green clothes'                        
-    clothes = create_item(name)
-    hair    = create_item('bald')
-    face    = create_item('clean')
-    chest   = create_item('flat')
-    shovel  = create_item('super shovel')
-    player_obj.ent.inventory[clothes.role].append(clothes)
-    player_obj.ent.inventory[hair.role].append(hair)
-    player_obj.ent.inventory[face.role].append(face)
-    player_obj.ent.inventory[chest.role].append(chest)
-    player_obj.ent.inventory[shovel.role].append(shovel)
-    clothes.toggle_equip(player_obj.ent)
-    sort_inventory()
-    
-    # Prepare gui
-    pyg.msg = []
-    pyg.update_gui('Press / to hide messages.', pyg.white)
-    pyg.msg_toggle = True
-
-@debug_call
-def play_game():
-    """ IMPORTANT. Processes user input and triggers monster movement. """
-    
-    global player_action, msg_toggle, stairs, last_press_time
-    
-    player_move = False
-    mech.movement_speed(toggle=False)
-    player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
-    
-    # Start loop
-    pyg.play_game = True
-    while pyg.play_game:
-        pyg.clock.tick(30)
-        for event in pygame.event.get():
-
-            # Save and quit
-            if event.type == QUIT:
-                save_account()
-                pygame.quit()
-                sys.exit()
-            
-            # Keep playing
-            if not player_obj.ent.dead:
-                if event.type == KEYDOWN:
-                    active_effects()
-                    print(f"\n({player_obj.ent.X}, {player_obj.ent.Y}), ({int(player_obj.ent.X/pyg.tile_width)}, {int(player_obj.ent.Y/pyg.tile_height)})")
-                    
-                    # >>MAIN MENU<<
-                    if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                        pyg.last_press_time = float(time.time())
-                        pygame.key.set_repeat(0, 0)
-                        player_obj.ent.env.camera.zoom_in(custom=1)
-                        running = False
-                        return
-                    
-                    # >>MOVE<<
-                    if   event.key in pyg.key_UP:    player_obj.ent.move(0, -pyg.tile_height)
-                    elif event.key in pyg.key_DOWN:  player_obj.ent.move(0, pyg.tile_height)
-                    elif event.key in pyg.key_LEFT:  player_obj.ent.move(-pyg.tile_width, 0)
-                    elif event.key in pyg.key_RIGHT: player_obj.ent.move(pyg.tile_width, 0)
-
-                    # >>PICKUP/STAIRS<<
-                    if event.key in pyg.key_RETURN:
-                        
-                        # Check if an item is under the player
-                        if player_obj.ent.tile.item:
-                            
-                            # Dungeon
-                            if player_obj.ent.tile.item.name == 'portal': mech.next_level()
-                            
-                            # Pick up or activate
-                            else: player_obj.ent.tile.item.pick_up()
-
-                    # >>HOME<<
-                    if event.key == K_RSHIFT:
-                        if player_obj.ent.tile.item:
-                            if player_obj.ent.tile.item.name in ['door', 'portal']:
-                                if player_obj.ent.env.name != 'home':
-                                    place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].player_coordinates)
-
-                    # >>VIEW STATS<<
-                    if event.key in pyg.key_1:
-                        player_obj.ent.env.camera.zoom_in(custom=1)
-                        
-                        level_up_exp = mech.level_up_base + player_obj.ent.rank * mech.level_up_factor
-                        new_menu(header  =  'Character Information',
-                                 options = ['Rank:                                ' + str(player_obj.ent.rank),
-                                            'Experience:                       ' + str(player_obj.ent.exp),
-                                            'Experience to level up:    ' + str(level_up_exp),
-                                            'Maximum HP:                    ' + str(player_obj.ent.max_hp),
-                                            'Attack:                             ' + str(player_obj.ent.attack),
-                                            'Defense:                           ' + str(player_obj.ent.defense)])
-                    
-                        player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
-                    
-                    # >>CHECK INVENTORY<<
-                    elif event.key in pyg.key_2:
-                        pygame.key.set_repeat(250, 150)
-                        player_obj.ent.env.camera.zoom_in(custom=1)
-                        
-                        chosen_item = inventory_menu("INVENTORY:         USE ITEM")
-                        if chosen_item is not None:
-                            chosen_item.use()
-                            pyg.update_gui()
-                        
-                        mech.movement_speed(toggle=False)
-                        player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
-                    
-                    # >>DROP ITEM<<
-                    elif event.key in pyg.key_3:
-                        pygame.key.set_repeat(250, 150)
-                        player_obj.ent.env.camera.zoom_in(custom=1)
-                        
-                        if player_obj.ent.tile.item:
-                            pyg.update_gui("There's already something here", color=pyg.red)
-                        else:
-                            chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
-                            if chosen_item is not None:
-                                chosen_item.drop()
-                                pygame.event.clear()
-                        
-                        mech.movement_speed(toggle=False)
-                        player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
-                    
-                    # >>VIEW QUESTLOG<<
-                    elif event.key in pyg.key_4:
-                        pygame.key.set_repeat(250, 150)
-                        player_obj.ent.env.camera.zoom_in(custom=1)
-                        
-                        player_obj.questlog.questlog_menu()
-                        
-                        mech.movement_speed(toggle=False)
-                        player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
-                    
-                    # >>MOVEMENT SPEED<<
-                    elif event.key in pyg.key_5 and (time.time()-last_press_time > cooldown_time):
-                        mech.movement_speed()
-                        last_press_time = float(time.time()-0.8)
-                    
-                    # >>SCREENSHOT<<
-                    elif event.key in pyg.key_6:
-                        screenshot(size='display', visible='False')
-                    
-                    # >>DEV TOOLS<<
-                    elif event.key in pyg.key_7:
-                        pygame.key.set_repeat(250, 150)
-                        if pyg.zoom != 1:
-                            player_obj.ent.env.camera.zoom_in(custom=1)
-                            pyg.zoom_cache = pyg.zoom
-                        
-                        dev.select_item()
-                        
-                        mech.movement_speed(toggle=False)
-
-                    # >>DEV TOOLS<<
-                    elif event.key in pyg.key_8:
-                        dev.export_env()
-                    
-                    # >>DEV TOOLS<<
-                    elif event.key in pyg.key_9:
-                        dev.import_env()
-                        pygame.event.clear()
-                    
-                    # >>TOGGLE MESSAGES<<
-                    elif event.key in pyg.key_SLASH:
-                    
-                        # Hide messages
-                        if pyg.msg_toggle:
-                            pyg.msg_toggle = False
-                        
-                        else:
-                            # Hide messages and GUI
-                            if pyg.gui_toggle:
-                                pyg.gui_toggle = False
-                                pyg.msg_toggle = False
-                            
-                            # View messages and GUI
-                            else:
-                                pyg.gui_toggle = True
-                                pyg.msg_toggle = True
-            
-                    # >>ZOOM<<
-                    elif event.key in pyg.key_PLUS:
-                        player_obj.ent.env.camera.zoom_in()
-                    elif event.key in pyg.key_MINUS:
-                        player_obj.ent.env.camera.zoom_out()
-            
-            else:
-                # >>MAIN MENU<<
-                if event.type == KEYDOWN:
-                    if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                        pyg.last_press_time = float(time.time())
-                        pygame.key.set_repeat(0, 0)
-                        player_obj.ent.env.camera.zoom_in(custom=1)
-                        running = False
-                        return
-                        
-                # >>TOGGLE MESSAGES<<
-                elif event.key in pyg.key_SLASH:
-                    if pyg.msg_toggle:
-                        pyg.msg_toggle = False
-                    else:
-                        if pyg.gui_toggle:
-                            pyg.gui_toggle = False
-                            pyg.msg_toggle = False
-                        else:
-                            pyg.msg_toggle = True
-                            pyg.gui_toggle = True
-            
-            # ! (unknown)
-            if event.type == MOUSEBUTTONDOWN: # Cursor-controlled actions?
-                if event.button == 1:
-                    player_move = True
-                    pyg.msg_toggle = False
-                elif event.button == 3:
-                    mouse_x, mouse_y = event.pos
-                    get_names_under_mouse(mouse_x, mouse_y)
-            
-            # ! (unknown)
-            if event.type == MOUSEBUTTONUP:
-                if event.button == 1:
-                    player_move = False
-
-        # ! (unknown)
-        if player_move:
-            pos = pygame.mouse.get_pos()
-            x = int((pos[0] + player_obj.ent.env.camera.X)/pyg.tile_width)
-            y = int((pos[1] + player_obj.ent.env.camera.Y)/pyg.tile_height)
-            tile = player_obj.ent.env.map[x][y]
-            if tile != player_obj.ent.tile:
-                dX = tile.X - player_obj.ent.X
-                dY = tile.Y - player_obj.ent.Y
-                distance = (dX ** 2 + dY ** 2)**(1/2) # Distance from player to target
-                dX = int(round(dX / distance)) * pyg.tile_width # Restrict motion to grid
-                dY = int(round(dY / distance)) * pyg.tile_height
-                
-                # Slow down diagonal moves
-                if dX and dY:
-                    pygame.key.set_repeat(250, 200)
-                player_obj.ent.move(dX, dY) # Triggers the chosen action
-
-    #if game_state == 'playing' and player_action != 'didnt-take-turn': # Tab forward and unhash to allow turn-based game
-        for entity in player_obj.ent.env.entities:
-            entity.ai()
-        render_all()
-        pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
-        pygame.display.update()
 
 def render_all(size='display', visible=False, gui=True):
     """ Draws tiles and stuff. Constantly runs. """
@@ -946,16 +284,17 @@ def render_all(size='display', visible=False, gui=True):
             pyg.display.blit(mech.impact_image, mech.impact_image_pos)
         
         # Print messages
-        if pyg.zoom == 1:
+        if not pyg.overlay:
             if gui:
                 if pyg.msg_toggle: 
                     Y = 10
                     for message in pyg.msg:
-                        pyg.display.blit(message, (10, Y))
+                        pyg.screen.blit(message, (10, Y))
                         Y += 16
                 if pyg.gui_toggle:
-                    pyg.display.blit(pyg.gui, (10, 453))
-            pygame.display.flip()
+                    pyg.screen.blit(pyg.gui, (10, 453))
+    
+    aud.shuffle()
 
 def check_tile(x, y):
     """ Reveals newly explored regions with respect to the player's position. """
@@ -1004,7 +343,89 @@ class Pygame:
 
     def __init__(self):
         
+        # Controls
+        self.set_controls()
+        
         # Colors
+        self.set_colors()
+        
+        # Graphics
+        self.set_graphics()
+        
+        # Other
+        self.startup_toggle  = True
+        self.startup_toggle2 = True
+        self.startup_toggle3 = True
+        self.cooldown_time   = 0.2
+        self.last_press_time = 0
+        
+        # Start pygame
+        pygame.init()
+        pygame.key.set_repeat(250, 150)
+        pygame.display.set_caption("Mors Somnia") # Sets game title
+        self.screen  = pygame.display.set_mode((self.screen_width, self.screen_height),)
+        self.font    = pygame.font.SysFont('segoeuisymbol', 16, bold=True) # pygame.font.Font('Data/font.ttf', 24)
+        self.clock   = pygame.time.Clock()
+        self.display = pygame.Surface((int(self.screen_width / self.zoom), int(self.screen_height / self.zoom)))
+        self.gui     = self.font.render('', True, self.yellow)
+
+    def set_controls(self, controls='B'):
+        
+        # Default controls
+        if controls == 'A':
+            self.key_0             = [K_0,      K_KP0,       K_ESCAPE]    # back/menu
+            self.key_1             = [K_1,      K_KP1]                    # stats
+            self.key_2             = [K_2,      K_KP2]                    # inventory (equip)
+            self.key_3             = [K_3,      K_KP3]                    # inventory (drop)
+            self.key_4             = [K_4,      K_KP4]                    # quests
+            self.key_5             = [K_5,      K_KP5]                    # movement speed
+            self.key_6             = [K_6,      K_KP6]                    # screenshot
+            self.key_7             = [K_7,      K_KP7]                    # dev
+            self.key_8             = [K_8,      K_KP8]                    # dev
+            self.key_9             = [K_9,      K_KP9]                    # dev
+            self.key_UP            = [K_UP,     K_w]                      # movement (up)
+            self.key_DOWN          = [K_DOWN,   K_s]                      # movement (down)
+            self.key_LEFT          = [K_LEFT,   K_a]                      # movement (left)
+            self.key_RIGHT         = [K_RIGHT,  K_d]                      # movement (right)
+            self.key_RETURN        = [K_RETURN, K_ASTERISK]               # activate
+            self.key_SHIFT         = [K_RSHIFT, K_LSHIFT,    K_BACKSPACE] # activate
+            self.key_SLASH         = [K_SLASH]                            # messages
+            self.key_PLUS          = [K_PLUS,   K_KP_PLUS]                # zoom
+            self.key_MINUS         = [K_MINUS,  K_KP_MINUS]               # zoom
+
+        # Alternate controls
+        elif controls == 'B':
+            # Unused: 0, *
+            
+            # Movement
+            self.key_LEFT          = [K_1,      K_KP1, K_LEFT]        # left
+            self.key_DOWN          = [K_2,      K_KP2, K_DOWN]        # down
+            self.key_RIGHT         = [K_3,      K_KP3, K_RIGHT]        # right
+            self.key_UP            = [K_5,      K_KP5, K_UP  ]        # up
+
+            # Actions
+            self.key_0             = [K_BACKSPACE]            # exit/main menu
+            self.key_RETURN        = [K_RETURN, K_KP_ENTER]   # action 1
+            self.key_SHIFT         = [K_KP_PERIOD]            # action 2
+            self.key_SLASH         = [K_KP_PERIOD]            # action 3
+            self.key_PLUS          = [K_PLUS,   K_KP_PLUS]    # zoom
+            self.key_MINUS         = [K_MINUS,  K_KP_MINUS]   # zoom
+            
+            # Menus
+            self.key_7             = [K_4,      K_KP4]        # inventory
+            self.key_9             = [K_6,      K_KP6]        # DevTools
+            self.key_1             = [K_7,      K_KP7]        # player information
+            self.key_5             = [K_8,      K_KP8]        # movement speed
+            self.key_4             = [K_9,      K_KP9]        # questlog
+            
+            # Deprecated
+            self.key_2             = [None]
+            self.key_3             = [None]
+            self.key_6             = [None]
+            self.key_8             = [K_0, K_KP0]
+
+    def set_colors(self):
+        
         self.black             = pygame.color.THECOLORS['black']
         self.gray              = pygame.color.THECOLORS['gray90']
         self.white             = pygame.color.THECOLORS['white']
@@ -1018,26 +439,8 @@ class Pygame:
         self.light_green       = pygame.color.THECOLORS['lightgreen']
         self.light_blue        = pygame.color.THECOLORS['lightblue']
         self.light_yellow      = pygame.color.THECOLORS['lightyellow']
-        
-        # Controls
-        self.key_0             = [K_0,     K_KP0, K_ESCAPE] # back
-        self.key_1             = [K_1,     K_KP1]           # stats
-        self.key_2             = [K_2,     K_KP2]           # inventory (equip)
-        self.key_3             = [K_3,     K_KP3]           # inventory (drop)
-        self.key_4             = [K_4,     K_KP4]           # quests
-        self.key_5             = [K_5,     K_KP5]           # movement speed
-        self.key_6             = [K_6,     K_KP6]           # screenshot
-        self.key_7             = [K_7,     K_KP7]           # screenshot
-        self.key_8             = [K_8,     K_KP8]           # screenshot
-        self.key_9             = [K_9,     K_KP9]           # screenshot
-        self.key_UP            = [K_UP,    K_w]             # movement (up)
-        self.key_DOWN          = [K_DOWN,  K_s]             # movement (down)
-        self.key_LEFT          = [K_LEFT,  K_a]             # movement (left)
-        self.key_RIGHT         = [K_RIGHT, K_d]             # movement (right)
-        self.key_RETURN        = [K_RETURN, K_ASTERISK]     # activate
-        self.key_SLASH         = [K_SLASH]                  # messages
-        self.key_PLUS          = [K_PLUS,  K_KP_PLUS] 
-        self.key_MINUS         = [K_MINUS, K_KP_MINUS]
+
+    def set_graphics(self):
         
         # Graphics parameters
         self.screen_width      = 640 # 20 tiles
@@ -1058,22 +461,6 @@ class Pygame:
         self.gui               = None # font object; stats to be rendered
         self.message_width     = int(self.screen_width / 6)
         self.message_height    = 4 # number of lines shown
-        
-        # Other
-        self.startup_toggle  = True
-        self.startup_toggle2 = True
-        self.startup_toggle3 = True
-        self.cooldown_time   = 0.2
-        self.last_press_time = 0
-        
-        # Pygame initialization
-        pygame.init()
-        pygame.key.set_repeat(250, 150)
-        pygame.display.set_caption("Mors Somnia") # Sets game title
-        self.screen            = pygame.display.set_mode((self.screen_width, self.screen_height),)
-        self.font              = pygame.font.SysFont('segoeuisymbol', 16, bold=True)
-        self.clock             = pygame.time.Clock()
-        self.display = pygame.Surface((int(self.screen_width / self.zoom), int(self.screen_height / self.zoom)))
 
     def update_gui(self, new_msg=None, color=None):
         
@@ -1210,7 +597,7 @@ class Images:
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
         
         # Import tiles
-        ent_matrix = self.import_tiles('Data/tileset_ent.png', flipped=flipped, effects=['posterize'])
+        ent_matrix = self.import_tiles('Data/.Images/tileset_ent.png', flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
         self.ent_names = [
@@ -1239,7 +626,7 @@ class Images:
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
 
         # Import tiles
-        equip_matrix = self.import_tiles('Data/tileset_equip.png', flipped=flipped, effects=['posterize'])
+        equip_matrix = self.import_tiles('Data/.Images/tileset_equip.png', flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
         self.equip_names = [
@@ -1268,7 +655,7 @@ class Images:
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
         
         # Import tiles
-        other_matrix = self.import_tiles('Data/tileset_other.png', flipped=flipped, effects=['posterize'])
+        other_matrix = self.import_tiles('Data/.Images/tileset_other.png', flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
         self.other_names = [
@@ -1298,7 +685,7 @@ class Images:
         paths_options = [
             'left right', 'up down', 'down right', 'down left', 'up right', 'up left']
         null_options  = [
-            None]
+            'null']
         other_options = [
             decor_options,  drugs_options, potions_options, scrolls_options, stairs_options,
             floors_options, walls_options, roofs_options,   paths_options,   null_options]
@@ -1315,9 +702,10 @@ class Images:
         """ Manages biome types. """
         
         self.biomes = {
+            
             'any':     ['forest', 'desert', 'dungeon', 'water'],
             'wet':     ['forest', 'water'],
-            
+        
             'land':    ['forest', 'desert', 'dungeon'],
             'forest':  ['forest'],
             'desert':  ['desert'],
@@ -1393,10 +781,20 @@ class Audio:
         
         # Define song titles
         self.dict = {
-            'menu':       "Data/music_menu.mp3",
-            'home':       "Data/music_home.mp3",
-            'dungeon 1': "Data/music_dungeon_1.mp3",
-            'dungeon 2': "Data/music_dungeon_2.mp3"}
+            'home':        "Data/.Music/menu.mp3",
+            'menu':        "Data/.Music/menu.mp3",
+            'overworld 1': "Data/.Music/overworld_1.mp3",
+            'overworld 2': "Data/.Music/overworld_2.mp3",
+            'overworld 3': "Data/.Music/overworld_3.wav",
+            'overworld 4': "Data/.Music/overworld_4.mp3",
+            'dungeon 1':   "Data/.Music/dungeon_1.wav",
+            'dungeon 2':   "Data/.Music/dungeon_2.mp3",
+            'dungeon 3':   "Data/.Music/dungeon_3.wav",
+            'dungeon 4':   "Data/.Music/dungeon_4.mp3",
+            'dungeon 5':   "Data/.Music/dungeon_5.mp3",
+            'dungeon 6':   "Data/.Music/dungeon_6.mp3"}
+        
+        self.load_speech()
         
         # Initialize parameters
         self.current_track = None
@@ -1405,10 +803,15 @@ class Audio:
         self.i = 0
 
         # Other
-        self.last_press_time = 0
-        self.cooldown_time   = 0.5
+        self.last_press_time_control = 0
+        self.cooldown_time_control   = 0.5
+        self.last_press_time_speech = 0
+        self.speech_speed   = 100
         self.paused          = False
         self.control(self.soundtrack)
+
+    def shuffle(self):
+        if not pygame.mixer.music.get_busy(): self.play_track()
 
     def play_track(self, song=None, fade_out_time=2000, fade_in_time=2000):
         """ Plays a track and stops and prior track if needed. """
@@ -1432,8 +835,8 @@ class Audio:
     def control(self, soundtrack=None, new_track=None):
         """ Loads and plays soundtracks, or plays single tracks. """
         
-        if time.time() - self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time())
+        if time.time() - self.last_press_time_control > self.cooldown_time_control:
+            self.last_press_time_control = float(time.time())
         
             # Start a playlist
             if soundtrack:
@@ -1465,6 +868,46 @@ class Audio:
             pygame.mixer.music.unpause()
             self.paused = False
 
+    def load_speech(self):
+        
+        self.sound_map = {}
+
+        for letter in "abcdefghijklmnopqrstuvwxyz".upper():
+            self.sound_map[letter] = pygame.mixer.Sound(f"Data/.Speech/{letter}.wav")
+        
+        self.default_sound = pygame.mixer.Sound("Data/.Speech/M.wav")
+
+    def play_speech(self, text):
+        
+        # Prevent repeated calls
+        if time.time() - self.last_press_time_speech > self.speech_speed//100:
+            self.last_press_time_speech = float(time.time())
+
+            # Only play dialogue
+            if (':' in text) and ('*' not in text):
+                
+                # Sort through each letter
+                for char in text.upper():
+                    
+                    # Pick some random letters to play
+                    if random.randint(0, 1):
+                        
+                        # Set sound
+                        if char in self.sound_map:
+                            self.sound_map[char].play()
+                        elif self.default_sound:
+                            self.default_sound.play()
+                        else:
+                            continue
+                        
+                        # Play the sound
+                        pygame.time.delay(self.speech_speed)  # Wait before playing the next sound
+                        pygame.event.clear()
+        
+            else:
+                pygame.time.delay(self.speech_speed)
+                pygame.event.clear()
+
 class Player:
     """ Manages player file. One save for each file. """
 
@@ -1479,7 +922,6 @@ class Player:
         self.ents     = {}
         self.envs     = {'home': [], 'dungeon': []}
         self.dungeon = []
-        self.img      = None
         self.file_num = 0
 
     def create_player(self):
@@ -1525,6 +967,832 @@ class Player:
         chest.toggle_equip(self.ent)
         dagger.toggle_equip(self.ent)
 
+## States
+class MainMenu:
+    
+    def __init__(self):
+        
+        # Initialize title
+        self.title_font     = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
+        self.game_title     = self.title_font.render("MORS SOMNIA", True, pyg.green)
+        self.game_title_pos = (int((pyg.screen_width - self.game_title.get_width())/2), 85)
+        
+        # Initialize cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        self.cursor_pos = [50, 304]
+        
+        # Initialize menu options
+        self.menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
+        self.menu_choices_surfaces = []
+        for i in range(len(self.menu_choices)):
+            if   i == 0:                          color = pyg.green
+            elif i == len(self.menu_choices) - 1: color = pyg.red
+            else:                                 color = pyg.gray
+            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, color))
+        self.choice, self.choices_length = 0, len(self.menu_choices) - 1
+        
+        # Allows access to garden
+        self.menu_toggle = True
+        
+        # Other
+        self.last_press_time, self.cooldown_time = 0, 0.5
+
+    def startup(self):
+        
+        # Startup background
+        background_image = pygame.image.load("Data/.Images/garden.png").convert()
+        background_image = pygame.transform.scale(background_image, (pyg.screen_width, pyg.screen_height))
+
+        # Fade details
+        alpha = 0
+        fade_speed = 10
+        fade_surface = pygame.Surface((pyg.screen_width, pyg.screen_height))
+        fade_surface.fill(pyg.black)
+        
+        # Apply fade
+        while alpha < 255:
+            pyg.clock.tick(30)
+            fade_surface.set_alpha(255 - alpha)
+            
+            # Set menu background to the custom image
+            pyg.screen.blit(background_image, (0, 0))
+            
+            # Draw the menu elements during the fade
+            pyg.screen.blit(self.game_title, self.game_title_pos)
+
+            # Apply the fade effect
+            pyg.screen.blit(fade_surface, (0, 0))
+            
+            pygame.display.flip()
+            
+            # Increase alpha for the next frame
+            alpha += fade_speed
+        pyg.game_state = 'play_game'
+        pyg.overlay = 'menu'
+        return
+
+    def run(self):
+        
+        mech.movement_speed(toggle=False, custom=2)
+        
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                
+                # ---------------------------- GARDEN -----------------------------
+                if not self.menu_toggle:
+                    
+                    # >>MOVE/ATTACK<<
+                    if   event.key in pyg.key_UP:    player_obj.ent.move(0, -pyg.tile_height)
+                    elif event.key in pyg.key_DOWN:  player_obj.ent.move(0, pyg.tile_height)
+                    elif event.key in pyg.key_LEFT:  player_obj.ent.move(-pyg.tile_width, 0)
+                    elif event.key in pyg.key_RIGHT: player_obj.ent.move(pyg.tile_width, 0)
+                    
+                    # >>MENU<<
+                    elif event.key in pyg.key_SLASH and (time.time()-self.last_press_time > self.cooldown_time):
+                        self.last_press_time = float(time.time())
+                        pygame.key.set_repeat(0, 0)
+                        self.menu_toggle = True
+                
+                # ---------------------------- MENU -----------------------------
+                if self.menu_toggle:
+                
+                    # >>SELECT MENU ITEM<<
+                    if event.key in pyg.key_UP:
+                        self.cursor_pos[1] -= 24
+                        self.choice -= 1
+                        if self.choice < 0:
+                            self.choice = self.choices_length
+                            self.cursor_pos[1] = 304 + (len(self.menu_choices) - 1) * 24
+                    elif event.key in pyg.key_DOWN:
+                        self.cursor_pos[1] += 24
+                        self.choice += 1
+                        if self.choice > self.choices_length:
+                            self.choice = 0
+                            self.cursor_pos[1] = 304
+                    
+                    # >>MUSIC<<
+                    elif event.key in pyg.key_PLUS:
+                        aud.pause(paused=False)
+                    elif event.key in pyg.key_MINUS:
+                        aud.pause(paused=True)
+                    elif event.key in pyg.key_9:
+                        aud.play_track()
+                    
+                    # >>RESUME<<
+                    elif (event.key in pyg.key_0) and (time.time()-self.last_press_time > self.cooldown_time):
+                        self.last_press_time = float(time.time())
+                        if not pyg.startup_toggle2:
+                            pyg.game_state = 'play_game'
+                            pyg.overlay = None
+                            return
+                    
+                    elif event.key in pyg.key_RETURN:
+                        
+                        # >>NEW GAME<<
+                        if self.choice == 0:
+                            pyg.startup_toggle2 = True  # when false, prevents returning to character creation menu after initialization
+                            pyg.game_state = 'new_game'
+                            pyg.overlay = None
+                            if not pyg.startup_toggle2:
+                                new_game_obj.new_game()
+                                pyg.game_state = 'play_game'
+                                pyg.overlay = None
+                                return
+                            else: return
+                        
+                        # >>LOAD<<
+                        elif self.choice == 1:
+                            pyg.overlay = 'load'
+                            return
+                        
+                        # >>SAVE<<
+                        elif self.choice == 2:
+                            pyg.overlay = 'save'
+                            return
+
+                        # >>CONTROLS<<
+                        elif self.choice == 3:
+                            pyg.overlay = 'controls'
+                            return
+                        
+                        # >>QUIT<<
+                        elif self.choice == 4:
+                            pygame.quit()
+                            sys.exit()
+                    
+                    # >>GARDEN<<
+                    elif event.key in pyg.key_SLASH and (time.time()-self.last_press_time > self.cooldown_time):
+                        self.last_press_time = float(time.time())
+                        self.menu_toggle = False
+                        if player_obj.ent.env.name != 'garden':
+                            self.menu_toggle = True
+                            place_player(env=player_obj.envs['garden'], loc=player_obj.envs['garden'].player_coordinates)
+                        elif not pyg.startup_toggle2:
+                            place_player(env=player_obj.ent.last_env, loc=player_obj.ent.last_env.player_coordinates)
+        pyg.overlay = 'menu'
+        return
+
+    def render(self):
+        
+        if self.menu_toggle:
+            Y = 300
+            for menu_choice_surface in self.menu_choices_surfaces:
+                pyg.screen.blit(menu_choice_surface, (80, Y))
+                Y += 24
+            
+            ## Regular text
+            if pyg.startup_toggle2: pyg.screen.blit(self.game_title, self.game_title_pos)
+            pyg.screen.blit(self.cursor_img, self.cursor_pos)
+
+class NewMenu:
+    
+    def __init__(self, name, header, options, options_categories=None, position='top left', backgrounds=None):
+        """ IMPORTANT. Creates cursor, background, and menu options, then returns index of choice.
+
+            header             : string; top line of text
+            options            : list of strings; menu choices
+            options_categories : list of strings; categorization; same length as options
+            position           : chooses layout preset """
+        
+        self.name               = name
+        self.header             = header
+        self.options            = options
+        self.options_categories = options_categories
+        self.position           = position
+        self.backgrounds        = backgrounds
+        
+        # Initialize temporary data containers
+        self.choice                   = 0                   # holds index of option pointed at by cursor
+        self.choices_length           = len(self.options)-1 # number of choices
+        self.options_categories_cache = ''                  # holds current category
+        self.options_render           = self.options.copy()
+        
+        # Alter layout if categories are present
+        if self.options_categories: 
+            tab_X, tab_Y = 70, 10
+            self.options_categories_cache_2 = self.options_categories[0]
+        else:
+            tab_X, tab_Y = 0, 0
+
+        # Set initial position of each text type
+        self.header_position    = {'top left':    [5, 10], 'center': [int((pyg.screen_width - main_menu_obj.game_title.get_width())/2), 85],
+                              'bottom left': [5, 10],              'bottom right': [60 ,70]}
+        self.cursor_position    = {'top left':    [50+tab_X, 38+tab_Y], 'center':       [50, 300],
+                              'bottom left': [50+tab_X, 65-tab_Y], 'bottom right': [60 ,70]}
+        self.options_positions  = {'top left':    [80+tab_X, 34],       'center':       [80, 300],
+                              'bottom left': [5, 10],              'bottom right': [60 ,70]}
+        self.category_positions = {'top left':    [5, 34],              'center':       [80, 300],
+                              'bottom left': [5, 10],              'bottom right': [60 ,70]}
+
+        # Set mutable copies of text positions
+        self.cursor_position_mutable    = self.cursor_position[self.position].copy()
+        self.options_positions_mutable  = self.options_positions[self.position].copy()
+        self.category_positions_mutable = self.category_positions[self.position].copy()
+
+        # Initialize cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0,0)))
+        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        
+        # Initialize menu options
+        self.header_render = pyg.font.render(self.header, True, pyg.yellow)
+        for i in range(len(self.options)):
+            color = pyg.gray
+            self.options_render[i] = pyg.font.render(options[i], True, color)
+        
+        # Initialize backgrounds
+        if self.backgrounds:
+            self.backgrounds_render = copy.copy(self.backgrounds)
+            for i in range(len(self.backgrounds)):
+                self.backgrounds_render[i] = pygame.image.load(self.backgrounds[i]).convert()
+
+    def reset(self, name, header, options, options_categories, position, backgrounds):
+        self.__init__(self.name, self.header, self.options, self.options_categories, self.position, self.backgrounds)
+
+    def run(self):
+        
+        pyg.clock.tick(30)
+        mech.movement_speed(toggle=False, custom=2)
+        mech.zoom_cache = 1
+        
+        # Called when the user inputs a command
+        for event in pygame.event.get():
+            
+            if event.type == KEYDOWN:
+
+                # >>RESUME<<
+                if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
+                    pyg.last_press_time = float(time.time())
+                    pyg.overlay = 'menu'
+                    return None
+                
+                # >>SELECT MENU ITEM<<
+                if event.key in pyg.key_UP:
+                
+                    # Move cursor up
+                    self.cursor_position_mutable[1]     -= 24
+                    self.choice                         -= 1
+                    
+                    # Move to lowest option
+                    if self.choice < 0:
+                        self.choice                     = self.choices_length
+                        self.cursor_position_mutable[1] = self.cursor_position[self.position][1] + (len(self.options)-1) * 24
+                        if self.options_categories:
+                            self.cursor_position_mutable[1] += tab_Y * (len(set(self.options_categories)) - 1)
+                            self.options_categories_cache_2 = self.options_categories[self.choice]
+                    
+                    # Move cursor again if there are categories
+                    elif self.options_categories:
+                        if self.options_categories[self.choice] != self.options_categories_cache_2:
+                            self.options_categories_cache_2 = self.options_categories[self.choice]
+                            self.cursor_position_mutable[1] -= tab_Y
+                
+                elif event.key in pyg.key_DOWN:
+                
+                    # Move cursor down
+                    self.cursor_position_mutable[1]     += 24
+                    self.choice                         += 1
+                    
+                    # Move to highest option
+                    if self.choice > self.choices_length:
+                        self.choice                     = 0
+                        self.cursor_position_mutable[1] = self.cursor_position[self.position][1]
+                        if self.options_categories:
+                            self.options_categories_cache_2 = self.options_categories[self.choice]
+                    
+                    # Move cursor again if there are categories
+                    elif self.options_categories:
+                        if self.options_categories[self.choice] != self.options_categories_cache_2:
+                            self.options_categories_cache_2 = self.options_categories[self.choice]
+                            self.cursor_position_mutable[1] += tab_Y
+                
+                # Process selection or return to main menu
+                elif event.key in pyg.key_RETURN:
+                    
+                        if self.name == 'save':
+                            self.save_account()
+                        elif self.name == 'load':
+                            self.load_account()
+                        
+                        pyg.overlay = 'menu'
+                        return
+
+        pyg.overlay = copy.copy(self.name)
+        return
+
+    def save_account(self):    
+        """ Shows a menu with each item of the inventory as an option, then returns an item if it is chosen.
+            Structures
+            ----------
+            = player_obj
+            == envs
+            === garden
+            === home
+            === dungeon
+            == ent
+            == ents 
+            == questlog """
+        
+        # Update files menu
+        if player_obj.file_num: self.options[player_obj.file_num - 1] += ' *'
+        
+        # Save data or return to main menu
+        if type(self.choice) != int:
+            pyg.overlay = 'main_menu'
+            return
+        else:
+            self.choice += 1
+            
+            # Update Player object
+            player_obj.file_num = self.choice
+            
+            # Save everything
+            with open(f"Data/File_{self.choice}/ent.pkl", 'wb') as file:        pickle.dump(player_obj.ent, file)
+            with open(f"Data/File_{self.choice}/ents.pkl", 'wb') as file:       pickle.dump(player_obj.ents, file)
+            with open(f"Data/File_{self.choice}/envs.pkl", 'wb') as file:       pickle.dump(player_obj.envs, file)
+            with open(f"Data/File_{self.choice}/questlog.pkl", 'wb') as file:   pickle.dump(player_obj.questlog, file)
+            with open(f"Data/File_{self.choice}/questlines.pkl", 'wb') as file: pickle.dump(player_obj.questlines, file)
+            
+            screenshot(
+                size    = 'display',
+                visible = False,
+                folder  = f"Data/File_{self.choice}", filename="screenshot.png",
+                blur    = True)
+            
+            self.reset(
+                self.name,
+                self.header,
+                self.options,
+                self.options_categories,
+                self.position,
+                self.backgrounds)
+            load_account_obj.reset(
+                load_account_obj.name,
+                load_account_obj.header,
+                load_account_obj.options,
+                load_account_obj.options_categories,
+                load_account_obj.position,
+                load_account_obj.backgrounds)
+            pyg.overlay = 'main_menu'
+
+    def load_account(self):    
+        """ Shows a menu with each item of the inventory as an option, then returns an item if it is chosen.
+            Structures
+            ----------
+            = player_obj
+            == envs
+            === garden
+            === home
+            === dungeon
+            == ent 
+            == ents 
+            == questlog """
+        
+        global player_obj
+        
+        # Update file menu
+        if player_obj.file_num: self.options[player_obj.file_num - 1] += ' *'
+        
+        # Load data or return to main menu
+        if self.choice is not None:
+            
+            if type(self.choice) != int:
+                pyg.overlay = 'main_menu'
+                return
+            else:
+                self.choice += 1
+                pyg.startup_toggle2 = False
+                pyg.startup_toggle3 = False
+            
+            # Load data onto fresh player
+            player_obj = Player()
+            with open(f"Data/File_{self.choice}/questlines.pkl", "rb") as file: player_obj.questlines = pickle.load(file)
+            with open(f"Data/File_{self.choice}/ent.pkl", "rb") as file:        player_obj.ent        = pickle.load(file)
+            with open(f"Data/File_{self.choice}/ents.pkl", "rb") as file:       player_obj.ents       = pickle.load(file)
+            with open(f"Data/File_{self.choice}/envs.pkl", "rb") as file:       player_obj.envs       = pickle.load(file)
+            with open(f"Data/File_{self.choice}/questlog.pkl", "rb") as file:   player_obj.questlog   = pickle.load(file)
+
+            # Load cameras
+            for env in player_obj.envs.values():
+                if type(env) == list:
+                    for sub_env in env: sub_env.camera = Camera(player_obj.ent)
+                else:                   env.camera     = Camera(player_obj.ent)
+            
+            self.reset(self.name, self.header, self.options, self.options_categories, self.position, self.backgrounds)
+            pyg.overlay = 'main_menu'
+
+    def render(self):
+        
+        # Render menu background
+        if self.backgrounds:
+            pyg.screen.fill(pyg.black)
+            pyg.screen.blit(self.backgrounds_render[self.choice], (0, 0))
+        else:
+            pyg.screen.fill(pyg.black)
+        
+        # Render header and cursor
+        pyg.screen.blit(self.header_render, self.header_position[self.position])
+        pyg.screen.blit(self.cursor_img, self.cursor_position_mutable)
+        
+        # Render categories and options
+        for i in range(len(self.options_render)):
+            
+            # Render category text if it is not present 
+            if self.options_categories:
+                if self.options_categories[i] != self.options_categories_cache:
+                    self.options_categories_cache = self.options_categories[i]
+                    text = pyg.font.render(f'{self.options_categories_cache.upper()}:', True, pyg.gray)
+                    self.options_positions_mutable[1] += tab_Y
+                    pyg.screen.blit(text, (self.category_positions_mutable[0], self.options_positions_mutable[1]))
+                
+            # Render option text
+            pyg.screen.blit(self.options_render[i], self.options_positions_mutable)
+            self.options_positions_mutable[1] += 24
+        self.options_positions_mutable = self.options_positions[self.position].copy()
+        self.category_positions_mutable = self.category_positions[self.position].copy()
+        pygame.display.flip()
+
+class NewGame:
+    
+    def __init__(self):
+        """ Manages the character creation menu. Handles player input. Only active when menu is open.
+            Called when starting a new game.
+        
+            HAIR:       sets hair by altering hair_index, which is used in new_game to add hair as an Object hidden in the inventory
+            HANDEDNESS: mirrors player/equipment tiles, which are saved in img.dict and img.cache
+            ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
+        
+        # -------------------------------------- INIT --------------------------------------
+        # Reset character
+        player_obj.create_player()
+        place_player(player_obj.envs['garden'], player_obj.envs['garden'].center)
+        player_obj.ent.env.camera = Camera(player_obj.ent)
+        player_obj.ent.env.camera.fixed = True
+        player_obj.ent.env.camera.zoom_in(custom=1)
+        
+        # Initialize cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        
+        # Set character background
+        self.background_image = pygame.image.load("Data/.Images/room.png")
+        
+        # Initialize menu options
+        self.menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]   
+        for i in range(len(self.menu_choices)):
+            if   i == len(self.menu_choices)-2:  color = pyg.green
+            elif i == len(self.menu_choices)-1:  color = pyg.red
+            else:                           color = pyg.gray
+            self.menu_choices[i] = pyg.font.render(self.menu_choices[i], True, color)
+        self.choice, self.choices_length = 0, len(self.menu_choices)-1
+        self.cursor_pos, self.top_choice = [50, 424-len(self.menu_choices)*24], [50, 424-len(self.menu_choices)*24]
+        
+        # Begins with default settings (ideally)
+        self.orientations = ['front', 'right', 'back', 'left']
+        self.last_press_time = 0
+        self.cooldown_time = 0.7
+
+    def run(self):
+        pyg.clock.tick(30)
+        mech.movement_speed(toggle=False, custom=2)
+        
+        # Prevent escape from going back to character creation
+        if not pyg.startup_toggle2:
+            pyg.game_state = 'play_game'
+            pyg.overlay = 'menu'
+            return
+        
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+            
+                # >>MAIN MENU<<
+                if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
+                    pyg.last_press_time = float(time.time())
+                    pyg.game_state = 'play_game'
+                    pyg.overlay = 'menu'
+                    return
+                
+                # >>SELECT MENU ITEM<<
+                elif event.key in pyg.key_UP:   # Up
+                    self.cursor_pos[1]     -= 24
+                    self.choice            -= 1
+                    
+                    # Go to the top menu choice
+                    if self.choice < 0:
+                        self.choice         = self.choices_length
+                        self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-1) * 24
+                    
+                    # Skip a blank line
+                    elif self.choice == (self.choices_length - 2):
+                        self.choice         = self.choices_length - 3
+                        self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-4) * 24
+                
+                elif event.key in pyg.key_DOWN: # Down
+                    self.cursor_pos[1]     += 24
+                    self.choice            += 1
+                    
+                    if self.choice > self.choices_length:
+                        self.choice         = 0
+                        self.cursor_pos[1]  = self.top_choice[1]
+                    
+                    elif self.choice == (self.choices_length - 2):
+                        self.choice         = self.choices_length - 1
+                        self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
+                
+                # Apply option
+                elif event.key in pyg.key_RETURN:
+                
+                    # >>HAIR and FACE<<
+                    if self.choice in [0, 1, 2]:
+                        
+                        # Hair or face
+                        if self.choice == 0:
+                            role     = 'head'
+                            img_dict = img.hair_options
+                        elif self.choice == 1:
+                            role     = 'face'
+                            img_dict = img.face_options
+                        elif self.choice == 2:
+                            role     = 'chest'
+                            img_dict = img.chest_options
+                        
+                        # Find next option and dequip last option
+                        index = (img_dict.index(player_obj.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
+                        img_name = img_dict[index]
+                        player_obj.ent.equipment[role].toggle_equip(player_obj.ent)
+                        
+                        # Equip next option if already generated
+                        if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in player_obj.ent.inventory.values()]:
+                            player_obj.ent.inventory[img_name][0].toggle_equip(player_obj.ent)
+                        
+                        # Generate option before equip
+                        else:
+                            item = create_item(img_name)
+                            player_obj.ent.inventory['armor'].append(item)
+                            item.toggle_equip(player_obj.ent)
+                    
+                    # >>SKIN<<
+                    if self.choice == 3:
+                        if player_obj.ent.img_names[0] == 'white':   player_obj.ent.img_names[0] = 'black'
+                        elif player_obj.ent.img_names[0] == 'black': player_obj.ent.img_names[0] = 'white'
+                    
+                    # >>HANDEDNESS<<
+                    if self.choice == 4:
+                        if player_obj.ent.handedness == 'left':
+                            player_obj.ent.handedness = 'right'
+                        elif player_obj.ent.handedness == 'right':
+                            player_obj.ent.handedness = 'left'
+                    
+                    # >>ACCEPT<<
+                    if self.choice == 6:
+                        pyg.startup_toggle2 = False
+                        new_game_obj.new_game()
+                        pyg.game_state = 'play_game'
+                        return
+                    
+                    # >>MAIN MENU<<
+                    if self.choice == 7:
+                        pyg.game_state = 'play_game'
+                        pyg.overlay = 'menu'
+                        return
+        pyg.game_state = 'new_game'
+
+    @debug_call
+    def new_game(self):
+        """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
+            Called when starting a new game or loading a previous game.
+
+            new:  creates player as Object with Fighter stats, calls make_home(), then loads initial inventory
+            else: calls load_objects_from_file() to load player, inventory, and current floor """
+        
+        # Clear prior data
+        player_obj.envs = {}
+        player_obj.ents = {}
+        player_obj.questlog = None
+        player_obj.envs['garden'] = build_garden()
+
+        # Prepare player
+        player_obj.ent.role         = 'player'
+        player_obj.ent.img_names[1] = 'front'
+        player_obj.questlog         = Questlog()
+        
+        player_obj.envs['home'] = build_home()
+        place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].center)
+        
+        # Create items
+        if player_obj.ent.equipment['chest'].img_names[0] == 'bra': name = 'yellow dress'
+        else: name = 'green clothes'                        
+        clothes = create_item(name)
+        hair    = create_item('bald')
+        face    = create_item('clean')
+        chest   = create_item('flat')
+        shovel  = create_item('super shovel')
+        player_obj.ent.inventory[clothes.role].append(clothes)
+        player_obj.ent.inventory[hair.role].append(hair)
+        player_obj.ent.inventory[face.role].append(face)
+        player_obj.ent.inventory[chest.role].append(chest)
+        player_obj.ent.inventory[shovel.role].append(shovel)
+        clothes.toggle_equip(player_obj.ent)
+        sort_inventory()
+        
+        # Prepare gui
+        pyg.msg = []
+        pyg.update_gui('Press / to hide messages.', pyg.white)
+        pyg.msg_toggle = True
+    
+    def render(self):
+        # -------------------------------------- RENDER --------------------------------------
+        # Implement timed rotation of character
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time()) 
+            player_obj.ent.img_names[1] = self.orientations[self.orientations.index(player_obj.ent.img_names[1]) - 1]
+
+        # Set menu background
+        pyg.display.fill(pyg.black)
+        
+        # Renders menu to update cursor location
+        Y = self.top_choice[1] - 4
+        for self.menu_choice in self.menu_choices:
+            pyg.display.blit(self.menu_choice, (80, Y))
+            Y += 24
+        pyg.display.blit(self.cursor_img, self.cursor_pos)
+        pyg.display.blit(self.background_image, (400, 200))
+        player_obj.ent.draw(pyg.display, loc=(464, 264))
+
+class PlayGame:
+    
+    def __init__(self):
+        
+        self.player_move = False
+
+    def run(self):
+        
+        mech.movement_speed(toggle=False)
+        
+        if not pyg.overlay:
+            pyg.clock.tick(30)
+            for event in pygame.event.get():
+
+                # Save and quit
+                if event.type == QUIT:
+                    save_account()
+                    pygame.quit()
+                    sys.exit()
+                
+                # Keep playing
+                if not player_obj.ent.dead:
+                    if event.type == KEYDOWN:
+                        active_effects()
+                        print(f"\n({player_obj.ent.X}, {player_obj.ent.Y}), ({int(player_obj.ent.X/pyg.tile_width)}, {int(player_obj.ent.Y/pyg.tile_height)})")
+                        
+                        # >>MAIN MENU<<
+                        if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
+                            pyg.last_press_time = float(time.time())
+                            pyg.overlay = 'menu'
+                            pygame.event.clear()
+                            return
+                        
+                        # >>MOVE<<
+                        if   event.key in pyg.key_UP:    player_obj.ent.move(0, -pyg.tile_height)
+                        elif event.key in pyg.key_DOWN:  player_obj.ent.move(0, pyg.tile_height)
+                        elif event.key in pyg.key_LEFT:  player_obj.ent.move(-pyg.tile_width, 0)
+                        elif event.key in pyg.key_RIGHT: player_obj.ent.move(pyg.tile_width, 0)
+
+                        # >>PICKUP/STAIRS<<
+                        if event.key in pyg.key_RETURN:
+                            
+                            # Check if an item is under the player
+                            if player_obj.ent.tile.item:
+                                
+                                # Dungeon
+                                if player_obj.ent.tile.item.name == 'portal': mech.next_level()
+                                
+                                # Pick up or activate
+                                else: player_obj.ent.tile.item.pick_up()
+
+                        # >>HOME<<
+                        if event.key in pyg.key_SHIFT:
+                            if player_obj.ent.tile.item:
+                                if player_obj.ent.tile.item.name in ['door', 'portal']:
+                                    if player_obj.ent.env.name != 'home':
+                                        place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].player_coordinates)
+
+                        # >>VIEW STATS<<
+                        if event.key in pyg.key_1:
+                            player_obj.ent.env.camera.zoom_in(custom=1)
+                            
+                            level_up_exp = mech.level_up_base + player_obj.ent.rank * mech.level_up_factor
+                            new_menu(header  =  'Character Information',
+                                     options = ['Rank:                                ' + str(player_obj.ent.rank),
+                                                'Experience:                       ' + str(player_obj.ent.exp),
+                                                'Experience to level up:    ' + str(level_up_exp),
+                                                'Maximum HP:                    ' + str(player_obj.ent.max_hp),
+                                                'Attack:                             ' + str(player_obj.ent.attack),
+                                                'Defense:                           ' + str(player_obj.ent.defense)])
+                        
+                            player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
+                        
+                        # >>CHECK INVENTORY<<
+                        elif event.key in pyg.key_2:
+                            chosen_item = inventory_menu("INVENTORY:         USE ITEM")
+                            if chosen_item is not None:
+                                chosen_item.use()
+                                pyg.update_gui()
+                        
+                        # >>DROP ITEM<<
+                        elif event.key in pyg.key_3:
+                            if player_obj.ent.tile.item:
+                                pyg.update_gui("There's already something here", color=pyg.red)
+                            else:
+                                chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
+                                if chosen_item is not None:
+                                    chosen_item.drop()
+                                    pygame.event.clear()
+                        
+                        # >>VIEW QUESTLOG<<
+                        elif event.key in pyg.key_4:
+                            player_obj.questlog.questlog_menu()
+                        
+                        # >>MOVEMENT SPEED<<
+                        elif (event.key in pyg.key_5) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
+                            pyg.last_press_time = float(time.time())
+                            mech.movement_speed()
+
+                        # >>SCREENSHOT<<
+                        elif event.key in pyg.key_6:
+                            screenshot(size='display', visible='False')
+                        
+                        # >>INVENTORY<<
+                        elif event.key in pyg.key_7:
+                            pyg.overlay = 'inv'
+                            pygame.event.clear()
+                            return
+                        
+                        # >>DEV TOOLS<<
+                        elif event.key in pyg.key_8:
+                            dev.export_env()
+                        
+                        # >>CONSTRUCTION<<
+                        elif event.key in pyg.key_9:
+                            pyg.overlay = 'dev'
+                            pygame.event.clear()
+                            return
+                        
+                        # >>TOGGLE MESSAGES<<
+                        elif event.key in pyg.key_SLASH:
+                        
+                            # Hide messages
+                            if pyg.msg_toggle:
+                                pyg.msg_toggle = False
+                            
+                            else:
+                                # Hide messages and GUI
+                                if pyg.gui_toggle:
+                                    pyg.gui_toggle = False
+                                    pyg.msg_toggle = False
+                                
+                                # View messages and GUI
+                                else:
+                                    pyg.gui_toggle = True
+                                    pyg.msg_toggle = True
+                
+                        # >>ZOOM<<
+                        elif event.key in pyg.key_PLUS:
+                            player_obj.ent.env.camera.zoom_in()
+                        elif event.key in pyg.key_MINUS:
+                            player_obj.ent.env.camera.zoom_out()
+                
+                else:
+                    # >>MAIN MENU<<
+                    if event.type == KEYDOWN:
+                        if event.key in pyg.key_0:
+                            pyg.overlay = 'menu'
+                            pygame.event.clear()
+                            return
+                            
+                    # >>TOGGLE MESSAGES<<
+                    elif event.key in pyg.key_SLASH:
+                        if pyg.msg_toggle:
+                            pyg.msg_toggle = False
+                        else:
+                            if pyg.gui_toggle:
+                                pyg.gui_toggle = False
+                                pyg.msg_toggle = False
+                            else:
+                                pyg.msg_toggle = True
+                                pyg.gui_toggle = True
+            
+        for entity in player_obj.ent.env.entities:
+            entity.ai()
+            
+        pyg.game_state = 'play_game'
+
+    def render(self):
+        render_all()
+
 class DevTools:
     
     def __init__(self):
@@ -1535,117 +1803,107 @@ class DevTools:
         self.dic_categories = img.other_names[:-1]
         self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
         self.locked = False
-        self.img_names = [None, None]
+        self.img_names = ['null', 'null']
         self.img_x = 0
         self.img_y = 0
 
-    def select_item(self):   
-
+    def run(self):   
+        
+        mech.movement_speed(toggle=False, custom=2)
+        
         # Initialize cursor
-        cursor_img = pygame.Surface((32, 32)).convert()
-        cursor_img.set_colorkey(cursor_img.get_at((0,0)))
-        pygame.draw.polygon(cursor_img, pyg.white, [(0, 0), (31, 0), (31, 31), (0, 31)], 1)
-        cursor_pos = self.cursor_pos
+        if bool(self.locked): size, width, alpha = 30, 2, 192
+        else:                 size, width, alpha = 31, 1, 128
+        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill.fill((255, 255, 255, alpha))
+        pygame.draw.polygon(
+            self.cursor_border, 
+            pygame.Color('white'), 
+            [(0, 0), (size, 0), (size, size), (0, size)],  width)
         
         # Initialize tile selection
-        dic = img.other[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
+        self.dic = img.other[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
         
-        running = True
-        while running: # while True
-            pyg.clock.tick(30)
-            for event in pygame.event.get():
-                if event.type == KEYDOWN:
-                
-                    # >>PLAY GAME<<
-                    if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                        pyg.last_press_time = float(time.time())
-                        running = False
-                        return
-                    
-                    elif event.key in pyg.key_7:
-                        if not self.locked:
-                            cursor_img = pygame.Surface((32, 32)).convert()
-                            cursor_img.set_colorkey(cursor_img.get_at((0,0)))
-                            self.locked = True
-                            pygame.draw.polygon(cursor_img, pyg.white, [(0, 0), (30, 0), (30, 30), (0, 30)], 2)
-                        else:
-                            cursor_img = pygame.Surface((32, 32)).convert()
-                            cursor_img.set_colorkey(cursor_img.get_at((0,0)))
-                            self.locked = False
-                            pygame.draw.polygon(cursor_img, pyg.white, [(0, 0), (31, 0), (31, 31), (0, 31)], 1)
-                    
-                    # >>NAVIGATE DICTIONARY<<
-                    elif event.key in pyg.key_UP:
-                        
-                        # Selection
-                        if not self.locked:
-                            choice -= 1
-                            if cursor_pos[1] == 32: offset -= 1
-                            else: cursor_pos[1] -= pyg.tile_height
-                        else: player_obj.ent.move(0, -pyg.tile_height)
-                    
-                    elif event.key in pyg.key_DOWN:
-                        if not self.locked:
-                            choice += 1
-                            if cursor_pos[1] >= (min(len(dic), 12) * 32): offset += 1
-                            else: cursor_pos[1] += pyg.tile_height
-                        else: player_obj.ent.move(0, pyg.tile_height)
-                    
-                    # >>CHANGE DICTIONARY<<
-                    elif (event.key in pyg.key_LEFT) or (event.key in pyg.key_RIGHT):
-                    
-                        if event.key in pyg.key_LEFT:
-                            if not self.locked: self.dic_index -= 1
-                            else: player_obj.ent.move(-pyg.tile_height, 0)
-                                
-                        elif event.key in pyg.key_RIGHT:
-                            if not self.locked: self.dic_index += 1
-                            else: player_obj.ent.move(pyg.tile_width, 0)
-
-                        dic = img.other[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                        offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-                        choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-                        choice = cursor_pos[1]//32 + offset - 1
-                        
-                        # Move cursor to the highest spot in the dictionary
-                        if cursor_pos[1] > 32*len(dic):
-                            cursor_pos[1] = 32*len(dic)
-                            choice = len(dic) - offset - 1
-                    
-                    # >>SELECT AND PLACE<<
-                    elif event.key in pyg.key_RETURN:
-                        self.place_item(dic, choice)
-
-                # Save for later reference
-                self.cursor_pos = cursor_pos
-                self.dic_indices[self.dic_index%len(self.dic_indices)][0] = offset
-                self.dic_indices[self.dic_index%len(self.dic_indices)][1] = choice
-                render_all(gui=False)
+        pyg.clock.tick(30)
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
             
-            # Renders menu to update cursor location
-            Y = 32
-            counter = 0
-            for i in range(len(list(dic))):
+                # >>PLAY GAME<<
+                if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
+                    pyg.last_press_time = float(time.time())
+                    pyg.overlay = None
+                    return
                 
-                # Stop at the 12th image, starting with respect to the offset 
-                if counter <= 12:
-                    pyg.display.blit(dic[list(dic.keys())[(i+offset)%len(dic)]], (pyg.screen_width-pyg.tile_width, Y))
-                    Y += pyg.tile_height
-                    counter += 1
-                else: break
-            pyg.display.blit(cursor_img, cursor_pos)
-            pygame.display.flip()
-            pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
-            pygame.display.update()
+                # >>LOCK SELECTION<<
+                elif event.key in pyg.key_9:
+                    if not self.locked:
+                        self.cursor_border = pygame.Surface((32, 32)).convert()
+                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
+                        self.locked = True
+                        pygame.draw.polygon(self.cursor_border, pyg.white, [(0, 0), (30, 0), (30, 30), (0, 30)], 2)
+                    else:
+                        self.cursor_border = pygame.Surface((32, 32)).convert()
+                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
+                        self.locked = False
+                        pygame.draw.polygon(self.cursor_border, pyg.white, [(0, 0), (31, 0), (31, 31), (0, 31)], 1)
+                
+                # >>NAVIGATE DICTIONARY<<
+                elif event.key in pyg.key_UP:
+                    
+                    # Selection
+                    if not self.locked:
+                        self.choice -= 1
+                        if self.cursor_pos[1] == 32: self.offset -= 1
+                        else: self.cursor_pos[1] -= pyg.tile_height
+                    else: player_obj.ent.move(0, -pyg.tile_height)
+                
+                elif event.key in pyg.key_DOWN:
+                    if not self.locked:
+                        self.choice += 1
+                        if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
+                        else: self.cursor_pos[1] += pyg.tile_height
+                    else: player_obj.ent.move(0, pyg.tile_height)
+                
+                # >>CHANGE DICTIONARY<<
+                elif (event.key in pyg.key_LEFT) or (event.key in pyg.key_RIGHT):
+                
+                    if event.key in pyg.key_LEFT:
+                        if not self.locked: self.dic_index -= 1
+                        else: player_obj.ent.move(-pyg.tile_height, 0)
+                            
+                    elif event.key in pyg.key_RIGHT:
+                        if not self.locked: self.dic_index += 1
+                        else: player_obj.ent.move(pyg.tile_width, 0)
 
-    def place_item(self, dic, choice):
+                    self.dic = img.other[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+                    self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+                    self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
+                    self.choice = self.cursor_pos[1]//32 + self.offset - 1
+                    
+                    # Move cursor to the highest spot in the dictionary
+                    if self.cursor_pos[1] > 32*len(self.dic):
+                        self.cursor_pos[1] = 32*len(self.dic)
+                        self.choice = len(self.dic) - self.offset - 1
+                
+                # >>SELECT AND PLACE<<
+                elif event.key in pyg.key_RETURN:
+                    self.place_item()
+
+            # Save for later reference
+            self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
+            self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
+        pyg.overlay = 'dev'
+        return
+
+    def place_item(self):
 
         # Note location and image names
         self.img_x, self.img_y = int(player_obj.ent.X/pyg.tile_width), int(player_obj.ent.Y/pyg.tile_height)
         self.img_names[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
-        self.img_names[1] = list(dic.keys())[(choice)%len(dic)]
+        self.img_names[1] = list(self.dic.keys())[(self.choice)%len(self.dic)]
         
         # Set location for drop
         if player_obj.ent.direction == 'front':   self.img_y += 1
@@ -1666,9 +1924,9 @@ class DevTools:
             item = create_entity(
                 names = self.img_names.copy())
             place_object(
-                obj = item,
-                loc = [self.img_x, self.img_y],
-                env = player_obj.ent.env,
+                obj   = item,
+                loc   = [self.img_x, self.img_y],
+                env   = player_obj.ent.env,
                 names = self.img_names.copy())
         
         # Place item
@@ -1676,12 +1934,13 @@ class DevTools:
             item = create_item(
                 names = self.img_names)
             place_object(
-                obj = item,
-                loc = [self.img_x, self.img_y],
-                env = player_obj.ent.env,
+                obj   = item,
+                loc   = [self.img_x, self.img_y],
+                env   = player_obj.ent.env,
                 names = self.img_names.copy())
         
         self.img_x, self.img_y = None, None
+        pyg.overlay = None
 
     def export_env(self):
         with open(f"Data/File_{player_obj.file_num}/env.pkl", 'wb') as file:
@@ -1696,137 +1955,185 @@ class DevTools:
             place_player(env, env.player_coordinates)
         except: print("No file found!")
 
-## Gameplay    
-class Mechanics:
-    """ Game parameters. Does not need to be saved. """
+    def render(self):
+        render_all(gui=False)
+        pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
+        
+        # Renders menu to update cursor location
+        Y = 32
+        counter = 0
+        for i in range(len(list(self.dic))):
+            
+            # Stop at the 12th image, starting with respect to the offset 
+            if counter <= 12:
+                pyg.screen.blit(self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]], (pyg.screen_width-pyg.tile_width, Y))
+                Y += pyg.tile_height
+                counter += 1
+            else: break
+        pyg.screen.blit(self.cursor_border, self.cursor_pos)
+
+class Inventory:
     
     def __init__(self):
         
-        self.room_max_size     = 10
-        self.room_min_size     = 4
-        self.max_rooms         = 3
+        # Data for select_item and locked_item
+        self.cursor_pos = [0, 32]
+        self.dic_index = 0
+        self.locked = False
+        self.img_names = ['null', 'null']
+        self.img_x = 0
+        self.img_y = 0
+        self.dic_indices = [[0, 0]]
 
-        # Combat
-        self.heal_amount       = 4
-        self.lightning_damage  = 20
-        self.lightning_range   = 5 * pyg.tile_width
-        self.confuse_range     = 8 * pyg.tile_width
-        self.confuse_num_turns = 10
-        self.fireball_radius   = 3 * pyg.tile_width
-        self.fireball_damage   = 12
+    def run(self):   
         
-        self.blank_surface = pygame.Surface((pyg.tile_width, pyg.tile_height)).convert()
-        self.blank_surface.set_colorkey(self.blank_surface.get_at((0,0)))
-        self.impact_image = self.get_impact_image()
-        self.impact_image_pos = [0,0]
-        self.impact = False
+        # Restrict movement speed
+        mech.movement_speed(toggle=False, custom=2)
+        
+        # Initialize cursor
+        if bool(self.locked): size, width, alpha = 30, 2, 192
+        else:                 size, width, alpha = 31, 1, 128
+        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill.fill((255, 255, 255, alpha))
+        pygame.draw.polygon(
+            self.cursor_border, 
+            pygame.Color('white'), 
+            [(0, 0), (size, 0), (size, size), (0, size)],  width)
+        
+        # Initialize tile selection
+        inventory_dics      = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
+        self.dic_categories = ['weapons',     'armor',     'potions',     'scrolls',     'drugs',     'other']
+        for key, value in player_obj.ent.inventory.items():
+            for item in value:
+                if not item.hidden:
+                    inventory_dics[key][item.name] = img.dict[item.img_names[0]][item.img_names[1]]
+        for key, value in inventory_dics.items():
+            if not value: self.dic_categories.remove(key)
+        
+        # Restore last selection
+        if len(self.dic_indices) != len(self.dic_categories):
+            self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
+        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
+        self.dic = inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
 
-        self.level_up_base     = 200
-        self.level_up_factor   = 150
+        # Handle keystrokes
+        pyg.clock.tick(30)
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+            
+                # >>PLAY GAME<<
+                if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
+                    pyg.last_press_time = float(time.time())
+                    pyg.overlay = None
+                    return
+                
+                # >>LOCK SELECTION<<
+                elif (event.key in pyg.key_7) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
+                    pyg.last_press_time = float(time.time())
+                    
+                    if not self.locked:
+                        self.cursor_border = pygame.Surface((32, 32)).convert()
+                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
+                        self.locked = True
+                        pygame.draw.polygon(self.cursor_border, pyg.white, [(0, 0), (30, 0), (30, 30), (0, 30)], 2)
+                    else:
+                        self.cursor_border = pygame.Surface((32, 32)).convert()
+                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
+                        self.locked = False
+                        pygame.draw.polygon(self.cursor_border, pyg.white, [(0, 0), (31, 0), (31, 31), (0, 31)], 1)
+                
+                # >>NAVIGATE DICTIONARY<<
+                elif event.key in pyg.key_UP:
+                    
+                    # Selection
+                    if not self.locked:
+                        self.choice -= 1
+                        if self.cursor_pos[1] == 32: self.offset -= 1
+                        else: self.cursor_pos[1] -= pyg.tile_height
+                    else: player_obj.ent.move(0, -pyg.tile_height)
+                
+                elif event.key in pyg.key_DOWN:
+                    if not self.locked:
+                        self.choice += 1
+                        if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
+                        else: self.cursor_pos[1] += pyg.tile_height
+                    else: player_obj.ent.move(0, pyg.tile_height)
+                
+                # >>CHANGE DICTIONARY<<
+                elif (event.key in pyg.key_LEFT) or (event.key in pyg.key_RIGHT):
+                
+                    if event.key in pyg.key_LEFT:
+                        if not self.locked: self.dic_index -= 1
+                        else:               player_obj.ent.move(-pyg.tile_height, 0)
+                    
+                    elif event.key in pyg.key_RIGHT:
+                        if not self.locked: self.dic_index += 1
+                        else:               player_obj.ent.move(pyg.tile_width, 0)
+                    
+                    self.dic = inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+                    self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+                    self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
+                    self.choice = self.cursor_pos[1]//32 + self.offset - 1
+                    
+                    # Move cursor to the highest spot in the dictionary
+                    if self.cursor_pos[1] > 32*len(self.dic):
+                        self.cursor_pos[1] = 32*len(self.dic)
+                        self.choice = len(self.dic) - self.offset - 1
+                
+                # >>USE OR DROP<<
+                else:
+                    if event.key in pyg.key_RETURN:
+                        self.activate('use')
+                    elif event.key in pyg.key_SLASH:
+                        self.activate('drop')
 
-        self.torch_radius      = 10
-        
-        self.movement_speed_toggle = 0
+            # Save for later reference
+            self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
+            self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
+            render_all(gui=False)
+        return
 
-    @debug_call
-    def next_level(self):
-        """ Advances player to the next level. """
+    def activate(self, action):
         
-        pyg.update_gui('...', pyg.violet)
-        player_obj.ent.heal(int(player_obj.ent.max_hp / 2))  #heal the player by 50%
+        outer_list = list(player_obj.ent.inventory.items())
+        outer_list2 = copy.deepcopy(outer_list)
+        for i in range(len(outer_list2)):
+            if not outer_list2[len(outer_list2)-i-1][1]: outer_list.pop(len(outer_list2)-i-1)
+        outer_key, inner_list = outer_list[self.dic_index%len(outer_list)]
+        filtered_list = [item for item in inner_list if not item.hidden]
+        item = filtered_list[self.choice%len(filtered_list)]
+        
+        self.img_names[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
+        self.img_names[1] = list(self.dic.keys())[(self.choice)%len(self.dic)]
 
-        # Generate dungeon
-        if 'dungeon' not in player_obj.envs.keys(): player_obj.envs['dungeon'] = []
-        time.sleep(0.5)
-        pyg.update_gui('After a rare moment of peace, you descend deeper into the heart of the dungeon...', pyg.red)
-        build_dungeon_level()
+        pyg.inventory = False
         
-        # Place player and update display
-        place_player(env=player_obj.envs['dungeon'][-1], loc=player_obj.envs['dungeon'][-1].center)
+        if action == 'use':    return item.use()
+        elif action == 'drop': return item.drop()
+        
+        pyg.overlay = None
+        return
 
-    @debug_call
-    def get_impact_image(self):
+    def render(self):
+        render_all(gui=False)
+        pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
         
-        color = (230, 230, 230)
-        self.impact_image = pygame.Surface((pyg.tile_width, pyg.tile_width)).convert()
-        self.impact_image.set_colorkey(self.impact_image.get_at((0,0)))
-        image = pygame.Surface((int(pyg.tile_width/2), int(pyg.tile_height/3))).convert()
-        top = 0
-        left = 0
-        bottom = image.get_width()-1
-        right = image.get_height()-1
-        center_X = int(image.get_width()/2)-1
-        center_Y = int(image.get_height()/2)-1
-        pygame.draw.line(image, color, (top,      left),     (bottom,   right),    2)
-        pygame.draw.line(image, color, (bottom,   left),     (top,      right),    2)
-        pygame.draw.line(image, color, (center_X, top),      (center_X, bottom),   2)
-        pygame.draw.line(image, color, (left,     center_Y), (right,    center_Y), 2)
-        X = int((self.impact_image.get_width() - image.get_width())/2)
-        Y = int((self.impact_image.get_height() - image.get_height())/2)
-        self.impact_image.blit(image, (X, Y))
-        return self.impact_image
+        # Renders menu to update cursor location
+        Y = 32
+        counter = 0
+        for i in range(len(list(self.dic))):
+            
+            # Stop at the 12th image, starting with respect to the offset 
+            if counter <= 12:
+                pyg.screen.blit(self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]], (0, Y))
+                Y += pyg.tile_height
+                counter += 1
+            else: break
+        pyg.screen.blit(self.cursor_border, self.cursor_pos)
 
-    def movement_speed(self, toggle=True, custom=None):
-        """ Toggles and sets movement speed. """
-        
-        speed_list = [
-            ['Default', (250, 150)],
-            ['Fast',    (1,   120)],
-            ['Fixed',   (0,   0)]]
-        
-        if toggle:
-            if self.movement_speed_toggle == len(toggle_list)-1: 
-                self.movement_speed_toggle = 0
-            else: self.movement_speed_toggle += 1
-        elif custom is not None: self.movement_speed_toggle = custom
-        
-        (hold_time, repeat_time) = speed_list[self.movement_speed_toggle][1]
-        pygame.key.set_repeat(hold_time, repeat_time)
-        
-        if toggle: pyg.update_gui(f"Movement speed: {speed_list[self.movement_speed_toggle][0]}", pyg.white)
-
-    def cast_heal():
-        """ Heals the player. """
-        
-        if player_obj.ent.fighter.hp == player_obj.ent.fighter.max_hp:
-            pyg.update_gui('You are already at full health.', pyg.red)
-            return 'cancelled'
-        pyg.update_gui('Your wounds start to feel better!', pyg.violet)
-        player_obj.ent.fighter.heal(mech.heal_amount)
-
-    def cast_lightning():
-        """ Finds the closest enemy within a maximum range and attacks it. """
-        
-        monster = closest_monster(mech.lightning_range)
-        if monster is None:  #no enemy found within maximum range
-            pyg.update_gui('No enemy is close enough to strike.', pyg.red)
-            return 'cancelled'
-        pyg.update_gui('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
-            + str(mech.lightning_damage) + ' hit points.', pyg.light_blue)
-        monster.fighter.take_damage(mech.lightning_damage)
-
-    def cast_fireball():
-        """ Asks the player for a target tile to throw a fireball at. """
-        
-        pyg.update_gui('Left-click a target tile for the fireball, or right-click to cancel.', pyg.light_cyan)
-        (X, Y) = target_tile()
-        if X is None: return 'cancelled'
-        pyg.update_gui('The fireball explodes, burning everything within ' + str(int(mech.fireball_radius/pyg.tile_width)) + ' tiles!', pyg.orange)
-        for ent in player_obj.ent.env.entities: # Damages every fighter in range, including the player
-            if ent.distance(X, Y) <= mech.fireball_radius and ent.fighter:
-                pyg.update_gui('The ' + ent.name + ' gets burned for ' + str(mech.fireball_damage) + ' hit points.', pyg.orange)
-                ent.fighter.take_damage(mech.fireball_damage)
-
-    def cast_confuse():
-        """ Asks the player for a target to confuse, then replaces the monster's AI with a "confused" one. After some turns, it restores the old AI. """
-        
-        pyg.update_gui('Left-click an enemy to confuse it, or right-click to cancel.', pyg.light_cyan)
-        monster = target_monster(mech.confuse_range)
-        if monster is None: return 'cancelled'
-        old_ai = monster.ai
-        monster.ai = ConfusedMonster(old_ai)
-        pyg.update_gui('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', pyg.light_green)
-
+## Constructions
 class Tile:
     """ Defines a tile of the map and its parameters. Sight is blocked if a tile is blocked. """
     
@@ -1851,14 +2158,15 @@ class Tile:
             setattr(self, key, value)
 
     def draw(self, surface):
-        x = self.X - player_obj.ent.env.camera.X
-        y = self.Y - player_obj.ent.env.camera.Y
+        X = self.X - player_obj.ent.env.camera.X
+        Y = self.Y - player_obj.ent.env.camera.Y
         
+        # Add tile effects
         if self.img_names[0] != 'roofs':    image = img.shift(self.img_names, [abs(self.rand_X), abs(self.rand_Y)])
         else:                               image = img.dict[self.img_names[0]][self.img_names[1]]
         if self.biome in img.biomes['sea']: image = img.static(image, offset=20, rate=100)
 
-        surface.blit(image, (x, y))
+        surface.blit(image, (X, Y))
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -1879,7 +2187,7 @@ class Item:
         """ Parameters
             ----------
             name          : string
-            role          : string in ['weapon', 'armor', 'potion', 'scroll', 'other']
+            role          : string in ['weapons', 'armor', 'potions', 'scrolls', 'other']
             slot          : string in ['non-dominant hand', 'dominant hand', 'body', 'head', 'face']
             
             X             :
@@ -1956,15 +2264,17 @@ class Item:
         # Allow for NPC actions
         if not ent: ent = player_obj.ent
         
-        # Dequip before dropping
-        if self in ent.equipment.values():
-            self.toggle_equip(ent)
+        # Prevent dropping items over other items
+        if not ent.tile.item:
         
-        self.X = ent.X
-        self.Y = ent.Y
-        ent.inventory[self.role].remove(self)
-        ent.tile.item = self
-        pyg.update_gui('You dropped a ' + self.name + '.', pyg.yellow)   
+            # Dequip before dropping
+            if self in ent.equipment.values():
+                self.toggle_equip(ent)
+            
+            self.X = ent.X
+            self.Y = ent.Y
+            ent.inventory[self.role].remove(self)
+            ent.tile.item = self
 
     def use(self, ent=None):
         """ Equips of unequips an item if the object has the Equipment component. """
@@ -1979,7 +2289,7 @@ class Item:
         elif self.effect:
             
             # Add active effect
-            if (self.role == 'player') and (self.role in ['potion', 'weapon', 'armor']):
+            if (self.role == 'player') and (self.role in ['potions', 'weapons', 'armor']):
                 ent.effects.append(self.effect)
             
             # Activate the item
@@ -2096,10 +2406,11 @@ class Entity:
         
         # Mechanics
         self.effects    = []
-        self.inventory  = {'weapon': [], 'armor': [], 'potion': [], 'scroll': [], 'drugs': [], 'other': []}
+        self.inventory  = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
         self.equipment  = {'head': None, 'face': None, 'chest': None, 'body': None, 'dominant hand': None, 'non-dominant hand': None}
         self.dead       = False
         self.dialogue   = []
+        self.default_dialogue   = []
         self.quest      = None
 
     def ai(self):
@@ -2207,13 +2518,19 @@ class Entity:
                     ent = self.env.map[x][y].entity
                     
                     ## Dialogue
-                    if ent.dialogue:
-                        pyg.update_gui(ent.dialogue[0], pyg.white)
-                        
-                        # Quests
-                        if type(ent.dialogue) == list:
-                            ent.quest.dialogue(ent)
-
+                    if ent.dialogue or ent.default_dialogue:
+                            
+                            # Quest dialogue
+                            if ent.dialogue: dialogue = ent.dialogue[0]
+                            
+                            # Idle chat
+                            else: dialogue = random.choice(ent.default_dialogue)
+                            
+                            if time.time() - aud.last_press_time_speech > aud.speech_speed//100:
+                                pyg.update_gui(dialogue, pyg.white)
+                                aud.play_speech(dialogue)
+                                if ent.dialogue: ent.quest.dialogue(ent)
+                            
                     ## Attack
                     if self.env.name != 'home':
                         self.attack_target(ent)
@@ -2337,7 +2654,7 @@ class Entity:
             self.hp -= damage
             
             # Damage animation
-            entity_flash(self)
+            #entity_flash(self)
             
             # Check for death
             if self.hp <= 0:
@@ -2458,21 +2775,22 @@ class Entity:
                         else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
                 else: pass
         
-        # Blit weapons
+        # Blit weapons and shields
         for item in self.equipment.values():
             if item is not None:
-                if item.role == 'weapon':
-                    if self.handedness == 'left':
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
-                        else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
-                    else:
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
-                        else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
-                else: pass
+                if item.role in ['weapons', 'armor']:
+                    if item.slot in ['dominant hand', 'non-dominant hand']:
+                        if self.handedness == 'left':
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
+                            else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
+                        else:
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
+                            else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
+                    else: pass
         
         # Blit dialogue bubble
             if self.dialogue:
-                if type(self.dialogue) == list: pyg.display.blit(img.dict['decor']['bubble'], (X, Y-pyg.tile_height))
+                pyg.display.blit(img.dict['decor']['bubble'], (X, Y-pyg.tile_height))
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -2830,6 +3148,145 @@ class Room:
     def __hash__(self):
         return hash((self.x1, self.y1))
 
+## Gameplay    
+class Mechanics:
+    """ Game parameters. Does not need to be saved. """
+    
+    def __init__(self):
+        
+        # Environments
+        self.room_max_size     = 10
+        self.room_min_size     = 4
+        self.max_rooms         = 3
+
+        # Combat
+        self.heal_amount       = 4
+        self.lightning_damage  = 20
+        self.lightning_range   = 5 * pyg.tile_width
+        self.confuse_range     = 8 * pyg.tile_width
+        self.confuse_num_turns = 10
+        self.fireball_radius   = 3 * pyg.tile_width
+        self.fireball_damage   = 12
+
+        self.impact_image      = self.get_impact_image()
+        self.impact_image_pos  = [0,0]
+        self.impact            = False        
+        self.blank_surface     = pygame.Surface((pyg.tile_width, pyg.tile_height)).convert()
+        self.blank_surface.set_colorkey(self.blank_surface.get_at((0,0)))
+
+        self.level_up_base     = 200
+        self.level_up_factor   = 150
+
+        self.torch_radius      = 10
+        
+        self.movement_speed_toggle = 0
+        self.speed_list = [
+            ['Default', (250, 150)],
+            ['Fast',    (1,   120)],
+            ['Fixed',   (0,   0)]]
+
+    @debug_call
+    def next_level(self):
+        """ Advances player to the next level. """
+        
+        pyg.update_gui('You step into the darkness.', pyg.violet)
+        player_obj.ent.heal(int(player_obj.ent.max_hp / 2))  #heal the player by 50%
+
+        # Generate dungeon
+        if 'dungeon' not in player_obj.envs.keys(): player_obj.envs['dungeon'] = []
+        time.sleep(0.5)
+        build_dungeon_level()
+        
+        # Place player and update display
+        place_player(env=player_obj.envs['dungeon'][-1], loc=player_obj.envs['dungeon'][-1].center)
+
+    @debug_call
+    def get_impact_image(self):
+        
+        color = (230, 230, 230)
+        self.impact_image = pygame.Surface((pyg.tile_width, pyg.tile_width)).convert()
+        self.impact_image.set_colorkey(self.impact_image.get_at((0,0)))
+        image = pygame.Surface((int(pyg.tile_width/2), int(pyg.tile_height/3))).convert()
+        top = 0
+        left = 0
+        bottom = image.get_width()-1
+        right = image.get_height()-1
+        center_X = int(image.get_width()/2)-1
+        center_Y = int(image.get_height()/2)-1
+        pygame.draw.line(image, color, (top,      left),     (bottom,   right),    2)
+        pygame.draw.line(image, color, (bottom,   left),     (top,      right),    2)
+        pygame.draw.line(image, color, (center_X, top),      (center_X, bottom),   2)
+        pygame.draw.line(image, color, (left,     center_Y), (right,    center_Y), 2)
+        X = int((self.impact_image.get_width() - image.get_width())/2)
+        Y = int((self.impact_image.get_height() - image.get_height())/2)
+        self.impact_image.blit(image, (X, Y))
+        return self.impact_image
+
+    def movement_speed(self, toggle=True, custom=None):
+        """ Toggles and sets movement speed. """
+        
+        # Change speed
+        if toggle:
+            if self.movement_speed_toggle == len(self.speed_list)-1: 
+                self.movement_speed_toggle = 0
+            else:
+                self.movement_speed_toggle += 1
+            pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", pyg.white)
+            (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
+            pygame.key.set_repeat(hold_time, repeat_time)
+        
+        # Set custom speed
+        elif custom is not None:
+            (hold_time, repeat_time) = self.speed_list[custom][1]
+            pygame.key.set_repeat(hold_time, repeat_time)
+        
+        # Restore previous speed
+        else:
+            (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
+            pygame.key.set_repeat(hold_time, repeat_time)
+
+    def cast_heal():
+        """ Heals the player. """
+        
+        if player_obj.ent.fighter.hp == player_obj.ent.fighter.max_hp:
+            pyg.update_gui('You are already at full health.', pyg.red)
+            return 'cancelled'
+        pyg.update_gui('Your wounds start to feel better!', pyg.violet)
+        player_obj.ent.fighter.heal(mech.heal_amount)
+
+    def cast_lightning():
+        """ Finds the closest enemy within a maximum range and attacks it. """
+        
+        monster = closest_monster(mech.lightning_range)
+        if monster is None:  #no enemy found within maximum range
+            pyg.update_gui('No enemy is close enough to strike.', pyg.red)
+            return 'cancelled'
+        pyg.update_gui('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
+            + str(mech.lightning_damage) + ' hit points.', pyg.light_blue)
+        monster.fighter.take_damage(mech.lightning_damage)
+
+    def cast_fireball():
+        """ Asks the player for a target tile to throw a fireball at. """
+        
+        pyg.update_gui('Left-click a target tile for the fireball, or right-click to cancel.', pyg.light_cyan)
+        (X, Y) = target_tile()
+        if X is None: return 'cancelled'
+        pyg.update_gui('The fireball explodes, burning everything within ' + str(int(mech.fireball_radius/pyg.tile_width)) + ' tiles!', pyg.orange)
+        for ent in player_obj.ent.env.entities: # Damages every fighter in range, including the player
+            if ent.distance(X, Y) <= mech.fireball_radius and ent.fighter:
+                pyg.update_gui('The ' + ent.name + ' gets burned for ' + str(mech.fireball_damage) + ' hit points.', pyg.orange)
+                ent.fighter.take_damage(mech.fireball_damage)
+
+    def cast_confuse():
+        """ Asks the player for a target to confuse, then replaces the monster's AI with a "confused" one. After some turns, it restores the old AI. """
+        
+        pyg.update_gui('Left-click an enemy to confuse it, or right-click to cancel.', pyg.light_cyan)
+        monster = target_monster(mech.confuse_range)
+        if monster is None: return 'cancelled'
+        old_ai = monster.ai
+        monster.ai = ConfusedMonster(old_ai)
+        pyg.update_gui('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', pyg.light_green)
+
 class Camera:
     """ Defines a camera to follow the player. """
     
@@ -2996,7 +3453,7 @@ class Quest:
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state.pop('function', None)
+        state.pop('function')
         return state
 
     def __setstate__(self, state):
@@ -3008,7 +3465,8 @@ class Quest:
         """ Sends dialogue from the entity to the quest's function, then updates
             the entity's dialogue if needed. """
         
-        message = self.function(ent.dialogue.pop(0))
+        print(self.name, self.function, ent.name)
+        message = self.function(ent.dialogue.pop(0), ent)
         if message: ent.dialogue.append(message)
 
 class Questlog:
@@ -3120,20 +3578,20 @@ class Questlog:
         if self.menu_index == 0:
         
             # List of quests
-            quest_index = new_menu(
-                header             = 'Questlog',
-                options            = list(self.quests.keys()),
-                options_categories = self.categories)
+            quest_index = None# new_menu(
+                #header             = 'Questlog',
+                #options            = list(self.quests.keys()),
+                #options_categories = self.categories)
             
             # Description of selected quest
             if type(quest_index) == int:
                 self.selected_quest = self.quests[list(self.quests.keys())[quest_index]]
                 self.update_questlog()
                 
-                selected_index = new_menu(
-                    header             = self.selected_quest.name,
-                    options            = self.selected_quest.content,
-                    options_categories = self.selected_quest.categories)
+                selected_index = None # new_menu(
+                    #header             = self.selected_quest.name,
+                    #options            = self.selected_quest.content,
+                    #options_categories = self.selected_quest.categories)
                 
                 # Go back to list of quests
                 if type(selected_index) != int:
@@ -3143,173 +3601,14 @@ class Questlog:
         else:
             
             # Description of selected quest
-            selected_index = new_menu(
-                header             = self.selected_quest.name,
-                options            = self.selected_quest.content,
-                options_categories = self.selected_quest.categories)
+            selected_index = None# new_menu(
+                #header             = self.selected_quest.name,
+                #options            = self.selected_quest.content,
+                #options_categories = self.selected_quest.categories)
             
             # Go back to list of quests
             if type(selected_index) == int:
                 player_obj.questlog.back_to_menu()
-
-class Inventory:
-    
-    def __init__(self):
-        
-        # Data for select_item and locked_item
-        self.cursor_pos = [0, 32]
-        self.dic_index = 0
-        self.locked = False
-        self.img_names = [None, None]
-        self.img_x = 0
-        self.img_y = 0
-
-    def select_item(self):   
-        
-        pyg.play_game = False
-        self.dic_categories = ['weapon', 'armor', 'potion', 'scrolls', 'drugs', 'other']
-
-        # Initialize cursor
-        cursor_pos = self.cursor_pos
-        cursor_img = pygame.Surface((32, 32)).convert()
-        cursor_img.set_colorkey((0, 0, 0))  # Explicit colorkey
-        if bool(self.locked): size, width = 30, 2
-        else:                 size, width = 31, 1
-        pygame.draw.polygon(cursor_img, pyg.white, [(0, 0), (size, 0), (size, size), (0, size)], width)
-        
-        # Initialize tile selection
-        inventory_dics = {'weapon': {}, 'armor': {}, 'potion': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
-        for key, value in player_obj.ent.inventory.items():
-            for item in value:
-                if not item.hidden:
-                    inventory_dics[key][item.name] = img.dict[item.img_names[0]][item.img_names[1]]
-        inventory_dics2 = {'weapon': {}, 'armor': {}, 'potion': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
-        for key, value in inventory_dics.items():
-            if value:
-                inventory_dics2[key] = inventory_dics[key]
-            else:
-                self.dic_categories.remove(key)
-        inventory_dics = inventory_dics2
-        
-        index = 0
-        dic = inventory_dics['weapon']
-
-        self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
-        offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
-        
-        pyg.inventory = True
-        while pyg.inventory: # while True
-            pyg.clock.tick(30)
-            for event in pygame.event.get():
-                if event.type == KEYDOWN:
-                
-                    # >>PLAY GAME<<
-                    if (event.key in pyg.key_0) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                        pyg.last_press_time = float(time.time())
-                        pyg.inventory = False
-                        pyg.play_game = True
-                        running = False
-                        return
-                    
-                    # >>LOCK SELECTION<<
-                    elif event.key in pyg.key_7:
-                        if not self.locked:
-                            cursor_img = pygame.Surface((32, 32)).convert()
-                            cursor_img.set_colorkey(cursor_img.get_at((0,0)))
-                            self.locked = True
-                            pygame.draw.polygon(cursor_img, pyg.white, [(0, 0), (30, 0), (30, 30), (0, 30)], 2)
-                        else:
-                            cursor_img = pygame.Surface((32, 32)).convert()
-                            cursor_img.set_colorkey(cursor_img.get_at((0,0)))
-                            self.locked = False
-                            pygame.draw.polygon(cursor_img, pyg.white, [(0, 0), (31, 0), (31, 31), (0, 31)], 1)
-                    
-                    # >>NAVIGATE DICTIONARY<<
-                    elif event.key in pyg.key_UP:
-                        
-                        # Selection
-                        if not self.locked:
-                            choice -= 1
-                            if cursor_pos[1] == 32: offset -= 1
-                            else: cursor_pos[1] -= pyg.tile_height
-                        else: player_obj.ent.move(0, -pyg.tile_height)
-                    
-                    elif event.key in pyg.key_DOWN:
-                        if not self.locked:
-                            choice += 1
-                            if cursor_pos[1] >= (min(len(dic), 12) * 32): offset += 1
-                            else: cursor_pos[1] += pyg.tile_height
-                        else: player_obj.ent.move(0, pyg.tile_height)
-                    
-                    # >>CHANGE DICTIONARY<<
-                    elif (event.key in pyg.key_LEFT) or (event.key in pyg.key_RIGHT):
-                    
-                        if event.key in pyg.key_LEFT:
-                            if not self.locked: self.dic_index -= 1
-                            else:               player_obj.ent.move(-pyg.tile_height, 0)
-                        
-                        elif event.key in pyg.key_RIGHT:
-                            if not self.locked: self.dic_index += 1
-                            else:               player_obj.ent.move(pyg.tile_width, 0)
-                        
-                        dic = inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                        offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-                        choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-                        choice = cursor_pos[1]//32 + offset - 1
-                        
-                        # Move cursor to the highest spot in the dictionary
-                        if cursor_pos[1] > 32*len(dic):
-                            cursor_pos[1] = 32*len(dic)
-                            choice = len(dic) - offset - 1
-                    
-                    # >>USE OR DROP<<
-                    else:
-                        if event.key in pyg.key_RETURN:
-                            self.activate(dic, choice, self.dic_index, 'use')
-                        elif event.key in pyg.key_SLASH:
-                            self.activate(dic, choice, self.dic_index, 'drop')
-
-                # Save for later reference
-                self.cursor_pos = cursor_pos
-                self.dic_indices[self.dic_index%len(self.dic_indices)][0] = offset
-                self.dic_indices[self.dic_index%len(self.dic_indices)][1] = choice
-                render_all(gui=False)
-            
-            # Renders menu to update cursor location
-            Y = 32
-            counter = 0
-            for i in range(len(list(dic))):
-                
-                # Stop at the 12th image, starting with respect to the offset 
-                if counter <= 12:
-                    pyg.display.blit(dic[list(dic.keys())[(i+offset)%len(dic)]], (0, Y))
-                    Y += pyg.tile_height
-                    counter += 1
-                else: break
-            pyg.display.blit(cursor_img, cursor_pos)
-            pygame.display.flip()
-            pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
-            pygame.display.update()
-
-    def activate(self, dic, choice, dic_index, action):
-        
-        outer_list = list(player_obj.ent.inventory.items())
-        outer_list2 = copy.deepcopy(outer_list)
-        for i in range(len(outer_list2)):
-            if not outer_list2[len(outer_list2)-i-1][1]: outer_list.pop(len(outer_list2)-i-1)
-        outer_key, inner_list = outer_list[dic_index%len(outer_list)]
-        filtered_list = [item for item in inner_list if not item.hidden]
-        item = filtered_list[choice%len(filtered_list)]
-        
-        self.img_names[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
-        self.img_names[1] = list(dic.keys())[(choice)%len(dic)]
-        
-        if action == 'use':    item.use()
-        elif action == 'drop': item.drop()
-        
-        pyg.inventory = False
-        pyg.play_game = True
 
 ## Quests
 class Bloodkin():
@@ -3392,7 +3691,7 @@ class Bloodkin():
         if ent.quest.dialogue_list:
             return ent.quest.dialogue_list[0]
 
-    def mysterious_note(self, dialogue=None):
+    def mysterious_note(self, dialogue, ent):
         """ Manages friend quest, including initialization and dialogue.
             Upon finding a scroll of death, the player must first learn to descipher it.
             People in the town seem to suggest that the church is involved.
@@ -3483,12 +3782,6 @@ class Bloodkin():
                 player_obj.questlog.quests[quest.name] = quest
                 player_obj.questlog.update_questlog()
                 pyg.update_gui("Quest added!", pyg.green)
-                
-                # Generate main characters
-                if 'Kyrio' not in player_obj.ents.keys():
-                    create_NPC('Kyrio')
-                player_obj.ents['Kyrio'].quest = quest
-                player_obj.ents['Kyrio'].dialogue = ["Kyrio: ..."]
             
         else:
             #ent.quest.dialogue_list.remove(dialogue)
@@ -3566,7 +3859,7 @@ def build_home():
         name       = 'home',
         lvl_num    = 0,
         size       = 5,
-        soundtrack = ['home'],
+        soundtrack = ['menu'],
         img_names  = ['walls', 'gray'],
         floors     = ['floors', 'green'],
         walls      = ['walls', 'gray'],
@@ -3692,7 +3985,7 @@ def build_dungeon_level():
         name       = 'dungeon',
         lvl_num    = lvl_num,
         size       = 1 + lvl_num//3,
-        soundtrack = list(aud.dict.keys()),
+        soundtrack = [f'dungeon {lvl_num}'],
         img_names  = ['walls', 'gray'],
         floors     = ['floors', 'dark green'],
         walls      = ['walls', 'gray'],
@@ -3934,7 +4227,11 @@ def build_overworld():
         name       = 'overworld',
         lvl_num    = 0,
         size       = 5,
-        soundtrack = ['home'],
+        soundtrack = [
+            'overworld 1',
+            'overworld 2',
+            'overworld 3',
+            'overworld 4'],
         img_names  = ['floors', 'grass3'],
         floors     = ['floors', 'grass3'],
         walls      = ['walls', 'gray'],
@@ -4053,7 +4350,13 @@ def build_overworld():
     if 'Kyrio' not in player_obj.ents.keys():
         create_NPC('Kyrio')
         room = random.choice(player_obj.envs['overworld'].rooms)
-        place_object(player_obj.ents['Kyrio'], room.center(), env)
+        if not env.map[room.center()[0]][room.center()[1]].item:
+            (x, y) = room.center()
+        elif not env.map[room.center()[0]+1][room.center()[1]+1].item:
+            (x, y) = (room.center()[0]+1, room.center()[1]+1)
+        else:
+            (x, y) = (room.center()[0]-1, room.center()[1]-1)
+        place_object(player_obj.ents['Kyrio'], (x, y), env)
     
     ## Place NPCs
     if 'Kapno' not in player_obj.ents.keys():
@@ -4482,7 +4785,7 @@ def create_item(names, effect=None):
     
         'healing potion': Item(
             name          = 'healing potion',
-            role          = 'potion',
+            role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'red'],
 
@@ -4501,7 +4804,7 @@ def create_item(names, effect=None):
 
         'transformation potion': Item(
             name          = 'transformation potion',
-            role          = 'potion',
+            role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'purple'],
 
@@ -4520,7 +4823,7 @@ def create_item(names, effect=None):
 
         'blue potion': Item(
             name          = 'transformation potion',
-            role          = 'potion',
+            role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'blue'],
 
@@ -4539,7 +4842,7 @@ def create_item(names, effect=None):
 
         'gray potion': Item(
             name          = 'transformation potion',
-            role          = 'potion',
+            role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'gray'],
             
@@ -4558,7 +4861,7 @@ def create_item(names, effect=None):
 
         'scroll of lightning bolt': Item(
             name          = 'scroll of lightning bolt',
-            role          = 'scroll',
+            role          = 'scrolls',
             slot          = None,
             img_names     = ['scrolls', 'closed'],
             
@@ -4577,7 +4880,7 @@ def create_item(names, effect=None):
 
         'scroll of fireball': Item(
             name          = 'scroll of fireball',
-            role          = 'scroll',
+            role          = 'scrolls',
             slot          = None,
             img_names     = ['scrolls', 'closed'],
             
@@ -4596,7 +4899,7 @@ def create_item(names, effect=None):
 
         'scroll of confusion': Item(
             name          = 'scroll of confusion',
-            role          = 'scroll',
+            role          = 'scrolls',
             slot          = None,
             img_names     = ['scrolls', 'closed'],
             
@@ -4615,7 +4918,7 @@ def create_item(names, effect=None):
 
         'scroll of death': Item(
             name          = 'scroll of death',
-            role          = 'scroll',
+            role          = 'scrolls',
             slot          = None,
             img_names     = ['scrolls', 'open'],
             
@@ -4789,7 +5092,7 @@ def create_item(names, effect=None):
     
         'shovel': Item(
             name          = 'shovel',
-            role          = 'weapon',
+            role          = 'weapons',
             slot          = 'dominant hand',
             img_names     = ['shovel', 'dropped'],
 
@@ -4808,7 +5111,7 @@ def create_item(names, effect=None):
 
         'super shovel': Item(
             name          = 'super shovel',
-            role          = 'weapon',
+            role          = 'weapons',
             slot          = 'dominant hand',
             img_names     = ['super shovel', 'dropped'],
 
@@ -4827,7 +5130,7 @@ def create_item(names, effect=None):
 
         'dagger': Item(
             name          = 'dagger',
-            role          = 'weapon',
+            role          = 'weapons',
             slot          = 'dominant hand',
             img_names     = ['dagger', 'dropped'],
             
@@ -4846,7 +5149,7 @@ def create_item(names, effect=None):
 
         'sword': Item(
             name          = 'sword',
-            role          = 'weapon',
+            role          = 'weapons',
             slot          = 'dominant hand',
             img_names     = ['sword', 'dropped'],
             
@@ -4865,7 +5168,7 @@ def create_item(names, effect=None):
 
         'blood dagger': Item(
             name          = 'blood dagger',
-            role          = 'weapon',
+            role          = 'weapons',
             slot          = 'dominant hand',
             img_names     = ['blood dagger', 'dropped'],
             
@@ -4884,7 +5187,7 @@ def create_item(names, effect=None):
 
         'blood sword': Item(
             name          = 'blood sword',
-            role          = 'weapon',
+            role          = 'weapons',
             slot          = 'dominant hand',
             img_names     = ['blood sword', 'dropped'],
 
@@ -5206,11 +5509,14 @@ def create_item(names, effect=None):
             attack_bonus  = 0,
             defense_bonus = 10,
             effect        = effect)}
-
+        
+    # Search with image names
     if type(names) in [tuple, list]:
         for val in item_dict.values():
             if val.img_names == names:
                 item = val
+    
+    # Search with dictionary names
     else:
         item = item_dict[names]
     
@@ -5671,7 +5977,7 @@ def create_NPC(name):
         beard.toggle_equip(player_obj.ents['Kyrio'])
         dagger.toggle_equip(player_obj.ents['Kyrio'])
         player_obj.ents['Kyrio'].default_dialogue = [
-            'Kyrio: ...',
+            'Kyrio: *furrows his brow*',
             'Kyrio: Talk to my brother, Kapno. I know little of mercantile.',
             'Kyrio: *seems not to notice*']
     
@@ -5734,9 +6040,8 @@ def add_doors(room):
                                 room.env.map[loc[0]+i-1][loc[1]+j-1].item    = None
                                 room.env.map[loc[0]+i-1][loc[1]+j-1].blocked = False
                                 
-                            # Check for water
-                            if room.env.map[loc[0]+i-1][loc[1]+j-1].biome in img.biomes['sea']:
-                                room.env.map[loc[0]+i-1][loc[1]+j-1].biome == 'city'
+                            room.env.map[loc[0]+i-1][loc[1]+j-1].biome == 'city'
+                    
                     except: continue
         
         # Create narrow entryway and clear items
@@ -5761,9 +6066,8 @@ def add_doors(room):
                                     room.env.map[loc[0]+i-1][loc[1]+j-1].item    = None
                                     room.env.map[loc[0]+i-1][loc[1]+j-1].blocked = False
                                     
-                                # Check for water
-                                if room.env.map[loc[0]+i-1][loc[1]+j-1].biome in img.biomes['sea']:
-                                    room.env.map[loc[0]+i-1][loc[1]+j-1].biome == 'city'
+                                room.env.map[loc[0]+i-1][loc[1]+j-1].biome == 'city'
+                        
                         except:
                             continue
 
@@ -5905,7 +6209,7 @@ def entity_flash(ent):
     while flash_time > 1:
         pygame.time.Clock().tick(30)
         if flash:
-            ent.img_names = ['null', None]
+            ent.img_names = ['null', 'null']
         render_all()
         flash -= 1
 
@@ -5973,7 +6277,7 @@ def active_effects():
 # Utilities
 ## Gameplay
 def is_blocked(env, loc):
-    """ Checks for barriers and trigger dialogue. """
+    """ Checks for barriers and triggers dialogue. """
     
     # Check for barriers
     if env.map[loc[0]][loc[1]].blocked:
@@ -5997,8 +6301,8 @@ def sort_inventory(ent=None):
     # Allow for NPC actions
     if not ent: ent = player_obj.ent
         
-    inventory_cache = {'weapon': [], 'armor': [], 'potion': [], 'scroll': [], 'drugs': [], 'other': []}
-    other_cache     = {'weapon': [], 'armor': [], 'potion': [], 'scroll': [], 'drugs': [], 'other': []}
+    inventory_cache = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
+    other_cache     = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
 
     # Sort by category
     for item_list in player_obj.ent.inventory.values():
@@ -6006,10 +6310,10 @@ def sort_inventory(ent=None):
             inventory_cache[item.role].append(item)
     
     # Sort by stats:
-    sorted(inventory_cache['weapon'], key=lambda obj: obj.attack_bonus + obj.defense_bonus + obj.hp_bonus)
+    sorted(inventory_cache['weapons'], key=lambda obj: obj.attack_bonus + obj.defense_bonus + obj.hp_bonus)
     sorted(inventory_cache['armor'],  key=lambda obj: obj.attack_bonus + obj.defense_bonus + obj.hp_bonus)
-    sorted(inventory_cache['potion'], key=lambda obj: obj.name)
-    sorted(inventory_cache['scroll'], key=lambda obj: obj.name)
+    sorted(inventory_cache['potions'], key=lambda obj: obj.name)
+    sorted(inventory_cache['scrolls'], key=lambda obj: obj.name)
     sorted(inventory_cache['other'],  key=lambda obj: obj.name)
 
     player_obj.ent.inventory = inventory_cache
@@ -6043,102 +6347,10 @@ def random_choice(chances_dict):
     strings = list(chances_dict.keys())
     return strings[random_choice_index(chances)]
 
-## Files
 @debug_call
-def save_account():    
-    """ Shows a menu with each item of the inventory as an option, then returns an item if it is chosen.
-        Structures
-        ----------
-        = player_obj
-        == envs
-        === garden
-        === home
-        === dungeon
-        == ent
-        == ents 
-        == questlog """
-    
-    options = [f"File 1",
-               f"File 2",
-               f"File 3"]
-    if player_obj.file_num: options[player_obj.file_num - 1] += ' *'
-    
-    # Select file number
-    file_num = new_menu(
-        header      = "Save",
-        options     = options,
-        backgrounds = ["Data/File_1/screenshot.png",
-                       "Data/File_2/screenshot.png",
-                       "Data/File_3/screenshot.png"])
-    if type(file_num) != int: main_menu()
-    else:
-        file_num += 1
-        
-        # Update Player object
-        player_obj.file_num = file_num
-        
-        # Save everything
-        with open(f"Data/File_{file_num}/ent.pkl", 'wb') as file:        pickle.dump(player_obj.ent, file)
-        with open(f"Data/File_{file_num}/ents.pkl", 'wb') as file:       pickle.dump(player_obj.ents, file)
-        with open(f"Data/File_{file_num}/envs.pkl", 'wb') as file:       pickle.dump(player_obj.envs, file)
-        with open(f"Data/File_{file_num}/questlog.pkl", 'wb') as file:   pickle.dump(player_obj.questlog, file)
-        with open(f"Data/File_{file_num}/questlines.pkl", 'wb') as file: pickle.dump(player_obj.questlines, file)
-        screenshot(size='display', visible=False, folder=f"Data/File_{file_num}", filename="screenshot.png", blur=True)
-
-@debug_call
-def load_account():    
-    """ Shows a menu with each item of the inventory as an option, then returns an item if it is chosen.
-        Structures
-        ----------
-        = player_obj
-        == envs
-        === garden
-        === home
-        === dungeon
-        == ent 
-        == ents 
-        == questlog """
-    
-    global player_obj
-    
-    options = [f"File 1",
-               f"File 2",
-               f"File 3"]
-    if player_obj.file_num: options[player_obj.file_num - 1] += ' *'
-    
-    # Select file number
-    file_num = new_menu(
-        header      = "Load",
-        options     = options,
-        backgrounds = ["Data/File_1/screenshot.png",
-                       "Data/File_2/screenshot.png",
-                       "Data/File_3/screenshot.png"])
-    if file_num is not None:
-        
-        if type(file_num) != int: main_menu()
-        else:
-            file_num += 1
-            pyg.startup_toggle2 = False
-            pyg.startup_toggle3 = False
-        
-        # Load data onto fresh player
-        player_obj = Player()
-        with open(f"Data/File_{file_num}/questlines.pkl", "rb") as file: player_obj.questlines = pickle.load(file)
-        with open(f"Data/File_{file_num}/ent.pkl", "rb") as file:        player_obj.ent        = pickle.load(file)
-        with open(f"Data/File_{file_num}/ents.pkl", "rb") as file:       player_obj.ents       = pickle.load(file)
-        with open(f"Data/File_{file_num}/envs.pkl", "rb") as file:       player_obj.envs       = pickle.load(file)
-        with open(f"Data/File_{file_num}/questlog.pkl", "rb") as file:   player_obj.questlog   = pickle.load(file)
-        
-        # Load cameras
-        for env in player_obj.envs.values():
-            if type(env) == list:
-                for sub_env in env: sub_env.camera = Camera(player_obj.ent)
-            else:                   env.camera     = Camera(player_obj.ent)
-
-@debug_call
-def screenshot(size='display', visible=False, folder="Data/Cache", filename="screenshot.png", blur=False):
+def screenshot(size='display', visible=False, folder="Data/.Cache", filename="screenshot.png", blur=False):
     """ Takes a screenshot.
-        cache:  saves a regular screenshot under Data/Cache/screenshot.png
+        cache:  saves a regular screenshot under Data/.Cache/screenshot.png
         save:   moves regular cached screenshot to Data/File_#/screenshot.png 
         blur:   adds a blur effect """
     
