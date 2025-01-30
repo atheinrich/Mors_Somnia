@@ -119,11 +119,11 @@ def main():
     place_player(player_obj.envs['garden'], player_obj.envs['garden'].center)    # main
     
     # Open the main menu
-    main_menu_obj = MainMenu()
-    play_game_obj = PlayGame()
-    new_game_obj = NewGame()
-    garden_obj = PlayGarden()
-    new_menu_obj  = NewMenu(
+    main_menu_obj    = MainMenu()
+    play_game_obj    = PlayGame()
+    new_game_obj     = NewGame()
+    garden_obj       = PlayGarden()
+    new_menu_obj     = NewMenu(
         name      = 'controls',
         header    = "Controls", 
         options   = ["Move:                                       Arrow keys or WASD",
@@ -157,7 +157,7 @@ def main():
         backgrounds = ["Data/File_1/screenshot.png",
                        "Data/File_2/screenshot.png",
                        "Data/File_3/screenshot.png"])
-    hold_obj = Hold()
+    hold_obj         = Hold()
     
     game_states()
 
@@ -1219,8 +1219,7 @@ class Player:
         
         self.ent      = None
         self.ents     = {}
-        self.envs     = {'home': [], 'dungeon': []}
-        self.dungeon = []
+        self.envs     = {'home': [], 'dungeon': [], 'garden': [], 'cave': []}
         self.file_num = 0
 
     @debug_call
@@ -1844,9 +1843,13 @@ class NewGame:
             HANDEDNESS: mirrors player/equipment tiles, which are saved in img.dict and img.cache
             ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
         
+        global player_obj
+        
         # -------------------------------------- INIT --------------------------------------
         # Reset character
+        player_obj = Player()
         player_obj.create_player()
+        player_obj.envs['garden'] = build_garden()
         place_player(player_obj.envs['garden'], player_obj.envs['garden'].center)    # new game
         player_obj.ent.env.camera = Camera(player_obj.ent)
         player_obj.ent.env.camera.fixed = True
@@ -2471,10 +2474,11 @@ class DevTools:
             if event.type == KEYDOWN:
             
                 # >>PLAY GAME<<
-                if (event.key in pyg.key_BACK) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                    pyg.last_press_time = float(time.time())
-                    pyg.overlay = None
-                    return
+                if (event.key in pyg.key_BACK) or (event.key in pyg.key_HOLD):
+                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        pyg.last_press_time = float(time.time())
+                        pyg.overlay = None
+                        return
                 
                 # >>LOCK SELECTION<<
                 elif event.key in pyg.key_DEV:
@@ -2530,6 +2534,12 @@ class DevTools:
                 # >>SELECT AND PLACE<<
                 elif event.key in pyg.key_ENTER:
                     self.place_item()
+                
+                # >>INVENTORY<<
+                elif event.key in pyg.key_INV:
+                    pyg.overlay = 'inv'
+                    pygame.event.clear()
+                    return
 
             # Save for later reference
             self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
@@ -2671,10 +2681,11 @@ class Inventory:
             if event.type == KEYDOWN:
             
                 # >>PLAY GAME<<
-                if (event.key in pyg.key_BACK) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                    pyg.last_press_time = float(time.time())
-                    pyg.overlay = None
-                    return
+                if (event.key in pyg.key_BACK) or (event.key in pyg.key_HOLD):
+                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        pyg.last_press_time = float(time.time())
+                        pyg.overlay = None
+                        return
                 
                 # >>LOCK SELECTION<<
                 elif (event.key in pyg.key_INV) and (time.time()-self.last_press_time > self.cooldown_time):
@@ -2733,6 +2744,12 @@ class Inventory:
                     if self.cursor_pos[1] > 32*len(self.dic):
                         self.cursor_pos[1] = 32*len(self.dic)
                         self.choice = len(self.dic) - self.offset - 1
+                    
+                # >>CONSTRUCTION<<
+                elif event.key in pyg.key_DEV:
+                    pyg.overlay = 'dev'
+                    pygame.event.clear()
+                    return
                 
                 # >>USE OR DROP<<
                 else:
