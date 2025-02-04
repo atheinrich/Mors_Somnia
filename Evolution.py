@@ -90,13 +90,16 @@ def debug_call(func):
 def main():
     """ Initializes the essentials and opens the main menu. """
     
-    global pyg, mech, img, aud, player_obj, dev, inv
+    global pyg, mech, img, aud, player_obj
     global main_menu_obj, play_game_obj, new_game_obj, new_menu_obj
-    global save_account_obj, load_account_obj, garden_obj, hold_obj
+    global save_account_obj, load_account_obj, garden_obj
+    global dev, inv, hold_obj, trade_obj
     
     # Initialize pygame (parameters, display, clock, etc.)
     pyg  = Pygame()
-    
+    pyg.game_state = 'startup'
+    pyg.overlay    = None
+
     # Initialize general mechanics (?)
     mech = Mechanics()
     
@@ -112,11 +115,6 @@ def main():
     
     # Create player
     player_obj = Player()
-    player_obj.create_player()
-
-    # Generate main menu
-    player_obj.envs['garden'] = build_garden()
-    place_player(player_obj.envs['garden'], player_obj.envs['garden'].center)    # main
     
     # Open the main menu
     main_menu_obj    = MainMenu()
@@ -158,12 +156,12 @@ def main():
                        "Data/File_2/screenshot.png",
                        "Data/File_3/screenshot.png"])
     hold_obj         = Hold()
+    trade_obj        = Trade()
     
     game_states()
 
 def game_states():
-
-    pyg.game_state = 'startup'
+    
     pyg.running    = True
     while pyg.running:
         
@@ -211,6 +209,10 @@ def game_states():
         elif pyg.overlay == 'hold':
             hold_obj.run()
             hold_obj.render()
+        
+        elif pyg.overlay == 'trade':
+            trade_obj.run()
+            trade_obj.render()
         
         img.render()
         pygame.display.flip()
@@ -385,7 +387,7 @@ def new_menu(header, options, options_categories=None, position='top left', back
                     running = False
                     return choice
 
-def render_all(size='display', visible=False, gui=True):
+def render_all(size='display', visible=False):
     """ Draws tiles and stuff. Constantly runs. """
     
     pyg.display.fill(pyg.black)
@@ -434,21 +436,23 @@ def render_all(size='display', visible=False, gui=True):
                         if tile.img_names == tile.room.roof:
                             tile.draw(pyg.display)
     
-    if size == 'display':
+    if (size == 'display') and (pyg.overlay != 'menu'):
         if bool(img.impact):
             for i in range(len(img.impact_images)):
                 pyg.screen.blit(img.impact_images[i], img.impact_image_pos[i])
         
         # Print messages
-        if not pyg.overlay:
-            if gui:
-                if pyg.msg_toggle: 
-                    Y = 10
-                    for message in pyg.msg:
-                        pyg.screen.blit(message, (10, Y))
-                        Y += 16
-                if pyg.gui_toggle:
-                    pyg.screen.blit(pyg.gui, (10, 453))
+        if pyg.msg_toggle: 
+            Y = 3
+            
+            # Find how many messages to write
+            for message in pyg.msg:
+                pyg.screen.blit(message, (5, Y))
+                Y += 16
+        
+        if pyg.gui_toggle:
+            for i in range(len(pyg.gui)):
+                pyg.screen.blit(list(pyg.gui.values())[i],   (5+250*i, pyg.screen_height-27))
     
     aud.shuffle()
 
@@ -522,7 +526,10 @@ class Pygame:
         self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.clock    = pygame.time.Clock()
         self.display  = pygame.Surface((int(self.screen_width / self.zoom), int(self.screen_height / self.zoom)))
-        self.gui      = self.font.render('', True, self.gray)
+        self.gui      = {
+            'health':   self.font.render('', True, self.red),
+            'stamina':  self.font.render('', True, self.green),
+            'location': self.font.render('', True, self.gray)}
 
     def set_controls(self, controls='B'):
         
@@ -622,28 +629,44 @@ class Pygame:
     def update_gui(self, new_msg=None, color=None):
         
         if player_obj.ent.env:
-            if player_obj.ent.env.name != 'garden':
             
-                # Update pyg.update_gui list
-                if new_msg:
-                    for line in textwrap.wrap(new_msg, pyg.message_width):
-                        
-                        # Delete older messages
-                        if len(self.msg) == pyg.message_height:
-                            del self.msg[0]
-                        
-                        # Create pyg.update_gui object
-                        self.msg.append(self.font.render(line, True, color))
-                
-                # Updage lower gui
-                else:
-                    health = str(player_obj.ent.hp) + '/' + str(player_obj.ent.max_hp)
-                    env    = str(player_obj.ent.env.name)
-                    if player_obj.ent.env.lvl_num: env = env + ' (level ' + str(player_obj.ent.env.lvl_num) + ')'
+            # Create or delete message; update pyg.update_gui list
+            if new_msg:
+                for line in textwrap.wrap(new_msg, pyg.message_width):
                     
-                    self.gui = self.font.render('HP: '            + health + ' '*60 + 
-                                                'Environment: '   + env,
-                                                True, pyg.dark_gray)
+                    # Delete older messages
+                    if len(self.msg) == pyg.message_height:
+                        del self.msg[0]
+                    
+                    # Create pyg.update_gui object
+                    self.msg.append(self.font.render(line, True, color))
+            
+            # Update top and/or bottom gui
+            if not pyg.overlay:
+                
+                # Health
+                current_health = int(player_obj.ent.hp / player_obj.ent.max_hp) * 10
+                leftover_health = 10 - current_health
+                health = '▆' * current_health + '▁' * leftover_health
+                
+                # Stamina
+                current_stamina = int((player_obj.ent.stamina % 101) / 10)
+                leftover_stamina = 10 - current_stamina
+                stamina = '▆' * current_stamina + '▁' * leftover_stamina
+                
+                # Location
+                env = str(player_obj.ent.env.name)
+                if player_obj.ent.env.lvl_num: env = env + ' (level ' + str(player_obj.ent.env.lvl_num) + ')'
+                
+                self.gui = {
+                    'health':   self.minifont.render(health,  True, self.red),
+                    'stamina':  self.minifont.render(stamina, True, self.green),
+                    'location': self.minifont.render(env,     True, self.dark_gray)}
+            
+            # Show last message
+            else:
+                if self.msg: self.msg = [self.msg[-1]]
+                self.gui = {'wallet': self.minifont.render('⨋ '+str(player_obj.ent.wallet), True, self.dark_gray)}
 
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -1010,11 +1033,11 @@ class Images:
                     flash = False
                     ent.img_names = old_img_names
 
-    def vicinity_flash(self, image):
+    def vicinity_flash(self, ent, image):
         """ Death animation. """
         
         self.impact = True
-        vicinity_list = player_obj.ent.get_vicinity()
+        vicinity_list = ent.get_vicinity()
         for i in range(2*len(vicinity_list)):
             
             image     = image
@@ -1024,6 +1047,22 @@ class Images:
             duration  = 0.5
             last_time = time.time()
             delay     = i*0.1
+            
+            self.render_log.append([image, image_pos, duration, last_time, delay])
+
+    def flash_above(self, ent, image):
+        """ Death animation. """
+        
+        self.impact = True
+        for i in range(2):
+            
+            image     = image
+            x         = ent.X - player_obj.ent.env.camera.X
+            y         = ent.Y - pyg.tile_height - player_obj.ent.env.camera.Y
+            image_pos = (x, y)
+            duration  = 0.1
+            last_time = time.time()
+            delay     = i*0.2
             
             self.render_log.append([image, image_pos, duration, last_time, delay])
 
@@ -1242,6 +1281,7 @@ class Player:
             max_hp     = 100,
             attack     = 0,
             defense    = 100,
+            stamina    = 100,
             
             X          = 0,
             Y          = 0,
@@ -1391,6 +1431,7 @@ class MainMenu:
                     # >>NEW GAME<<
                     if self.choice == 0:
                         pyg.game_state = 'new_game'
+                        new_game_obj.reset()
                         pyg.overlay = None
                         return
                     
@@ -1843,11 +1884,8 @@ class NewGame:
             HANDEDNESS: mirrors player/equipment tiles, which are saved in img.dict and img.cache
             ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
         
-        global player_obj
-        
-        # -------------------------------------- INIT --------------------------------------
-        # Reset character
-        player_obj = Player()
+        # Reset player
+        pyg.startup_toggle = True
         player_obj.create_player()
         player_obj.envs['garden'] = build_garden()
         place_player(player_obj.envs['garden'], player_obj.envs['garden'].center)    # new game
@@ -1976,6 +2014,9 @@ class NewGame:
                         pyg.overlay = 'menu'
                         return
         pyg.game_state = 'new_game'
+
+    def reset(self):
+        self.__init__()
 
     def new_game(self):
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
@@ -2106,6 +2147,7 @@ class PlayGame:
                         
                         # >>CONSTRUCTION<<
                         elif event.key in pyg.key_DEV:
+                            trade_obj.ent = player_obj.ent
                             pyg.overlay = 'dev'
                             pygame.event.clear()
                             return
@@ -2136,7 +2178,6 @@ class PlayGame:
         pyg.game_state = 'play_game'
 
     def key_UP(self):
-        
         # >>MOVE<<
         player_obj.ent.move(0, -pyg.tile_height)
 
@@ -2154,21 +2195,23 @@ class PlayGame:
 
     def key_ENTER(self):
         
-        print(player_obj.ent.env.player_coordinates)
-        pygame.event.clear()
-        
-        # >>PICKUP/STAIRS<<
-        # Check if an item is under the player
-        if player_obj.ent.tile.item:
-            
-            # Dungeon
-            if player_obj.ent.tile.item.name == 'dungeon':     mech.enter_dungeon()
-            elif player_obj.ent.tile.item.name == 'cave':      mech.enter_cave()
-            elif player_obj.ent.tile.item.name == 'overworld': mech.enter_overworld()
-            elif player_obj.ent.tile.item.name == 'home':      mech.enter_home()
-            
-            # Pick up or activate
-            else: player_obj.ent.tile.item.pick_up()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
+            pygame.event.clear()
+            print(player_obj.ent.env.player_coordinates)
+
+            # >>PICKUP/STAIRS<<
+            # Check if an item is under the player
+            if player_obj.ent.tile.item:
+                
+                # Dungeon
+                if player_obj.ent.tile.item.name == 'dungeon':     mech.enter_dungeon()
+                elif player_obj.ent.tile.item.name == 'cave':      mech.enter_cave()
+                elif player_obj.ent.tile.item.name == 'overworld': mech.enter_overworld()
+                elif player_obj.ent.tile.item.name == 'home':      mech.enter_home()
+                
+                # Pick up or activate
+                else: player_obj.ent.tile.item.pick_up()
 
     def key_PERIOD(self):
         
@@ -2264,6 +2307,8 @@ class PlayGame:
                 pygame.event.clear()
 
     def render(self):
+        pyg.message_height = 4
+        if not pyg.overlay: pyg.update_gui()
         render_all()
 
 class PlayGarden:
@@ -2272,6 +2317,8 @@ class PlayGarden:
         
         if pyg.overlay == 'menu': player_obj.ent.role = 'NPC'
         else:                     player_obj.ent.role = 'player'
+        
+        player_obj.envs['garden'].camera.zoom_in(custom=1)
         mech.movement_speed(toggle=False, custom=2)
         
         if not pyg.overlay:
@@ -2434,7 +2481,9 @@ class PlayGarden:
                 pygame.event.clear()
 
     def render(self):
-        render_all(gui=False)
+        pyg.msg_toggle = False
+        pyg.gui_toggle = False
+        render_all()
 
 class DevTools:
     
@@ -2605,7 +2654,10 @@ class DevTools:
         except: print("No file found!")
 
     def render(self):
-        render_all(gui=False)
+        pyg.message_height = 1
+        pyg.update_gui()
+        render_all()
+        
         pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
         
         # Renders menu to update cursor location
@@ -2634,7 +2686,7 @@ class Inventory:
         self.img_y = 0
         self.dic_indices = [[0, 0]]
         
-        self.detail = False
+        self.detail = True
         self.cooldown_time = 0.1
         self.last_press_time = 0
 
@@ -2762,7 +2814,6 @@ class Inventory:
             # Save for later reference
             self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
             self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
-            render_all(gui=False)
         return
 
     def find_item(self, offset=None):
@@ -2808,7 +2859,10 @@ class Inventory:
         return
 
     def render(self):
-        render_all(gui=False)
+        pyg.message_height = 1
+        pyg.update_gui()
+        render_all()
+        
         pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
         
         # Renders menu to update cursor location
@@ -2836,7 +2890,7 @@ class Inventory:
                     self.menu_choices = [item_name, detail]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.gray))
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.dark_gray))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
                         pyg.screen.blit(menu_choice_surface, (40, Y_detail))
@@ -2869,7 +2923,7 @@ class Hold:
         self.test_sequence_2 = [pyg.key_LEFT, pyg.key_RIGHT]
         self.keys = pyg.key_LEFT + pyg.key_DOWN + pyg.key_RIGHT
         
-        self.detail = False
+        self.detail = True
 
     def run(self):   
         
@@ -2927,7 +2981,6 @@ class Hold:
                 self.key_sequence = []
 
         pyg.overlay = 'hold'
-        render_all(gui=False)
         return
 
     def update_data(self):
@@ -2974,7 +3027,10 @@ class Hold:
                     return
 
     def render(self):
-        render_all(gui=False)
+        pyg.message_height = 1
+        pyg.update_gui()
+        render_all()
+        
         pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
         pyg.screen.blit(self.cursor_border, self.cursor_pos)
         
@@ -2997,7 +3053,7 @@ class Hold:
                     self.menu_choices = [effect_name, self.sequences[effect_name]]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.gray))
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.dark_gray))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
                         pyg.screen.blit(menu_choice_surface, (40, Y_cache))
@@ -3010,6 +3066,399 @@ class Hold:
             
             else: break
         pyg.screen.blit(self.cursor_border, self.cursor_pos)
+
+class Trade:
+
+    def __init__(self):
+        
+        # Data for select_item and locked_item
+        self.cursor_pos_bnm = [pyg.screen_width-pyg.tile_width, 32]
+        self.dic_index_bnm = 0
+        self.dic_categories_bnm = img.other_names[:-1]
+        self.dic_indices_bnm = [[0, 0] for _ in self.dic_categories_bnm] # offset, choice
+        self.img_names_bnm = ['null', 'null']
+        self.img_x_bnm = 0
+        self.img_y_bnm = 0
+        
+        # Data for select_item and locked_item
+        self.cursor_pos = [0, 32]
+        self.dic_index = 0
+        self.img_names = ['null', 'null']
+        self.img_x = 0
+        self.img_y = 0
+        self.dic_indices = [[0, 0]]
+        
+        self.detail = True
+        self.cooldown_time = 0.1
+        self.last_press_time = 0
+        
+        self.menu_toggle = 'right'
+        self.ent         = None
+
+        ## Cursors
+        # Left cursor
+        size, width, alpha = 30, 2, 192
+        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill.fill((255, 255, 255, alpha))
+        pygame.draw.polygon(
+            self.cursor_border, 
+            pygame.Color('white'), 
+            [(0, 0), (size, 0), (size, size), (0, size)],  width)
+        
+        # Right cursor
+        self.cursor_border_bnm = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill_bnm   = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill_bnm.fill((255, 255, 255, alpha))
+        pygame.draw.polygon(
+            self.cursor_border_bnm, 
+            pygame.Color('white'), 
+            [(0, 0), (size, 0), (size, size), (0, size)],  width)
+
+    def update_data(self):
+        
+        # Restrict movement speed
+        mech.movement_speed(toggle=False, custom=2)
+        
+        ## Dictionaries
+        # Left dictionary
+        self.inventory_dics = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
+        for key, value in player_obj.ent.inventory.items():
+            for item in value:
+                if not item.hidden:
+                    self.inventory_dics[key][item.name] = [img.dict[item.img_names[0]][item.img_names[1]], item]
+        self.inv_dics = {}
+        for key, value in self.inventory_dics.items():
+            if value: self.inv_dics[key] = value
+        
+        # Right dictionary
+        self.inventory_dics_bnm = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
+        for key, value in self.ent.inventory.items():
+            for item in value:
+                if not item.hidden:
+                    self.inventory_dics_bnm[key][item.name] = [img.dict[item.img_names[0]][item.img_names[1]], item]
+        self.inv_dics_bnm = {}
+        for key, value in self.inventory_dics_bnm.items():
+            if value: self.inv_dics_bnm[key] = value
+        
+        ## Selection
+        # Left selection restoration
+        if len(self.dic_indices) != len(self.inv_dics):
+            self.dic_indices = [[0, 0] for _ in self.inv_dics] # offset, choice
+        
+        # Quit if the inventory is empty
+        if self.dic_indices:
+            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]%len(self.inv_dics)
+            self.dic    = self.inv_dics[list(self.inv_dics.keys())[self.dic_index%len(self.inv_dics)]]
+        else:
+            pyg.overlay = None
+            return
+        
+        # Right selection restoration
+        if len(self.dic_indices_bnm) != len(self.inv_dics_bnm):
+            self.dic_indices_bnm = [[0, 0] for _ in self.inv_dics_bnm] # offset, choice
+        
+        # Quit if the inventory is empty
+        if self.dic_indices_bnm:
+            self.offset_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][0]
+            self.choice_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1]%len(self.inv_dics_bnm)
+            self.dic_bnm    = self.inv_dics_bnm[list(self.inv_dics_bnm.keys())[self.dic_index_bnm%len(self.inv_dics_bnm)]]
+        else:
+            pyg.overlay = None
+            return
+
+    def run(self):   
+        
+        # Update dictionaries and create cursors
+        self.update_data()
+        
+        if self.menu_toggle == 'right':
+            self.dic_jkl           = self.dic_bnm
+            self.choice_jkl        = self.choice_bnm
+            self.cursor_pos_jkl    = self.cursor_pos_bnm
+            self.offset_jkl        = self.offset_bnm
+            self.dic_index_jkl     = self.dic_index_bnm
+            self.dic_indices_jkl   = self.dic_indices_bnm
+            self.inv_dics_jkl      = self.inv_dics_bnm
+            self.owner             = self.ent
+            self.recipient         = player_obj.ent
+            self.cursor_fill_jkl   = self.cursor_fill_bnm
+            self.cursor_border_jkl = self.cursor_border_bnm
+        else:
+            self.dic_jkl           = self.dic
+            self.choice_jkl        = self.choice
+            self.cursor_pos_jkl    = self.cursor_pos
+            self.offset_jkl        = self.offset
+            self.dic_index_jkl     = self.dic_index
+            self.dic_indices_jkl   = self.dic_indices
+            self.inv_dics_jkl      = self.inv_dics
+            self.owner             = self.ent
+            self.recipient         = player_obj.ent
+            self.cursor_fill_jkl   = self.cursor_fill
+            self.cursor_border_jkl = self.cursor_border
+        
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+            
+                ## >>PLAY GAME<<
+                if (event.key in pyg.key_BACK) or (event.key in pyg.key_HOLD):
+                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        pyg.last_press_time = float(time.time())
+                        pyg.overlay = None
+                        return
+                
+                ## >>SWITCH<<
+                elif event.key in pyg.key_INV: self.menu_toggle = 'left'
+                elif event.key in pyg.key_DEV: self.menu_toggle = 'right'    
+                
+                ## >>NAVIGATE DICTIONARY<<
+                elif event.key in pyg.key_UP:
+                    
+                    # Navigate trader's inventory
+                    if self.menu_toggle == 'right':
+                        self.choice_bnm = (self.choice_bnm - 1)%len(self.dic_bnm)
+                        if self.cursor_pos_bnm[1] == 32: self.offset_bnm -= 1
+                        else: self.cursor_pos_bnm[1] -= pyg.tile_height
+                    
+                    # Navigate player's inventory
+                    else:
+                        self.choice = (self.choice - 1)%len(self.dic)
+                        if self.cursor_pos[1] == 32: self.offset -= 1
+                        else: self.cursor_pos[1] -= pyg.tile_height
+                
+                elif event.key in pyg.key_DOWN:
+                    
+                    # Navigate trader's inventory
+                    if self.menu_toggle == 'right':
+                        self.choice_bnm = (self.choice_bnm + 1)%len(self.dic_bnm)
+                        if self.cursor_pos_bnm[1] >= (min(len(self.dic_bnm), 12) * 32): self.offset_bnm += 1
+                        else: self.cursor_pos_bnm[1] += pyg.tile_height
+                    
+                    # Navigate player's inventory
+                    else:
+                        self.choice = (self.choice + 1)%len(self.dic)
+                        if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
+                        else: self.cursor_pos[1] += pyg.tile_height
+                
+                ## >>CHANGE DICTIONARY<<
+                elif (event.key in pyg.key_LEFT) or (event.key in pyg.key_RIGHT):
+                
+                    if event.key in pyg.key_LEFT:
+                        if self.menu_toggle == 'right': self.dic_index_bnm = (self.dic_index_bnm - 1)%len(self.dic_indices_bnm)
+                        else:                           self.dic_index     = (self.dic_index - 1)%len(self.dic_indices)
+                    
+                    elif event.key in pyg.key_RIGHT:
+                        if self.menu_toggle == 'right': self.dic_index_bnm = (self.dic_index_bnm + 1)%len(self.dic_indices_bnm)
+                        else:                           self.dic_index     = (self.dic_index + 1)%len(self.dic_indices)
+                    
+                    # Navigate trader's inventory
+                    if self.menu_toggle == 'right':
+                        if self.dic_indices_bnm:
+                            self.dic_bnm    = self.inv_dics_bnm[list(self.inv_dics_bnm.keys())[self.dic_index_bnm%len(self.inv_dics_bnm)]]
+                            self.offset_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][0]
+                            self.choice_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1]%len(self.dic_bnm)
+                            self.choice_bnm = (self.cursor_pos_bnm[1]//32 + self.offset_bnm - 1)%len(self.dic_bnm)
+                            
+                            # Move cursor to the highest spot in the dictionary
+                            if self.cursor_pos_bnm[1] > 32*len(self.dic_bnm):
+                                self.cursor_pos_bnm[1] = 32*len(self.dic_bnm)
+                                self.choice_bnm = (len(self.dic_bnm) - self.offset_bnm - 1)%len(self.dic_bnm)
+                        else:
+                            pyg.overlay = None
+                            return
+                    
+                    # Navigate player's inventory
+                    else:
+                        if self.dic_indices:
+                            self.dic    = self.inv_dics[list(self.inv_dics.keys())[self.dic_index%len(self.inv_dics)]]
+                            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+                            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]%len(self.dic)
+                            self.choice = (self.cursor_pos[1]//32 + self.offset - 1)%len(self.dic)
+                            
+                            # Move cursor to the highest spot in the dictionary
+                            if self.cursor_pos[1] > 32*len(self.dic):
+                                self.cursor_pos[1] = 32*len(self.dic)
+                                self.choice = (len(self.dic) - self.offset - 1)%len(self.dic)
+                        else:
+                            pyg.overlay = None
+                            return
+                
+                ## >>DETAILS<<
+                elif event.key in pyg.key_QUEST:
+                    if not self.detail: self.detail = True
+                    else:               self.detail = False
+                
+                ## >>SELECT<<
+                elif event.key in pyg.key_ENTER:
+                    self.select()
+            
+            # Save for later reference
+            if self.menu_toggle == 'right':
+                if self.dic_indices_bnm:
+                    self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][0] = self.offset_bnm
+                    self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1] = self.choice_bnm
+                else:
+                    pyg.overlay = None
+                    return
+            else:
+                if self.dic_indices:
+                    self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
+                    self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
+                else:
+                    pyg.overlay = None
+                    return
+        
+        pyg.overlay = 'trade'
+        return
+
+    def select(self):
+        """
+        dic         : name, surface, and Item object; ex. {'green clothes': [<Surface>, <Item>]}
+        offset      : 
+        choice      : 
+        dic_indices : list of tuples; one tuple for each nonempty pocket; the first entry is 
+        dic index   : int between 0 and the number of pockets; increases when 
+
+        """
+        
+        # Find owner and item
+        if self.menu_toggle == 'right':
+            owner     = self.ent
+            recipient = player_obj.ent
+            index     = self.dic_indices_bnm[self.dic_index_bnm%len(self.inv_dics_bnm)][1]
+            item      = list(self.dic_bnm.values())[index][1]
+        else:
+            owner     = player_obj.ent
+            recipient = self.ent
+            index     = self.dic_indices[self.dic_index%len(self.inv_dics)][1]
+            item      = list(self.dic.values())[index][1]
+        
+        # Trade item
+        item.trade(owner, recipient)
+        
+        # Adjust cursor
+        if self.menu_toggle == 'right':
+            if self.cursor_pos_bnm[1] >= 32*len(self.dic_bnm):
+                self.cursor_pos_bnm[1] = 32*(len(self.dic_bnm)-1)
+                self.choice_bnm = len(self.dic_bnm) - self.offset_bnm - 2
+        else:
+            if self.cursor_pos[1] >= 32*len(self.dic):
+                self.cursor_pos[1] = 32*(len(self.dic)-1)
+                self.choice = len(self.dic) - self.offset - 2
+    
+    def find_item(self, ent, offset=None):
+        
+        if self.menu_toggle == 'right':
+            dic_index = self.dic_index_bnm
+            choice    = self.choice_bnm
+            offset    = self.offset_bnm
+        
+        else:
+            dic_index = self.dic_index
+            choice    = self.choice
+            offset    = self.offset
+        
+        # Retrieve inventory list
+        outer_list   = list(ent.inventory.items())
+        length       = len(outer_list)
+        filter_empty = []
+        
+        # Remove names without objects
+        for i in range(length):
+            if outer_list[i][1]: filter_empty.append(outer_list[i])
+        
+        # Name and list of objects for the selected category
+        outer_key, inner_list = filter_empty[dic_index%len(filter_empty)]
+        
+        # Remove hidden items
+        filtered_list = [item for item in inner_list if not item.hidden]
+        
+        # Select the item
+        if filtered_list:
+            
+            try:
+                if type(offset) == int: item = filtered_list[offset]
+                else: item = filtered_list[choice%len(filtered_list)]
+                return item
+            except:
+                pass
+
+    def render(self):
+        pyg.message_height = 1
+        pyg.update_gui()
+        render_all()
+        
+        if self.menu_toggle == 'right': pyg.screen.blit(self.cursor_fill_bnm, self.cursor_pos_bnm)
+        else:                           pyg.screen.blit(self.cursor_fill,     self.cursor_pos)
+        
+        # Renders menu to update cursor location
+        Y = 32
+        counter = 0
+        for i in range(len(list(self.dic))):
+            
+            # Stop at the 12th image, starting with respect to the offset 
+            if counter <= 12:
+                
+                # Extract image details
+                items_list = list(self.dic.keys())
+                item_name  = items_list[(i+self.offset)%len(self.dic)]
+                item       = self.dic[item_name][1]
+                
+                # Render details
+                if self.detail:
+                    Y_detail = int(Y)
+                    cost = f"⨋ {item.cost}"
+                    self.menu_choices = [item_name, cost]
+                    self.menu_choices_surfaces = []
+                    for i in range(len(self.menu_choices)):
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.dark_gray))
+                    
+                    for menu_choice_surface in self.menu_choices_surfaces:
+                        pyg.screen.blit(menu_choice_surface, (40, Y_detail))
+                        Y_detail += 12
+                
+                # Render image
+                pyg.screen.blit(self.dic[item_name][0], (0, Y))
+                Y += pyg.tile_height
+                counter += 1                
+            else: break
+        
+        # Renders menu to update cursor location
+        Y = 32
+        counter = 0
+        for i in range(len(list(self.dic_bnm))):
+            
+            # Stop at the 12th image, starting with respect to the offset 
+            if counter <= 12:
+                
+                # Extract image details
+                items_list = list(self.dic_bnm.keys())
+                item_name  = items_list[(i+self.offset_bnm)%len(self.dic_bnm)]
+                item       = self.dic_bnm[item_name][1]
+                
+                # Render details
+                if self.detail:
+                    Y_detail = int(Y)
+                    cost = f"⨋ {item.cost}"
+                    self.menu_choices = [item_name, cost]
+                    self.menu_choices_surfaces = []
+                    for i in range(len(self.menu_choices)):
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.gray))
+                    
+                    for menu_choice_surface in self.menu_choices_surfaces:
+                        X = pyg.screen_width - pyg.tile_width - menu_choice_surface.get_width() - 8
+                        pyg.screen.blit(menu_choice_surface,  (X, Y_detail))
+                        Y_detail += 12
+                
+                # Render image
+                pyg.screen.blit(self.dic_bnm[item_name][0],  (pyg.screen_width-pyg.tile_width, Y))
+                Y += pyg.tile_height
+                counter += 1                
+            else: break
+        
+        if self.menu_toggle == 'right': pyg.screen.blit(self.cursor_border_bnm, self.cursor_pos_bnm)
+        else:                           pyg.screen.blit(self.cursor_border,     self.cursor_pos)
 
 ## Constructions
 class Tile:
@@ -3185,6 +3634,25 @@ class Item:
             ent.inventory[self.role].remove(self)
             ent.tile.item = self
 
+    def trade(self, owner, recipient):
+        
+        # Dequip before trading
+        if self in owner.equipment.values():
+            self.toggle_equip(owner)
+        
+        if (owner.wallet - self.cost) > 0:
+            
+            # Remove from owner
+            owner.inventory[self.role].remove(self)
+            owner.wallet += self.cost
+            
+            # Give to recipient
+            recipient.inventory[self.role].append(self)
+            recipient.wallet -= self.cost
+        
+        else:
+            pyg.update_gui("Not enough cash!", color=pyg.red)
+
     def use(self, ent=None):
         """ Equips of unequips an item if the object has the Equipment component. """
         
@@ -3321,6 +3789,8 @@ class Entity:
         self.dialogue   = None
         self.default_dialogue = []
         self.quest      = None
+        self.wallet     = 5
+        self.trader     = False
         self.inventory  = {'weapons': [], 'armor': [],  'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
         self.equipment  = {'head': None,  'face': None, 'chest': None, 'body': None,  'dominant hand': None, 'non-dominant hand': None}
         self.effects    = [Effect(
@@ -3424,7 +3894,10 @@ class Entity:
             y = int((self.Y + dY)/pyg.tile_height)
             
             # Move player
-            if self.role == 'player': self.move_player((x, y), (dX, dY))
+            if self.role == 'player': self.move_player(x, y, dX, dY)
+            
+            # Move pet
+            if self.img_names[0] == 'radish': self.move_pet(x, y, dX, dY)
             
             # Move NPC or enemy
             else:
@@ -3448,11 +3921,8 @@ class Entity:
                             player_obj.ent.env.map[x][y].entity = self
                             self.tile        = player_obj.ent.env.map[x][y]
 
-    def move_player(self, r, dR):
+    def move_player(self, x, y, dX, dY):
         """ Annex of move() for player actions. """
-        
-        (x, y)   = r
-        (dX, dY) = dR
         
         # Move forwards
         if not is_blocked(self.env, [x, y]):
@@ -3471,6 +3941,11 @@ class Entity:
             if self.env.map[x][y].item:
                 if self.env.map[x][y].item.effect:
                     floor_effects(self.env.map[x][y].item.effect.name)
+            
+            # Check stamina
+            if (mech.movement_speed_toggle == 1) and (self.stamina > 0):
+                self.stamina -= 1/2
+                pyg.update_gui()
         
         # Interact with an entity
         elif self.env.map[x][y].entity:
@@ -3482,8 +3957,16 @@ class Entity:
                 # Quest dialogue
                 if ent.dialogue: dialogue = ent.dialogue
                 
-                # Idle chat
-                else: dialogue = random.choice(ent.default_dialogue)
+                # Idle chat and trading
+                else:
+                    
+                    # Idle chat
+                    dialogue = random.choice(ent.default_dialogue)
+                    
+                    # Trading
+                    if ent.trader:
+                        trade_obj.ent = ent
+                        pyg.overlay = 'trade'
                 
                 # Play speech and update quests
                 if time.time() - aud.last_press_time_speech > aud.speech_speed//100:
@@ -3527,6 +4010,23 @@ class Entity:
                         self.tile.item = None # removes item from world
         
         self.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
+
+    def move_pet(self, x, y, dX, dY):
+        
+        # Move forwards
+        if not is_blocked(self.env, [x, y]):
+            
+            # Move and update map
+            self.X                      += dX
+            self.Y                      += dY
+            self.tile.entity            = None
+            player_obj.ent.env.map[x][y].entity   = self
+            self.tile                   = self.env.map[x][y]
+            
+        # Trigger floor effects
+        if self.env.map[x][y].item:
+            if self.env.map[x][y].item.effect:
+                self.env.map[x][y].item.effect.function(self)
 
     def move_towards(self, target_X, target_Y):
         """ Moves object towards target. """
@@ -4142,7 +4642,7 @@ class Mechanics:
             ['Fast',    (1,   130)],
             ['Fixed',   (0,   0)]]
 
-        self.cooldown_time = 1.5
+        self.cooldown_time = 10
         self.last_press_time = 0
 
     def bowl(self):
@@ -4150,11 +4650,13 @@ class Mechanics:
         build_dungeon_level()
         place_player(env=player_obj.envs['dungeon'][-1], loc=player_obj.envs['dungeon'][-1].center)    # mech (bowl)
 
+    @debug_call
     def enter_dungeon(self):
         """ Advances player to the next level. """
         
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
+            pygame.event.clear()
             
             if 'dungeon' not in player_obj.envs.keys(): 
                 pyg.update_gui('You step into the darkness.', pyg.dark_gray)
@@ -4175,11 +4677,13 @@ class Mechanics:
                 build_dungeon_level()
                 place_player(env=player_obj.envs['dungeon'][-1], loc=player_obj.envs['dungeon'][-1].center)    # mech (dungeon)
 
+    @debug_call
     def enter_cave(self):
         """ Advances player to the next level. """
         
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
+            pygame.event.clear()
                 
             if 'cave' not in player_obj.envs.keys(): 
                 pyg.update_gui('The ground breaks beneath you and reveals a cave.', pyg.dark_gray)
@@ -4200,34 +4704,53 @@ class Mechanics:
                 build_cave_level()
                 place_player(env=player_obj.envs['cave'][-1], loc=player_obj.envs['cave'][-1].center)    # mech (cave)
 
+    @debug_call
     def enter_overworld(self):
         
-        if 'overworld' not in player_obj.envs.keys(): build_overworld()
-        place_player(env=player_obj.envs['overworld'], loc=player_obj.envs['overworld'].center)    # mech (overworld)
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
+            pygame.event.clear()
+            
+            if 'overworld' not in player_obj.envs.keys(): build_overworld()
+            place_player(env=player_obj.envs['overworld'], loc=player_obj.envs['overworld'].center)    # mech (overworld)
 
+    @debug_call
     def enter_home(self):
-        place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].player_coordinates)    # mech (home)
+        
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
+            pygame.event.clear()
+            
+            place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].player_coordinates)    # mech (home)
 
     def movement_speed(self, toggle=True, custom=None):
         """ Toggles and sets movement speed. """
         
-        # Change speed
-        if toggle:
-            if self.movement_speed_toggle == len(self.speed_list)-1: 
-                self.movement_speed_toggle = 0
+        # Check stamina
+        if player_obj.ent.stamina > 0:
+        
+            # Change speed
+            if toggle:
+                if self.movement_speed_toggle == len(self.speed_list)-1: 
+                    self.movement_speed_toggle = 0
+                else:
+                    self.movement_speed_toggle += 1
+                pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
+                (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
+                pygame.key.set_repeat(hold_time, repeat_time)
+            
+            # Set custom speed
+            elif custom is not None:
+                (hold_time, repeat_time) = self.speed_list[custom][1]
+                pygame.key.set_repeat(hold_time, repeat_time)
+            
+            # Restore previous speed
             else:
-                self.movement_speed_toggle += 1
-            pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
-            (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
-            pygame.key.set_repeat(hold_time, repeat_time)
-        
-        # Set custom speed
-        elif custom is not None:
-            (hold_time, repeat_time) = self.speed_list[custom][1]
-            pygame.key.set_repeat(hold_time, repeat_time)
-        
-        # Restore previous speed
+                (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
+                pygame.key.set_repeat(hold_time, repeat_time)
+            
         else:
+            self.movement_speed_toggle = 0
             (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
             pygame.key.set_repeat(hold_time, repeat_time)
 
@@ -4275,7 +4798,7 @@ class Mechanics:
 
     def swing(self):
         image = img.dict[player_obj.ent.equipment['dominant hand'].img_names[0]]['dropped']
-        img.vicinity_flash(image)
+        img.vicinity_flash(player_obj.ent, image)
         for tile in player_obj.ent.get_vicinity():
             if tile.entity:
                 player_obj.ent.attack_target(tile.entity)
@@ -4284,7 +4807,7 @@ class Mechanics:
         
         # Activate animation
         image = img.dict['decor']['bones']
-        img.vicinity_flash(image)
+        img.vicinity_flash(player_obj.ent, image)
         img.entity_flash(player_obj.ent)
         
         # Kill player
@@ -4294,6 +4817,17 @@ class Mechanics:
     def attack_combos(self):
         self.attack_init = pyg.key_BACK
         self.attack_crit = [pyg.key_INFO, pyg.key_EQUIP, pyg.key_DROP]
+
+    def radish_eat(self, ent):
+        ent.rank += 1
+        image = img.dict['drugs']['bubbles']
+        img.flash_above(ent, image)
+        ent.tile.item = None
+
+    def boost_stamina(self):
+        player_obj.ent.stamina += 50
+        if player_obj.ent.stamina > 100: player_obj.ent.stamina = 100
+        pyg.update_gui()
 
 class Effect:
 
@@ -4404,17 +4938,25 @@ class Camera:
     def zoom_in(self, factor=0.1, custom=None):
         """ Zoom in by reducing the camera's width and height. """
         
-        if not self.fixed:
-            if custom:
-                pyg.zoom = custom
-            else:
-                pyg.zoom += factor
-                pyg.zoom_cache = pyg.zoom
+        # Set to a specific value
+        if custom and (pyg.zoom != custom):
+            pyg.zoom = custom
+            pyg.zoom_cache = pyg.zoom
             pyg.update_gui()
             self.width  = int(pyg.screen_width / pyg.zoom)
             self.height = int(pyg.screen_height / pyg.zoom)
             pyg.display = pygame.Surface((self.width, self.height))
             self._recalculate_bounds()
+            
+        elif not self.fixed:
+            pyg.zoom += factor
+            pyg.zoom_cache = pyg.zoom
+            pyg.update_gui()
+            self.width  = int(pyg.screen_width / pyg.zoom)
+            self.height = int(pyg.screen_height / pyg.zoom)
+            pyg.display = pygame.Surface((self.width, self.height))
+            self._recalculate_bounds()
+
 
     def zoom_out(self, factor=0.1, custom=None):
         """ Zoom out by increasing the camera's width and height. """
@@ -4833,18 +5375,18 @@ class Bloodkin:
             # Generate characters and dialogue
             if 'Kyrio' not in player_obj.ents.keys(): player_obj.ents['Kyrio'] = create_NPC('Kyrio')
             quest.Kyrio_dialogue = [
-                "Kyrio: A",
-                "Kyrio: B",
-                "Kyrio: C"]
+                "Kyrio: Huh? I know nothing about such things.",
+                "Kyrio: Rather inquisitive, are you? Never turns out well.",
+                "Kyrio: Fine, yes, my brother might know. I am busy."]
             quest.Kyrio_progress              = 0
             player_obj.ents['Kyrio'].quest    = quest
             player_obj.ents['Kyrio'].dialogue = quest.Kyrio_dialogue[0]
             
             if 'Kapno' not in player_obj.ents.keys(): player_obj.ents['Kapno'] = create_NPC('Kapno')
             quest.Kapno_dialogue = [
-                "Kapno: A",
-                "Kapno: B",
-                "Kapno: C"]
+                "Kapno: Exquisite! Where was this symbol found?",
+                "Kapno: I have a strange curiosity for such things. They seem more frequent as of late.",
+                "Kapno: Let me know if you find anything else."]
             quest.Kapno_progress              = 0
             player_obj.ents['Kapno'].quest    = quest
             player_obj.ents['Kapno'].dialogue = quest.Kapno_dialogue[0]
@@ -4933,7 +5475,7 @@ def build_garden():
     x, y = new_room.center()[0], new_room.center()[1]
     
     # Generate items and entities
-    items = [['forest', 'tree',   10]]
+    items    = [['forest', 'tree',   10]]
     entities = [['forest', 'radish', 50]]
     place_objects(env, items, entities)
     
@@ -5219,7 +5761,7 @@ def build_overworld():
         ['desert', 'rock',   50]]
     place_objects(env, items, entities)
     
-    # Construct rooms
+    ## Construct rooms
     num_rooms             = 20
     rooms                 = []
     room_counter, counter = 0, 0
@@ -5284,34 +5826,48 @@ def build_overworld():
     place_object(stairs, [x, y], player_obj.envs['overworld'])
     
     ## Place NPCs
-    if 'Kyrio' not in player_obj.ents.keys(): player_obj.ents['Kyrio'] = create_NPC('Kyrio')
-    room = random.choice(player_obj.envs['overworld'].rooms)
-    if not env.map[room.center()[0]][room.center()[1]].item:       (x, y) = room.center()
-    elif not env.map[room.center()[0]+1][room.center()[1]+1].item: (x, y) = (room.center()[0]+1, room.center()[1]+1)
-    else:                                                          (x, y) = (room.center()[0]-1, room.center()[1]-1)
-    place_object(player_obj.ents['Kyrio'], (x, y), env)
+    bools = lambda room, i: [
+        env.map[room.center()[0]+i][room.center()[1]+i].item,
+        env.map[room.center()[0]+i][room.center()[1]+i].entity]
     
-    if 'Kapno' not in player_obj.ents.keys(): player_obj.ents['Kapno'] = create_NPC('Kapno')
-    room = random.choice(player_obj.envs['overworld'].rooms)
-    if not env.map[room.center()[0]][room.center()[1]].item:       (x, y) = room.center()
-    elif not env.map[room.center()[0]+1][room.center()[1]+1].item: (x, y) = (room.center()[0]+1, room.center()[1]+1)
-    else:                                                          (x, y) = (room.center()[0]-1, room.center()[1]-1)
-    place_object(player_obj.ents['Kapno'], (x, y), env)
-    
-    if 'Erasti' not in player_obj.ents.keys(): player_obj.ents['Erasti'] = create_NPC('Erasti')
-    room = random.choice(player_obj.envs['overworld'].rooms)
-    if not env.map[room.center()[0]][room.center()[1]].item:       (x, y) = room.center()
-    elif not env.map[room.center()[0]+1][room.center()[1]+1].item: (x, y) = (room.center()[0]+320, room.center()[1]+320)
-    else:                                                          (x, y) = (room.center()[0]-320, room.center()[1]-320)
-    place_object(player_obj.ents['Erasti'], (x, y), env)
-    
-    for _ in range(10):
-    
-        ent = create_NPC('random')
+    # Set named characters to spawn
+    for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci']:
+        
+        # Create NPC if needed
+        if name not in player_obj.ents.keys(): player_obj.ents[name] = create_NPC(name)
+        
+        # Select room not occupied by player
         room = random.choice(player_obj.envs['overworld'].rooms)
-        rand_x = (random.randint(0,2)-1) * 32
-        rand_y = (random.randint(0,2)-1) * 32
-        if not env.map[room.center()[0]][room.center()[1]].item:       (x, y) = room.center()
+        while room == player_obj.envs['overworld'].rooms[-1]:
+            room = random.choice(player_obj.envs['overworld'].rooms)
+        
+        # Select spawn location
+        for i in range(3):
+            occupied = bools(room, i-1)
+            if occupied[0] == occupied[1]:
+                (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
+        
+        # Spawn entity
+        place_object(player_obj.ents[name], (x, y), env)
+    
+    # Set number of random characters
+    for _ in range(10):
+        
+        # Create entity
+        ent = create_NPC('random')
+        
+        # Select room not occupied by player
+        room = random.choice(player_obj.envs['overworld'].rooms)
+        while room == player_obj.envs['overworld'].rooms[-1]:
+            room = random.choice(player_obj.envs['overworld'].rooms)
+        
+        # Select spawn location
+        for i in range(3):
+            occupied = bools(room, i-1)
+            if occupied[0] == occupied[1]:
+                (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
+        
+        # Spawn entity
         place_object(ent, (x, y), env)
 
 def build_cave_level():
@@ -5477,10 +6033,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = True,
             movable       = True,
             rand_set      = 0,
+            cost          = 20,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5500,6 +6057,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 5,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5515,10 +6073,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = True,
             movable       = False,
             rand_set      = 0,
+            cost          = 5,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5534,10 +6093,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = True,
             movable       = False,
             rand_set      = 0,
+            cost          = 20,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5553,10 +6113,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = True,
             movable       = True,
             rand_set      = 2,
+            cost          = 25,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5576,6 +6137,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5595,6 +6157,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5610,10 +6173,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 15,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5629,10 +6193,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 15,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5648,10 +6213,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 15,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5667,10 +6233,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 15,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5686,10 +6253,11 @@ def create_item(names, effect=None):
             durability    = 101,
             equippable    = False,
             equipped      = False,
-            hidden        = True,
+            hidden        = False,
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 15,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5709,6 +6277,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 10,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5730,6 +6299,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 25,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5749,6 +6319,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5768,6 +6339,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5787,6 +6359,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 30,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5806,11 +6379,17 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
             defense_bonus = 0,
-            effect        = effect),
+            effect        = Effect(
+                name          = 'food',
+                img_names     = ['drugs', 'plant'],
+                function      = mech.boost_stamina,
+                sequence      = None,
+                cooldown_time = 0.1)),
 
         'bubbles': Item(
             name          = 'bubbles',
@@ -5825,11 +6404,17 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 50,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
             defense_bonus = 0,
-            effect        = effect),
+            effect        = Effect(
+                name          = 'food',
+                img_names     = ['drugs', 'bubbles'],
+                function      = mech.radish_eat,
+                sequence      = None,
+                cooldown_time = 0.1)),
 
     # Potions and scrolls (potions_options, scrolls_options)
     
@@ -5846,6 +6431,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5865,6 +6451,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5884,6 +6471,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5903,6 +6491,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5922,6 +6511,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 20,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5941,6 +6531,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 20,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5960,6 +6551,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 20,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5979,6 +6571,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 1000,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -5999,12 +6592,13 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
             defense_bonus = 0,
             effect        = effect),
-            
+
         'portal': Item(
             name          = 'portal',
             role          = 'other',
@@ -6018,12 +6612,13 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
             defense_bonus = 0,
             effect        = effect),
-            
+
         'cave': Item(
             name          = 'cave',
             role          = 'other',
@@ -6037,12 +6632,13 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
             defense_bonus = 0,
             effect        = effect),
-            
+
         'path left right': Item(
             name          = 'path',
             role          = 'other',
@@ -6056,6 +6652,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6075,6 +6672,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6094,6 +6692,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6113,6 +6712,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6132,6 +6732,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6151,6 +6752,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6172,6 +6774,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 15,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6191,9 +6794,10 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
-            attack_bonus  = 10,
+            attack_bonus  = 1000,
             defense_bonus = 0,
             effect        = effect),
 
@@ -6210,6 +6814,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 25,
             
             hp_bonus      = 0,
             attack_bonus  = 2,
@@ -6229,6 +6834,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 75,
             
             hp_bonus      = 0,
             attack_bonus  = 5,
@@ -6248,6 +6854,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 500,
             
             hp_bonus      = 0,
             attack_bonus  = 10,
@@ -6267,6 +6874,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 1000,
             
             hp_bonus      = 0,
             attack_bonus  = 15,
@@ -6288,6 +6896,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6307,6 +6916,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6326,8 +6936,9 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 20,
             
-            hp_bonus      = 0,
+            hp_bonus      = 1,
             attack_bonus  = 0,
             defense_bonus = 1,
             effect        = effect),
@@ -6345,6 +6956,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 10,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6364,10 +6976,11 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 20,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
-            defense_bonus = 1,
+            defense_bonus = 2,
             effect        = effect),
 
         'iron armor': Item(
@@ -6383,6 +6996,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 100,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6402,6 +7016,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = False,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6421,6 +7036,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6440,6 +7056,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6459,6 +7076,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6478,6 +7096,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6497,6 +7116,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6516,6 +7136,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6535,6 +7156,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6554,6 +7176,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6573,6 +7196,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6592,6 +7216,7 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 50,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
@@ -6611,12 +7236,13 @@ def create_item(names, effect=None):
             blocked       = False,
             movable       = True,
             rand_set      = 0,
+            cost          = 0,
             
             hp_bonus      = 0,
             attack_bonus  = 0,
             defense_bonus = 10,
             effect        = effect)}
-        
+    
     # Search with image names
     if type(names) in [tuple, list]:
         for val in item_dict.values():
@@ -6653,6 +7279,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = False,
             lethargy   = 5,
@@ -6673,6 +7300,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = False,
             lethargy   = 5,
@@ -6693,6 +7321,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = False,
             lethargy   = 5,
@@ -6713,6 +7342,7 @@ def create_entity(names):
             max_hp     = 100,
             attack     = 0,
             defense    = 100,
+            stamina    = 100,
             
             follow     = False,
             lethargy   = 5,
@@ -6733,6 +7363,7 @@ def create_entity(names):
             max_hp     = 20,
             attack     = 4,
             defense    = 0,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6753,6 +7384,7 @@ def create_entity(names):
             max_hp     = 20,
             attack     = 4,
             defense    = 0,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6773,6 +7405,7 @@ def create_entity(names):
             max_hp     = 30,
             attack     = 8,
             defense    = 2,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6793,6 +7426,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6813,6 +7447,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6833,6 +7468,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6853,6 +7489,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6873,6 +7510,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6893,6 +7531,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6913,6 +7552,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6933,6 +7573,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6953,6 +7594,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 5,
@@ -6973,6 +7615,7 @@ def create_entity(names):
             max_hp     = 10,
             attack     = 0,
             defense    = 500,
+            stamina    = 100,
             
             follow     = False,
             lethargy   = 2,
@@ -6993,6 +7636,7 @@ def create_entity(names):
             max_hp     = 50,
             attack     = 15,
             defense    = 5,
+            stamina    = 100,
             
             follow     = False,
             lethargy   = 10,
@@ -7013,6 +7657,7 @@ def create_entity(names):
             max_hp     = 25,
             attack     = 0,
             defense    = 25,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 6,
@@ -7033,6 +7678,7 @@ def create_entity(names):
             max_hp     = 25,
             attack     = 0,
             defense    = 25,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 6,
@@ -7053,6 +7699,7 @@ def create_entity(names):
             max_hp     = 25,
             attack     = 0,
             defense    = 25,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 6,
@@ -7073,6 +7720,7 @@ def create_entity(names):
             max_hp     = 25,
             attack     = 0,
             defense    = 25,
+            stamina    = 100,
             
             follow     = True,
             lethargy   = 6,
@@ -7095,6 +7743,8 @@ def create_NPC(name):
     """ A more specific version of create_entity. """
     
     if name == 'Kyrio':
+        
+        # Equipment
         ent = create_entity('black')
         clothes = create_item('exotic clothes')
         beard   = create_item('white beard')
@@ -7105,15 +7755,18 @@ def create_NPC(name):
         clothes.toggle_equip(ent)
         beard.toggle_equip(ent)
         dagger.toggle_equip(ent)
+        
+        # Dialogue
         ent.default_dialogue = [
             "Kyrio: *furrows his brow*",
             "Kyrio: Talk to my brother, Kapno. I know little of mercantile.",
             "Kyrio: *seems not to notice*",
             "Kyrio: Is there something you need?"]
-        return ent
     
     elif name == 'Kapno':
-        ent = create_entity('black')
+        
+        # Equipment
+        ent     = create_entity('black')
         clothes = create_item('exotic clothes')
         beard   = create_item('white beard')
         dagger  = create_item('blood dagger')
@@ -7123,16 +7776,29 @@ def create_NPC(name):
         clothes.toggle_equip(ent)
         beard.toggle_equip(ent)
         dagger.toggle_equip(ent)
+        
+        # Inventory
+        ent.trader = True
+        inv = ['shovel', 'sword', 'iron shield',
+               'orange clothes', 'exotic clothes',
+               'healing potion', 'transformation potion', 'blue potion', 'gray potion',
+               'boxes', 'fire', 'shrooms', 'cup shroom']
+        for item in inv:
+            item = create_item(item)
+            ent.inventory[item.role].append(item)
+        
+        # Dialogue
         ent.default_dialogue = [
             "Kapno: Huh?",
             "Kapno: Too many dry days, it seems. The lake is rather shallow.",
             "Kapno: Have you seen my brother? He seems distracted as of late.",
             "Kapno: My bones may be brittle, but I know good products when I see them.",
             "Kapno: *mumbles*"]
-        return ent
-
+    
     elif name == 'Erasti':
-        ent = create_entity('black')
+        
+        # Equipment
+        ent     = create_entity('black')
         hair    = create_item('brown hair')
         bra     = create_item('bra')
         clothes = create_item('yellow dress')
@@ -7145,6 +7811,8 @@ def create_NPC(name):
         bra.toggle_equip(ent)
         clothes.toggle_equip(ent)
         shovel.toggle_equip(ent)
+        
+        # Dialogue
         ent.default_dialogue = [
             "Erasti: ...",
             "Erasti: Are you new to the region? Sorry, my memory is terrible!",
@@ -7152,7 +7820,42 @@ def create_NPC(name):
             "Erasti: Sorry, I have a lot on my mind.",
             "Erasti: Good to see you!",
             "Erasti: Rumor has it that Kapno stashes a jar of herbs under his bed."]
-
+    
+    elif name == 'Merci':
+        
+        # Equipment
+        ent     = create_entity('white')
+        hair    = create_item('blue hair')
+        bra     = create_item('bra')
+        clothes = create_item('chain dress')
+        shovel  = create_item('shovel')
+        ent.inventory[hair.role].append(hair)
+        ent.inventory[bra.role].append(bra)
+        ent.inventory[clothes.role].append(clothes)
+        ent.inventory[shovel.role].append(shovel)
+        hair.toggle_equip(ent)
+        bra.toggle_equip(ent)
+        clothes.toggle_equip(ent)
+        shovel.toggle_equip(ent)
+        
+        # Inventory
+        ent.trader = True
+        inv = ['shovel',
+               'chain dress', 'green clothes', 'yellow dress',
+               'bubbles', 'plant']
+        for item in inv:
+            item = create_item(item)
+            ent.inventory[item.role].append(item)
+        
+        # Dialogue
+        ent.default_dialogue = [
+            "Merci: Are you looking to buy anything in particular? Please, take a look at my stock.",
+            "Merci: We specialize in exotic goods, but the basics are available as well.",
+            "Merci: I prefer coins, but I could use the sale. Are you looking to trade?",
+            "Merci: Your purchase is free if you can find my keys. I can't sell my blades without them!",
+            "Merci: We have many items for sale.",
+            "Merci: ... Oh, welcome in!"]
+    
     elif name == 'random':
         ent     = create_entity(str(random.choice(img.skin_options)))
         hair    = create_item(str(random.choice(img.hair_options)))
@@ -7172,7 +7875,8 @@ def create_NPC(name):
             "NPC: ...",
             "NPC: Howdy!",
             "NPC: *seems busy*"]
-        return ent
+    
+    return ent
 
 def add_doors(room):
     """ Add one or two doors to a room, and adds a entryway. """
@@ -7314,7 +8018,7 @@ def place_objects(env, items, entities):
                 
                 # Check that the object matches the biome
                 if env.map[x][y].biome in img.biomes[selection[0]]:
-                    if not random.randint(0, selection[2]):
+                    if not random.randint(0, selection[2]) and not env.map[x][y].item:
                         
                         ## Place object
                         item = create_item(selection[1])
