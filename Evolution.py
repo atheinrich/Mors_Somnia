@@ -68,7 +68,6 @@ import time
 import pickle
 import copy
 import sys
-import textwrap
 
 # Aesthetics
 from PIL import Image, ImageFilter, ImageOps
@@ -452,7 +451,7 @@ def render_all(size='display', visible=False):
         
         if pyg.gui_toggle:
             for i in range(len(pyg.gui)):
-                pyg.screen.blit(list(pyg.gui.values())[i],   (5+250*i, pyg.screen_height-27))
+                pyg.screen.blit(list(pyg.gui.values())[i], (5+250*i, pyg.screen_height-27))
     
     aud.shuffle()
 
@@ -521,7 +520,8 @@ class Pygame:
         pygame.init()
         pygame.key.set_repeat(250, 150)
         pygame.display.set_caption("Mors Somnia") # Sets game title
-        self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height),)
+        self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.frame    = True
         self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.clock    = pygame.time.Clock()
@@ -603,6 +603,8 @@ class Pygame:
         self.yellow            = pygame.color.THECOLORS['yellow']
         self.orange            = pygame.color.THECOLORS['orange']
         self.violet            = pygame.color.THECOLORS['violet']
+        self.colors            = [self.black, self.dark_gray, self.gray, self.white,
+                                  self.red, self.orange, self.yellow, self.green, self.blue, self.violet]
 
     def set_graphics(self):
         
@@ -623,25 +625,56 @@ class Pygame:
         self.msg               = []   # list of font objects; messages to be rendered
         self.gui_toggle        = True # Boolean; shows or hides GUI
         self.gui               = None # font object; stats to be rendered
-        self.message_width     = int(self.screen_width / 6)
-        self.message_height    = 4 # number of lines shown
+        self.msg_width         = int(self.screen_width / 6)
+        self.msg_height        = 4 # number of lines shown
+        self.msg_history       = {}
+
+    def textwrap(self, text, width):
+        words = text.split()
+        lines = []
+        current_line = []
+
+        for word in words:
+            if sum(len(w) for w in current_line) + len(current_line) + len(word) <= width:
+                current_line.append(word)
+            else:
+                lines.append(" ".join(current_line))
+                current_line = [word]
+        
+        if current_line:
+            lines.append(" ".join(current_line))
+
+        return lines
 
     def update_gui(self, new_msg=None, color=None):
         
+        # Prepare colors
+        img.average()
+        if not color: color = pygame.Color(img.top_correct, img.top_correct, img.top_correct)
+        bottom_color = pygame.Color(img.bottom_correct, img.bottom_correct, img.bottom_correct)
+        
         if player_obj.ent.env:
             
-            # Create or delete message; update pyg.update_gui list
+            # Create and delete messages
             if new_msg:
-                for line in textwrap.wrap(new_msg, pyg.message_width):
+                for line in pyg.textwrap(new_msg, pyg.msg_width):
+                    self.msg_history[line] = color
                     
                     # Delete older messages
-                    if len(self.msg) == pyg.message_height:
+                    if len(self.msg) == pyg.msg_height:
                         del self.msg[0]
-                    
-                    # Create pyg.update_gui object
-                    self.msg.append(self.font.render(line, True, color))
             
-            # Update top and/or bottom gui
+            # Reconstruct message list
+            self.msg = []
+            lines = list(self.msg_history.keys())[len(self.msg_history)-self.msg_height:]
+            colors = list(self.msg_history.values())[len(self.msg_history)-self.msg_height:]
+            for i in range(len(lines)):
+                if colors[i] in pyg.colors:
+                    self.msg.append(self.font.render(lines[i], True, colors[i]))
+                else:
+                    self.msg.append(self.font.render(lines[i], True, color))
+            
+            # Update bottom gui
             if not pyg.overlay:
                 
                 # Health
@@ -661,12 +694,12 @@ class Pygame:
                 self.gui = {
                     'health':   self.minifont.render(health,  True, self.red),
                     'stamina':  self.minifont.render(stamina, True, self.green),
-                    'location': self.minifont.render(env,     True, self.dark_gray)}
+                    'location': self.minifont.render(env,     True, bottom_color)}
             
             # Show last message
             else:
                 if self.msg: self.msg = [self.msg[-1]]
-                self.gui = {'wallet': self.minifont.render('⨋ '+str(player_obj.ent.wallet), True, self.dark_gray)}
+                self.gui = {'wallet': self.minifont.render('⨋ '+str(player_obj.ent.wallet), True, bottom_color)}
 
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -1108,6 +1141,50 @@ class Images:
                     else:
                         self.render_log.pop(j)
 
+    # Utility
+    def average(self):
+        
+        # Identify regions of interest
+        top_rect     = pygame.Rect(0, 0, pyg.screen_width, 50)
+        bottom_rect  = pygame.Rect(0, pyg.screen_height-50, pyg.screen_width, 50)
+        left_rect    = pygame.Rect(50, 50, 50, 50)
+        right_rect   = pygame.Rect(pyg.screen_width-100, 50, 50, 50)
+        menu_rect    = pygame.Rect(100, pyg.screen_height-100, 50, 50) # pygame.Rect(100, pyg.screen_width-100, 100, 100)
+        
+        top_color    = pygame.transform.average_color(pyg.screen, rect=top_rect,    consider_alpha=False)
+        bottom_color = pygame.transform.average_color(pyg.screen, rect=bottom_rect, consider_alpha=False)
+        left_color   = pygame.transform.average_color(pyg.screen, rect=left_rect,   consider_alpha=False)
+        right_color  = pygame.transform.average_color(pyg.screen, rect=right_rect,  consider_alpha=False)
+        menu_color   = pygame.transform.average_color(pyg.screen, rect=menu_rect,   consider_alpha=False)
+        
+        # Relative luminance formula
+        top_brightness    = 0.2126 * top_color[0]    + 0.7152 * top_color[1]    + 0.0722 * top_color[2]
+        bottom_brightness = 0.2126 * bottom_color[0] + 0.7152 * bottom_color[1] + 0.0722 * bottom_color[2]
+        left_brightness   = 0.2126 * left_color[0]   + 0.7152 * left_color[1]   + 0.0722 * left_color[2]
+        right_brightness  = 0.2126 * right_color[0]  + 0.7152 * right_color[1]  + 0.0722 * right_color[2]
+        menu_brightness   = 0.2126 * menu_color[0]   + 0.7152 * menu_color[1]   + 0.0722 * menu_color[2]
+        
+        # Quadratic version
+        #top_brightness    = (top_color[0]**2    + top_color[1]**2    + top_color[2]**2)**(1/2)
+        #bottom_brightness = (bottom_color[0]**2 + bottom_color[1]**2 + bottom_color[2]**2)**(1/2)
+        #left_brightness   = (left_color[0]**2   + left_color[1]**2   + left_color[2]**2)**(1/2)
+        #right_brightness  = (right_color[0]**2  + right_color[1]**2  + right_color[2]**2)**(1/2)
+        #menu_brightness   = (menu_color[0]**2   + menu_color[1]**2   + menu_color[2]**2)**(1/2)
+        
+        # Restrict corrections to [0, 255]
+        if top_brightness < 40:    top_brightness    = 40
+        if bottom_brightness < 40: bottom_brightness = 40
+        if left_brightness < 40:   left_brightness   = 40
+        if right_brightness < 40:  right_brightness  = 40
+        if menu_brightness < 40:   menu_brightness   = 40
+        
+        # Calculate a good shade of gray
+        self.top_correct    = int(((255 - top_brightness)**2    + (255/3)**2)**(1/2))
+        self.bottom_correct = int(((255 - bottom_brightness)**2 + (255/3)**2)**(1/2))
+        self.left_correct   = int(((255 - left_brightness)**2   + (255/3)**2)**(1/2))
+        self.right_correct  = int(((255 - right_brightness)**2  + (255/3)**2)**(1/2))
+        self.menu_correct   = int(((255 - menu_brightness)**2   + (255/3)**2)**(1/2))
+
 class Audio:
     """ Manages audio. One save for each file. """
 
@@ -1314,240 +1391,6 @@ class Player:
         dagger.toggle_equip(self.ent)
 
 ## States
-class MainMenu:
-    
-    def __init__(self):
-        
-        # Initialize title
-        self.title_font     = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
-        self.game_title     = self.title_font.render("MORS SOMNIA", True, pyg.gray)
-        self.game_title_pos = (int((pyg.screen_width - self.game_title.get_width())/2), 85)
-        
-        # Initialize cursor
-        self.cursor_img = pygame.Surface((16, 16)).convert()
-        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_img, pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
-        self.cursor_pos = [32, 320]
-        
-        # Initialize menu options
-        self.menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
-        self.menu_choices_surfaces = []
-        for i in range(len(self.menu_choices)):
-            if   i == 0:                          color = pyg.gray
-            elif i == len(self.menu_choices) - 1: color = pyg.gray
-            else:                                 color = pyg.gray
-            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, color))
-        self.choice, self.choices_length = 0, len(self.menu_choices) - 1
-        
-        # Allows access to garden
-        self.menu_toggle = True
-        
-        # Other
-        self.last_press_time, self.cooldown_time = 0, 0.5
-
-    def startup(self):
-        
-        # Startup background
-        background_image = pygame.image.load("Data/.Images/garden.png").convert()
-        background_image = pygame.transform.scale(background_image, (pyg.screen_width, pyg.screen_height))
-
-        # Fade details
-        alpha = 0
-        fade_speed = 10
-        fade_surface = pygame.Surface((pyg.screen_width, pyg.screen_height))
-        fade_surface.fill(pyg.black)
-        
-        # Apply fade
-        while alpha < 255:
-            pyg.clock.tick(30)
-            fade_surface.set_alpha(255 - alpha)
-            
-            # Set menu background to the custom image
-            pyg.screen.blit(background_image, (0, 0))
-            
-            # Draw the menu elements during the fade
-            pyg.screen.blit(self.game_title, self.game_title_pos)
-
-            # Apply the fade effect
-            pyg.screen.blit(fade_surface, (0, 0))
-            
-            pygame.display.flip()
-            
-            # Increase alpha for the next frame
-            alpha += fade_speed
-        pyg.game_state = 'play_garden'
-        pyg.overlay = 'menu'
-        return
-
-    def run(self):
-        
-        # Restrict keystroke speed
-        mech.movement_speed(toggle=False, custom=2)
-        
-        # Prevent saving before a game is started or loaded
-        if pyg.startup_toggle:
-            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, pyg.dark_gray)
-        else:
-            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, pyg.gray)
-
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-            
-                # Navigation
-                if event.key in pyg.key_UP:       self.key_UP()
-                elif event.key in pyg.key_DOWN:   self.key_DOWN()
-                
-                # Music
-                elif event.key in pyg.key_PLUS:   self.key_PLUS()
-                elif event.key in pyg.key_MINUS:  self.key_MINUS()
-                elif event.key in pyg.key_DEV:    self.key_DEV()
-                
-                # Garden
-                elif event.key in pyg.key_PERIOD: self.key_PERIOD()
-        
-                # Unused
-                elif event.key in pyg.key_LEFT:   self.key_LEFT()
-                elif event.key in pyg.key_RIGHT:  self.key_RIGHT()
-                elif event.key in pyg.key_HOLD:   self.key_HOLD()
-                elif event.key in pyg.key_INV:    self.key_INV()
-                elif event.key in pyg.key_INFO:   self.key_INFO()
-                elif event.key in pyg.key_SPEED:  self.key_SPEED()
-                elif event.key in pyg.key_QUEST:  self.key_QUEST()
-                elif event.key in pyg.key_EQUIP:  self.key_EQUIP()
-                elif event.key in pyg.key_DROP:   self.key_DROP()
-                
-                # >>RESUME<<
-                elif event.key in pyg.key_BACK:
-                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
-                        pyg.last_press_time = float(time.time())
-                        if not pyg.startup_toggle: pyg.game_state = 'play_game'
-                        else:                      pyg.game_state = 'play_garden'
-                        pyg.overlay = None
-                        return
-                
-                # Select option
-                elif event.key in pyg.key_ENTER:
-                    
-                    # >>NEW GAME<<
-                    if self.choice == 0:
-                        pyg.game_state = 'new_game'
-                        new_game_obj.reset()
-                        pyg.overlay = None
-                        return
-                    
-                    # >>LOAD<<
-                    elif self.choice == 1:
-                        pyg.overlay = 'load'
-                        return
-                    
-                    # >>SAVE<<
-                    elif self.choice == 2:
-                        
-                        # Prevent saving before a game is started or loaded
-                        if not pyg.startup_toggle:
-                            pyg.overlay = 'save'
-                            return
-                    
-                    # >>CONTROLS<<
-                    elif self.choice == 3:
-                        pyg.overlay = 'controls'
-                        return
-                    
-                    # >>QUIT<<
-                    elif self.choice == 4:
-                        pygame.quit()
-                        sys.exit()
-        
-        pyg.overlay = 'menu'
-        return
-
-    def key_UP(self):
-        
-        # >>SELECT MENU ITEM<<
-        self.cursor_pos[1] -= 24
-        self.choice -= 1
-        if self.choice < 0:
-            self.choice = self.choices_length
-            self.cursor_pos[1] = 320 + (len(self.menu_choices) - 1) * 24
-
-    def key_DOWN(self):
-        
-        # >>SELECT MENU ITEM<<
-        self.cursor_pos[1] += 24
-        self.choice += 1
-        if self.choice > self.choices_length:
-            self.choice = 0
-            self.cursor_pos[1] = 320
-    
-    def key_LEFT(self):
-        pass
-
-    def key_RIGHT(self):
-        pass
-
-    def key_PERIOD(self):
-
-        # >>GARDEN<<
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time())
-            if player_obj.ent.env.name != 'garden':
-                place_player(env=player_obj.envs['garden'], loc=player_obj.envs['garden'].player_coordinates)    # menu (key_PERIOD)
-                pyg.game_state = 'play_garden'
-            elif not pyg.startup_toggle:
-                place_player(env=player_obj.ent.last_env, loc=player_obj.ent.last_env.player_coordinates)    # menu (key_PERIOD)
-                pyg.game_state = 'play_game'
-
-    def key_HOLD(self):
-        pass
-
-    def key_PLUS(self):
-        aud.pause(paused=False)
-
-    def key_MINUS(self):
-        aud.pause(paused=True)
-
-    def key_INFO(self):
-        pass
-
-    def key_QUEST(self):
-        pass
-
-    def key_SPEED(self):
-        pass
-
-    def key_INV(self):
-        pass
-
-    def key_DEV(self):
-        aud.play_track()
-
-    def key_EQUIP(self):
-        pass
-
-    def key_DROP(self):
-        pass
-
-    def render(self):
-        
-        # Blit menu options
-        Y = 316
-        for menu_choice_surface in self.menu_choices_surfaces:
-            pyg.screen.blit(menu_choice_surface, (48, Y))
-            Y += 24
-        
-        # Blit cursor
-        pyg.screen.blit(self.cursor_img, self.cursor_pos)
-
-        # Blit logo
-        if pyg.startup_toggle:
-            pyg.screen.blit(self.game_title, self.game_title_pos)
-        else:
-            for i in range(len(img.big)):
-                for j in range(len(img.big[0])):
-                    X = pyg.screen_width - pyg.tile_width * (i+2)
-                    Y = pyg.screen_height - pyg.tile_height * (j+2)
-                    pyg.screen.blit(img.big[len(img.big)-j-1][len(img.big[0])-i-1], (X, Y))
-
 class NewMenu:
     
     def __init__(self, name, header, options, options_categories=None, position='top left', backgrounds=None):
@@ -2057,7 +1900,7 @@ class NewGame:
         
         # Prepare gui
         pyg.msg = []
-        pyg.update_gui('Press / to hide messages.', pyg.dark_gray)
+        pyg.update_gui('Press / to hide messages.')
         pyg.msg_toggle = True
     
     def render(self):
@@ -2299,7 +2142,7 @@ class PlayGame:
         
         # >>DROP ITEM<<
         if player_obj.ent.tile.item:
-            pyg.update_gui("There's already something here", color=pyg.dark_gray)
+            pyg.update_gui("There's already something here")
         else:
             chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
             if chosen_item is not None:
@@ -2307,7 +2150,7 @@ class PlayGame:
                 pygame.event.clear()
 
     def render(self):
-        pyg.message_height = 4
+        pyg.msg_height = 4
         if not pyg.overlay: pyg.update_gui()
         render_all()
 
@@ -2473,7 +2316,7 @@ class PlayGarden:
         
         # >>DROP ITEM<<
         if player_obj.ent.tile.item:
-            pyg.update_gui("There's already something here", color=pyg.dark_gray)
+            pyg.update_gui("There's already something here")
         else:
             chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
             if chosen_item is not None:
@@ -2484,6 +2327,253 @@ class PlayGarden:
         pyg.msg_toggle = False
         pyg.gui_toggle = False
         render_all()
+
+## Overlays
+class MainMenu:
+    
+    def __init__(self):
+        
+        # Initialize title
+        self.title_font     = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
+        self.game_title     = self.title_font.render("MORS SOMNIA", True, pyg.gray)
+        self.game_title_pos = (int((pyg.screen_width - self.game_title.get_width())/2), 85)
+        
+        # Initialize cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
+        self.cursor_pos = [32, 320]
+        
+        # Initialize menu options
+        self.menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
+        self.menu_choices_surfaces = []
+        
+        img.average()
+        self.color = pygame.Color(img.menu_correct, img.menu_correct, img.menu_correct)
+        for i in range(len(self.menu_choices)):
+            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, self.color))
+        self.choice, self.choices_length = 0, len(self.menu_choices) - 1
+        
+        # Allows access to garden
+        self.menu_toggle = True
+        
+        # Other
+        self.last_press_time, self.cooldown_time = 0, 0.5
+
+    def startup(self):
+        
+        # Startup background
+        background_image = pygame.image.load("Data/.Images/garden.png").convert()
+        background_image = pygame.transform.scale(background_image, (pyg.screen_width, pyg.screen_height))
+
+        # Fade details
+        alpha = 0
+        fade_speed = 10
+        fade_surface = pygame.Surface((pyg.screen_width, pyg.screen_height))
+        fade_surface.fill(pyg.black)
+        
+        # Apply fade
+        while alpha < 255:
+            pyg.clock.tick(30)
+            fade_surface.set_alpha(255 - alpha)
+            
+            # Set menu background to the custom image
+            pyg.screen.blit(background_image, (0, 0))
+            
+            # Draw the menu elements during the fade
+            pyg.screen.blit(self.game_title, self.game_title_pos)
+
+            # Apply the fade effect
+            pyg.screen.blit(fade_surface, (0, 0))
+            
+            pygame.display.flip()
+            
+            # Increase alpha for the next frame
+            alpha += fade_speed
+        pyg.game_state = 'play_garden'
+        pyg.overlay = 'menu'
+        return
+
+    def run(self):
+        
+        # Restrict keystroke speed
+        mech.movement_speed(toggle=False, custom=2)
+        
+        # Prevent saving before a game is started or loaded
+        if pyg.startup_toggle:
+            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, pyg.dark_gray)
+        else:
+            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, self.color)
+
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+            
+                # Navigation
+                if event.key in pyg.key_UP:       self.key_UP()
+                elif event.key in pyg.key_DOWN:   self.key_DOWN()
+                
+                # Music
+                elif event.key in pyg.key_PLUS:   self.key_PLUS()
+                elif event.key in pyg.key_MINUS:  self.key_MINUS()
+                elif event.key in pyg.key_DEV:    self.key_DEV()
+                
+                # Garden
+                elif event.key in pyg.key_PERIOD: self.key_PERIOD()
+        
+                # Unused
+                elif event.key in pyg.key_LEFT:   self.key_LEFT()
+                elif event.key in pyg.key_RIGHT:  self.key_RIGHT()
+                elif event.key in pyg.key_HOLD:   self.key_HOLD()
+                elif event.key in pyg.key_INV:    self.key_INV()
+                elif event.key in pyg.key_INFO:   self.key_INFO()
+                elif event.key in pyg.key_SPEED:  self.key_SPEED()
+                elif event.key in pyg.key_QUEST:  self.key_QUEST()
+                elif event.key in pyg.key_EQUIP:  self.key_EQUIP()
+                elif event.key in pyg.key_DROP:   self.key_DROP()
+                
+                # >>RESUME<<
+                elif event.key in pyg.key_BACK:
+                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        pyg.last_press_time = float(time.time())
+                        if not pyg.startup_toggle: pyg.game_state = 'play_game'
+                        else:                      pyg.game_state = 'play_garden'
+                        pyg.overlay = None
+                        return
+                
+                # Select option
+                elif event.key in pyg.key_ENTER:
+                    
+                    # >>NEW GAME<<
+                    if self.choice == 0:
+                        pyg.game_state = 'new_game'
+                        new_game_obj.reset()
+                        pyg.overlay = None
+                        return
+                    
+                    # >>LOAD<<
+                    elif self.choice == 1:
+                        pyg.overlay = 'load'
+                        return
+                    
+                    # >>SAVE<<
+                    elif self.choice == 2:
+                        
+                        # Prevent saving before a game is started or loaded
+                        if not pyg.startup_toggle:
+                            pyg.overlay = 'save'
+                            return
+                    
+                    # >>CONTROLS<<
+                    elif self.choice == 3:
+                        pyg.overlay = 'controls'
+                        return
+                    
+                    # >>QUIT<<
+                    elif self.choice == 4:
+                        pygame.quit()
+                        sys.exit()
+        
+        pyg.overlay = 'menu'
+        return
+
+    def key_UP(self):
+        
+        # >>SELECT MENU ITEM<<
+        self.cursor_pos[1] -= 24
+        self.choice -= 1
+        if self.choice < 0:
+            self.choice = self.choices_length
+            self.cursor_pos[1] = 320 + (len(self.menu_choices) - 1) * 24
+
+    def key_DOWN(self):
+        
+        # >>SELECT MENU ITEM<<
+        self.cursor_pos[1] += 24
+        self.choice += 1
+        if self.choice > self.choices_length:
+            self.choice = 0
+            self.cursor_pos[1] = 320
+    
+    def key_LEFT(self):
+        pass
+
+    def key_RIGHT(self):
+        pass
+
+    def key_PERIOD(self):
+
+        # >>GARDEN<<
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time())
+            if player_obj.ent.env.name != 'garden':
+                place_player(env=player_obj.envs['garden'], loc=player_obj.envs['garden'].player_coordinates)    # menu (key_PERIOD)
+                pyg.game_state = 'play_garden'
+            elif not pyg.startup_toggle:
+                place_player(env=player_obj.ent.last_env, loc=player_obj.ent.last_env.player_coordinates)    # menu (key_PERIOD)
+                pyg.game_state = 'play_game'
+
+    def key_HOLD(self):
+        pass
+
+    def key_PLUS(self):
+        aud.pause(paused=False)
+
+    def key_MINUS(self):
+        aud.pause(paused=True)
+
+    def key_INFO(self):
+        if pyg.frame:
+            pygame.display.set_mode((pyg.screen_width, pyg.screen_height), pygame.NOFRAME)
+            pyg.frame = False
+        else:
+            pygame.display.set_mode((pyg.screen_width, pyg.screen_height))
+            pyg.frame = True
+
+    def key_QUEST(self):
+        pass
+
+    def key_SPEED(self):
+        pass
+
+    def key_INV(self):
+        pass
+
+    def key_DEV(self):
+        aud.play_track()
+
+    def key_EQUIP(self):
+        pass
+
+    def key_DROP(self):
+        pass
+
+    def render(self):
+        
+        # Blit menu options
+        Y = 316
+        
+        self.menu_choices_surfaces = []
+        
+        img.average()
+        self.color = pygame.Color(img.menu_correct, img.menu_correct, img.menu_correct)
+        for i in range(len(self.menu_choices)):
+            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, self.color))
+        for menu_choice_surface in self.menu_choices_surfaces:
+            pyg.screen.blit(menu_choice_surface, (48, Y))
+            Y += 24
+        
+        # Blit cursor
+        pyg.screen.blit(self.cursor_img, self.cursor_pos)
+
+        # Blit logo
+        if pyg.startup_toggle:
+            pyg.screen.blit(self.game_title, self.game_title_pos)
+        else:
+            for i in range(len(img.big)):
+                for j in range(len(img.big[0])):
+                    X = pyg.screen_width - pyg.tile_width * (i+2)
+                    Y = pyg.screen_height - pyg.tile_height * (j+2)
+                    pyg.screen.blit(img.big[len(img.big)-j-1][len(img.big[0])-i-1], (X, Y))
 
 class DevTools:
     
@@ -2654,11 +2744,11 @@ class DevTools:
         except: print("No file found!")
 
     def render(self):
-        pyg.message_height = 1
+        pyg.msg_height = 1
         pyg.update_gui()
         render_all()
         
-        pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
+        pyg.screen.blit(self.cursor_fill, self.cursor_pos)
         
         # Renders menu to update cursor location
         Y = 32
@@ -2836,7 +2926,7 @@ class Inventory:
         # Select the item
         if filtered_list:
             
-            if type(offset) == int: item = filtered_list[offset]
+            if type(offset) == int: item = filtered_list[offset%len(filtered_list)]
             else: item = filtered_list[self.choice%len(filtered_list)]
             return item
 
@@ -2859,11 +2949,15 @@ class Inventory:
         return
 
     def render(self):
-        pyg.message_height = 1
+        
+        # Basics
+        pyg.msg_height = 1
         pyg.update_gui()
         render_all()
         
-        pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
+        pyg.screen.blit(self.cursor_fill, self.cursor_pos)
+        img.average()
+        color = pygame.Color(img.left_correct, img.left_correct, img.left_correct)
         
         # Renders menu to update cursor location
         Y = 32
@@ -2890,7 +2984,8 @@ class Inventory:
                     self.menu_choices = [item_name, detail]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.dark_gray))
+                        self.menu_choices_surfaces.append(
+                            pyg.minifont.render(self.menu_choices[i], True, color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
                         pyg.screen.blit(menu_choice_surface, (40, Y_detail))
@@ -3027,12 +3122,14 @@ class Hold:
                     return
 
     def render(self):
-        pyg.message_height = 1
+        pyg.msg_height = 1
         pyg.update_gui()
         render_all()
         
         pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
         pyg.screen.blit(self.cursor_border, self.cursor_pos)
+        img.average()
+        color = pygame.Color(img.left_correct, img.left_correct, img.left_correct)
         
         # Renders menu to update cursor location
         Y = 32
@@ -3053,7 +3150,8 @@ class Hold:
                     self.menu_choices = [effect_name, self.sequences[effect_name]]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.dark_gray))
+                        self.menu_choices_surfaces.append(
+                            pyg.minifont.render(self.menu_choices[i], True, color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
                         pyg.screen.blit(menu_choice_surface, (40, Y_cache))
@@ -3385,14 +3483,24 @@ class Trade:
                 pass
 
     def render(self):
-        pyg.message_height = 1
+        
+        # Basics
+        pyg.msg_height = 1
         pyg.update_gui()
         render_all()
         
-        if self.menu_toggle == 'right': pyg.screen.blit(self.cursor_fill_bnm, self.cursor_pos_bnm)
-        else:                           pyg.screen.blit(self.cursor_fill,     self.cursor_pos)
+        # Cursor background and font colors
+        img.average()
+        if self.menu_toggle == 'right':
+            left_color  = pygame.Color(img.left_correct - 20, img.left_correct - 20, img.left_correct - 20)
+            right_color = pygame.Color(img.right_correct, img.right_correct, img.right_correct)
+            pyg.screen.blit(self.cursor_fill_bnm, self.cursor_pos_bnm)
+        else:
+            left_color  = pygame.Color(img.left_correct, img.left_correct, img.left_correct)
+            right_color = pygame.Color(img.right_correct - 20, img.right_correct - 20, img.right_correct - 20)
+            pyg.screen.blit(self.cursor_fill, self.cursor_pos)
         
-        # Renders menu to update cursor location
+        ## Player's inventory
         Y = 32
         counter = 0
         for i in range(len(list(self.dic))):
@@ -3412,7 +3520,7 @@ class Trade:
                     self.menu_choices = [item_name, cost]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.dark_gray))
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, left_color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
                         pyg.screen.blit(menu_choice_surface, (40, Y_detail))
@@ -3424,7 +3532,7 @@ class Trade:
                 counter += 1                
             else: break
         
-        # Renders menu to update cursor location
+        ## Trader's inventory
         Y = 32
         counter = 0
         for i in range(len(list(self.dic_bnm))):
@@ -3444,7 +3552,7 @@ class Trade:
                     self.menu_choices = [item_name, cost]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, pyg.gray))
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, right_color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
                         X = pyg.screen_width - pyg.tile_width - menu_choice_surface.get_width() - 8
@@ -3600,7 +3708,7 @@ class Item:
         if not ent: ent = player_obj.ent
         
         if len(ent.inventory) >= 26:
-            pyg.update_gui('Your inventory is full, cannot pick up ' + self.name + '.', pyg.dark_gray)
+            pyg.update_gui('Your inventory is full, cannot pick up ' + self.name + '.')
         else:
             
             # Pick up item if possible
@@ -3612,7 +3720,7 @@ class Item:
                 ent.inventory[self.role].append(self)
                 sort_inventory(ent)
                 ent.tile.item = None
-                pyg.update_gui("Picked up " + self.name + ".", pyg.dark_gray)
+                pyg.update_gui("Picked up " + self.name + ".")
 
     def drop(self, ent=None):
         """ Unequips item before dropping if the object has the Equipment component, then adds it to the map at
@@ -3640,7 +3748,8 @@ class Item:
         if self in owner.equipment.values():
             self.toggle_equip(owner)
         
-        if (owner.wallet - self.cost) > 0:
+        # Check wallet for cash
+        if (owner.wallet - self.cost) >= 0:
             
             # Remove from owner
             owner.inventory[self.role].remove(self)
@@ -3670,9 +3779,9 @@ class Item:
                 ent.effects.append(self.effect)
             
             # Activate the item
-            else: self.effect.function()
+            else: self.effect.function(ent)
         
-        elif self.role == 'player': pyg.update_gui("The " + self.name + " cannot be used.", pyg.dark_gray)
+        elif self.role == 'player': pyg.update_gui("The " + self.name + " cannot be used.")
 
     def toggle_equip(self, ent):
         """ Toggles the equip/unequip status. """
@@ -3699,7 +3808,7 @@ class Item:
 
         if ent.role == 'player':
             if not self.hidden:
-                pyg.update_gui('Equipped ' + self.name + ' on ' + self.slot + '.', pyg.dark_gray)
+                pyg.update_gui('Equipped ' + self.name + ' on ' + self.slot + '.')
 
     def dequip(self, ent):
         """ Unequips an object and shows a message about it. """
@@ -3718,7 +3827,7 @@ class Item:
         
         if self.role == 'player':
             if not self.hidden:
-                pyg.update_gui('Dequipped ' + self.name + ' from ' + self.slot + '.', pyg.dark_gray)
+                pyg.update_gui('Dequipped ' + self.name + ' from ' + self.slot + '.')
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -4000,7 +4109,7 @@ class Entity:
                         self.env.player_coordinates    = [x, y]
                         check_tile(x, y)
                     else:
-                        pyg.update_gui('The shovel strikes the wall but does not break it.', pyg.dark_gray)
+                        pyg.update_gui('The shovel strikes the barrier but does not break it.')
                     
                     # Update durability
                     if self.equipment['dominant hand'].durability <= 100:
@@ -4659,7 +4768,7 @@ class Mechanics:
             pygame.event.clear()
             
             if 'dungeon' not in player_obj.envs.keys(): 
-                pyg.update_gui('You step into the darkness.', pyg.dark_gray)
+                pyg.update_gui('You step into the darkness.')
                 player_obj.envs['dungeon'] = []
                 build_dungeon_level()
             
@@ -4686,7 +4795,7 @@ class Mechanics:
             pygame.event.clear()
                 
             if 'cave' not in player_obj.envs.keys(): 
-                pyg.update_gui('The ground breaks beneath you and reveals a cave.', pyg.dark_gray)
+                pyg.update_gui('The ground breaks beneath you and reveals a cave.')
                 player_obj.envs['cave'] = []
                 build_cave_level()
             
@@ -4735,7 +4844,7 @@ class Mechanics:
                     self.movement_speed_toggle = 0
                 else:
                     self.movement_speed_toggle += 1
-                pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
+                pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}")
                 (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
             
@@ -4758,9 +4867,9 @@ class Mechanics:
         """ Heals the player. """
         
         if player_obj.ent.fighter.hp == player_obj.ent.fighter.max_hp:
-            pyg.update_gui('You are already at full health.', pyg.dark_gray)
+            pyg.update_gui('You are already at full health.')
             return 'cancelled'
-        pyg.update_gui('Your wounds start to feel better!', pyg.dark_gray)
+        pyg.update_gui('Your wounds start to feel better!')
         player_obj.ent.fighter.heal(mech.heal_amount)
 
     def cast_lightning(self):
@@ -4768,7 +4877,7 @@ class Mechanics:
         
         monster = closest_monster(mech.lightning_range)
         if monster is None:  #no enemy found within maximum range
-            pyg.update_gui('No enemy is close enough to strike.', pyg.dark_gray)
+            pyg.update_gui('No enemy is close enough to strike.')
             return 'cancelled'
         pyg.update_gui('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
             + str(mech.lightning_damage) + ' hit points.', pyg.red)
@@ -4824,9 +4933,9 @@ class Mechanics:
         img.flash_above(ent, image)
         ent.tile.item = None
 
-    def boost_stamina(self):
-        player_obj.ent.stamina += 50
-        if player_obj.ent.stamina > 100: player_obj.ent.stamina = 100
+    def boost_stamina(self, ent):
+        ent.stamina += 50
+        if ent.stamina > 100: ent.stamina = 100
         pyg.update_gui()
 
 class Effect:
@@ -5016,7 +5125,7 @@ class Quest:
         """ Sends dialogue from the entity to the quest's function, then updates
             the entity's dialogue if needed. """
         
-        message = self.function(ent.dialogue, ent)
+        message = self.function(ent, ent.dialogue)
         if message:
             return message
 
@@ -5268,7 +5377,7 @@ class Bloodkin:
     def __init__(self):
         pass
 
-    def making_a_friend(self, dialogue, ent):
+    def making_a_friend(self, ent, dialogue):
         """ Manages friend quest, including initialization and dialogue. """
         
         # Initialization
@@ -5339,7 +5448,7 @@ class Bloodkin:
         if ent.quest.dialogue_list:
             return ent.quest.dialogue_list[0]
 
-    def mysterious_note(self, dialogue=None, ent=None):
+    def mysterious_note(self, ent=None, dialogue=None):
         """ Manages friend quest, including initialization and dialogue.
             Upon finding a scroll of death, the player must first learn to descipher it.
             People in the town seem to suggest that the church is involved.
@@ -5348,7 +5457,7 @@ class Bloodkin:
             Church: Coax a lizard to the altar (by following). """
         
         # Read the note
-        if not dialogue and not ent:
+        if not dialogue:
             note_text = ["ξνμλ λξ ξλι ξγθιβξ ξ θθ.", "Ηκρσ σρσ λβνξθι νθ.", "Ψπθ αβνιθ πθμ."]
             new_menu(header="mysterious note", options=note_text, position="top left")
         
@@ -5551,7 +5660,7 @@ def build_home():
 
         # Healing potion
         x, y = 4, 11
-        item = create_item('healing potion')
+        item = create_item('jug of blood')
         place_object(item, [x, y], player_obj.envs['home'])
         
         # Lightning scroll
@@ -5686,7 +5795,7 @@ def build_dungeon_level():
     
     # Generate items and entities
     items = [
-        ['dungeon', 'healing potion', 10],
+        ['dungeon', 'jug of blood', 10],
         ['dungeon', 'bones',          50],
         ['dungeon', 'sword',          1000//env.lvl_num],
         ['dungeon', 'iron shield',    1000//env.lvl_num],
@@ -5943,7 +6052,7 @@ def build_cave_level():
     
     # Generate items and entities
     items = [
-        ['dungeon', 'healing potion', 10],
+        ['dungeon', 'jug of blood', 10],
         ['dungeon', 'bones',          50],
         ['dungeon', 'sword',          1000//env.lvl_num],
         ['dungeon', 'iron shield',    1000//env.lvl_num],
@@ -6418,8 +6527,8 @@ def create_item(names, effect=None):
 
     # Potions and scrolls (potions_options, scrolls_options)
     
-        'healing potion': Item(
-            name          = 'healing potion',
+        'jug of blood': Item(
+            name          = 'jug of blood',
             role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'red'],
@@ -6438,8 +6547,8 @@ def create_item(names, effect=None):
             defense_bonus = 0,
             effect        = effect),
 
-        'transformation potion': Item(
-            name          = 'transformation potion',
+        'jug of grapes': Item(
+            name          = 'jug of grapes',
             role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'purple'],
@@ -6458,8 +6567,8 @@ def create_item(names, effect=None):
             defense_bonus = 0,
             effect        = effect),
 
-        'blue potion': Item(
-            name          = 'transformation potion',
+        'jug of water': Item(
+            name          = 'jug of grapes',
             role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'blue'],
@@ -6478,8 +6587,8 @@ def create_item(names, effect=None):
             defense_bonus = 0,
             effect        = effect),
 
-        'gray potion': Item(
-            name          = 'transformation potion',
+        'jug of cement': Item(
+            name          = 'jug of grapes',
             role          = 'potions',
             slot          = None,
             img_names     = ['potions', 'gray'],
@@ -7781,7 +7890,7 @@ def create_NPC(name):
         ent.trader = True
         inv = ['shovel', 'sword', 'iron shield',
                'orange clothes', 'exotic clothes',
-               'healing potion', 'transformation potion', 'blue potion', 'gray potion',
+               'jug of blood', 'jug of grapes', 'jug of water', 'jug of cement',
                'boxes', 'fire', 'shrooms', 'cup shroom']
         for item in inv:
             item = create_item(item)
@@ -8013,7 +8122,7 @@ def place_objects(env, items, entities):
             # Check that the space is not already occupied
             if not is_blocked(env, [x, y]):
 
-                ## Randomly select an object
+                ## Randomly select and place an item
                 selection = random.choice(items)
                 
                 # Check that the object matches the biome
@@ -8024,12 +8133,12 @@ def place_objects(env, items, entities):
                         item = create_item(selection[1])
                         place_object(item, [x, y], env)
                     
-                # Randomly select an entity
+                ## Randomly select and place an entity
                 selection = random.choice(entities)
                 
                 # Check that the entity matches the biome
                 if env.map[x][y].biome in img.biomes[selection[0]]:
-                    if not random.randint(0, selection[2]):
+                    if not random.randint(0, selection[2]) and not env.map[x][y].item:
                         
                         ## Place entity
                         entity = create_entity(selection[1])
@@ -8151,7 +8260,7 @@ def active_effects():
     """ Applies effects from items and equipment. Runs constantly. """
     global friendly, teleport, dig, super_dig
     
-    #if 'transformation potion' in inventory_cache:
+    #if 'jug of grapes' in inventory_cache:
     #    player_obj.ent.image = img.dict['monsters'][0]
     #    friendly = True
     #else:
@@ -8178,7 +8287,7 @@ def is_blocked(env, loc):
     
     # Triggers message for hidden passages
     if env.map[loc[0]][loc[1]].unbreakable:
-        pyg.update_gui('A mysterious breeze seeps through the cracks.', pyg.dark_gray)
+        pyg.update_gui('A mysterious breeze seeps through the cracks.')
         pygame.event.clear()
         return True
     
