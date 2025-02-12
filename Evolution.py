@@ -89,37 +89,37 @@ def debug_call(func):
 def main():
     """ Initializes the essentials and opens the main menu. """
     
-    global pyg, mech, img, aud, player_obj
+    global pyg, mech, img, aud, player_obj, pet_obj
     global main_menu_obj, play_game_obj, new_game_obj, new_menu_obj
     global save_account_obj, load_account_obj, garden_obj
-    global dev, inv, hold_obj, trade_obj
+    global dev, inv, hold_obj, trade_obj, stats_obj, weather
     
     # Initialize pygame (parameters, display, clock, etc.)
-    pyg  = Pygame()
-    pyg.game_state = 'startup'
-    pyg.overlay    = None
+    pyg              = Pygame()
+    pyg.game_state   = 'startup'
+    pyg.overlay      = None
 
-    # Initialize general mechanics (?)
-    mech = Mechanics()
+    # Initialize mechanics and audio
+    mech             = Mechanics()
+    aud              = Audio()
+    weather          = Weather()
     
     # Import images (sorted dictionary and cache)
-    img         = Images()
-    img.flipped = Images(flipped=True)
+    img              = Images()
+    img.flipped      = Images(flipped=True)
     pygame.display.set_icon(img.dict['decor']['skeleton'])
-
-    # Initialize pygame audio and development tools
-    aud = Audio()
-    inv = Inventory()
-    dev = DevTools()
     
     # Create player
-    player_obj = Player()
+    player_obj       = Player()
+    pet_obj          = Pets()
     
-    # Open the main menu
-    main_menu_obj    = MainMenu()
+    # Initialize gamestates
     play_game_obj    = PlayGame()
     new_game_obj     = NewGame()
     garden_obj       = PlayGarden()
+    
+    # Initialize overlays
+    main_menu_obj    = MainMenu()
     new_menu_obj     = NewMenu(
         name      = 'controls',
         header    = "Controls", 
@@ -154,9 +154,11 @@ def main():
         backgrounds = ["Data/File_1/screenshot.png",
                        "Data/File_2/screenshot.png",
                        "Data/File_3/screenshot.png"])
+    inv              = Inventory()
+    dev              = DevTools()
     hold_obj         = Hold()
     trade_obj        = Trade()
-    
+    stats_obj        = Stats()
     game_states()
 
 def game_states():
@@ -171,6 +173,10 @@ def game_states():
         elif pyg.game_state == 'play_game':
             play_game_obj.run()
             play_game_obj.render()
+            
+            ## Extra adjustments
+            weather.run()
+            weather.render()
         
         elif pyg.game_state == 'new_game':
             new_game_obj.run()
@@ -212,6 +218,9 @@ def game_states():
         elif pyg.overlay == 'trade':
             trade_obj.run()
             trade_obj.render()
+        
+        elif pyg.overlay == 'stats':
+            stats_obj.render()
         
         img.render()
         pygame.display.flip()
@@ -381,7 +390,7 @@ def new_menu(header, options, options_categories=None, position='top left', back
                         if options_categories[choice] != options_categories_cache_2:
                             options_categories_cache_2 = options_categories[choice]
                             cursor_position_mutable[1] += tab_Y
-                            
+                
                 elif event.key in pyg.key_ENTER:
                     running = False
                     return choice
@@ -449,9 +458,24 @@ def render_all(size='display', visible=False):
                 pyg.screen.blit(message, (5, Y))
                 Y += 16
         
+        # Print status bars and time
         if pyg.gui_toggle:
+            gui = list(pyg.gui.values())
             for i in range(len(pyg.gui)):
-                pyg.screen.blit(list(pyg.gui.values())[i], (5+250*i, pyg.screen_height-27))
+                
+                #
+                if i == 0:   x = 16
+                
+                #
+                elif i == 1: x = pyg.screen_width//2 - gui[2].get_width()//2 - gui[1].get_width()
+                elif i == 2: x = pyg.screen_width//2 - gui[2].get_width()//2
+                elif i == 3: x = pyg.screen_width//2 + gui[2].get_width()//2
+                
+                #
+                elif i == 4: x = pyg.screen_width - gui[i].get_width() - 16
+                
+                y = pyg.screen_height - 27
+                pyg.screen.blit(gui[i], (x, y))
     
     aud.shuffle()
 
@@ -520,7 +544,7 @@ class Pygame:
         pygame.init()
         pygame.key.set_repeat(250, 150)
         pygame.display.set_caption("Mors Somnia") # Sets game title
-        self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
         self.frame    = True
         self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True) # pygame.font.Font('Data/font.ttf', 24)
@@ -537,59 +561,59 @@ class Pygame:
         if controls == 'A':
             
             # Movement
-            self.key_UP       = [K_UP,    K_w]            # up
-            self.key_DOWN     = [K_DOWN,  K_s]            # down
-            self.key_LEFT     = [K_LEFT,  K_a]            # left
-            self.key_RIGHT    = [K_RIGHT, K_d]            # right
+            self.key_UP       = [K_UP,    K_w]             # up
+            self.key_DOWN     = [K_DOWN,  K_s]             # down
+            self.key_LEFT     = [K_LEFT,  K_a]             # left
+            self.key_RIGHT    = [K_RIGHT, K_d]             # right
             
             # Actions
-            self.key_BACK     = [K_BACKSPACE, K_NUMLOCK, K_ESCAPE]  # exit/main menu
-            self.key_ENTER    = [K_RETURN,    K_KP_ENTER] # action 1
-            self.key_PERIOD   = [K_KP_PERIOD]             # action 2
-            self.key_PLUS     = [K_PLUS,      K_KP_PLUS]  # zoom
-            self.key_MINUS    = [K_MINUS,     K_KP_MINUS] # zoom
+            self.key_BACK     = [K_BACKSPACE, K_ESCAPE, K_SLASH, K_KP_DIVIDE]  # exit/main menu
+            self.key_ENTER    = [K_RETURN,    K_KP_ENTER]  # action 1
+            self.key_PERIOD   = [K_KP_PERIOD]              # action 2
+            self.key_PLUS     = [K_PLUS,      K_KP_PLUS]   # zoom
+            self.key_MINUS    = [K_MINUS,     K_KP_MINUS]  # zoom
             self.key_HOLD     = [K_0, K_KP0]
             
             # Menus
-            self.key_INV      = [K_4, K_KP4]              # inventory
-            self.key_DEV      = [K_6, K_KP6]              # DevTools
-            self.key_INFO     = [K_7, K_KP7]              # player information
-            self.key_SPEED    = [K_8, K_KP8]              # movement speed
-            self.key_QUEST    = [K_9, K_KP9]              # questlog
+            self.key_INV      = [K_4, K_KP4]               # inventory
+            self.key_DEV      = [K_6, K_KP6]               # DevTools
+            self.key_INFO     = [K_7, K_KP7]               # player information
+            self.key_SPEED    = [K_8, K_KP8]               # movement speed
+            self.key_QUEST    = [K_9, K_KP9]               # questlog
             
             # Other
-            self.key_EQUIP    = [K_2, K_KP2]              # inventory (equip)
-            self.key_DROP     = [K_3, K_KP3]              # inventory (drop)
+            self.key_EQUIP    = [K_2, K_KP2]               # inventory (equip)
+            self.key_DROP     = [K_3, K_KP3]               # inventory (drop)
             
 
         # Alternate controls
         elif controls == 'B':
-            # Unused: 0, *
             
             # Movement
-            self.key_UP       = [K_5, K_KP5,  K_UP  ]     # up
-            self.key_DOWN     = [K_2, K_KP2,  K_DOWN]     # down
-            self.key_LEFT     = [K_1, K_KP1,  K_LEFT]     # left
-            self.key_RIGHT    = [K_3, K_KP3,  K_RIGHT]    # right
+            self.key_UP       = [K_5, K_KP5,  K_UP]          # up
+            self.key_DOWN     = [K_2, K_KP2,  K_DOWN]        # down
+            self.key_LEFT     = [K_1, K_KP1,  K_LEFT]        # left
+            self.key_RIGHT    = [K_3, K_KP3,  K_RIGHT]       # right
 
             # Actions
-            self.key_BACK     = [K_BACKSPACE, K_NUMLOCK]  # exit/main menu
-            self.key_ENTER    = [K_RETURN,    K_KP_ENTER] # action 1
-            self.key_PERIOD   = [K_KP_PERIOD]             # action 2
-            self.key_PLUS     = [K_PLUS,      K_KP_PLUS]  # zoom
-            self.key_MINUS    = [K_MINUS,     K_KP_MINUS] # zoom
-            self.key_HOLD     = [K_0, K_KP0]              # attack sequences
+            self.key_BACK     = [K_SLASH,     K_KP_DIVIDE]   # exit/main menu
+            self.key_GUI      = [K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
+            self.key_ENTER    = [K_RETURN,    K_KP_ENTER]    # action 1
+            self.key_PERIOD   = [K_KP_PERIOD]                # action 2
+            self.key_PLUS     = [K_PLUS,      K_KP_PLUS]     # zoom
+            self.key_MINUS    = [K_MINUS,     K_KP_MINUS]    # zoom
+            self.key_HOLD     = [K_0, K_KP0]                 # attack sequences
             
             # Menus
-            self.key_INV      = [K_4, K_KP4]              # inventory
-            self.key_DEV      = [K_6, K_KP6]              # DevTools
-            self.key_INFO     = [K_7, K_KP7]              # player information
-            self.key_SPEED    = [K_8, K_KP8]              # movement speed
-            self.key_QUEST    = [K_9, K_KP9]              # questlog
+            self.key_INV      = [K_4, K_KP4]                 # inventory
+            self.key_DEV      = [K_6, K_KP6]                 # DevTools
+            self.key_INFO     = [K_7, K_KP7]                 # player information
+            self.key_SPEED    = [K_8, K_KP8]                 # movement speed
+            self.key_QUEST    = [K_9, K_KP9]                 # questlog
             
             # Unused
-            self.key_EQUIP    = []                       # inventory (equip)
-            self.key_DROP     = []                       # inventory (drop)
+            self.key_EQUIP    = []                           # inventory (equip)
+            self.key_DROP     = []                           # inventory (drop)
 
     def set_colors(self):
         
@@ -657,6 +681,8 @@ class Pygame:
             
             # Create and delete messages
             if new_msg:
+                if new_msg in self.msg_history.keys():
+                    del self.msg_history[new_msg]
                 for line in pyg.textwrap(new_msg, pyg.msg_width):
                     self.msg_history[line] = color
                     
@@ -666,8 +692,11 @@ class Pygame:
             
             # Reconstruct message list
             self.msg = []
-            lines = list(self.msg_history.keys())[len(self.msg_history)-self.msg_height:]
-            colors = list(self.msg_history.values())[len(self.msg_history)-self.msg_height:]
+            index = len(self.msg_history) - self.msg_height
+            if index < 0:
+                index = 0
+            lines = list(self.msg_history.keys())[index:]
+            colors = list(self.msg_history.values())[index:]
             for i in range(len(lines)):
                 if colors[i] in pyg.colors:
                     self.msg.append(self.font.render(lines[i], True, colors[i]))
@@ -678,28 +707,39 @@ class Pygame:
             if not pyg.overlay:
                 
                 # Health
-                current_health = int(player_obj.ent.hp / player_obj.ent.max_hp) * 10
+                current_health = int(player_obj.ent.hp / player_obj.ent.max_hp * 10)
                 leftover_health = 10 - current_health
-                health = '▆' * current_health + '▁' * leftover_health
+                health = '⚪' * leftover_health + '⚫' * current_health
                 
                 # Stamina
                 current_stamina = int((player_obj.ent.stamina % 101) / 10)
                 leftover_stamina = 10 - current_stamina
-                stamina = '▆' * current_stamina + '▁' * leftover_stamina
+                stamina = '⚫' * current_stamina + '⚪' * leftover_stamina
+                
+                # Time
+                time = ['🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕'][player_obj.ent.world_time-1]
+                
+                self.gui = {
+                    'first':   self.minifont.render('', True, self.white),
+                    'health':  self.minifont.render(health,  True, self.red),
+                    'time':    self.minifont.render(time, True, bottom_color),
+                    'stamina': self.minifont.render(stamina, True, self.green),
+                    'last':    self.minifont.render('', True, self.white)}
+            
+            # Show last message
+            else:
+                if self.msg: self.msg = [self.msg[-1]]
                 
                 # Location
                 env = str(player_obj.ent.env.name)
                 if player_obj.ent.env.lvl_num: env = env + ' (level ' + str(player_obj.ent.env.lvl_num) + ')'
                 
                 self.gui = {
-                    'health':   self.minifont.render(health,  True, self.red),
-                    'stamina':  self.minifont.render(stamina, True, self.green),
-                    'location': self.minifont.render(env,     True, bottom_color)}
-            
-            # Show last message
-            else:
-                if self.msg: self.msg = [self.msg[-1]]
-                self.gui = {'wallet': self.minifont.render('⨋ '+str(player_obj.ent.wallet), True, bottom_color)}
+                    'wallet':   self.minifont.render('⨋ '+str(player_obj.ent.wallet), True, bottom_color),
+                    'second':   self.minifont.render('',  True, self.white),
+                    'third':    self.minifont.render('',  True, self.white),
+                    'fourth':   self.minifont.render('',  True, self.white),
+                    'location': self.minifont.render(env, True, bottom_color)}
 
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -787,7 +827,6 @@ class Images:
                     try:
                         tileset = ImageOps.posterize(tileset, 6)
                     except OSError as e:
-                        print("Image mode:", tileset.mode)
                         raise e
             
             # Apply custom blur kernel
@@ -889,12 +928,13 @@ class Images:
         
         # Define tile names and options
         self.other_names = [
-            'decor', 'drugs', 'potions', 'scrolls',
+            'decor', 'bubbles', 'drugs', 'potions', 'scrolls',
             'stairs', 'floors', 'walls', 'roofs', 'paths',
             'null']
         decor_options = [
-            'tree',   'bones', 'boxes',  'fire', 'leafy',      'bubble', 'skeleton', 'shrooms',
+            'tree', 'bones', 'boxes',  'fire', 'leafy', 'skeleton', 'shrooms',
             'red plant right', 'red plant left', 'cup shroom', 'frond',  'blades']
+        bubbles_options = ['dots', 'exclamation', 'dollar', 'cart', 'question', 'skull', 'heart']
         drugs_options = [
             'needle', 'skin', 'teeth', 'bowl', 'plant', 'bubbles']
         potions_options = [
@@ -917,8 +957,8 @@ class Images:
         null_options  = [
             'null']
         other_options = [
-            decor_options,  drugs_options, potions_options, scrolls_options, stairs_options,
-            floors_options, walls_options, roofs_options,   paths_options,   null_options]
+            decor_options, bubbles_options, drugs_options, potions_options, scrolls_options, stairs_options,
+            floors_options, walls_options, roofs_options, paths_options, null_options]
         
         # Create image dictionary
         self.other = {}
@@ -938,17 +978,62 @@ class Images:
         
         self.biomes = {
             
-            'any':     ['forest', 'desert', 'dungeon', 'water', 'city'],
+            'any':     ['forest', 'desert', 'dungeon', 'water', 'city', 'cave'],
             'wet':     ['forest', 'water'],
         
-            'land':    ['forest', 'desert', 'dungeon'],
+            'land':    ['forest', 'desert', 'dungeon', 'cave'],
             'forest':  ['forest'],
             'desert':  ['desert'],
-            'dungeon': ['dungeon'],
+            'dungeon': ['dungeon', 'cave'],
             'city':    ['city'],
+            'cave':    ['cave', 'dungeon'],
             
             'sea':     ['water'],
             'water':   ['water']}
+
+    # Utility
+    def average(self):
+        
+        # Identify regions of interest
+        top_rect     = pygame.Rect(0, 0, pyg.screen_width, 50)
+        bottom_rect  = pygame.Rect(0, pyg.screen_height-50, pyg.screen_width, 50)
+        left_rect    = pygame.Rect(50, 50, 50, 50)
+        right_rect   = pygame.Rect(pyg.screen_width-100, 50, 50, 50)
+        menu_rect    = pygame.Rect(100, pyg.screen_height-100, 50, 50)
+        
+        top_color    = pygame.transform.average_color(pyg.screen, rect=top_rect,    consider_alpha=False)
+        bottom_color = pygame.transform.average_color(pyg.screen, rect=bottom_rect, consider_alpha=False)
+        left_color   = pygame.transform.average_color(pyg.screen, rect=left_rect,   consider_alpha=False)
+        right_color  = pygame.transform.average_color(pyg.screen, rect=right_rect,  consider_alpha=False)
+        menu_color   = pygame.transform.average_color(pyg.screen, rect=menu_rect,   consider_alpha=False)
+        
+        # Relative luminance formula
+        top_brightness    = 0.2126 * top_color[0]    + 0.7152 * top_color[1]    + 0.0722 * top_color[2]
+        bottom_brightness = 0.2126 * bottom_color[0] + 0.7152 * bottom_color[1] + 0.0722 * bottom_color[2]
+        left_brightness   = 0.2126 * left_color[0]   + 0.7152 * left_color[1]   + 0.0722 * left_color[2]
+        right_brightness  = 0.2126 * right_color[0]  + 0.7152 * right_color[1]  + 0.0722 * right_color[2]
+        menu_brightness   = 0.2126 * menu_color[0]   + 0.7152 * menu_color[1]   + 0.0722 * menu_color[2]
+        
+        # Quadratic version
+        #top_brightness    = (top_color[0]**2    + top_color[1]**2    + top_color[2]**2)**(1/2)
+        #bottom_brightness = (bottom_color[0]**2 + bottom_color[1]**2 + bottom_color[2]**2)**(1/2)
+        #left_brightness   = (left_color[0]**2   + left_color[1]**2   + left_color[2]**2)**(1/2)
+        #right_brightness  = (right_color[0]**2  + right_color[1]**2  + right_color[2]**2)**(1/2)
+        #menu_brightness   = (menu_color[0]**2   + menu_color[1]**2   + menu_color[2]**2)**(1/2)
+        
+        # Restrict corrections to [0, 255]
+        if top_brightness < 35:    top_brightness    = 35
+        if bottom_brightness < 35: bottom_brightness = 35
+        if left_brightness < 35:   left_brightness   = 35
+        if right_brightness < 35:  right_brightness  = 35
+        if menu_brightness < 35:   menu_brightness   = 35
+        
+        # Calculate a good shade of gray
+        self.top_correct    = int(((255 - top_brightness)**2    + (255/3)**2)**(1/2))
+        self.bottom_correct = int(((255 - bottom_brightness)**2 + (255/3)**2)**(1/2))
+        self.left_correct   = int(((255 - left_brightness)**2   + (255/3)**2)**(1/2))
+        self.right_correct  = int(((255 - right_brightness)**2  + (255/3)**2)**(1/2))
+        self.menu_correct   = int(((255 - menu_brightness)**2   + (255/3)**2)**(1/2))
 
     # Effects
     def flip(self, obj):
@@ -1100,7 +1185,7 @@ class Images:
             self.render_log.append([image, image_pos, duration, last_time, delay])
 
     def render(self):
-        """ Temporarily renders images in the queue.
+        """ Temporarily renders images in the queue, such as impact images.
         
             render_log : a list of the form [image, position, duration, last_time]
             image      : pygame image file
@@ -1121,11 +1206,11 @@ class Images:
                 if j >= 0:
                     
                     # Shorthand
-                    image = self.render_log[j][0]
-                    position = self.render_log[j][1]
-                    duration = self.render_log[j][2]
+                    image     = self.render_log[j][0]
+                    position  = self.render_log[j][1]
+                    duration  = self.render_log[j][2]
                     last_time = self.render_log[j][3]
-                    delay = self.render_log[j][4]
+                    delay     = self.render_log[j][4]
                     
                     # Count down before showing image
                     if delay > 0:
@@ -1136,54 +1221,10 @@ class Images:
                     elif duration > 0:
                         self.render_log[j][2] -= (time.time() - last_time)
                         self.render_log[j][3] = time.time()
-                        pyg.screen.blit(image, position)
+                        pyg.display.blit(image, position)
                         
                     else:
                         self.render_log.pop(j)
-
-    # Utility
-    def average(self):
-        
-        # Identify regions of interest
-        top_rect     = pygame.Rect(0, 0, pyg.screen_width, 50)
-        bottom_rect  = pygame.Rect(0, pyg.screen_height-50, pyg.screen_width, 50)
-        left_rect    = pygame.Rect(50, 50, 50, 50)
-        right_rect   = pygame.Rect(pyg.screen_width-100, 50, 50, 50)
-        menu_rect    = pygame.Rect(100, pyg.screen_height-100, 50, 50) # pygame.Rect(100, pyg.screen_width-100, 100, 100)
-        
-        top_color    = pygame.transform.average_color(pyg.screen, rect=top_rect,    consider_alpha=False)
-        bottom_color = pygame.transform.average_color(pyg.screen, rect=bottom_rect, consider_alpha=False)
-        left_color   = pygame.transform.average_color(pyg.screen, rect=left_rect,   consider_alpha=False)
-        right_color  = pygame.transform.average_color(pyg.screen, rect=right_rect,  consider_alpha=False)
-        menu_color   = pygame.transform.average_color(pyg.screen, rect=menu_rect,   consider_alpha=False)
-        
-        # Relative luminance formula
-        top_brightness    = 0.2126 * top_color[0]    + 0.7152 * top_color[1]    + 0.0722 * top_color[2]
-        bottom_brightness = 0.2126 * bottom_color[0] + 0.7152 * bottom_color[1] + 0.0722 * bottom_color[2]
-        left_brightness   = 0.2126 * left_color[0]   + 0.7152 * left_color[1]   + 0.0722 * left_color[2]
-        right_brightness  = 0.2126 * right_color[0]  + 0.7152 * right_color[1]  + 0.0722 * right_color[2]
-        menu_brightness   = 0.2126 * menu_color[0]   + 0.7152 * menu_color[1]   + 0.0722 * menu_color[2]
-        
-        # Quadratic version
-        #top_brightness    = (top_color[0]**2    + top_color[1]**2    + top_color[2]**2)**(1/2)
-        #bottom_brightness = (bottom_color[0]**2 + bottom_color[1]**2 + bottom_color[2]**2)**(1/2)
-        #left_brightness   = (left_color[0]**2   + left_color[1]**2   + left_color[2]**2)**(1/2)
-        #right_brightness  = (right_color[0]**2  + right_color[1]**2  + right_color[2]**2)**(1/2)
-        #menu_brightness   = (menu_color[0]**2   + menu_color[1]**2   + menu_color[2]**2)**(1/2)
-        
-        # Restrict corrections to [0, 255]
-        if top_brightness < 40:    top_brightness    = 40
-        if bottom_brightness < 40: bottom_brightness = 40
-        if left_brightness < 40:   left_brightness   = 40
-        if right_brightness < 40:  right_brightness  = 40
-        if menu_brightness < 40:   menu_brightness   = 40
-        
-        # Calculate a good shade of gray
-        self.top_correct    = int(((255 - top_brightness)**2    + (255/3)**2)**(1/2))
-        self.bottom_correct = int(((255 - bottom_brightness)**2 + (255/3)**2)**(1/2))
-        self.left_correct   = int(((255 - left_brightness)**2   + (255/3)**2)**(1/2))
-        self.right_correct  = int(((255 - right_brightness)**2  + (255/3)**2)**(1/2))
-        self.menu_correct   = int(((255 - menu_brightness)**2   + (255/3)**2)**(1/2))
 
 class Audio:
     """ Manages audio. One save for each file. """
@@ -1231,18 +1272,32 @@ class Audio:
     def play_track(self, song=None, fade_out_time=2000, fade_in_time=2000):
         """ Plays a track and stops and prior track if needed. """
         
-        # Fade out current track
-        if pygame.mixer.music.get_busy(): pygame.mixer.music.fadeout(fade_out_time)
-        
         # Select next track
         if not song:
             self.i = (self.i+1) % self.soundtrack_len
             song   = self.soundtrack[self.i]
-
-        # Play the next track with fade-in
-        self.current_track = song
-        pygame.mixer.music.load(self.dict[song])
-        pygame.mixer.music.play(fade_ms=fade_in_time)
+        
+        # Play the next track with fade-in if not already playing
+        if self.current_track:
+            if self.dict[song] != self.dict[self.current_track]:
+                
+                # Fade out current track
+                if pygame.mixer.music.get_busy(): pygame.mixer.music.fadeout(fade_out_time)
+                
+                # Begin next track
+                self.current_track = song
+                pygame.mixer.music.load(self.dict[song])
+                pygame.mixer.music.play(fade_ms=fade_in_time)
+        
+        else:
+            
+            # Fade out current track
+            if pygame.mixer.music.get_busy(): pygame.mixer.music.fadeout(fade_out_time)
+            
+            # Begin next track
+            self.current_track = song
+            pygame.mixer.music.load(self.dict[song])
+            pygame.mixer.music.play(fade_ms=fade_in_time)
         
         if self.paused: pygame.mixer.music.pause()
 
@@ -1264,7 +1319,7 @@ class Audio:
                 new_track.play(fade_ms=4000)
                 self.current_track = new_track
             
-            # Move to the next song
+            # Move to the next song when complete
             elif pygame.mixer.music.get_busy():
                 song = pygame.mixer.Sound(self.dict[self.current_track])
                 self.duration = song.get_length()
@@ -1354,10 +1409,10 @@ class Player:
 
             exp        = 0,
             rank       = 1,
-            hp         = 100,
-            max_hp     = 100,
+            hp         = 10,
+            max_hp     = 10,
             attack     = 0,
-            defense    = 100,
+            defense    = 1,
             stamina    = 100,
             
             X          = 0,
@@ -1375,16 +1430,21 @@ class Player:
         face   = create_item('clean')
         chest  = create_item('flat')
         dagger = create_item('dagger')
+        
         dagger.effect = Effect(
             name          = 'swing',
             img_names     = ['decor', 'boxes'],
             function      = mech.swing,
+            trigger       = 'active',
             sequence      = '⮜⮟⮞',
-            cooldown_time = 0.1)
-        self.ent.inventory[hair.role].append(hair)
-        self.ent.inventory[face.role].append(face)
-        self.ent.inventory[chest.role].append(chest)
-        self.ent.inventory[dagger.role].append(dagger)
+            cooldown_time = 0.1,
+            other         = None)
+            
+        hair.pick_up(ent=self.ent)
+        face.pick_up(ent=self.ent)
+        chest.pick_up(ent=self.ent)
+        dagger.pick_up(ent=self.ent)
+        
         hair.toggle_equip(self.ent)
         face.toggle_equip(self.ent)
         chest.toggle_equip(self.ent)
@@ -1769,7 +1829,7 @@ class NewGame:
                 # >>MAIN MENU<<
                 if (event.key in pyg.key_BACK) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
                     pyg.last_press_time = float(time.time())
-                    pyg.game_state = 'play_game'
+                    pyg.game_state = 'play_garden'
                     pyg.overlay = 'menu'
                     return
                 
@@ -1890,21 +1950,28 @@ class NewGame:
         face    = create_item('clean')
         chest   = create_item('flat')
         shovel  = create_item('super shovel')
-        player_obj.ent.inventory[clothes.role].append(clothes)
-        player_obj.ent.inventory[hair.role].append(hair)
-        player_obj.ent.inventory[face.role].append(face)
-        player_obj.ent.inventory[chest.role].append(chest)
-        player_obj.ent.inventory[shovel.role].append(shovel)
+        lamp    = create_item('iron shield')
+        
+        clothes.pick_up(ent=player_obj.ent)
+        hair.pick_up(ent=player_obj.ent)
+        face.pick_up(ent=player_obj.ent)
+        chest.pick_up(ent=player_obj.ent)
+        shovel.pick_up(ent=player_obj.ent)
+        lamp.pick_up(ent=player_obj.ent)
+        
         clothes.toggle_equip(player_obj.ent)
+        lamp.toggle_equip(player_obj.ent)
         sort_inventory()
         
         # Prepare gui
         pyg.msg = []
-        pyg.update_gui('Press / to hide messages.')
+        pyg.msg_history = {}
+        pyg.update_gui("Press * to hide your health and stamina bars.", pyg.dark_gray)
+        pyg.update_gui("Press it again to hide the message bar.", pyg.dark_gray)
         pyg.msg_toggle = True
+        pyg.gui_toggle = True
     
     def render(self):
-        # -------------------------------------- RENDER --------------------------------------
         # Implement timed rotation of character
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time()) 
@@ -1927,8 +1994,10 @@ class PlayGame:
     def __init__(self):
         self.cooldown_time = 1
         self.last_press_time = 0
+        self.gui_set = 0
 
     def run(self):
+        active_effects()
         
         player_obj.ent.role = 'player'
         mech.movement_speed(toggle=False)
@@ -1945,7 +2014,6 @@ class PlayGame:
                 # Keep playing
                 if not player_obj.ent.dead:
                     if event.type == KEYDOWN:
-                        active_effects()                        
                         
                         # Movement
                         if event.key in pyg.key_UP:       self.key_UP()
@@ -1955,6 +2023,7 @@ class PlayGame:
                         
                         # Actions
                         elif event.key in pyg.key_ENTER:  self.key_ENTER()
+                        elif event.key in pyg.key_GUI:    self.key_GUI()
                         elif event.key in pyg.key_PERIOD: self.key_PERIOD()
                         elif event.key in pyg.key_PLUS:   self.key_PLUS()
                         elif event.key in pyg.key_MINUS:  self.key_MINUS()
@@ -1995,10 +2064,16 @@ class PlayGame:
                             pygame.event.clear()
                             return
                 
+                # Handle menus when dead
                 else:
                     
-                    # >>MAIN MENU<<
+                    # Restrict movement speed
+                    mech.movement_speed(toggle=False, custom=2)
+                    
+                    # Menus
                     if event.type == KEYDOWN:
+                        
+                        # >>MAIN MENU<<
                         if event.key in pyg.key_BACK:
                             pyg.overlay = 'menu'
                             pygame.event.clear()
@@ -2014,6 +2089,11 @@ class PlayGame:
                                 else:
                                     pyg.msg_toggle = True
                                     pyg.gui_toggle = True
+                    
+                        # Other
+                        elif event.key in pyg.key_INFO:   self.key_INFO()
+                        elif event.key in pyg.key_SPEED:  self.key_SPEED()
+                        elif event.key in pyg.key_QUEST:  self.key_QUEST()
             
         for entity in player_obj.ent.env.entities:
             if not entity.dead: entity.ai()
@@ -2056,10 +2136,34 @@ class PlayGame:
                 # Pick up or activate
                 else: player_obj.ent.tile.item.pick_up()
 
+    def key_GUI(self):
+        
+        # >>TOGGLE GUI<<
+        self.gui_set = (self.gui_set + 1) % 4
+        
+        # Show all
+        if self.gui_set == 0:
+            pyg.gui_toggle = True
+            pyg.msg_toggle = True
+        
+        # Hide GUI
+        elif self.gui_set == 1:
+            pyg.gui_toggle = False
+            pyg.msg_toggle = True
+        
+        # Hide both
+        elif self.gui_set == 2:
+            pyg.gui_toggle = False
+            pyg.msg_toggle = False
+
+        # Hide messages
+        elif self.gui_set == 3:
+            pyg.gui_toggle = True
+            pyg.msg_toggle = False
+
     def key_PERIOD(self):
         
         # >>HOME<<
-        
         if player_obj.ent.tile.item:
             if player_obj.ent.tile.item.name in ['dungeon', 'cave']:
                 if time.time()-self.last_press_time > self.cooldown_time:
@@ -2073,24 +2177,6 @@ class PlayGame:
                     elif player_obj.ent.env.lvl_num == 1:
                         env = player_obj.ent.last_env
                         place_player(env, env.player_coordinates)    # play game (key_PERIOD)
-        
-        # >>TOGGLE MESSAGES<<
-        else:
-        
-            # Hide messages
-            if pyg.msg_toggle:
-                pyg.msg_toggle = False
-            
-            else:
-                # Hide messages and GUI
-                if pyg.gui_toggle:
-                    pyg.gui_toggle = False
-                    pyg.msg_toggle = False
-                
-                # View messages and GUI
-                else:
-                    pyg.gui_toggle = True
-                    pyg.msg_toggle = True
 
     def key_PLUS(self):
         
@@ -2142,7 +2228,7 @@ class PlayGame:
         
         # >>DROP ITEM<<
         if player_obj.ent.tile.item:
-            pyg.update_gui("There's already something here")
+            pyg.update_gui("There's already something here", pyg.dark_gray)
         else:
             chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
             if chosen_item is not None:
@@ -2158,13 +2244,19 @@ class PlayGarden:
     
     def run(self):
         
+        # Update pets
+        pet_obj.update()
+        
+        # Active or deactivate AI
         if pyg.overlay == 'menu': player_obj.ent.role = 'NPC'
         else:                     player_obj.ent.role = 'player'
         
+        # Set camera and movement speed
         player_obj.envs['garden'].camera.zoom_in(custom=1)
         mech.movement_speed(toggle=False, custom=2)
         
-        if not pyg.overlay:
+        # Handle input
+        if pyg.overlay in [None, 'stats']:
             for event in pygame.event.get():
 
                 # Save and quit
@@ -2178,29 +2270,27 @@ class PlayGarden:
                     if event.type == KEYDOWN:
                         
                         # Movement
-                        if event.key in pyg.key_UP:     self.key_UP()
-                        if event.key in pyg.key_DOWN:   self.key_DOWN()
-                        if event.key in pyg.key_LEFT:   self.key_LEFT()
-                        if event.key in pyg.key_RIGHT:  self.key_RIGHT()
+                        if event.key in pyg.key_UP:       self.key_UP()
+                        elif event.key in pyg.key_DOWN:   self.key_DOWN()
+                        elif event.key in pyg.key_LEFT:   self.key_LEFT()
+                        elif event.key in pyg.key_RIGHT:  self.key_RIGHT()
                         
                         # Actions
-                        if event.key in pyg.key_ENTER:  self.key_ENTER()
-                        if event.key in pyg.key_PERIOD: self.key_PERIOD()
-                        if event.key in pyg.key_PLUS:   self.key_PLUS()
-                        if event.key in pyg.key_MINUS:  self.key_MINUS()
-                        if event.key in pyg.key_HOLD:   self.key_HOLD()
+                        elif event.key in pyg.key_ENTER:  self.key_ENTER()
+                        elif event.key in pyg.key_PERIOD: self.key_PERIOD()
+                        elif event.key in pyg.key_PLUS:   self.key_PLUS()
+                        elif event.key in pyg.key_MINUS:  self.key_MINUS()
                         
                         # Menus
-                        if event.key in pyg.key_INFO:   self.key_INFO()
-                        if event.key in pyg.key_SPEED:  self.key_SPEED()
-                        if event.key in pyg.key_QUEST:  self.key_QUEST()
+                        elif event.key in pyg.key_SPEED:  self.key_SPEED()
+                        elif event.key in pyg.key_QUEST:  self.key_QUEST()
                         
                         # Other
-                        if event.key in pyg.key_EQUIP: self.key_EQUIP()
-                        if event.key in pyg.key_DROP:  self.key_DROP()
+                        elif event.key in pyg.key_EQUIP:  self.key_EQUIP()
+                        elif event.key in pyg.key_DROP:   self.key_DROP()
                         
                         # >>MAIN MENU<<
-                        if event.key in pyg.key_BACK:
+                        elif event.key in pyg.key_BACK:
                             if time.time()-pyg.last_press_time > pyg.cooldown_time:
                                 pyg.last_press_time = float(time.time())
                                 pyg.overlay = 'menu'
@@ -2208,14 +2298,24 @@ class PlayGarden:
                                 return
                         
                         # >>INVENTORY<<
-                        if event.key in pyg.key_INV:
+                        elif event.key in pyg.key_INV:
                             pyg.overlay = 'inv'
                             pygame.event.clear()
                             return
                         
                         # >>CONSTRUCTION<<
-                        if event.key in pyg.key_DEV:
+                        elif event.key in pyg.key_DEV:
                             pyg.overlay = 'dev'
+                            pygame.event.clear()
+                            return
+                
+                        # >>STATS<<
+                        elif event.key in pyg.key_INFO:
+                            if pyg.overlay != 'stats':
+                                stats_obj.dic = pet_obj.stats
+                                pyg.overlay = 'stats'
+                            else:
+                                pyg.overlay = None
                             pygame.event.clear()
                             return
                 
@@ -2291,9 +2391,6 @@ class PlayGarden:
     def key_MINUS(self):
         pass
 
-    def key_INFO(self):
-        pass
-
     def key_QUEST(self):
         player_obj.questlog.questlog_menu()
 
@@ -2316,7 +2413,7 @@ class PlayGarden:
         
         # >>DROP ITEM<<
         if player_obj.ent.tile.item:
-            pyg.update_gui("There's already something here")
+            pyg.update_gui("There's already something here", pyg.dark_gray)
         else:
             chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
             if chosen_item is not None:
@@ -2435,8 +2532,6 @@ class MainMenu:
                 elif event.key in pyg.key_BACK:
                     if time.time()-pyg.last_press_time > pyg.cooldown_time:
                         pyg.last_press_time = float(time.time())
-                        if not pyg.startup_toggle: pyg.game_state = 'play_game'
-                        else:                      pyg.game_state = 'play_garden'
                         pyg.overlay = None
                         return
                 
@@ -2557,12 +2652,16 @@ class MainMenu:
         img.average()
         self.color = pygame.Color(img.menu_correct, img.menu_correct, img.menu_correct)
         for i in range(len(self.menu_choices)):
-            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, self.color))
+            if (i == 2) and pyg.startup_toggle:
+                color = pyg.dark_gray
+            else: color = self.color
+            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, color))
         for menu_choice_surface in self.menu_choices_surfaces:
             pyg.screen.blit(menu_choice_surface, (48, Y))
             Y += 24
         
         # Blit cursor
+        pygame.draw.polygon(self.cursor_img, self.color, [(5, 3), (10, 7), (5, 11)], 0)
         pyg.screen.blit(self.cursor_img, self.cursor_pos)
 
         # Blit logo
@@ -2591,6 +2690,7 @@ class DevTools:
 
     def run(self):   
         
+        # Restrict movement speed
         mech.movement_speed(toggle=False, custom=2)
         
         # Initialize cursor
@@ -2746,7 +2846,6 @@ class DevTools:
     def render(self):
         pyg.msg_height = 1
         pyg.update_gui()
-        render_all()
         
         pyg.screen.blit(self.cursor_fill, self.cursor_pos)
         
@@ -2781,9 +2880,6 @@ class Inventory:
         self.last_press_time = 0
 
     def update_data(self):
-
-        # Restrict movement speed
-        mech.movement_speed(toggle=False, custom=2)
         
         # Initialize cursor
         if bool(self.locked): size, width, alpha = 30, 2, 192
@@ -2813,7 +2909,10 @@ class Inventory:
         self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
         self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
 
-    def run(self):   
+    def run(self):
+        
+        # Restrict movement speed
+        mech.movement_speed(toggle=False, custom=2)
         
         # Update dictionaries and create cursors
         self.update_data()
@@ -2868,25 +2967,26 @@ class Inventory:
                 
                 # >>CHANGE DICTIONARY<<
                 elif (event.key in pyg.key_LEFT) or (event.key in pyg.key_RIGHT):
-                
-                    if event.key in pyg.key_LEFT:
-                        if not self.locked: self.dic_index -= 1
-                        else:               player_obj.ent.move(-pyg.tile_height, 0)
-                    
-                    elif event.key in pyg.key_RIGHT:
-                        if not self.locked: self.dic_index += 1
-                        else:               player_obj.ent.move(pyg.tile_width, 0)
-                    
-                    self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                    self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-                    self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-                    self.choice = self.cursor_pos[1]//32 + self.offset - 1
-                    
-                    # Move cursor to the highest spot in the dictionary
-                    if self.cursor_pos[1] > 32*len(self.dic):
-                        self.cursor_pos[1] = 32*len(self.dic)
-                        self.choice = len(self.dic) - self.offset - 1
-                    
+                    if len(self.dic_categories) > 1:
+                        
+                        if event.key in pyg.key_LEFT:
+                            if not self.locked: self.dic_index -= 1
+                            else:               player_obj.ent.move(-pyg.tile_height, 0)
+                        
+                        elif event.key in pyg.key_RIGHT:
+                            if not self.locked: self.dic_index += 1
+                            else:               player_obj.ent.move(pyg.tile_width, 0)
+                        
+                        self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+                        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+                        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
+                        self.choice = self.cursor_pos[1]//32 + self.offset - 1
+                        
+                        # Move cursor to the highest spot in the dictionary
+                        if self.cursor_pos[1] > 32*len(self.dic):
+                            self.cursor_pos[1] = 32*len(self.dic)
+                            self.choice = len(self.dic) - self.offset - 1
+                        
                 # >>CONSTRUCTION<<
                 elif event.key in pyg.key_DEV:
                     pyg.overlay = 'dev'
@@ -2953,7 +3053,6 @@ class Inventory:
         # Basics
         pyg.msg_height = 1
         pyg.update_gui()
-        render_all()
         
         pyg.screen.blit(self.cursor_fill, self.cursor_pos)
         img.average()
@@ -3019,14 +3118,24 @@ class Hold:
         self.keys = pyg.key_LEFT + pyg.key_DOWN + pyg.key_RIGHT
         
         self.detail = True
+        self.cooldown_time = 0.5
+        self.last_press_time = 0
 
-    def run(self):   
+    def run(self):
+        
+        # Restrict movement speed
+        mech.movement_speed(toggle=False, custom=2)
         
         # Generate cursor and dictionaries
         self.update_data()
         
         # Handle keystrokes
         for event in pygame.event.get():
+            
+            # Clear sequence after some time
+            if time.time()-self.last_press_time > self.cooldown_time:
+                self.last_press_time = time.time()
+                self.key_sequence = []
             
             # Wait for sequence
             if event.type == pygame.KEYDOWN:
@@ -3080,9 +3189,6 @@ class Hold:
 
     def update_data(self):
         
-        # Restrict keystroke speed
-        mech.movement_speed(toggle=False, custom=2)
-        
         # Initialize cursor
         if bool(self.locked): size, width, alpha = 30, 2, 192
         else:                 size, width, alpha = 31, 1, 128
@@ -3099,8 +3205,9 @@ class Hold:
         self.dic_categories = ['effects']
         self.sequences      = {}
         for effect in player_obj.ent.effects:
-            inventory_dics['effects'][effect.img_names[1]] = img.dict[effect.img_names[0]][effect.img_names[1]]
-            self.sequences[effect.img_names[1]] = effect.sequence
+            if effect.sequence:
+                inventory_dics['effects'][effect.img_names[1]] = img.dict[effect.img_names[0]][effect.img_names[1]]
+                self.sequences[effect.img_names[1]] = effect.sequence
         for key, value in inventory_dics.items():
             if not value: self.dic_categories.remove(key)
         
@@ -3124,7 +3231,6 @@ class Hold:
     def render(self):
         pyg.msg_height = 1
         pyg.update_gui()
-        render_all()
         
         pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
         pyg.screen.blit(self.cursor_border, self.cursor_pos)
@@ -3213,60 +3319,10 @@ class Trade:
             pygame.Color('white'), 
             [(0, 0), (size, 0), (size, size), (0, size)],  width)
 
-    def update_data(self):
+    def run(self):
         
         # Restrict movement speed
         mech.movement_speed(toggle=False, custom=2)
-        
-        ## Dictionaries
-        # Left dictionary
-        self.inventory_dics = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
-        for key, value in player_obj.ent.inventory.items():
-            for item in value:
-                if not item.hidden:
-                    self.inventory_dics[key][item.name] = [img.dict[item.img_names[0]][item.img_names[1]], item]
-        self.inv_dics = {}
-        for key, value in self.inventory_dics.items():
-            if value: self.inv_dics[key] = value
-        
-        # Right dictionary
-        self.inventory_dics_bnm = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
-        for key, value in self.ent.inventory.items():
-            for item in value:
-                if not item.hidden:
-                    self.inventory_dics_bnm[key][item.name] = [img.dict[item.img_names[0]][item.img_names[1]], item]
-        self.inv_dics_bnm = {}
-        for key, value in self.inventory_dics_bnm.items():
-            if value: self.inv_dics_bnm[key] = value
-        
-        ## Selection
-        # Left selection restoration
-        if len(self.dic_indices) != len(self.inv_dics):
-            self.dic_indices = [[0, 0] for _ in self.inv_dics] # offset, choice
-        
-        # Quit if the inventory is empty
-        if self.dic_indices:
-            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]%len(self.inv_dics)
-            self.dic    = self.inv_dics[list(self.inv_dics.keys())[self.dic_index%len(self.inv_dics)]]
-        else:
-            pyg.overlay = None
-            return
-        
-        # Right selection restoration
-        if len(self.dic_indices_bnm) != len(self.inv_dics_bnm):
-            self.dic_indices_bnm = [[0, 0] for _ in self.inv_dics_bnm] # offset, choice
-        
-        # Quit if the inventory is empty
-        if self.dic_indices_bnm:
-            self.offset_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][0]
-            self.choice_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1]%len(self.inv_dics_bnm)
-            self.dic_bnm    = self.inv_dics_bnm[list(self.inv_dics_bnm.keys())[self.dic_index_bnm%len(self.inv_dics_bnm)]]
-        else:
-            pyg.overlay = None
-            return
-
-    def run(self):   
         
         # Update dictionaries and create cursors
         self.update_data()
@@ -3410,6 +3466,59 @@ class Trade:
         pyg.overlay = 'trade'
         return
 
+    def update_data(self):
+        
+        # Restrict movement speed
+        mech.movement_speed(toggle=False, custom=2)
+        
+        ## Dictionaries
+        # Left dictionary
+        self.inventory_dics = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
+        for key, value in player_obj.ent.inventory.items():
+            for item in value:
+                if not item.hidden:
+                    self.inventory_dics[key][item.name] = [img.dict[item.img_names[0]][item.img_names[1]], item]
+        self.inv_dics = {}
+        for key, value in self.inventory_dics.items():
+            if value: self.inv_dics[key] = value
+        
+        # Right dictionary
+        self.inventory_dics_bnm = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
+        for key, value in self.ent.inventory.items():
+            for item in value:
+                if not item.hidden:
+                    self.inventory_dics_bnm[key][item.name] = [img.dict[item.img_names[0]][item.img_names[1]], item]
+        self.inv_dics_bnm = {}
+        for key, value in self.inventory_dics_bnm.items():
+            if value: self.inv_dics_bnm[key] = value
+        
+        ## Selection
+        # Left selection restoration
+        if len(self.dic_indices) != len(self.inv_dics):
+            self.dic_indices = [[0, 0] for _ in self.inv_dics] # offset, choice
+        
+        # Quit if the inventory is empty
+        if self.dic_indices:
+            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]%len(self.inv_dics)
+            self.dic    = self.inv_dics[list(self.inv_dics.keys())[self.dic_index%len(self.inv_dics)]]
+        else:
+            pyg.overlay = None
+            return
+        
+        # Right selection restoration
+        if len(self.dic_indices_bnm) != len(self.inv_dics_bnm):
+            self.dic_indices_bnm = [[0, 0] for _ in self.inv_dics_bnm] # offset, choice
+        
+        # Quit if the inventory is empty
+        if self.dic_indices_bnm:
+            self.offset_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][0]
+            self.choice_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1]%len(self.inv_dics_bnm)
+            self.dic_bnm    = self.inv_dics_bnm[list(self.inv_dics_bnm.keys())[self.dic_index_bnm%len(self.inv_dics_bnm)]]
+        else:
+            pyg.overlay = None
+            return
+
     def select(self):
         """
         dic         : name, surface, and Item object; ex. {'green clothes': [<Surface>, <Item>]}
@@ -3487,7 +3596,6 @@ class Trade:
         # Basics
         pyg.msg_height = 1
         pyg.update_gui()
-        render_all()
         
         # Cursor background and font colors
         img.average()
@@ -3567,6 +3675,44 @@ class Trade:
         
         if self.menu_toggle == 'right': pyg.screen.blit(self.cursor_border_bnm, self.cursor_pos_bnm)
         else:                           pyg.screen.blit(self.cursor_border,     self.cursor_pos)
+
+class Stats:
+    
+    def render(self):
+        pyg.msg_height = 1
+        pyg.update_gui()
+        render_all()
+        
+        # Render background
+        fill_width  = pyg.tile_width  * 5 + pyg.tile_width // 2
+        fill_height = pyg.tile_height * 3 + pyg.tile_height // 2
+        self.cursor_fill   = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
+        self.cursor_fill.fill((0, 0, 0, 128))
+        pyg.screen.blit(self.cursor_fill, (32, 32))
+        
+        # Render border
+        self.cursor_border = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
+        self.cursor_fill.fill((0, 0, 0, 128))
+        pygame.draw.polygon(
+            self.cursor_border, 
+            pyg.gray, 
+            [(0, 0),
+             (fill_width-1, 0),
+             (fill_width-1, fill_height-1),
+             (0, fill_height-1)], 1)
+        pyg.screen.blit(self.cursor_border, (32, 32))
+        
+        # Render items
+        Y = 32
+        for i in range(len(list(self.dic))):
+            X1 = pyg.tile_height + pyg.tile_height // 4
+            X2 = pyg.tile_height * 4
+            key, val = list(self.dic.items())[i]
+            key = pyg.font.render(key, True, pyg.gray)
+            val = pyg.font.render(val, True, pyg.gray)
+            pyg.screen.blit(key, (X1, Y))
+            pyg.screen.blit(val, (X2, Y))
+            Y += pyg.tile_height//2
 
 ## Constructions
 class Tile:
@@ -3659,6 +3805,7 @@ class Item:
         self.tile   = None
         self.X      = None
         self.Y      = None
+        self.owner  = None
         
         # Seed a seed for individual adjustments
         self.rand_X = random.randint(-self.rand_set, self.rand_set)
@@ -3666,6 +3813,11 @@ class Item:
         
         # Notify code of big object
         self.big = False
+        
+        # Initialize effect if passive
+        if self.effect:
+            if self.effect.trigger == 'passive':
+                self.effect.function(self)
 
     def draw(self, surface):
         """ Draws the object at its position. """
@@ -3708,19 +3860,26 @@ class Item:
         if not ent: ent = player_obj.ent
         
         if len(ent.inventory) >= 26:
-            pyg.update_gui('Your inventory is full, cannot pick up ' + self.name + '.')
+            pyg.update_gui("Your inventory is full, cannot pick up " + self.name + ".", pyg.dark_gray)
         else:
             
             # Pick up item if possible
             if self.movable:
                 
-                if self.effect:
-                    self.effect
-                
+                # Add to inventory
                 ent.inventory[self.role].append(self)
                 sort_inventory(ent)
-                ent.tile.item = None
-                pyg.update_gui("Picked up " + self.name + ".")
+                
+                # Remove from environment
+                if ent.tile:
+                    if ent.tile.item:
+                        ent.tile.item = None
+                
+                # Assign parameters
+                self.owner = ent
+                
+                if ent.role == 'player':
+                    pyg.update_gui("Picked up " + self.name + ".", pyg.dark_gray)
 
     def drop(self, ent=None):
         """ Unequips item before dropping if the object has the Equipment component, then adds it to the map at
@@ -3737,8 +3896,9 @@ class Item:
             if self in ent.equipment.values():
                 self.toggle_equip(ent)
             
-            self.X = ent.X
-            self.Y = ent.Y
+            self.owner = None
+            self.X     = ent.X
+            self.Y     = ent.Y
             ent.inventory[self.role].remove(self)
             ent.tile.item = self
 
@@ -3756,7 +3916,7 @@ class Item:
             owner.wallet += self.cost
             
             # Give to recipient
-            recipient.inventory[self.role].append(self)
+            self.pick_up(ent=recipient)
             recipient.wallet -= self.cost
         
         else:
@@ -3781,14 +3941,18 @@ class Item:
             # Activate the item
             else: self.effect.function(ent)
         
-        elif self.role == 'player': pyg.update_gui("The " + self.name + " cannot be used.")
+        elif self.role == 'player': pyg.update_gui("The " + self.name + " cannot be used.", pyg.dark_gray)
 
     def toggle_equip(self, ent):
         """ Toggles the equip/unequip status. """
         
-        if not ent: ent = player_obj.ent
-        if self.equipped: self.dequip(ent)
-        else:             self.equip(ent)
+        # Assign entity
+        if not ent:        ent = player_obj.ent
+        if not self.owner: self.owner = ent
+        
+        # Equip or dequip
+        if self.equipped:  self.dequip(ent)
+        else:              self.equip(ent)
 
     def equip(self, ent):
         """ Unequips object if the slot is already being used. """
@@ -3802,13 +3966,14 @@ class Item:
         ent.max_hp  += self.hp_bonus
         ent.attack  += self.attack_bonus
         ent.defense += self.defense_bonus
-        if self.effect: ent.effects.append(self.effect)
+        if self.effect:
+            ent.effects.append(self.effect)
         
         self.equipped = True
 
         if ent.role == 'player':
             if not self.hidden:
-                pyg.update_gui('Equipped ' + self.name + ' on ' + self.slot + '.')
+                pyg.update_gui("Equipped " + self.name + " on " + self.slot + ".", pyg.dark_gray)
 
     def dequip(self, ent):
         """ Unequips an object and shows a message about it. """
@@ -3827,7 +3992,7 @@ class Item:
         
         if self.role == 'player':
             if not self.hidden:
-                pyg.update_gui('Dequipped ' + self.name + ' from ' + self.slot + '.')
+                pyg.update_gui("Dequipped " + self.name + " from " + self.slot + ".", pyg.dark_gray)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -3906,12 +4071,17 @@ class Entity:
             name          = 'suicide',
             img_names     = ['decor', 'bones'],
             function      = mech.suicide,
+            trigger       = 'active',
             sequence      = '⮟⮟⮟',
-            cooldown_time = 1)]
+            cooldown_time = 1,
+            other         = None)]
         
         # Randomizer
         self.rand_X = random.randint(-pyg.tile_width,  pyg.tile_width)
         self.rand_Y = random.randint(-pyg.tile_height, pyg.tile_height)
+        
+        # World clock
+        self.world_time = 3
 
     def ai(self):
         """ Preset movements. """
@@ -4079,7 +4249,7 @@ class Entity:
                 
                 # Play speech and update quests
                 if time.time() - aud.last_press_time_speech > aud.speech_speed//100:
-                    pyg.update_gui(dialogue, pyg.white)
+                    pyg.update_gui(dialogue)
                     aud.play_speech(dialogue)
                     if ent.dialogue:
                         ent.dialogue = ent.quest.dialogue(ent)
@@ -4109,7 +4279,7 @@ class Entity:
                         self.env.player_coordinates    = [x, y]
                         check_tile(x, y)
                     else:
-                        pyg.update_gui('The shovel strikes the barrier but does not break it.')
+                        pyg.update_gui("The shovel strikes the barrier but does not break it.", pyg.dark_gray)
                     
                     # Update durability
                     if self.equipment['dominant hand'].durability <= 100:
@@ -4196,10 +4366,10 @@ class Entity:
         if self.name != target.name:
             damage = self.attack - target.defense
             if damage > 0:
-                pyg.update_gui(self.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.', pyg.red)
+                pyg.update_gui(self.name.capitalize() + " attacks " + target.name + " for " + str(damage) + " hit points.", pyg.red)
                 target.take_damage(damage)
             elif self.role != 'player':
-                pyg.update_gui(self.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!', pyg.red)
+                pyg.update_gui(self.name.capitalize() + " attacks " + target.name + " but it has no effect!", pyg.red)
         return
 
     def take_damage(self, damage):
@@ -4227,7 +4397,7 @@ class Entity:
 
     def death(self):
         if self.role == 'player':
-            pyg.update_gui('You died!', pyg.red)
+            pyg.update_gui("You died!", pyg.red)
             player_obj.ent.dead        = True
             player_obj.ent.tile.entity = None
             
@@ -4237,7 +4407,7 @@ class Entity:
             pygame.event.clear()
         
         else:
-            pyg.update_gui('The ' + self.name + ' is dead! You gain ' + str(self.exp) + ' experience points.', pyg.red)
+            pyg.update_gui("The " + self.name + " is dead! You gain " + str(self.exp) + " experience points.", pyg.red)
             self.dead        = True
             self.role        = 'corpse'
             self.tile.entity = None
@@ -4356,7 +4526,12 @@ class Entity:
                     else: pass
         
         # Blit dialogue bubble
-            if self.dialogue: pyg.display.blit(img.dict['decor']['bubble'], (X, Y-pyg.tile_height))
+            if self.dialogue: pyg.display.blit(img.dict['bubbles']['dots'], (X, Y-pyg.tile_height))
+        
+        # Blit trading bubble
+            elif self.trader:
+                if 2 < player_obj.ent.world_time < 7:
+                    pyg.display.blit(img.dict['bubbles']['cart'], (X, Y-pyg.tile_height))
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -4742,7 +4917,7 @@ class Mechanics:
 
         self.level_up_base     = 200
         self.level_up_factor   = 150
-
+        
         self.torch_radius      = 10
         
         self.movement_speed_toggle = 0
@@ -4750,7 +4925,10 @@ class Mechanics:
             ['Default', (250, 150)],
             ['Fast',    (1,   130)],
             ['Fixed',   (0,   0)]]
-
+        self.slow_list = [
+            ['Fixed',   (0,   0)],
+            ['Default', (250, 150)]]
+        
         self.cooldown_time = 10
         self.last_press_time = 0
 
@@ -4768,7 +4946,7 @@ class Mechanics:
             pygame.event.clear()
             
             if 'dungeon' not in player_obj.envs.keys(): 
-                pyg.update_gui('You step into the darkness.')
+                pyg.update_gui("You step into the darkness.", pyg.dark_gray)
                 player_obj.envs['dungeon'] = []
                 build_dungeon_level()
             
@@ -4795,7 +4973,7 @@ class Mechanics:
             pygame.event.clear()
                 
             if 'cave' not in player_obj.envs.keys(): 
-                pyg.update_gui('The ground breaks beneath you and reveals a cave.')
+                pyg.update_gui("The ground breaks beneath you and reveals a cave.", pyg.dark_gray)
                 player_obj.envs['cave'] = []
                 build_cave_level()
             
@@ -4844,7 +5022,7 @@ class Mechanics:
                     self.movement_speed_toggle = 0
                 else:
                     self.movement_speed_toggle += 1
-                pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}")
+                pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
                 (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
             
@@ -4858,18 +5036,36 @@ class Mechanics:
                 (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
             
-        else:
-            self.movement_speed_toggle = 0
-            (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
-            pygame.key.set_repeat(hold_time, repeat_time)
+        else:        
+            
+            # Change speed
+            if toggle:
+                if self.movement_speed_toggle == len(self.slow_list)-1: 
+                    self.movement_speed_toggle = 0
+                else:
+                    self.movement_speed_toggle += 1
+                pyg.update_gui(f"Movement speed: {self.slow_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
+                (hold_time, repeat_time) = self.slow_list[self.movement_speed_toggle][1]
+                pygame.key.set_repeat(hold_time, repeat_time)
+            
+            # Set custom speed
+            elif custom is not None:
+                custom = custom % 2
+                (hold_time, repeat_time) = self.slow_list[custom][1]
+                pygame.key.set_repeat(hold_time, repeat_time)
+            
+            # Restore previous speed
+            else:
+                (hold_time, repeat_time) = self.slow_list[self.movement_speed_toggle][1]
+                pygame.key.set_repeat(hold_time, repeat_time)
 
     def cast_heal(self):
         """ Heals the player. """
         
         if player_obj.ent.fighter.hp == player_obj.ent.fighter.max_hp:
-            pyg.update_gui('You are already at full health.')
+            pyg.update_gui("You are already at full health.", pyg.dark_gray)
             return 'cancelled'
-        pyg.update_gui('Your wounds start to feel better!')
+        pyg.update_gui("Your wounds start to feel better!", pyg.dark_gray)
         player_obj.ent.fighter.heal(mech.heal_amount)
 
     def cast_lightning(self):
@@ -4877,33 +5073,33 @@ class Mechanics:
         
         monster = closest_monster(mech.lightning_range)
         if monster is None:  #no enemy found within maximum range
-            pyg.update_gui('No enemy is close enough to strike.')
+            pyg.update_gui("No enemy is close enough to strike.", pyg.dark_gray)
             return 'cancelled'
-        pyg.update_gui('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
+        pyg.update_gui("A lighting bolt strikes the " + monster.name + " with a loud thunder! The damage is "
             + str(mech.lightning_damage) + ' hit points.', pyg.red)
         monster.fighter.take_damage(mech.lightning_damage)
 
     def cast_fireball(self):
         """ Asks the player for a target tile to throw a fireball at. """
         
-        pyg.update_gui('Left-click a target tile for the fireball, or right-click to cancel.', pyg.red)
+        pyg.update_gui("Left-click a target tile for the fireball, or right-click to cancel.", pyg.red)
         (X, Y) = target_tile()
         if X is None: return 'cancelled'
-        pyg.update_gui('The fireball explodes, burning everything within ' + str(int(mech.fireball_radius/pyg.tile_width)) + ' tiles!', pyg.red)
+        pyg.update_gui("The fireball explodes, burning everything within " + str(int(mech.fireball_radius/pyg.tile_width)) + " tiles!", pyg.red)
         for ent in player_obj.ent.env.entities: # Damages every fighter in range, including the player
             if ent.distance(X, Y) <= mech.fireball_radius and ent.fighter:
-                pyg.update_gui('The ' + ent.name + ' gets burned for ' + str(mech.fireball_damage) + ' hit points.', pyg.red)
+                pyg.update_gui("The " + ent.name + " gets burned for " + str(mech.fireball_damage) + " hit points.", pyg.red)
                 ent.fighter.take_damage(mech.fireball_damage)
 
     def cast_confuse(self):
         """ Asks the player for a target to confuse, then replaces the monster's AI with a "confused" one. After some turns, it restores the old AI. """
         
-        pyg.update_gui('Left-click an enemy to confuse it, or right-click to cancel.', pyg.red)
+        pyg.update_gui("Left-click an enemy to confuse it, or right-click to cancel.", pyg.red)
         monster = target_monster(mech.confuse_range)
         if monster is None: return 'cancelled'
         old_ai = monster.ai
         monster.ai = ConfusedMonster(old_ai)
-        pyg.update_gui('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', pyg.red)
+        pyg.update_gui("The eyes of the " + monster.name + " look vacant, as he starts to stumble around!", pyg.red)
 
     def swing(self):
         image = img.dict[player_obj.ent.equipment['dominant hand'].img_names[0]]['dropped']
@@ -4928,8 +5124,8 @@ class Mechanics:
         self.attack_crit = [pyg.key_INFO, pyg.key_EQUIP, pyg.key_DROP]
 
     def radish_eat(self, ent):
-        ent.rank += 1
-        image = img.dict['drugs']['bubbles']
+        pet_obj.moods['happiness'] += 1
+        image = img.dict['bubbles']['heart']
         img.flash_above(ent, image)
         ent.tile.item = None
 
@@ -4938,42 +5134,70 @@ class Mechanics:
         if ent.stamina > 100: ent.stamina = 100
         pyg.update_gui()
 
+    def lamp(self, item):
+        """ Adds or removes a light to be rendered under the following conditions.
+            1. The object is not owned by an entity.
+            2. The object is equipped by an entity. """
+        
+        if item.owner:
+            if item.equipped:
+                if item not in weather.lamp_list:
+                    weather.lamp_list.append(item)
+            else:
+                if item in weather.lamp_list:
+                    weather.lamp_list.remove(item)
+        
+        else:
+            if item not in weather.lamp_list:
+                weather.lamp_list.append(item)
+            else:
+                weather.lamp_list.remove(item)
+
 class Effect:
 
-    def __init__(self, name, img_names, function, sequence, cooldown_time):
+    def __init__(self, name, img_names, function, trigger, sequence, cooldown_time, other):
         
         self.name            = name
         self.img_names       = img_names
         self.function        = function # set as a function in Mechanics
-
+        
+        self.trigger         = trigger
         self.sequence        = sequence
         
         self.cooldown_time   = cooldown_time
         self.last_press_time = 0
+        
+        self.other           = other
 
 class Camera:
     """ Defines a camera to follow the player. """
     
     def __init__(self, target):
         """ Defines a camera and its parameters. 
+            
             Parameters
             ----------
             target          : Entity object; focus of camera
-            width           : int; translational offset in number of pixels
-            height          : int; translational offset in number of pixels
-            X               : 
-            Y               : 
-            center_x        : unused
-            center_y        : unused
-            right           : unused
-            bottom          : unused
-            tile_map_x      : 
-            tile_map_y      : 
-            tile_map_width  : 
-            tile_map_height : 
-            x_range         : 
-            y_range         : 
-            fix_position    : """
+            width           : int; number of visible tiles in screen coordinates
+            height          : int; number of visible tiles in screen coordinates
+            tile_map_width  : int; number of visible tiles in tile coordinates
+            tile_map_height : int; number of visible tiles in tile coordinates
+            
+            X               : int; top left in screen coordinates
+            Y               : int; top left in screen coordinates
+            tile_map_x      : int; top left in tile coordinates
+            tile_map_y      : int; top left in tile coordinates
+            
+            right           : int; number of visible tiles + displacement in screen coordinates
+            bottom          : int; number of visible tiles + displacement in screen coordinates
+            x_range         : int; number of visible tiles + displacement in tile coordinates
+            y_range         : int; number of visible tiles + displacement in tile coordinates
+            (questionable)
+            
+            center_x        : int; middle of the camera in screen coordinates
+            center_y        : int; middle of the camera in screen coordinates
+            
+            fix_position    : bool; prevents adjustment of parameters """
         
         self.target          = target
         self.width           = int(pyg.screen_width / pyg.zoom)
@@ -5056,8 +5280,8 @@ class Camera:
             self.height = int(pyg.screen_height / pyg.zoom)
             pyg.display = pygame.Surface((self.width, self.height))
             self._recalculate_bounds()
-            
-        elif not self.fixed:
+        
+        elif not custom and not self.fixed:
             pyg.zoom += factor
             pyg.zoom_cache = pyg.zoom
             pyg.update_gui()
@@ -5065,7 +5289,6 @@ class Camera:
             self.height = int(pyg.screen_height / pyg.zoom)
             pyg.display = pygame.Surface((self.width, self.height))
             self._recalculate_bounds()
-
 
     def zoom_out(self, factor=0.1, custom=None):
         """ Zoom out by increasing the camera's width and height. """
@@ -5098,6 +5321,177 @@ class Camera:
         self.x_range         = self.tile_map_x + self.tile_map_width
         self.y_range         = self.tile_map_y + self.tile_map_height
         self.fix_position()
+
+class Pets:
+    """ Manages stats in the Garden. """
+
+    def __init__(self):
+        
+        # General
+        if player_obj.envs['garden']: self.ents = player_obj.envs['garden'].entities
+        else:                         self.ents = None
+        
+        self.stats = {
+            '      RADIX ATRIUM': None,
+            '': None,
+            'mood':     None,
+            'stamina':  None,
+            'strength': None,
+            'appeal':   None}
+        
+        # Numerical stats
+        self.levels = {
+            'stamina':  0,
+            'strength': 1,
+            'appeal':   1}
+        
+        self.moods = {
+            'happiness': 5,
+            'sadness':   0,
+            'anger':     0,
+            'boredom':   0,
+            'lethargy':  0,
+            'confusion': 0}
+        
+        # String conversions
+        self.faces = {
+            'happiness': '( ^_^ )',
+            'sadness':   '( Q_Q )',
+            'anger':     '( >_< )',
+            'boredom':   '( . _ .  )',
+            'lethargy':  '( =_= )',
+            'confusion': '(@_@)'}
+        
+        # Utility
+        self.happiness_cooldown = 10
+        self.happiness_press = 0
+        self.emoji_cooldown = 10
+        self.emoji_press = 0
+
+    def import_pets(self):
+        self.ents = player_obj.envs['garden'].entities
+
+    def stat_check(self, dic):
+        try:
+            dic = copy.copy(dic)
+            for key, value in dic.items():
+                if value > 10:  dic[value] = 10
+                elif value < 0: dic[value] = 0
+        except: print(dic)
+
+    def update(self):
+        
+        # Lose happiness
+        if self.moods['happiness']:
+            if time.time() - self.happiness_press > self.happiness_cooldown:
+                self.happiness_press = time.time()
+                
+                if not random.randint(0, 1):
+                    self.moods['happiness'] -= 1
+                    self.moods[random.choice(list(self.moods.keys()))] += 1
+        
+        # Clean up
+        self.stat_check(self.levels)
+        self.stat_check(self.moods)
+        
+        # Set mood
+        max_val = max(self.moods.values())
+        current_moods = [mood for mood, val in self.moods.items() if val == max_val]
+        
+        # Alternate between tied moods
+        if len(current_moods) > 1:
+            if time.time() - self.emoji_press > self.emoji_cooldown:
+                self.emoji_press = time.time()
+                self.stats['mood'] = self.faces[random.choice(current_moods)]        
+        
+        # Set the current mood
+        else:
+            self.stats['mood'] = self.faces[current_moods[0]]
+        
+        # Set levels
+        self.stats['stamina']  = '★' * self.levels['stamina']
+        while len(self.stats['stamina']) < 5:
+            self.stats['stamina'] += '☆'
+        self.stats['strength'] = '★' * self.levels['strength']
+        while len(self.stats['strength']) < 5:
+            self.stats['strength'] += '☆'
+        self.stats['appeal']   = '★' * self.levels['appeal']
+        while len(self.stats['appeal']) < 5:
+            self.stats['appeal'] += '☆'
+
+class Weather:
+
+    def __init__(self):
+        
+        # Dark blue background
+        self.overlay = pygame.Surface((pyg.screen_width * 10, pyg.screen_height * 10), pygame.SRCALPHA)
+        
+        self.lamp_list = []
+        
+        self.last_hour = time.localtime().tm_hour + 1
+    
+    def run(self):
+        
+        # Set time of day
+        if (time.localtime().tm_hour + 1) != self.last_hour:
+            self.last_hour  = time.localtime().tm_hour + 1
+            player_obj.ent.world_time = ((player_obj.ent.world_time+1) % 8) + 1
+        
+        # Set brightness
+        if player_obj.ent.world_time == 1:   alpha = 170 # 🌖
+        elif player_obj.ent.world_time == 2: alpha = 85  # 🌗
+        elif player_obj.ent.world_time == 3: alpha = 17  # 🌘
+        elif player_obj.ent.world_time == 4: alpha = 0   # 🌑
+        elif player_obj.ent.world_time == 5: alpha = 17  # 🌒
+        elif player_obj.ent.world_time == 6: alpha = 85  # 🌓
+        elif player_obj.ent.world_time == 7: alpha = 170 # 🌔
+        elif player_obj.ent.world_time == 8: alpha = 255 # 🌕
+        self.overlay.set_alpha(alpha)
+
+    def lamp(self, mask, x, y, size):
+        width  = pyg.tile_width * size
+        height = pyg.tile_height * size
+        alpha  = 255//size
+        left   = x - size*pyg.tile_width//2
+        top    = y - size*pyg.tile_height//2
+        
+        for i in range(size+1):
+            transparent_rect = pygame.Rect(
+                left   + (i+1) * 16,
+                top    + (i+1) * 16,
+                width  - i * 32,
+                height - i * 32)
+            self.overlay.fill((0, 0, 0, 255-alpha*i), transparent_rect)
+    
+    def render(self):
+        """ Creates a black overlay and cuts out regions for lighting.
+            Light is shown for any of the following conditions.
+                1. The object has mech.lamp as an effect and is not owned by an entity.
+                2. The object has mech.lamp as an effect and is equipped by an entity. """
+        
+        # Dark blue background
+        self.overlay.fill((0, 0, 0))
+
+        # Create light
+        for lamp in self.lamp_list:
+            
+            # Center light on entity
+            if lamp.owner and lamp.equipped:
+                self.lamp(
+                    self.overlay,
+                    lamp.owner.X - player_obj.ent.env.camera.X,
+                    lamp.owner.Y - player_obj.ent.env.camera.Y,
+                    lamp.effect.other)
+            
+            # Center light on item
+            elif not lamp.owner:
+                self.lamp(
+                    self.overlay,
+                    lamp.X - player_obj.ent.env.camera.X,
+                    lamp.Y - player_obj.ent.env.camera.Y,
+                    lamp.effect.other)
+        
+        pyg.display.blit(self.overlay, (0, 0))
 
 ## Quests
 class Quest:
@@ -5384,11 +5778,11 @@ class Bloodkin:
         if dialogue == "Walk into something to interact with it, or press Enter if you're above it.":
             ent.quest.dialogue_list = [
                 "Walk into something to interact with it, or press Enter if you're above it.",
-                "Press Backspace to view the main menu. Try it again to return!",
+                "Press / to view the main menu. Try it again to return!",
                 "Press 9 to view your questlog. Hold Enter to see more details.",
-                "Press 4 to open your inventory. Backspace returns you, and Enter activates!",
+                "Press 4 to open your inventory. Slash returns you, and Enter activates!",
                 "Try holding 0. Press the arrow keys for special actions, or press 9 to toggle details.",
-                "Check out Options in the main menu -- and don't forget to die!"]
+                "Check out Options in the main menu."]
             
             #ent.quest.dialogue_list = [
             #    "... The creature seems curious.",
@@ -5435,8 +5829,10 @@ class Bloodkin:
                             name          = 'mysterious note',
                             img_names     = ['scrolls', 'open'],
                             function      = self.mysterious_note,
+                            trigger       = 'active',
                             sequence      = None,
-                            cooldown_time = 0)
+                            cooldown_time = 0,
+                            other         = None)
                         place_object(
                             obj = obj,
                             loc = [x_test, y_test],
@@ -5588,6 +5984,9 @@ def build_garden():
     entities = [['forest', 'radish', 50]]
     place_objects(env, items, entities)
     
+    # Create pet management
+    pet_obj = Pets()
+    
     # Place player in first room
     env.player_coordinates = [x, y]
     env.map[x][y].item     = None
@@ -5656,37 +6055,35 @@ def build_home():
     player_obj.envs['home'].center = main_room.center()
 
     # Place items in home
-    for i in range(5): 
+    # Healing potion
+    x, y = 4, 11
+    item = create_item('jug of blood')
+    place_object(item, [x, y], player_obj.envs['home'])
+    
+    # Lightning scroll
+    x, y = 5, 11
+    item = create_item('scroll of lightning bolt')
+    place_object(item, [x, y], player_obj.envs['home'])
 
-        # Healing potion
-        x, y = 4, 11
-        item = create_item('jug of blood')
-        place_object(item, [x, y], player_obj.envs['home'])
-        
-        # Lightning scroll
-        x, y = 5, 11
-        item = create_item('scroll of lightning bolt')
-        place_object(item, [x, y], player_obj.envs['home'])
+    # Fireball scroll
+    x, y = 6, 11
+    item = create_item('scroll of fireball')
+    place_object(item, [x, y], player_obj.envs['home'])
 
-        # Fireball scroll
-        x, y = 6, 11
-        item = create_item('scroll of fireball')
-        place_object(item, [x, y], player_obj.envs['home'])
+    # Blood sword
+    x, y = 24, 33
+    item = create_item('blood sword')
+    place_object(item, [x, y], player_obj.envs['home'])
 
-        # Blood sword
-        x, y = 24, 33
-        item = create_item('blood sword')
-        place_object(item, [x, y], player_obj.envs['home'])
+    # Shield
+    x, y = 29, 34
+    item = create_item('iron shield')
+    place_object(item, [x, y], player_obj.envs['home'])
 
-        # Shield
-        x, y = 29, 34
-        item = create_item('iron shield')
-        place_object(item, [x, y], player_obj.envs['home'])
-
-        # Bug fix
-        x, y = 0, 0
-        item = create_item('scroll of fireball')
-        place_object(item, [x, y], player_obj.envs['home'])
+    # Bug fix
+    x, y = 0, 0
+    item = create_item('scroll of fireball')
+    place_object(item, [x, y], player_obj.envs['home'])
     
     # Generate stairs
     x, y = 9, 15
@@ -5722,6 +6119,7 @@ def build_home():
     
     return player_obj.envs['home']
 
+@debug_call
 def build_dungeon_level():
     """ Generates the overworld environment. """
     
@@ -5795,7 +6193,7 @@ def build_dungeon_level():
     
     # Generate items and entities
     items = [
-        ['dungeon', 'jug of blood', 10],
+        ['dungeon', 'jug of blood',   10],
         ['dungeon', 'bones',          50],
         ['dungeon', 'sword',          1000//env.lvl_num],
         ['dungeon', 'iron shield',    1000//env.lvl_num],
@@ -5803,9 +6201,9 @@ def build_dungeon_level():
         ['dungeon', 'fire',           100]]
     entities = [
         ['dungeon', 'plant',          100],
-        ['dungeon', 'eye',            25],
+        ['dungeon', 'eye',            5],
         ['dungeon', 'radish',         1000],
-        ['dungeon', 'round1',         100]]
+        ['dungeon', 'round1',         10]]
     place_objects(env, items, entities)
     
     # Place player in first room
@@ -5821,6 +6219,7 @@ def build_dungeon_level():
     stairs.name = 'dungeon'
     place_object(stairs, [x, y], player_obj.envs['dungeon'][-1])
 
+@debug_call
 def build_overworld():
     """ Generates the overworld environment. """
 
@@ -5979,6 +6378,7 @@ def build_overworld():
         # Spawn entity
         place_object(ent, (x, y), env)
 
+@debug_call
 def build_cave_level():
     """ Generates a cave environment. """
     
@@ -5991,9 +6391,9 @@ def build_cave_level():
         lvl_num    = lvl_num,
         size       = 1,
         soundtrack = [f'dungeon {lvl_num}'],
-        img_names  = ['walls', 'dark red'],
+        img_names  = ['walls',  'dark red'],
         floors     = ['floors', 'dirt1'],
-        walls      = ['walls', 'dark red'],
+        walls      = ['walls',  'dark red'],
         roofs      = None,
         blocked    = True,
         hidden     = True)
@@ -6025,7 +6425,7 @@ def build_cave_level():
             y1      = y,
             width   = width,
             height  = height,
-            biome   = 'any',
+            biome   = 'cave',
             hidden  = True,
             objects = True,
             floor   = env.floors,
@@ -6052,17 +6452,14 @@ def build_cave_level():
     
     # Generate items and entities
     items = [
-        ['dungeon', 'jug of blood', 10],
-        ['dungeon', 'bones',          50],
-        ['dungeon', 'sword',          1000//env.lvl_num],
-        ['dungeon', 'iron shield',    1000//env.lvl_num],
-        ['dungeon', 'skeleton',       500],
-        ['dungeon', 'fire',           100]]
+        ['dungeon', 'jug of cement',  100],
+        ['dungeon', 'shovel',         500],
+        ['dungeon', 'bones',          500],
+        ['dungeon', 'sword',          1000//env.lvl_num]]
     entities = [
-        ['dungeon', 'plant',          100],
-        ['dungeon', 'eye',            25],
         ['dungeon', 'radish',         1000],
-        ['dungeon', 'round1',         100]]
+        ['dungeon', 'red',            300],
+        ['dungeon', 'round3',         50]]
     place_objects(env, items, entities)
     
     # Place player in first room
@@ -6127,1240 +6524,1380 @@ def create_item(names, effect=None):
         Parameters
         ----------
         names : string or list of strings; name of object """
-
+    
     item = None
     item_dict = {
     
     # Decor (decor_options)
 
-        'tree': Item(
-            name          = 'tree',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'tree'],
+        'tree': {
+            'name':           'tree',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'tree'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = True,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 20,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        True,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           20,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'bones': Item(
-            name          = 'bones',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'bones'],
+        'bones': {
+            'name':           'bones',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'bones'],
 
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 5,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           5,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'boxes': Item(
-            name          = 'boxes',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'boxes'],
+        'boxes': {
+            'name':           'boxes',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'boxes'],
 
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = True,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 5,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        True,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           5,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'fire': Item(
-            name          = 'fire',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'fire'],
+        'fire': {
+            'name':           'fire',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'fire'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = True,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 20,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        True,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           20,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'leafy': Item(
-            name          = 'leafy tree',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'leafy'],
+        'leafy': {
+            'name':           'leafy tree',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'leafy'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = True,
-            movable       = True,
-            rand_set      = 2,
-            cost          = 25,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        True,
+            'movable':        True,
+            'rand_set':       2,
+            'cost':           25,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'bubble': Item(
-            name          = 'bubble',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'bubble'],
+        'skeleton': {
+            'name':           'skeleton',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'skeleton'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'skeleton': Item(
-            name          = 'skeleton',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'skeleton'],
+        'shrooms': {
+            'name':           'shrooms',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'shrooms'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           15,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'shrooms': Item(
-            name          = 'shrooms',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'shrooms'],
+        'red plant left': {
+            'name':           'red plant left',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'red plant left'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 15,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           15,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'red plant left': Item(
-            name          = 'red plant left',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'red plant left'],
+        'red plant right': {
+            'name':           'red plant right',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'red plant right'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 15,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           15,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'red plant right': Item(
-            name          = 'red plant right',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'red plant right'],
+        'cup shroom': {
+            'name':           'cup shroom',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'cup shroom'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 15,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           15,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'cup shroom': Item(
-            name          = 'cup shroom',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'cup shroom'],
+        'frond': {
+            'name':           'frond',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'frond'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 15,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           15,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'frond': Item(
-            name          = 'frond',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'frond'],
+        'blades': {
+            'name':           'blades',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'blades'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 15,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       10,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'blades': Item(
-            name          = 'blades',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['decor', 'blades'],
+    # Dialogue bubbles (bubbles_options)
+
+        'dots': {
+            'name':           'dots',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['bubbles', 'dots'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 10,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'exclamation': {
+            'name':           'exclamation',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['bubbles', 'exclamation'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'dollar': {
+            'name':           'dollar',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['bubbles', 'dollar'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'cart': {
+            'name':           'cart',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['bubbles', 'cart'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'question': {
+            'name':           'question',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['bubbles', 'question'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'skull': {
+            'name':           'skull',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['bubbles', 'skull'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'heart': {
+            'name':           'heart',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['bubbles', 'heart'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
     # Drugs (drugs_options)
 
-        'needle': Item(
-            name          = 'needle',
-            role          = 'drugs',
-            slot          = None,
-            img_names     = ['drugs', 'needle'],
+        'needle': {
+            'name':           'needle',
+            'role':           'drugs',
+            'slot':           None,
+            'img_names':      ['drugs', 'needle'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 25,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           25,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'skin': Item(
-            name          = 'skin',
-            role          = 'drugs',
-            slot          = None,
-            img_names     = ['drugs', 'skin'],
+        'skin': {
+            'name':           'skin',
+            'role':           'drugs',
+            'slot':           None,
+            'img_names':      ['drugs', 'skin'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'teeth': Item(
-            name          = 'teeth',
-            role          = 'drugs',
-            slot          = None,
-            img_names     = ['drugs', 'teeth'],
+        'teeth': {
+            'name':           'teeth',
+            'role':           'drugs',
+            'slot':           None,
+            'img_names':      ['drugs', 'teeth'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'bowl': Item(
-            name          = 'bowl',
-            role          = 'drugs',
-            slot          = None,
-            img_names     = ['drugs', 'bowl'],
+        'bowl': {
+            'name':           'bowl',
+            'role':           'drugs',
+            'slot':           None,
+            'img_names':      ['drugs', 'bowl'],
 
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 30,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           30,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = mech.bowl),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         Effect(
+                name          = 'bowl',
+                img_names     = ['drugs', 'bowl'],
+                function      = mech.bowl,
+                trigger       = 'active',
+                sequence      = None,
+                cooldown_time = 0.1,
+                other         = None)},
 
-        'plant': Item(
-            name          = 'plant',
-            role          = 'drugs',
-            slot          = None,
-            img_names     = ['drugs', 'plant'],
+        'plant': {
+            'name':           'plant',
+            'role':           'drugs',
+            'slot':           None,
+            'img_names':      ['drugs', 'plant'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = Effect(
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         Effect(
                 name          = 'food',
                 img_names     = ['drugs', 'plant'],
                 function      = mech.boost_stamina,
+                trigger       = 'active',
                 sequence      = None,
-                cooldown_time = 0.1)),
+                cooldown_time = 0.1,
+                other         = None)},
 
-        'bubbles': Item(
-            name          = 'bubbles',
-            role          = 'drugs',
-            slot          = None,
-            img_names     = ['drugs', 'bubbles'],
+        'bubbles': {
+            'name':           'bubbles',
+            'role':           'drugs',
+            'slot':           None,
+            'img_names':      ['drugs', 'bubbles'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 50,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           50,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = Effect(
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         Effect(
                 name          = 'food',
                 img_names     = ['drugs', 'bubbles'],
                 function      = mech.radish_eat,
+                trigger       = 'active',
                 sequence      = None,
-                cooldown_time = 0.1)),
+                cooldown_time = 0.1,
+                other         = None)},
 
     # Potions and scrolls (potions_options, scrolls_options)
     
-        'jug of blood': Item(
-            name          = 'jug of blood',
-            role          = 'potions',
-            slot          = None,
-            img_names     = ['potions', 'red'],
+        'jug of blood': {
+            'name':          'jug of blood',
+            'role':          'potions',
+            'slot':          None,
+            'img_names':     ['potions', 'red'],
 
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':    101,
+            'equippable':    False,
+            'equipped':      False,
+            'hidden':        False,
+            'blocked':       False,
+            'movable':       True,
+            'rand_set':      0,
+            'cost':          10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':      0,
+            'attack_bonus':  0,
+            'defense_bonus': 0,
+            'effect':        effect},
 
-        'jug of grapes': Item(
-            name          = 'jug of grapes',
-            role          = 'potions',
-            slot          = None,
-            img_names     = ['potions', 'purple'],
+        'jug of grapes': {
+            'name':          'jug of grapes',
+            'role':          'potions',
+            'slot':          None,
+            'img_names':     ['potions', 'purple'],
 
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':    101,
+            'equippable':    False,
+            'equipped':      False,
+            'hidden':        False,
+            'blocked':       False,
+            'movable':       True,
+            'rand_set':      0,
+            'cost':          10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':      0,
+            'attack_bonus':  0,
+            'defense_bonus': 0,
+            'effect':        effect},
 
-        'jug of water': Item(
-            name          = 'jug of grapes',
-            role          = 'potions',
-            slot          = None,
-            img_names     = ['potions', 'blue'],
+        'jug of water': {
+            'name':          'jug of water',
+            'role':          'potions',
+            'slot':          None,
+            'img_names':     ['potions', 'blue'],
 
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':    101,
+            'equippable':    False,
+            'equipped':      False,
+            'hidden':        False,
+            'blocked':       False,
+            'movable':       True,
+            'rand_set':      0,
+            'cost':          10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':      0,
+            'attack_bonus':  0,
+            'defense_bonus': 0,
+            'effect':        effect},
 
-        'jug of cement': Item(
-            name          = 'jug of grapes',
-            role          = 'potions',
-            slot          = None,
-            img_names     = ['potions', 'gray'],
+        'jug of cement': {
+            'name':           'jug of cement',
+            'role':           'potions',
+            'slot':           None,
+            'img_names':      ['potions', 'gray'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'scroll of lightning bolt': Item(
-            name          = 'scroll of lightning bolt',
-            role          = 'scrolls',
-            slot          = None,
-            img_names     = ['scrolls', 'closed'],
+        'scroll of lightning bolt': {
+            'name':           'scroll of lightning bolt',
+            'role':           'scrolls',
+            'slot':           None,
+            'img_names':      ['scrolls', 'closed'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 20,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           20,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'scroll of fireball': Item(
-            name          = 'scroll of fireball',
-            role          = 'scrolls',
-            slot          = None,
-            img_names     = ['scrolls', 'closed'],
+        'scroll of fireball': {
+            'name':           'scroll of fireball',
+            'role':           'scrolls',
+            'slot':           None,
+            'img_names':      ['scrolls', 'closed'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 20,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           20,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'scroll of confusion': Item(
-            name          = 'scroll of confusion',
-            role          = 'scrolls',
-            slot          = None,
-            img_names     = ['scrolls', 'closed'],
+        'scroll of confusion': {
+            'name':           'scroll of confusion',
+            'role':           'scrolls',
+            'slot':           None,
+            'img_names':      ['scrolls', 'closed'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 20,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           20,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'scroll of death': Item(
-            name          = 'scroll of death',
-            role          = 'scrolls',
-            slot          = None,
-            img_names     = ['scrolls', 'open'],
+        'scroll of death': {
+            'name':           'scroll of death',
+            'role':           'scrolls',
+            'slot':           None,
+            'img_names':      ['scrolls', 'open'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 1000,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           1000,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
     # Structures (stairs_options, floors_options)
-        'door': Item(
-            name          = 'door',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['stairs', 'door'],
+        'door': {
+            'name':           'door',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['stairs', 'door'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'portal': Item(
-            name          = 'portal',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['stairs', 'portal'],
+        'portal': {
+            'name':           'portal',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['stairs', 'portal'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'cave': Item(
-            name          = 'cave',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['floors', 'sand2'],
+        'cave': {
+            'name':           'cave',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['floors', 'sand2'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'path left right': Item(
-            name          = 'path',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['paths', 'left right'],
+        'path left right': {
+            'name':           'path',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['paths', 'left right'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
     
-        'path up down': Item(
-            name          = 'path',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['paths', 'up down'],
+        'path up down': {
+            'name':           'path',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['paths', 'up down'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
     
-        'path down right': Item(
-            name          = 'path',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['paths', 'down right'],
+        'path down right': {
+            'name':           'path',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['paths', 'down right'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
     
-        'path down left': Item(
-            name          = 'path',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['paths', 'down left'],
+        'path down left': {
+            'name':           'path',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['paths', 'down left'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
     
-        'paths up right': Item(
-            name          = 'path',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['paths', 'up right'],
+        'paths up right': {
+            'name':           'path',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['paths', 'up right'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
     
-        'paths up left': Item(
-            name          = 'path',
-            role          = 'other',
-            slot          = None,
-            img_names     = ['paths', 'up left'],
+        'paths up left': {
+            'name':           'path',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['paths', 'up left'],
             
-            durability    = 101,
-            equippable    = False,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
     
     # Weapons (equip_names)
     
-        'shovel': Item(
-            name          = 'shovel',
-            role          = 'weapons',
-            slot          = 'dominant hand',
-            img_names     = ['shovel', 'dropped'],
+        'shovel': {
+            'name':           'shovel',
+            'role':           'weapons',
+            'slot':           'dominant hand',
+            'img_names':      ['shovel', 'dropped'],
 
-            durability    = 100,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 15,
+            'durability':     100,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           15,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'super shovel': Item(
-            name          = 'super shovel',
-            role          = 'weapons',
-            slot          = 'dominant hand',
-            img_names     = ['super shovel', 'dropped'],
+        'super shovel': {
+            'name':           'super shovel',
+            'role':           'weapons',
+            'slot':           'dominant hand',
+            'img_names':      ['super shovel', 'dropped'],
 
-            durability    = 1000,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     1000,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 1000,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   1000,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'dagger': Item(
-            name          = 'dagger',
-            role          = 'weapons',
-            slot          = 'dominant hand',
-            img_names     = ['dagger', 'dropped'],
+        'dagger': {
+            'name':           'dagger',
+            'role':           'weapons',
+            'slot':           'dominant hand',
+            'img_names':      ['dagger', 'dropped'],
             
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 25,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           25,
             
-            hp_bonus      = 0,
-            attack_bonus  = 2,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   2,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'sword': Item(
-            name          = 'sword',
-            role          = 'weapons',
-            slot          = 'dominant hand',
-            img_names     = ['sword', 'dropped'],
+        'sword': {
+            'name':           'sword',
+            'role':           'weapons',
+            'slot':           'dominant hand',
+            'img_names':      ['sword', 'dropped'],
             
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 75,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           75,
             
-            hp_bonus      = 0,
-            attack_bonus  = 5,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   5,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'blood dagger': Item(
-            name          = 'blood dagger',
-            role          = 'weapons',
-            slot          = 'dominant hand',
-            img_names     = ['blood dagger', 'dropped'],
+        'blood dagger': {
+            'name':           'blood dagger',
+            'role':           'weapons',
+            'slot':           'dominant hand',
+            'img_names':      ['blood dagger', 'dropped'],
             
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 500,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           500,
             
-            hp_bonus      = 0,
-            attack_bonus  = 10,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   10,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'blood sword': Item(
-            name          = 'blood sword',
-            role          = 'weapons',
-            slot          = 'dominant hand',
-            img_names     = ['blood sword', 'dropped'],
+        'blood sword': {
+            'name':           'blood sword',
+            'role':           'weapons',
+            'slot':           'dominant hand',
+            'img_names':      ['blood sword', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 1000,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           1000,
             
-            hp_bonus      = 0,
-            attack_bonus  = 15,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   15,
+            'defense_bonus':  0,
+            'effect':         effect},
 
     # Armor (equip_names)
 
-        'green clothes': Item(
-            name          = 'green clothes',
-            role          = 'armor',
-            slot          = 'body',
-            img_names     = ['green clothes', 'dropped'],
+        'green clothes': {
+            'name':           'green clothes',
+            'role':           'armor',
+            'slot':           'body',
+            'img_names':      ['green clothes', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 1,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  1,
+            'effect':         effect},
 
-        'orange clothes': Item(
-            name          = 'orange clothes',
-            role          = 'armor',
-            slot          = 'body',
-            img_names     = ['orange clothes', 'dropped'],
+        'orange clothes': {
+            'name':           'orange clothes',
+            'role':           'armor',
+            'slot':           'body',
+            'img_names':      ['orange clothes', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 1,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  1,
+            'effect':         effect},
 
-        'exotic clothes': Item(
-            name          = 'exotic clothes',
-            role          = 'armor',
-            slot          = 'body',
-            img_names     = ['exotic clothes', 'dropped'],
+        'exotic clothes': {
+            'name':           'exotic clothes',
+            'role':           'armor',
+            'slot':           'body',
+            'img_names':      ['exotic clothes', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 20,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           20,
             
-            hp_bonus      = 1,
-            attack_bonus  = 0,
-            defense_bonus = 1,
-            effect        = effect),
+            'hp_bonus':       1,
+            'attack_bonus':   0,
+            'defense_bonus':  1,
+            'effect':         effect},
 
-        'yellow dress': Item(
-            name          = 'yellow dress',
-            role          = 'armor',
-            slot          = 'body',
-            img_names     = ['yellow dress', 'dropped'],
+        'yellow dress': {
+            'name':           'yellow dress',
+            'role':           'armor',
+            'slot':           'body',
+            'img_names':      ['yellow dress', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 10,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           10,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 1,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  1,
+            'effect':         effect},
 
-        'chain dress': Item(
-            name          = 'chain dress',
-            role          = 'armor',
-            slot          = 'body',
-            img_names     = ['chain dress', 'dropped'],
+        'chain dress': {
+            'name':           'chain dress',
+            'role':           'armor',
+            'slot':           'body',
+            'img_names':      ['chain dress', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 20,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           20,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 2,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  2,
+            'effect':         effect},
 
-        'iron armor': Item(
-            name          = 'iron armor',
-            role          = 'armor',
-            slot          = 'body',
-            img_names     = ['iron armor', 'dropped'],
+        'iron armor': {
+            'name':           'iron armor',
+            'role':           'armor',
+            'slot':           'body',
+            'img_names':      ['iron armor', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 100,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           100,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 10,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  10,
+            'effect':         effect},
 
-        'bald': Item(
-            name          = 'bald',
-            role          = 'armor',
-            slot          = 'head',
-            img_names     = ['bald', 'front'],
+        'bald': {
+            'name':           'bald',
+            'role':           'armor',
+            'slot':           'head',
+            'img_names':      ['bald', 'front'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = False,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
         
-        'brown hair': Item(
-            name          = 'brown hair',
-            role          = 'armor',
-            slot          = 'head',
-            img_names     = ['brown hair', 'dropped'],
+        'brown hair': {
+            'name':           'brown hair',
+            'role':           'armor',
+            'slot':           'head',
+            'img_names':      ['brown hair', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'blue hair': Item(
-            name          = 'blue hair',
-            role          = 'armor',
-            slot          = 'head',
-            img_names     = ['blue hair', 'dropped'],
+        'blue hair': {
+            'name':           'blue hair',
+            'role':           'armor',
+            'slot':           'head',
+            'img_names':      ['blue hair', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'short brown hair': Item(
-            name          = 'short brown hair',
-            role          = 'armor',
-            slot          = 'head',
-            img_names     = ['short brown hair', 'dropped'],
+        'short brown hair': {
+            'name':           'short brown hair',
+            'role':           'armor',
+            'slot':           'head',
+            'img_names':      ['short brown hair', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'clean': Item(
-            name          = 'clean',
-            role          = 'armor',
-            slot          = 'face',
-            img_names     = ['clean', 'dropped'],
+        'clean': {
+            'name':           'clean',
+            'role':           'armor',
+            'slot':           'face',
+            'img_names':      ['clean', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'brown beard': Item(
-            name          = 'brown beard',
-            role          = 'armor',
-            slot          = 'face',
-            img_names     = ['brown beard', 'dropped'],
+        'brown beard': {
+            'name':           'brown beard',
+            'role':           'armor',
+            'slot':           'face',
+            'img_names':      ['brown beard', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'blue beard': Item(
-            name          = 'blue beard',
-            role          = 'armor',
-            slot          = 'face',
-            img_names     = ['blue beard', 'dropped'],
+        'blue beard': {
+            'name':           'blue beard',
+            'role':           'armor',
+            'slot':           'face',
+            'img_names':      ['blue beard', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'white beard': Item(
-            name          = 'white beard',
-            role          = 'armor',
-            slot          = 'face',
-            img_names     = ['white beard', 'dropped'],
+        'white beard': {
+            'name':           'white beard',
+            'role':           'armor',
+            'slot':           'face',
+            'img_names':      ['white beard', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'flat': Item(
-            name          = 'flat',
-            role          = 'armor',
-            slot          = 'chest',
-            img_names     = ['flat', 'dropped'],
+        'flat': {
+            'name':           'flat',
+            'role':           'armor',
+            'slot':           'chest',
+            'img_names':      ['flat', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'bra': Item(
-            name          = 'bra',
-            role          = 'armor',
-            slot          = 'chest',
-            img_names     = ['bra', 'dropped'],
+        'bra': {
+            'name':           'bra',
+            'role':           'armor',
+            'slot':           'chest',
+            'img_names':      ['bra', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = True,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 0,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
 
-        'iron shield': Item(
-            name          = 'iron shield',
-            role          = 'armor',
-            slot          = 'non-dominant hand',
-            img_names     = ['iron shield', 'dropped'],
+        'iron shield': {
+            'name':           'iron shield',
+            'role':           'armor',
+            'slot':           'non-dominant hand',
+            'img_names':      ['iron shield', 'dropped'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 50,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           50,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 10,
-            effect        = effect),
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  10,
+            'effect':         Effect(
+                name          = 'lamp',
+                img_names     = ['iron shield', 'dropped'],
+                function      = mech.lamp,
+                trigger       = 'passive',
+                sequence      = None,
+                cooldown_time = 0,
+                other         = 5)},
     
     # Big objects
-            'logo': Item(
-            name          = 'logo',
-            role          = 'decor',
-            img_names     = ['top', 'left'],
+            'logo': {
+            'name':           'logo',
+            'role':           'decor',
+            'img_names':      ['top', 'left'],
 
-            durability    = 101,
-            equippable    = True,
-            equipped      = False,
-            hidden        = False,
-            blocked       = False,
-            movable       = True,
-            rand_set      = 0,
-            cost          = 0,
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         False,
+            'blocked':        False,
+            'movable':        True,
+            'rand_set':       0,
+            'cost':           0,
             
-            hp_bonus      = 0,
-            attack_bonus  = 0,
-            defense_bonus = 10,
-            effect        = effect)}
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  10,
+            'effect':         effect}}
     
     # Search with image names
     if type(names) in [tuple, list]:
         for val in item_dict.values():
-            if val.img_names == names:
-                item = val
+            if val['img_names'] == names:
+                item = Item(**val)
     
     # Search with dictionary names
     else:
-        item = item_dict[names]
+        item = Item(**item_dict[names])
     
     if not item: raise Exception(names)
     else:        return item
@@ -7376,474 +7913,474 @@ def create_entity(names):
     item = None
     ent_dict = {
         
-        'white': Entity(
-            name       = 'white NPC',
-            role       = 'NPC',
-            img_names = ['white', 'front'],
-            habitat    = 'any',
+        'white': {
+            'name':        'white NPC',
+            'role':        'NPC',
+            'img_names':   ['white', 'front'],
+            'habitat':     'any',
             
-            exp        = 0,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = False,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 0,
-            fear       = None,
-            reach      = 1000),
+            'follow':      False,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       1000},
         
-        'black': Entity(
-            name       = 'black NPC',
-            role       = 'NPC',
-            img_names = ['black', 'front'],
-            habitat    = 'any',
+        'black': {
+            'name':        'black NPC',
+            'role':        'NPC',
+            'img_names':   ['black', 'front'],
+            'habitat':     'any',
             
-            exp        = 0,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = False,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 0,
-            fear       = None,
-            reach      = 1000),
+            'follow':      False,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       1000},
         
-        'cyborg': Entity(
-            name       = 'cyborg NPC',
-            role       = 'NPC',
-            img_names = ['cyborg', 'front'],
-            habitat    = 'any',
+        'cyborg': {
+            'name':        'cyborg NPC',
+            'role':        'NPC',
+            'img_names':   ['cyborg', 'front'],
+            'habitat':     'any',
             
-            exp        = 0,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = False,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 0,
-            fear       = None,
-            reach      = 1000),
+            'follow':      False,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       1000},
         
-        'friend': Entity(
-            name       = 'friend',
-            role       = 'NPC',
-            img_names = ['friend', 'front'],
-            habitat    = 'land',
+        'friend': {
+            'name':        'friend',
+            'role':        'NPC',
+            'img_names':   ['friend', 'front'],
+            'habitat':     'land',
 
-            exp        = 0,
-            rank       = 100,
-            hp         = 100,
-            max_hp     = 100,
-            attack     = 0,
-            defense    = 100,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        100,
+            'hp':          100,
+            'max_hp':      100,
+            'attack':      0,
+            'defense':     100,
+            'stamina':     100,
             
-            follow     = False,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 0,
-            fear       = None,
-            reach      = 640),
+            'follow':      False,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       640},
     
-        'eye': Entity(
-            name       = 'eye',
-            role       = 'enemy',
-            img_names  = ['eye', 'front'],
-            habitat    = 'land',
+        'eye': {
+            'name':        'eye',
+            'role':        'enemy',
+            'img_names':   ['eye', 'front'],
+            'habitat':     'land',
             
-            exp        = 35,
-            rank       = 1,
-            hp         = 20,
-            max_hp     = 20,
-            attack     = 4,
-            defense    = 0,
-            stamina    = 100,
+            'exp':         35,
+            'rank':        1,
+            'hp':          20,
+            'max_hp':      20,
+            'attack':      4,
+            'defense':     0,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
         
-        'eyes': Entity(
-            name       = 'eyes',
-            role       = 'enemy',
-            img_names  = ['eyes', 'front'],
-            habitat    = 'land',
+        'eyes': {
+            'name':        'eyes',
+            'role':        'enemy',
+            'img_names':   ['eyes', 'front'],
+            'habitat':     'land',
             
-            exp        = 35,
-            rank       = 1,
-            hp         = 20,
-            max_hp     = 20,
-            attack     = 4,
-            defense    = 0,
-            stamina    = 100,
+            'exp':         35,
+            'rank':        1,
+            'hp':          20,
+            'max_hp':      20,
+            'attack':      4,
+            'defense':     0,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
     
-        'troll': Entity(
-            name       = 'troll',
-            role       = 'enemy',
-            img_names = ['troll', 'front'],
-            habitat    = 'land',
+        'troll': {
+            'name':        'troll',
+            'role':        'enemy',
+            'img_names':   ['troll', 'front'],
+            'habitat':     'land',
 
-            exp        = 100,
-            rank       = 1,
-            hp         = 30,
-            max_hp     = 30,
-            attack     = 8,
-            defense    = 2,
-            stamina    = 100,
+            'exp':         100,
+            'rank':        1,
+            'hp':          30,
+            'max_hp':      30,
+            'attack':      8,
+            'defense':     2,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
 
-        'triangle': Entity(
-            name       = 'triangle',
-            role       = 'enemy',
-            img_names = ['triangle', 'front'],
-            habitat    = 'land',
+        'triangle': {
+            'name':        'triangle',
+            'role':        'enemy',
+            'img_names':   ['triangle', 'front'],
+            'habitat':     'land',
 
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
     
-        'purple': Entity(
-            name       = 'purple',
-            role       = 'enemy',
-            img_names = ['purple', 'front'],
-            habitat    = 'land',
+        'purple': {
+            'name':        'purple',
+            'role':        'enemy',
+            'img_names':   ['purple', 'front'],
+            'habitat':     'land',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
     
-        'tentacles': Entity(
-            name       = 'tentacles',
-            role       = 'enemy',
-            img_names  = ['tentacles', 'front'],
-            habitat    = 'any',
+        'tentacles': {
+            'name':        'tentacles',
+            'role':        'enemy',
+            'img_names':   ['tentacles', 'front'],
+            'habitat':     'any',
 
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
     
-        'round1': Entity(
-            name       = 'round1',
-            role       = 'enemy',
-            img_names = ['round1', 'front'],
-            habitat    = 'land',
+        'round1': {
+            'name':        'round1',
+            'role':        'enemy',
+            'img_names':   ['round1', 'front'],
+            'habitat':     'land',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
     
-        'round2': Entity(
-            name       = 'round2',
-            role       = 'enemy',
-            img_names = ['round2', 'front'],
-            habitat    = 'land',
+        'round2': {
+            'name':        'round2',
+            'role':        'enemy',
+            'img_names':   ['round2', 'front'],
+            'habitat':     'land',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
         
-        'grass': Entity(
-            name       = 'grass',
-            role       = 'enemy',
-            img_names = ['grass', 'front'],
-            habitat    = 'forest',
+        'grass': {
+            'name':        'grass',
+            'role':        'enemy',
+            'img_names':   ['grass', 'front'],
+            'habitat':     'forest',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 40,
-            aggression = 20,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   40,
+            'aggression':  20,
+            'fear':        None,
+            'reach':       1000},
 
-        'round3': Entity(
-            name       = 'round3',
-            role       = 'enemy',
-            img_names = ['round3', 'front'],
-            habitat    = 'any',
+        'round3': {
+            'name':        'round3',
+            'role':        'enemy',
+            'img_names':   ['round3', 'front'],
+            'habitat':     'any',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          1,
+            'max_hp':      1,
+            'attack':      0,
+            'defense':     0,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      False,
+            'lethargy':    10,
+            'miss_rate':   10,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       64},
         
-        'lizard': Entity(
-            name       = 'lizard',
-            role       = 'enemy',
-            img_names = ['lizard', 'front'],
-            habitat    = 'desert',
+        'lizard': {
+            'name':        'lizard',
+            'role':        'enemy',
+            'img_names':   ['lizard', 'front'],
+            'habitat':     'desert',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    5,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
         
-        'red': Entity(
-            name       = 'red',
-            role       = 'enemy',
-            img_names = ['red', 'front'],
-            habitat    = 'land',
+        'red': {
+            'name':        'red',
+            'role':        'enemy',
+            'img_names':   ['red', 'front'],
+            'habitat':     'land',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 5,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      False,
+            'lethargy':    100,
+            'miss_rate':   10,
+            'aggression':  1,
+            'fear':        None,
+            'reach':       0},
         
-        'rock': Entity(
-            name       = 'rock',
-            role       = 'enemy',
-            img_names = ['rock', 'front'],
-            habitat    = 'desert',
+        'rock': {
+            'name':        'rock',
+            'role':        'enemy',
+            'img_names':   ['rock', 'front'],
+            'habitat':     'desert',
             
-            exp        = 500,
-            rank       = 1,
-            hp         = 10,
-            max_hp     = 10,
-            attack     = 0,
-            defense    = 500,
-            stamina    = 100,
+            'exp':         500,
+            'rank':        1,
+            'hp':          10,
+            'max_hp':      10,
+            'attack':      0,
+            'defense':     500,
+            'stamina':     100,
             
-            follow     = False,
-            lethargy   = 2,
-            miss_rate  = 0,
-            aggression = 0,
-            fear       = None,
-            reach      = 0),
+            'follow':      False,
+            'lethargy':    2,
+            'miss_rate':   0,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       0},
         
-        'frog': Entity(
-            name       = 'frog',
-            role       = 'enemy',
-            img_names = ['frog', 'front'],
-            habitat    = 'any',
+        'frog': {
+            'name':        'frog',
+            'role':        'enemy',
+            'img_names':   ['frog', 'front'],
+            'habitat':     'any',
             
-            exp        = 15,
-            rank       = 1,
-            hp         = 50,
-            max_hp     = 50,
-            attack     = 15,
-            defense    = 5,
-            stamina    = 100,
+            'exp':         15,
+            'rank':        1,
+            'hp':          50,
+            'max_hp':      50,
+            'attack':      15,
+            'defense':     5,
+            'stamina':     100,
             
-            follow     = False,
-            lethargy   = 10,
-            miss_rate  = 10,
-            aggression = 10,
-            fear       = None,
-            reach      = 1000),
+            'follow':      False,
+            'lethargy':    10,
+            'miss_rate':   10,
+            'aggression':  10,
+            'fear':        None,
+            'reach':       1000},
         
-        'radish': Entity(
-            name       = 'radish',
-            role       = 'enemy',
-            img_names  = ['radish', 'front'],
-            habitat    = 'forest',
+        'radish': {
+            'name':        'radish',
+            'role':        'enemy',
+            'img_names':   ['radish', 'front'],
+            'habitat':     'forest',
             
-            exp        = 0,
-            rank       = 1,
-            hp         = 25,
-            max_hp     = 25,
-            attack     = 0,
-            defense    = 25,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        1,
+            'hp':          25,
+            'max_hp':      25,
+            'attack':      0,
+            'defense':     25,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 6,
-            miss_rate  = 6,
-            aggression = 0,
-            fear       = 0,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    6,
+            'miss_rate':   6,
+            'aggression':  0,
+            'fear':        0,
+            'reach':       1000},
     
-        'snake': Entity(
-            name       = 'snake',
-            role       = 'enemy',
-            img_names  = ['snake', 'front'],
-            habitat    = 'forest',
+        'snake': {
+            'name':        'snake',
+            'role':        'enemy',
+            'img_names':   ['snake', 'front'],
+            'habitat':     'forest',
             
-            exp        = 0,
-            rank       = 1,
-            hp         = 25,
-            max_hp     = 25,
-            attack     = 0,
-            defense    = 25,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        1,
+            'hp':          25,
+            'max_hp':      25,
+            'attack':      0,
+            'defense':     25,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 6,
-            miss_rate  = 6,
-            aggression = 0,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    6,
+            'miss_rate':   6,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       1000},
     
-        'star': Entity(
-            name       = 'star',
-            role       = 'enemy',
-            img_names  = ['star', 'front'],
-            habitat    = 'forest',
+        'star': {
+            'name':        'star',
+            'role':        'enemy',
+            'img_names':   ['star', 'front'],
+            'habitat':     'forest',
             
-            exp        = 0,
-            rank       = 1,
-            hp         = 25,
-            max_hp     = 25,
-            attack     = 0,
-            defense    = 25,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        1,
+            'hp':          25,
+            'max_hp':      25,
+            'attack':      0,
+            'defense':     25,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 6,
-            miss_rate  = 6,
-            aggression = 0,
-            fear       = None,
-            reach      = 1000),
+            'follow':      True,
+            'lethargy':    6,
+            'miss_rate':   6,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       1000},
     
-        'plant': Entity(
-            name       = 'plant',
-            role       = 'enemy',
-            img_names = ['plant', 'front'],
-            habitat    = 'forest',
+        'plant': {
+            'name':        'plant',
+            'role':        'enemy',
+            'img_names':   ['plant', 'front'],
+            'habitat':     'forest',
             
-            exp        = 0,
-            rank       = 1,
-            hp         = 25,
-            max_hp     = 25,
-            attack     = 0,
-            defense    = 25,
-            stamina    = 100,
+            'exp':         0,
+            'rank':        1,
+            'hp':          25,
+            'max_hp':      25,
+            'attack':      0,
+            'defense':     25,
+            'stamina':     100,
             
-            follow     = True,
-            lethargy   = 6,
-            miss_rate  = 6,
-            aggression = 0,
-            fear       = None,
-            reach      = 1000)}
+            'follow':      True,
+            'lethargy':    6,
+            'miss_rate':   6,
+            'aggression':  0,
+            'fear':        None,
+            'reach':       1000}}
     
     if type(names) in [tuple, list]:
         for val in ent_dict.values():
-            if (val.img_names[0] == names[0]) and (val.img_names[1] == names[1]):
-                item = val
+            if val.img_names == names:
+                item = Entity(**val)
     else:
-        item = ent_dict[names]
+        item = Entity(**ent_dict[names])
     
     if not item: raise Exception(names)
     else:        return item
@@ -7858,9 +8395,11 @@ def create_NPC(name):
         clothes = create_item('exotic clothes')
         beard   = create_item('white beard')
         dagger  = create_item('blood dagger')
-        ent.inventory[clothes.role].append(clothes)
-        ent.inventory[beard.role].append(beard)
-        ent.inventory[dagger.role].append(dagger)
+        
+        clothes.pick_up(ent=ent)
+        beard.pick_up(ent=ent)
+        dagger.pick_up(ent=ent)
+
         clothes.toggle_equip(ent)
         beard.toggle_equip(ent)
         dagger.toggle_equip(ent)
@@ -7879,9 +8418,11 @@ def create_NPC(name):
         clothes = create_item('exotic clothes')
         beard   = create_item('white beard')
         dagger  = create_item('blood dagger')
-        ent.inventory[clothes.role].append(clothes)
-        ent.inventory[beard.role].append(beard)
-        ent.inventory[dagger.role].append(dagger)
+        
+        clothes.pick_up(ent=ent)
+        beard.pick_up(ent=ent)
+        dagger.pick_up(ent=ent)
+        
         clothes.toggle_equip(ent)
         beard.toggle_equip(ent)
         dagger.toggle_equip(ent)
@@ -7894,7 +8435,7 @@ def create_NPC(name):
                'boxes', 'fire', 'shrooms', 'cup shroom']
         for item in inv:
             item = create_item(item)
-            ent.inventory[item.role].append(item)
+            item.pick_up(ent=ent)
         
         # Dialogue
         ent.default_dialogue = [
@@ -7912,10 +8453,12 @@ def create_NPC(name):
         bra     = create_item('bra')
         clothes = create_item('yellow dress')
         shovel  = create_item('shovel')
-        ent.inventory[hair.role].append(hair)
-        ent.inventory[bra.role].append(bra)
-        ent.inventory[clothes.role].append(clothes)
-        ent.inventory[shovel.role].append(shovel)
+        
+        hair.pick_up(ent=ent)
+        bra.pick_up(ent=ent)
+        clothes.pick_up(ent=ent)
+        shovel.pick_up(ent=ent)
+        
         hair.toggle_equip(ent)
         bra.toggle_equip(ent)
         clothes.toggle_equip(ent)
@@ -7938,10 +8481,12 @@ def create_NPC(name):
         bra     = create_item('bra')
         clothes = create_item('chain dress')
         shovel  = create_item('shovel')
-        ent.inventory[hair.role].append(hair)
-        ent.inventory[bra.role].append(bra)
-        ent.inventory[clothes.role].append(clothes)
-        ent.inventory[shovel.role].append(shovel)
+        
+        hair.pick_up(ent=ent)
+        bra.pick_up(ent=ent)
+        clothes.pick_up(ent=ent)
+        shovel.pick_up(ent=ent)
+        
         hair.toggle_equip(ent)
         bra.toggle_equip(ent)
         clothes.toggle_equip(ent)
@@ -7954,7 +8499,7 @@ def create_NPC(name):
                'bubbles', 'plant']
         for item in inv:
             item = create_item(item)
-            ent.inventory[item.role].append(item)
+            item.pick_up(ent=ent)
         
         # Dialogue
         ent.default_dialogue = [
@@ -7971,10 +8516,12 @@ def create_NPC(name):
         bra     = create_item(str(random.choice(img.chest_options)))
         face    = create_item(str(random.choice(img.face_options)))
         clothes = create_item(str(random.choice(img.armor_names)))
-        ent.inventory[hair.role].append(hair)
-        ent.inventory[bra.role].append(bra)
-        ent.inventory[face.role].append(face)
-        ent.inventory[clothes.role].append(clothes)
+        
+        hair.pick_up(ent=ent)
+        bra.pick_up(ent=ent)
+        face.pick_up(ent=ent)
+        clothes.pick_up(ent=ent)
+        
         hair.toggle_equip(ent)
         bra.toggle_equip(ent)
         face.toggle_equip(ent)
@@ -8231,7 +8778,7 @@ def check_level_up():
     if player_obj.ent.exp >= level_up_exp:
         player_obj.ent.rank += 1
         player_obj.ent.exp -= level_up_exp
-        pyg.update_gui('Leveled up to ' + str(player_obj.ent.rank) + '!', pyg.yellow)
+        pyg.update_gui("Leveled up to " + str(player_obj.ent.rank) + "!", pyg.yellow)
         choice = None
         while choice == None: # Keeps asking until a choice is made
             choice = new_menu(
@@ -8258,18 +8805,16 @@ def floor_effects(floor_effect):
 
 def active_effects():
     """ Applies effects from items and equipment. Runs constantly. """
-    global friendly, teleport, dig, super_dig
+    global super_dig
     
-    #if 'jug of grapes' in inventory_cache:
-    #    player_obj.ent.image = img.dict['monsters'][0]
-    #    friendly = True
-    #else:
-    #    friendly = False
+    if player_obj.ent.equipment['dominant hand']:     dom = player_obj.ent.equipment['dominant hand']
+    if player_obj.ent.equipment['non-dominant hand']: non = player_obj.ent.equipment['non-dominant hand']
     
     try:
-        if get_equipped_in_slot('dominant hand').name == 'super shovel': super_dig = True
-        else:                                                            super_dig = False
-    except:                                                              super_dig = False
+        if dom.name == 'super shovel':       super_dig = True
+        else:                                super_dig = False
+        if non.effect.function == mech.lamp: non.effect.function(non)
+    except:                                  super_dig = False
 
 #######################################################################################################################################################
 # Utilities
@@ -8287,7 +8832,7 @@ def is_blocked(env, loc):
     
     # Triggers message for hidden passages
     if env.map[loc[0]][loc[1]].unbreakable:
-        pyg.update_gui('A mysterious breeze seeps through the cracks.')
+        pyg.update_gui("A mysterious breeze seeps through the cracks.", pyg.dark_gray)
         pygame.event.clear()
         return True
     
@@ -8360,7 +8905,7 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
         player_obj.ent.env.camera.X = 0
         player_obj.ent.env.camera.Y = 0
         player_obj.ent.env.camera.update()
-    render_all(size=size, visible=visible)
+        render_all(size=size, visible=visible)
     
     # Save image
     path = folder + '/' + filename
