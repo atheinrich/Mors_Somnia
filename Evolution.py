@@ -8,11 +8,34 @@
 # Plot
 """ Overview
     --------
-    There are many paths, but (almost) all lead to death.
-    Sleep and drug use lead to roguelike dreams.
-    Death is the only way to wake up from a dream or hallucination and return to the Overworld.
-    Only some items and player modifications are retained upon death in a dream.
-    If the player dies in the Overworld, the game ends without recovery (unless the Path 1 is followed).
+    There are many paths, but (almost) all lead to death. (One leads to immortality.)
+    In the Overworld, mystery trickles beneath the floorboards.
+    There are people to talk to, missions to complete, hidden opportunities, and clues to the endgame.
+    Daylight passes quickly. Sleep and drug use lead to roguelike dreams.
+    Death is the only way to wake up from a dream or hallucination and return to the Overworld. Death in the Overworld is absolute.
+    Only some items and modifications are retained upon death in a dream or hallucination.
+    
+    Main Quests
+    -----------
+    Making a Friend     : A tutorial for controls that allows early access to the Sigil.
+    Learning a Language : Introduction of the Sigil as a leading artifact in the overarching plot.
+    
+    Side Quests
+    -----------
+    Upgrade : A tutorial for trading mechanics that allows early access to a dagger.
+    
+    The Garden
+    ----------
+    Let There Be Water : A tutorial for item use and radish interaction in the Garden.
+    
+    Endgames
+    --------
+    No Risk, No Reward : The player does nothing substantial and dies in the Overworld. Upon death, the player cannot move (due to death).
+    Introspection      : The player escapes the Overworld and returns to Player Creation. Upon death, they arise in the Garden.
+    Becoming a God     : The player breaches polynomial depth in dreams and hallucinations. Death results in a stochastic environments forever.
+    Resident           : The player mostly survives and helps out around town. One death is prevented; the next results in a funeral.
+    Believer           : The player serves the church and saves it from destruction. 
+    * additional
     
     Path 1: With the aid of drugs, experience, and the church questline, the player can become effectively immortal through cloning.
     - This is the most difficult path to achieve and leads to the endgame.
@@ -89,11 +112,12 @@ def debug_call(func):
 def main():
     """ Initializes the essentials and opens the main menu. """
     
-    global pyg, mech, img, aud, player_obj, pet_obj
-    global main_menu_obj, play_game_obj, new_game_obj, new_menu_obj
-    global save_account_obj, load_account_obj, garden_obj
-    global dev, inv, hold_obj, trade_obj, stats_obj, weather
-    
+    global pyg, mech, img, aud
+    global player_obj, play_game_obj, new_game_obj, garden_obj, weather
+    global dev, inv, hold_obj, trade_obj
+    global main_menu_obj, big_menu, small_menu, ctrl_menu, info_obj, questlog_obj, pet_obj
+    global save_account_obj, load_account_obj
+
     # Initialize pygame (parameters, display, clock, etc.)
     pyg              = Pygame()
     pyg.game_state   = 'startup'
@@ -102,7 +126,6 @@ def main():
     # Initialize mechanics and audio
     mech             = Mechanics()
     aud              = Audio()
-    weather          = Weather()
     
     # Import images (sorted dictionary and cache)
     img              = Images()
@@ -120,22 +143,21 @@ def main():
     
     # Initialize overlays
     main_menu_obj    = MainMenu()
-    new_menu_obj     = NewMenu(
-        name      = 'controls',
-        header    = "Controls", 
-        options   = ["Move:                                       Arrow keys or WASD",
-                     "Descend stairs or grab item:    Enter",
-                     "Ascend stairs to home:            Shift",
-                     "Check stats:                             1",
-                     "Use item in inventory:              2",
-                     "Drop item from inventory:        3",
-                     "Open questlog:                        4",
-                     "Toggle movement speed:         5",
-                     "Take screenshot:                      6",
-                     "Construct items:                         7",
-                     "Unused:                                   8",
-                     "Unused:                                   9",
-                     "Toggle messages:                     /"])
+    ctrl_menu        = NewMenu(
+        name         = 'controls',
+        header       = "Controls", 
+        options = [
+            f"Move up:                                {pyg.key_UP[0]}                     Exit:                                         {pyg.key_BACK[0]}",
+            f"Move down:                           {pyg.key_DOWN[0]}                     Activate 1:                             {pyg.key_ENTER[0]}",
+            f"Move left:                               {pyg.key_LEFT[0]}                     Activate 2:                               {pyg.key_PERIOD[0]}",
+            f"Move right:                            {pyg.key_RIGHT[0]}",
+            "",
+            
+            f"Toggle inventory:                  {pyg.key_INV[0]}                     Enter combo:                         {pyg.key_HOLD[0]}",
+            f"Toggle DevTools:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
+            f"Toggle GUI:                            {pyg.key_GUI[0]}                     Zoom in:                                {pyg.key_PLUS[0]}",
+            f"View stats:                             {pyg.key_INFO[0]}                     Zoom out:                              {pyg.key_MINUS[0]}",
+            f"View questlog:                      {pyg.key_QUEST[0]}"])
     save_account_obj = NewMenu(
         name        = 'save',
         header      = "Save",
@@ -154,11 +176,22 @@ def main():
         backgrounds = ["Data/File_1/screenshot.png",
                        "Data/File_2/screenshot.png",
                        "Data/File_3/screenshot.png"])
+    questlog_obj = BigMenu(
+        name      = 'questlog',
+        header    = "                                                        QUESTLOG", 
+        options   = ["Test"])
+    questlog_obj.init_questlog()
+    questlog_obj.init_gardenlog()
     inv              = Inventory()
     dev              = DevTools()
     hold_obj         = Hold()
     trade_obj        = Trade()
-    stats_obj        = Stats()
+    small_menu       = SmallMenu()
+    info_obj         = Info()
+    big_menu         = BigMenu(
+        name      = 'temp',
+        header    = "temp", 
+        options   = [""])
     game_states()
 
 def game_states():
@@ -175,8 +208,8 @@ def game_states():
             play_game_obj.render()
             
             ## Extra adjustments
-            weather.run()
-            weather.render()
+            player_obj.ent.env.weather.run()
+            player_obj.ent.env.weather.render()
         
         elif pyg.game_state == 'new_game':
             new_game_obj.run()
@@ -192,8 +225,8 @@ def game_states():
             main_menu_obj.render()
         
         elif pyg.overlay == 'controls':
-            new_menu_obj.run()
-            new_menu_obj.render()
+            ctrl_menu.run()
+            ctrl_menu.render()
         
         elif pyg.overlay == 'load':
             load_account_obj.run()
@@ -220,202 +253,59 @@ def game_states():
             trade_obj.render()
         
         elif pyg.overlay == 'stats':
-            stats_obj.render()
+            small_menu.render()
+        
+        elif pyg.overlay == 'questlog':
+            questlog_obj.run()
+            questlog_obj.render()
+        
+        elif pyg.overlay == 'temp':
+            big_menu.run()
+            big_menu.render()
         
         img.render()
         pygame.display.flip()
         pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
         pyg.clock.tick(30)
 
-def inventory_menu(header):
-    """ Calls a menu with each item of the inventory as an option, then returns an item if it is chosen. """
-    
-    # Initialize cache files
-    options            = [] # list of strings; sent to menu
-    options_categories = [] # list of strings; sent to menu
-    item_cache         = [] # list of Item objects
-    
-    # Extract names and roles
-    for role in player_obj.ent.inventory.values():
-        for item in role:
-            if not item.hidden:
-                text = item.name
-                if item.equipped:
-                    text = text + ' (on ' + item.slot + ')'
-                options.append(text)
-                options_categories.append(item.role)
-                item_cache.append(item)
-    if not options:
-        options = ['Inventory is empty.']
-
-    # Generate menu and return selected option
-    index = new_menu(header, options, options_categories=options_categories, position="top left")
-    if index is not None: return item_cache[index]
-
-def new_menu(header, options, options_categories=None, position='top left', backgrounds=None):
-    """ IMPORTANT. Creates cursor, background, and menu options, then returns index of choice.
-
-        header             : string; top line of text
-        options            : list of strings; menu choices
-        options_categories : list of strings; categorization; same length as options
-        position           : chooses layout preset """
-
-    
-    # -------------------------------------- INIT --------------------------------------
-    # Initialize temporary data containers
-    choice                   = 0              # holds index of option pointed at by cursor
-    choices_length           = len(options)-1 # number of choices
-    options_categories_cache = ''             # holds current category
-    options_render = options.copy()
-    
-    # Alter layout if categories are present
-    if options_categories: 
-        tab_X, tab_Y         = 70, 10
-        options_categories_cache_2 = options_categories[0]
-    else:
-        tab_X, tab_Y         = 0, 0
-
-    # Set initial position of each text type
-    header_position    = {'top left':    [5, 10], 'center': [int((pyg.screen_width)/2), 85],
-                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
-    cursor_position    = {'top left':    [50+tab_X, 38+tab_Y], 'center':       [50, 300],
-                          'bottom left': [50+tab_X, 65-tab_Y], 'bottom right': [60 ,70]}
-    options_positions  = {'top left':    [80+tab_X, 34],       'center':       [80, 300],
-                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
-    category_positions = {'top left':    [5, 34],              'center':       [80, 300],
-                          'bottom left': [5, 10],              'bottom right': [60 ,70]}
-
-    # Set mutable copies of text positions
-    cursor_position_mutable    = cursor_position[position].copy()
-    options_positions_mutable  = options_positions[position].copy()
-    category_positions_mutable = category_positions[position].copy()
-
-    # Initialize cursor
-    cursor_img = pygame.Surface((16, 16)).convert()
-    cursor_img.set_colorkey(cursor_img.get_at((0,0)))
-    pygame.draw.polygon(cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-    
-    # Initialize menu options
-    header = pyg.font.render(header, True, pyg.yellow)
-    for i in range(len(options)):
-        color = pyg.gray
-        options_render[i] = pyg.font.render(options[i], True, color)
-    
-    # Initialize backgrounds
-    if backgrounds:
-        for i in range(len(backgrounds)):
-            backgrounds[i] = pygame.image.load(backgrounds[i]).convert()
-
-    # -------------------------------------- MENU --------------------------------------
-    # Allow player to select menu option
-    running = True
-    while running: # while True
-        pygame.time.Clock().tick(30)
-        
-        # Render menu background
-        if backgrounds:
-            pyg.screen.fill(pyg.black)
-            pyg.screen.blit(backgrounds[choice], (0, 0))
-        else:
-            pyg.screen.fill(pyg.black)
-        
-        # Render header and cursor
-        pyg.screen.blit(header, header_position[position])
-        pyg.screen.blit(cursor_img, cursor_position_mutable)
-        
-        # Render categories and options
-        for i in range(len(options_render)):
-            
-            # Render category text if it is not present 
-            if options_categories:
-                if options_categories[i] != options_categories_cache:
-                    options_categories_cache = options_categories[i]
-                    text = pyg.font.render(f'{options_categories_cache.upper()}:', True, pyg.gray)
-                    options_positions_mutable[1] += tab_Y
-                    pyg.screen.blit(text, (category_positions_mutable[0], options_positions_mutable[1]))
-                
-            # Render option text
-            pyg.screen.blit(options_render[i], options_positions_mutable)
-            options_positions_mutable[1] += 24
-        options_positions_mutable = options_positions[position].copy()
-        category_positions_mutable = category_positions[position].copy()
-        pygame.display.flip()
-        
-        # Called when the user inputs a command
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-
-                # >>RESUME<<
-                if (event.key in pyg.key_BACK) and (time.time()-pyg.last_press_time > pyg.cooldown_time):
-                    pyg.last_press_time = float(time.time())
-                    running = False
-                    return None
-                
-                # >>SELECT MENU ITEM<<
-                if event.key in pyg.key_UP:
-                
-                    # Move cursor up
-                    cursor_position_mutable[1]     -= 24
-                    choice                         -= 1
-                    
-                    # Move to lowest option
-                    if choice < 0:
-                        choice                     = choices_length
-                        cursor_position_mutable[1] = cursor_position[position][1] + (len(options)-1) * 24
-                        if options_categories:
-                            cursor_position_mutable[1] += tab_Y * (len(set(options_categories)) - 1)
-                            options_categories_cache_2 = options_categories[choice]
-                    
-                    # Move cursor again if there are categories
-                    elif options_categories:
-                        if options_categories[choice] != options_categories_cache_2:
-                            options_categories_cache_2 = options_categories[choice]
-                            cursor_position_mutable[1] -= tab_Y
-                
-                elif event.key in pyg.key_DOWN:
-                
-                    # Move cursor down
-                    cursor_position_mutable[1]     += 24
-                    choice                         += 1
-                    
-                    # Move to highest option
-                    if choice > choices_length:
-                        choice                     = 0
-                        cursor_position_mutable[1] = cursor_position[position][1]
-                        if options_categories:
-                            options_categories_cache_2 = options_categories[choice]
-                    
-                    # Move cursor again if there are categories
-                    elif options_categories:
-                        if options_categories[choice] != options_categories_cache_2:
-                            options_categories_cache_2 = options_categories[choice]
-                            cursor_position_mutable[1] += tab_Y
-                
-                elif event.key in pyg.key_ENTER:
-                    running = False
-                    return choice
-
 def render_all(size='display', visible=False):
     """ Draws tiles and stuff. Constantly runs. """
     
+    def bw_binary():
+        import numpy as np
+        
+        # Extract screen as image
+        screen_surface = pygame.display.get_surface()
+        raw_str = pygame.image.tostring(screen_surface, 'RGB')
+        image = Image.frombytes('RGB', screen_surface.get_size(), raw_str)
+        
+        # Apply PIL effects
+        image = image.convert('L')
+        
+        # Apply numpy effects
+        image = np.array(image)
+        image = np.where(image > 50, 255, 0)
+        image = image.T
+        image = np.stack([image] * 3, axis=-1)
+        image = pygame.surfarray.make_surface(image)
+        pyg.screen.blit(image, (0, 0))
+    
     pyg.display.fill(pyg.black)
     
-    # View entire map
+    # Set tiles to render
     if size == 'full':
         y_range_1, y_range_2 = 0, len(player_obj.ent.env.map[0])
         x_range_1, x_range_2 = 0, len(player_obj.ent.env.map)
     
-    # View display
     else:
         if not player_obj.ent.env.camera:
             player_obj.ent.env.camera = Camera(player_obj.ent)
-
-        # Calculate visible ranges dynamically based on zoom level and tile size
+        
         camera = player_obj.ent.env.camera
 
         y_range_1 = max(0, camera.tile_map_y)
         y_range_2 = min(len(player_obj.ent.env.map[0])-1, camera.tile_map_y + camera.tile_map_height+2)
-
+        
         x_range_1 = max(0, camera.tile_map_x)
         x_range_2 = min(len(player_obj.ent.env.map)-1, camera.tile_map_x + camera.tile_map_width+2)
     
@@ -444,6 +334,10 @@ def render_all(size='display', visible=False):
                         if tile.img_names == tile.room.roof:
                             tile.draw(pyg.display)
     
+    # Apply effects
+    if img.render_fx == 'bw_binary': bw_binary()
+    
+    # Render GUI
     if (size == 'display') and (pyg.overlay != 'menu'):
         if bool(img.impact):
             for i in range(len(img.impact_images)):
@@ -463,15 +357,15 @@ def render_all(size='display', visible=False):
             gui = list(pyg.gui.values())
             for i in range(len(pyg.gui)):
                 
-                #
+                # Left
                 if i == 0:   x = 16
                 
-                #
+                # Central
                 elif i == 1: x = pyg.screen_width//2 - gui[2].get_width()//2 - gui[1].get_width()
                 elif i == 2: x = pyg.screen_width//2 - gui[2].get_width()//2
                 elif i == 3: x = pyg.screen_width//2 + gui[2].get_width()//2
                 
-                #
+                # Right
                 elif i == 4: x = pyg.screen_width - gui[i].get_width() - 16
                 
                 y = pyg.screen_height - 27
@@ -479,7 +373,7 @@ def render_all(size='display', visible=False):
     
     aud.shuffle()
 
-def check_tile(x, y):
+def check_tile(x, y, startup=False):
     """ Reveals newly explored regions with respect to the player's position. """
     
     # Define some shorthand
@@ -499,25 +393,23 @@ def check_tile(x, y):
         
         # Check if the player enters or leaves a room
         if player_obj.ent.prev_tile:
-            if tile.room != player_obj.ent.prev_tile.room:
+            if (tile.room != player_obj.ent.prev_tile.room) or (startup == True):
                 
                 # Hide the roof if the player enters a room
                 if tile.room and tile.room.roof:
-                    for u in range(tile.room.x1 , tile.room.x2 + 1):
-                        for v in range(tile.room.y1, tile.room.y2 + 1):        
-                            if player_obj.ent.env.map[u][v] not in tile.room.walls_list:
-                                player_obj.ent.env.map[u][v].img_names = tile.room.floor
+                    for spot in tile.room.tiles_list:
+                        if spot not in tile.room.walls_list:
+                            spot.img_names = tile.room.floor
         
     # Reveal the roof if the player leaves the room
     if player_obj.ent.prev_tile:
         prev_tile = player_obj.ent.prev_tile
         if prev_tile.room and not tile.room:
             if prev_tile.room.roof:
-                for u in range(prev_tile.room.x1, prev_tile.room.x2 + 1):
-                    for v in range(prev_tile.room.y1, prev_tile.room.y2 + 1):
-                        if player_obj.ent.env.map[u][v] not in prev_tile.room.walls_list:
-                            player_obj.ent.env.map[u][v].img_names = prev_tile.room.roof
-    
+                for spot in prev_tile.room.tiles_list:
+                    if spot not in prev_tile.room.walls_list:
+                        spot.img_names = prev_tile.room.roof
+
 #######################################################################################################################################################
 # Classes
 ## Utility
@@ -545,7 +437,7 @@ class Pygame:
         pygame.key.set_repeat(250, 150)
         pygame.display.set_caption("Mors Somnia") # Sets game title
         self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
-        self.frame    = True
+        self.frame    = False
         self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.clock    = pygame.time.Clock()
@@ -555,61 +447,92 @@ class Pygame:
             'stamina':  self.font.render('', True, self.green),
             'location': self.font.render('', True, self.gray)}
 
-    def set_controls(self, controls='B'):
+    def set_controls(self, controls='numpad 1'):
+        
+        self.controls_preset = controls
         
         # Extended controls
-        if controls == 'A':
+        if controls == 'arrows':
             
             # Movement
-            self.key_UP       = [K_UP,    K_w]             # up
-            self.key_DOWN     = [K_DOWN,  K_s]             # down
-            self.key_LEFT     = [K_LEFT,  K_a]             # left
-            self.key_RIGHT    = [K_RIGHT, K_d]             # right
+            self.key_UP       = ['↑', K_UP,    K_w]             # up
+            self.key_DOWN     = ['↓', K_DOWN,  K_s]             # down
+            self.key_LEFT     = ['←', K_LEFT,  K_a]             # left
+            self.key_RIGHT    = ['→', K_RIGHT, K_d]             # right
             
             # Actions
-            self.key_BACK     = [K_BACKSPACE, K_ESCAPE, K_SLASH, K_KP_DIVIDE]  # exit/main menu
-            self.key_ENTER    = [K_RETURN,    K_KP_ENTER]  # action 1
-            self.key_PERIOD   = [K_KP_PERIOD]              # action 2
-            self.key_PLUS     = [K_PLUS,      K_KP_PLUS]   # zoom
-            self.key_MINUS    = [K_MINUS,     K_KP_MINUS]  # zoom
-            self.key_HOLD     = [K_0, K_KP0]
+            self.key_BACK     = ['/', K_BACKSPACE, K_ESCAPE, K_SLASH, K_KP_DIVIDE]  # exit/main menu
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]  # action 1
+            self.key_PERIOD   = ['.', K_KP_PERIOD]              # action 2
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS]   # zoom
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]  # zoom
+            self.key_HOLD     = ['0', K_0, K_KP0]
             
             # Menus
-            self.key_INV      = [K_4, K_KP4]               # inventory
-            self.key_DEV      = [K_6, K_KP6]               # DevTools
-            self.key_INFO     = [K_7, K_KP7]               # player information
-            self.key_SPEED    = [K_8, K_KP8]               # movement speed
-            self.key_QUEST    = [K_9, K_KP9]               # questlog
+            self.key_INV      = ['4', K_4, K_KP4]               # inventory
+            self.key_DEV      = ['6', K_6, K_KP6]               # DevTools
+            self.key_INFO     = ['7', K_7, K_KP7]               # player information
+            self.key_SPEED    = ['8', K_8, K_KP8]               # movement speed
+            self.key_QUEST    = ['9', K_9, K_KP9]               # questlog
             
             # Other
-            self.key_EQUIP    = [K_2, K_KP2]               # inventory (equip)
-            self.key_DROP     = [K_3, K_KP3]               # inventory (drop)
-            
+            self.key_EQUIP    = ['2', K_2, K_KP2]               # inventory (equip)
+            self.key_DROP     = ['3', K_3, K_KP3]               # inventory (drop)
 
         # Alternate controls
-        elif controls == 'B':
+        elif controls == 'numpad 1':
             
             # Movement
-            self.key_UP       = [K_5, K_KP5,  K_UP]          # up
-            self.key_DOWN     = [K_2, K_KP2,  K_DOWN]        # down
-            self.key_LEFT     = [K_1, K_KP1,  K_LEFT]        # left
-            self.key_RIGHT    = [K_3, K_KP3,  K_RIGHT]       # right
+            self.key_UP       = ['5', K_5, K_KP5,  K_UP]          # up
+            self.key_DOWN     = ['2', K_2, K_KP2,  K_DOWN]        # down
+            self.key_LEFT     = ['1', K_1, K_KP1,  K_LEFT]        # left
+            self.key_RIGHT    = ['3', K_3, K_KP3,  K_RIGHT]       # right
 
             # Actions
-            self.key_BACK     = [K_SLASH,     K_KP_DIVIDE]   # exit/main menu
-            self.key_GUI      = [K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
-            self.key_ENTER    = [K_RETURN,    K_KP_ENTER]    # action 1
-            self.key_PERIOD   = [K_KP_PERIOD]                # action 2
-            self.key_PLUS     = [K_PLUS,      K_KP_PLUS]     # zoom
-            self.key_MINUS    = [K_MINUS,     K_KP_MINUS]    # zoom
-            self.key_HOLD     = [K_0, K_KP0]                 # attack sequences
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]   # exit/main menu
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]    # action 1
+            self.key_PERIOD   = ['.', K_KP_PERIOD]                # action 2
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS]     # zoom
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]    # zoom
+            self.key_HOLD     = ['0', K_0, K_KP0]                 # attack sequences
             
             # Menus
-            self.key_INV      = [K_4, K_KP4]                 # inventory
-            self.key_DEV      = [K_6, K_KP6]                 # DevTools
-            self.key_INFO     = [K_7, K_KP7]                 # player information
-            self.key_SPEED    = [K_8, K_KP8]                 # movement speed
-            self.key_QUEST    = [K_9, K_KP9]                 # questlog
+            self.key_INV      = ['4', K_4, K_KP4]                 # inventory
+            self.key_DEV      = ['6', K_6, K_KP6]                 # DevTools
+            self.key_INFO     = ['7', K_7, K_KP7]                 # player information
+            self.key_SPEED    = ['8', K_8, K_KP8]                 # movement speed
+            self.key_QUEST    = ['9', K_9, K_KP9]                 # questlog
+            
+            # Unused
+            self.key_EQUIP    = []                           # inventory (equip)
+            self.key_DROP     = []                           # inventory (drop)
+
+        # Alternate controls
+        elif controls == 'numpad 2':
+            
+            # Movement
+            self.key_UP       = ['8', K_8, K_KP8,  K_UP]          # up
+            self.key_DOWN     = ['5', K_5, K_KP5,  K_DOWN]        # down
+            self.key_LEFT     = ['4', K_4, K_KP4,  K_LEFT]        # left
+            self.key_RIGHT    = ['6', K_6, K_KP6,  K_RIGHT]       # right
+
+            # Actions
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]   # exit/main menu
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]    # action 1
+            self.key_PERIOD   = ['.', K_KP_PERIOD]                # action 2
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS]     # zoom
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]    # zoom
+            self.key_HOLD     = ['0', K_0, K_KP0]                 # attack sequences
+            
+            # Menus
+            self.key_INV      = ['7', K_7, K_KP7]                 # inventory
+            self.key_DEV      = ['9', K_9, K_KP9]                 # DevTools
+            self.key_INFO     = ['1', K_1, K_KP1]                 # player information
+            self.key_SPEED    = ['2', K_2, K_KP2]                 # movement speed
+            self.key_QUEST    = ['3', K_3, K_KP3]                 # questlog
             
             # Unused
             self.key_EQUIP    = []                           # inventory (equip)
@@ -670,15 +593,61 @@ class Pygame:
 
         return lines
 
+    def fadeout_screen(self, screen, fade_in, env=None, loc=None, text="", font=None, duration=4):
+        
+        # Set functionality
+        if not fade_in:
+            alpha, change = 0, 10
+        else:
+            alpha, change = 255*2, -10
+            player_obj.ent.env.weather.run()
+            player_obj.ent.env.weather.render()
+
+        # Set fade color and speed
+        fade_surface = pygame.Surface(screen.get_size())
+        fade_surface.fill((0, 0, 0))
+        
+        # Set text color and position
+        if not font: font = self.font
+        text_surface = font.render(text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+        
+        # Increase alpha channel over time
+        clock = pygame.time.Clock()
+        running = True
+        while running:
+            
+            # Handle gamestate
+            alpha += change
+            if alpha > 255*duration: running = False
+            elif alpha < 0:          running = False
+            
+            fade_surface.set_alpha(alpha)
+            self.screen.blit(self.display, (0, 0))
+            screen.blit(fade_surface, (0, 0))
+            
+            # Show text
+            if alpha >= 255:
+                val = alpha - 255
+                if val > 255: val = 255
+                text_surface.set_alpha(random.randint(val-50, val))
+                self.screen.blit(text_surface, text_rect)
+            
+            pygame.display.update()
+            clock.tick(15)
+        
+        if env: place_player(env, loc)
+
     def update_gui(self, new_msg=None, color=None):
         
         # Prepare colors
         img.average()
-        if not color: color = pygame.Color(img.top_correct, img.top_correct, img.top_correct)
-        bottom_color = pygame.Color(img.bottom_correct, img.bottom_correct, img.bottom_correct)
+        if not color: color = pygame.Color(255-img.top_color[0], 255-img.top_color[1], 255-img.top_color[2])
+        bottom_color = pygame.Color(255-img.bottom_color[0], 255-img.bottom_color[1], 255-img.bottom_color[2])
         
         if player_obj.ent.env:
             
+            ## Upper gui
             # Create and delete messages
             if new_msg:
                 if new_msg in self.msg_history.keys():
@@ -703,21 +672,22 @@ class Pygame:
                 else:
                     self.msg.append(self.font.render(lines[i], True, color))
             
+            ## Lower gui
+            # Health
+            current_health = int(player_obj.ent.hp / player_obj.ent.max_hp * 10)
+            leftover_health = 10 - current_health
+            health = '⚪' * leftover_health + '⚫' * current_health
+            
+            # Stamina
+            current_stamina = int((player_obj.ent.stamina % 101) / 10)
+            leftover_stamina = 10 - current_stamina
+            stamina = '⚫' * current_stamina + '⚪' * leftover_stamina
+            
+            # Time
+            time = ['🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕'][player_obj.ent.env.env_time-1]
+            
             # Update bottom gui
             if not pyg.overlay:
-                
-                # Health
-                current_health = int(player_obj.ent.hp / player_obj.ent.max_hp * 10)
-                leftover_health = 10 - current_health
-                health = '⚪' * leftover_health + '⚫' * current_health
-                
-                # Stamina
-                current_stamina = int((player_obj.ent.stamina % 101) / 10)
-                leftover_stamina = 10 - current_stamina
-                stamina = '⚫' * current_stamina + '⚪' * leftover_stamina
-                
-                # Time
-                time = ['🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕'][player_obj.ent.world_time-1]
                 
                 self.gui = {
                     'first':   self.minifont.render('', True, self.white),
@@ -726,7 +696,7 @@ class Pygame:
                     'stamina': self.minifont.render(stamina, True, self.green),
                     'last':    self.minifont.render('', True, self.white)}
             
-            # Show last message
+            # Additional details
             else:
                 if self.msg: self.msg = [self.msg[-1]]
                 
@@ -736,9 +706,9 @@ class Pygame:
                 
                 self.gui = {
                     'wallet':   self.minifont.render('⨋ '+str(player_obj.ent.wallet), True, bottom_color),
-                    'second':   self.minifont.render('',  True, self.white),
-                    'third':    self.minifont.render('',  True, self.white),
-                    'fourth':   self.minifont.render('',  True, self.white),
+                    'health':  self.minifont.render(health,  True, self.red),
+                    'time':    self.minifont.render(time, True, bottom_color),
+                    'stamina': self.minifont.render(stamina, True, self.green),
                     'location': self.minifont.render(env, True, bottom_color)}
 
 class Images:
@@ -805,6 +775,8 @@ class Images:
         self.blank_surface     = pygame.Surface((pyg.tile_width, pyg.tile_height)).convert()
         self.blank_surface.set_colorkey(self.blank_surface.get_at((0,0)))
         self.render_log = []
+        
+        self.render_fx = None
 
     def import_tiles(self, filename, flipped=False, effects=None):
         """ Converts an image to a pygame image, cuts it into tiles, then returns a matrix of tiles. """
@@ -820,14 +792,8 @@ class Images:
             if 'posterize' in effects:
                 if tileset.mode == 'RGBA':
                     img_a = tileset.getchannel('A')
-                    img_rgb = tileset.convert('RGB')
-                    tileset = ImageOps.posterize(img_rgb, 6)
+                    tileset = ImageOps.posterize(tileset.convert('RGB'), 6).convert('RGB')
                     tileset.putalpha(img_a)
-                else:
-                    try:
-                        tileset = ImageOps.posterize(tileset, 6)
-                    except OSError as e:
-                        raise e
             
             # Apply custom blur kernel
             if 'kernel' in effects:
@@ -928,13 +894,16 @@ class Images:
         
         # Define tile names and options
         self.other_names = [
-            'decor', 'bubbles', 'drugs', 'potions', 'scrolls',
-            'stairs', 'floors', 'walls', 'roofs', 'paths',
+            'decor', 'bubbles', 'furniture', 'drugs', 'potions', 'scrolls',
+            'stairs', 'floors', 'walls', 'roofs', 'paths', 'concrete',
             'null']
         decor_options = [
             'tree', 'bones', 'boxes',  'fire', 'leafy', 'skeleton', 'shrooms',
-            'red plant right', 'red plant left', 'cup shroom', 'frond',  'blades']
-        bubbles_options = ['dots', 'exclamation', 'dollar', 'cart', 'question', 'skull', 'heart']
+            'red plant right', 'red plant left', 'cup shroom', 'frond',  'blades', 'purple bulbs']
+        bubbles_options = [
+            'dots', 'exclamation', 'dollar', 'cart', 'question', 'skull', 'heart']
+        furniture_options = [
+            'purple bed', 'red bed', 'shelf left', 'shelf right', 'long table left', 'long table right', 'table', 'red chair left', 'red chair right']
         drugs_options = [
             'needle', 'skin', 'teeth', 'bowl', 'plant', 'bubbles']
         potions_options = [
@@ -954,11 +923,13 @@ class Images:
             'tiled', 'slats']
         paths_options = [
             'left right', 'up down', 'down right', 'down left', 'up right', 'up left']
+        concrete_options = [
+            'gray window', 'gray door', 'gray wall left', 'gray wall', 'gray wall right', 'gray floor']
         null_options  = [
             'null']
         other_options = [
-            decor_options, bubbles_options, drugs_options, potions_options, scrolls_options, stairs_options,
-            floors_options, walls_options, roofs_options, paths_options, null_options]
+            decor_options, bubbles_options, furniture_options, drugs_options, potions_options, scrolls_options, stairs_options,
+            floors_options, walls_options, roofs_options, paths_options, concrete_options, null_options]
         
         # Create image dictionary
         self.other = {}
@@ -978,15 +949,15 @@ class Images:
         
         self.biomes = {
             
-            'any':     ['forest', 'desert', 'dungeon', 'water', 'city', 'cave'],
-            'wet':     ['forest', 'water'],
+            'any':     ['any', 'land', 'wet', 'sea', 'forest', 'desert', 'dungeon', 'water', 'city', 'cave'],
+            'wet':     ['any', 'wet', 'forest', 'water'],
         
-            'land':    ['forest', 'desert', 'dungeon', 'cave'],
-            'forest':  ['forest'],
-            'desert':  ['desert'],
-            'dungeon': ['dungeon', 'cave'],
-            'city':    ['city'],
-            'cave':    ['cave', 'dungeon'],
+            'land':    ['any', 'land', 'forest', 'desert', 'dungeon', 'cave'],
+            'forest':  ['any', 'forest'],
+            'desert':  ['any', 'desert'],
+            'dungeon': ['any', 'dungeon', 'cave'],
+            'city':    ['any', 'city'],
+            'cave':    ['any', 'cave', 'dungeon'],
             
             'sea':     ['water'],
             'water':   ['water']}
@@ -1001,18 +972,18 @@ class Images:
         right_rect   = pygame.Rect(pyg.screen_width-100, 50, 50, 50)
         menu_rect    = pygame.Rect(100, pyg.screen_height-100, 50, 50)
         
-        top_color    = pygame.transform.average_color(pyg.screen, rect=top_rect,    consider_alpha=False)
-        bottom_color = pygame.transform.average_color(pyg.screen, rect=bottom_rect, consider_alpha=False)
-        left_color   = pygame.transform.average_color(pyg.screen, rect=left_rect,   consider_alpha=False)
-        right_color  = pygame.transform.average_color(pyg.screen, rect=right_rect,  consider_alpha=False)
-        menu_color   = pygame.transform.average_color(pyg.screen, rect=menu_rect,   consider_alpha=False)
+        self.top_color    = pygame.transform.average_color(pyg.screen, rect=top_rect,    consider_alpha=False)
+        self.bottom_color = pygame.transform.average_color(pyg.screen, rect=bottom_rect, consider_alpha=False)
+        self.left_color   = pygame.transform.average_color(pyg.screen, rect=left_rect,   consider_alpha=False)
+        self.right_color  = pygame.transform.average_color(pyg.screen, rect=right_rect,  consider_alpha=False)
+        self.menu_color   = pygame.transform.average_color(pyg.screen, rect=menu_rect,   consider_alpha=False)
         
         # Relative luminance formula
-        top_brightness    = 0.2126 * top_color[0]    + 0.7152 * top_color[1]    + 0.0722 * top_color[2]
-        bottom_brightness = 0.2126 * bottom_color[0] + 0.7152 * bottom_color[1] + 0.0722 * bottom_color[2]
-        left_brightness   = 0.2126 * left_color[0]   + 0.7152 * left_color[1]   + 0.0722 * left_color[2]
-        right_brightness  = 0.2126 * right_color[0]  + 0.7152 * right_color[1]  + 0.0722 * right_color[2]
-        menu_brightness   = 0.2126 * menu_color[0]   + 0.7152 * menu_color[1]   + 0.0722 * menu_color[2]
+        top_brightness    = 0.2126 * self.top_color[0]    + 0.7152 * self.top_color[1]    + 0.0722 * self.top_color[2]
+        bottom_brightness = 0.2126 * self.bottom_color[0] + 0.7152 * self.bottom_color[1] + 0.0722 * self.bottom_color[2]
+        left_brightness   = 0.2126 * self.left_color[0]   + 0.7152 * self.left_color[1]   + 0.0722 * self.left_color[2]
+        right_brightness  = 0.2126 * self.right_color[0]  + 0.7152 * self.right_color[1]  + 0.0722 * self.right_color[2]
+        menu_brightness   = 0.2126 * self.menu_color[0]   + 0.7152 * self.menu_color[1]   + 0.0722 * self.menu_color[2]
         
         # Quadratic version
         #top_brightness    = (top_color[0]**2    + top_color[1]**2    + top_color[2]**2)**(1/2)
@@ -1119,44 +1090,26 @@ class Images:
         self.impact_image.blit(image, (X, Y))
         return self.impact_image
 
-    def entity_flash(self, ent):
+    def flash_over(self, ent):
         """ Death animation. """
         
         self.impact = True
-        self.impact_image_pos.append((ent.X - player_obj.ent.env.camera.X, ent.Y - player_obj.ent.env.camera.Y))
-        self.impact_images.append(self.impact_image)
-        render_all()
-        self.impact = False
-        self.impact_image_pos.remove((ent.X - player_obj.ent.env.camera.X, ent.Y - player_obj.ent.env.camera.Y))
-        self.impact_images.remove(self.impact_image)
         
-        flash = 3
-        flash_time = 2
-        if ent.hp <=0:
-           flash_time = 4
-        old_img_names = ent.img_names.copy()
-        while flash_time > 1:
-            pygame.time.Clock().tick(30)
-            #if flash:
-            #    ent.img_names = ['null', 'null']
-            render_all()
-            flash -= 1
-
-            if flash < 1:
-                flash = False
-                flash_time -= 1
-                ent.img_names = old_img_names
-                if flash_time < 1:
-                    flash_time = 0
-                    flash = False
-                    ent.img_names = old_img_names
+        image     = self.impact_image
+        x         = lambda: ent.X - player_obj.ent.env.camera.X
+        y         = lambda: ent.Y - player_obj.ent.env.camera.Y
+        image_pos = (x, y)
+        duration  = 0.2
+        delay     = 0
+        last_time = time.time()
+        self.render_log.append([image, image_pos, duration, last_time, delay])
 
     def vicinity_flash(self, ent, image):
         """ Death animation. """
         
         self.impact = True
         vicinity_list = ent.get_vicinity()
-        for i in range(2*len(vicinity_list)):
+        for i in range(len(vicinity_list)):
             
             image     = image
             x         = vicinity_list[i%len(vicinity_list)].X - player_obj.ent.env.camera.X
@@ -1167,22 +1120,41 @@ class Images:
             delay     = i*0.1
             
             self.render_log.append([image, image_pos, duration, last_time, delay])
+        
+        image     = image
+        x         = vicinity_list[0].X - player_obj.ent.env.camera.X
+        y         = vicinity_list[0].Y - player_obj.ent.env.camera.Y
+        image_pos = (x, y)
+        duration  = 0.5
+        last_time = time.time()
+        delay     = len(vicinity_list)*0.1
+        
+        self.render_log.append([image, image_pos, duration, last_time, delay])
 
     def flash_above(self, ent, image):
         """ Death animation. """
         
+        if ent.name == 'radish': shift = 12
+        else:                    shift = 0
+        
         self.impact = True
-        for i in range(2):
-            
-            image     = image
-            x         = ent.X - player_obj.ent.env.camera.X
-            y         = ent.Y - pyg.tile_height - player_obj.ent.env.camera.Y
-            image_pos = (x, y)
-            duration  = 0.1
-            last_time = time.time()
-            delay     = i*0.2
-            
-            self.render_log.append([image, image_pos, duration, last_time, delay])
+        
+        image     = image
+        x         = lambda: ent.X - player_obj.ent.env.camera.X
+        y         = lambda: ent.Y - pyg.tile_height - player_obj.ent.env.camera.Y + shift
+        image_pos = (x, y)
+        duration  = 0.8
+        delay     = 0
+        last_time = time.time()
+        self.render_log.append([image, image_pos, duration, last_time, delay])
+
+        x         = lambda: ent.X - player_obj.ent.env.camera.X
+        y         = lambda: ent.Y - pyg.tile_height - player_obj.ent.env.camera.Y + shift
+        image_pos = (x, y)
+        duration  = 0.2
+        delay     = 1.0
+        last_time = time.time()
+        self.render_log.append([image, image_pos, duration, last_time, delay])
 
     def render(self):
         """ Temporarily renders images in the queue, such as impact images.
@@ -1207,11 +1179,14 @@ class Images:
                     
                     # Shorthand
                     image     = self.render_log[j][0]
-                    position  = self.render_log[j][1]
                     duration  = self.render_log[j][2]
                     last_time = self.render_log[j][3]
                     delay     = self.render_log[j][4]
-                    
+                    if type(self.render_log[j][1][0]) == int:
+                        position = [self.render_log[j][1][0], self.render_log[j][1][1]]
+                    else:
+                        position = [self.render_log[j][1][0](), self.render_log[j][1][1]()]
+
                     # Count down before showing image
                     if delay > 0:
                         self.render_log[j][4] -= (time.time() - last_time)
@@ -1236,18 +1211,23 @@ class Audio:
         
         # Define song titles
         self.dict = {
-            'home':        "Data/.Music/menu.mp3",
-            'menu':        "Data/.Music/menu.mp3",
-            'overworld 1': "Data/.Music/overworld_1.mp3",
-            'overworld 2': "Data/.Music/overworld_2.mp3",
-            'overworld 3': "Data/.Music/overworld_3.wav",
-            'overworld 4': "Data/.Music/overworld_4.mp3",
-            'dungeon 1':   "Data/.Music/dungeon_1.wav",
-            'dungeon 2':   "Data/.Music/dungeon_2.mp3",
-            'dungeon 3':   "Data/.Music/dungeon_3.wav",
-            'dungeon 4':   "Data/.Music/dungeon_4.mp3",
-            'dungeon 5':   "Data/.Music/dungeon_5.mp3",
-            'dungeon 6':   "Data/.Music/dungeon_6.mp3"}
+            'home':              "Data/.Music/menu.mp3",
+            'menu':              "Data/.Music/menu.mp3",
+            'overworld 1':       "Data/.Music/overworld_1.mp3",
+            'overworld 2':       "Data/.Music/overworld_2.mp3",
+            'overworld 3':       "Data/.Music/overworld_3.wav",
+            'overworld 4':       "Data/.Music/overworld_4.mp3",
+            'dungeon 1':         "Data/.Music/dungeon_1.wav",
+            'dungeon 2':         "Data/.Music/dungeon_2.mp3",
+            'dungeon 3':         "Data/.Music/dungeon_3.wav",
+            'dungeon 4':         "Data/.Music/dungeon_4.mp3",
+            'dungeon 5':         "Data/.Music/dungeon_5.mp3",
+            'dungeon 6':         "Data/.Music/dungeon_6.mp3",
+            'hallucination 1':   "Data/.Music/dungeon_1.wav",
+            'hallucination 2':   "Data/.Music/dungeon_2.mp3",
+            'hallucination 3':   "Data/.Music/dungeon_3.wav",
+            'hallucination 4':   "Data/.Music/dungeon_4.mp3",
+            'hallucination 5':   "Data/.Music/dungeon_5.mp3"}
         
         self.load_speech()
         
@@ -1326,6 +1306,7 @@ class Audio:
                 current_time = pygame.mixer.music.get_pos() / 1000
                 self.remaining_time = self.duration - current_time
                 if self.remaining_time <= 3:
+                    print(1)
                     self.play_track(song=self.soundtrack[(i+1)//len(soundtrack)])
 
     def pause(self, paused):
@@ -1476,20 +1457,32 @@ class NewMenu:
         
         # Alter layout if categories are present
         if self.options_categories: 
-            tab_X, tab_Y = 70, 10
+            tab_x, tab_y = 70, 10
             self.options_categories_cache_2 = self.options_categories[0]
         else:
-            tab_X, tab_Y = 0, 0
+            tab_x, tab_y = 0, 0
 
         # Set initial position of each text type
-        self.header_position    = {'top left':    [5, 10], 'center': [int((pyg.screen_width - main_menu_obj.game_title.get_width())/2), 85],
-                              'bottom left': [5, 10],              'bottom right': [60 ,70]}
-        self.cursor_position    = {'top left':    [50+tab_X, 38+tab_Y], 'center':       [50, 300],
-                              'bottom left': [50+tab_X, 65-tab_Y], 'bottom right': [60 ,70]}
-        self.options_positions  = {'top left':    [80+tab_X, 34],       'center':       [80, 300],
-                              'bottom left': [5, 10],              'bottom right': [60 ,70]}
-        self.category_positions = {'top left':    [5, 34],              'center':       [80, 300],
-                              'bottom left': [5, 10],              'bottom right': [60 ,70]}
+        self.header_position = {
+            'top left':     [5, 10],
+            'center':       [int((pyg.screen_width - main_menu_obj.game_title.get_width())/2), 85],
+            'bottom left':  [5, 10],
+            'bottom right': [60 ,70]}
+        self.cursor_position = {
+            'top left':     [50+tab_x, 38+tab_y],
+            'center':       [50, 300],
+            'bottom left':  [50+tab_x, 65-tab_y],
+            'bottom right': [60 ,70]}
+        self.options_positions = {
+            'top left':     [80+tab_x, 34],
+            'center':       [80, 300],
+            'bottom left':  [5, 10],
+            'bottom right': [60 ,70]}
+        self.category_positions = {
+            'top left':     [5, 34],
+            'center':       [80, 300],
+            'bottom left':  [5, 10],
+            'bottom right': [60 ,70]}
 
         # Set mutable copies of text positions
         self.cursor_position_mutable    = self.cursor_position[self.position].copy()
@@ -1502,7 +1495,7 @@ class NewMenu:
         pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
         
         # Initialize menu options
-        self.header_render = pyg.font.render(self.header, True, pyg.yellow)
+        self.header_render = pyg.font.render(self.header, True, pyg.white)
         for i in range(len(self.options)):
             color = pyg.gray
             self.options_render[i] = pyg.font.render(options[i], True, color)
@@ -1529,21 +1522,10 @@ class NewMenu:
                 # Navigation
                 if event.key in pyg.key_UP:       self.key_UP()
                 elif event.key in pyg.key_DOWN:   self.key_DOWN()
-                
-                # Unused
-                elif event.key in pyg.key_LEFT:   self.key_LEFT()
-                elif event.key in pyg.key_RIGHT:  self.key_RIGHT()
-                elif event.key in pyg.key_HOLD:   self.key_HOLD()
-                elif event.key in pyg.key_INV:    self.key_INV()
-                elif event.key in pyg.key_INFO:   self.key_INFO()
-                elif event.key in pyg.key_SPEED:  self.key_SPEED()
-                elif event.key in pyg.key_QUEST:  self.key_QUEST()
-                elif event.key in pyg.key_EQUIP:  self.key_EQUIP()
-                elif event.key in pyg.key_DROP:   self.key_DROP()
-                elif event.key in pyg.key_PERIOD: self.key_PERIOD()
-                elif event.key in pyg.key_PLUS:   self.key_PLUS()
-                elif event.key in pyg.key_MINUS:  self.key_MINUS()
-                elif event.key in pyg.key_DEV:    self.key_DEV()
+                elif event.key in pyg.key_LEFT:
+                    if self.name == 'controls': self.set_controls('left')
+                elif event.key in pyg.key_RIGHT:
+                    if self.name == 'controls': self.set_controls('right')
                 
                 # >>RESUME<<
                 elif event.key in pyg.key_BACK:
@@ -1578,14 +1560,14 @@ class NewMenu:
             self.choice                     = self.choices_length
             self.cursor_position_mutable[1] = self.cursor_position[self.position][1] + (len(self.options)-1) * 24
             if self.options_categories:
-                self.cursor_position_mutable[1] += tab_Y * (len(set(self.options_categories)) - 1)
+                self.cursor_position_mutable[1] += tab_y * (len(set(self.options_categories)) - 1)
                 self.options_categories_cache_2 = self.options_categories[self.choice]
         
         # Move cursor again if there are categories
         elif self.options_categories:
             if self.options_categories[self.choice] != self.options_categories_cache_2:
                 self.options_categories_cache_2 = self.options_categories[self.choice]
-                self.cursor_position_mutable[1] -= tab_Y
+                self.cursor_position_mutable[1] -= tab_y
 
     def key_DOWN(self):
 
@@ -1605,45 +1587,8 @@ class NewMenu:
         elif self.options_categories:
             if self.options_categories[self.choice] != self.options_categories_cache_2:
                 self.options_categories_cache_2 = self.options_categories[self.choice]
-                self.cursor_position_mutable[1] += tab_Y
+                self.cursor_position_mutable[1] += tab_y
 
-    def key_LEFT(self):
-        pass
-
-    def key_RIGHT(self):
-        pass
-
-    def key_PERIOD(self):
-        pass
-
-    def key_HOLD(self):
-        pass
-
-    def key_PLUS(self):
-        pass
-
-    def key_MINUS(self):
-        pass
-
-    def key_INFO(self):
-        pass
-
-    def key_QUEST(self):
-        pass
-
-    def key_SPEED(self):
-        pass
-
-    def key_INV(self):
-        pass
-
-    def key_DEV(self):
-        pass
-
-    def key_EQUIP(self):
-        pass
-
-    def key_DROP(self):
         pass
 
     def save_account(self):    
@@ -1659,7 +1604,7 @@ class NewMenu:
             == ents 
             == questlog """
         
-        # Update files menu
+        # Update file menu
         if player_obj.file_num: self.options[player_obj.file_num - 1] += ' *'
         
         # Save data or return to main menu
@@ -1673,12 +1618,9 @@ class NewMenu:
             player_obj.file_num = self.choice
             
             # Save everything
-            with open(f"Data/File_{self.choice}/ent.pkl", 'wb') as file:        pickle.dump(player_obj.ent, file)
-            with open(f"Data/File_{self.choice}/ents.pkl", 'wb') as file:       pickle.dump(player_obj.ents, file)
-            with open(f"Data/File_{self.choice}/envs.pkl", 'wb') as file:       pickle.dump(player_obj.envs, file)
-            with open(f"Data/File_{self.choice}/questlog.pkl", 'wb') as file:   pickle.dump(player_obj.questlog, file)
-            with open(f"Data/File_{self.choice}/questlines.pkl", 'wb') as file: pickle.dump(player_obj.questlines, file)
+            with open(f"Data/File_{self.choice}/player_obj.pkl", 'wb') as file: pickle.dump(player_obj, file)
             
+            # Take a screenshot for the load menu
             screenshot(
                 size    = 'display',
                 visible = False,
@@ -1731,11 +1673,8 @@ class NewMenu:
             
             # Load data onto fresh player
             player_obj = Player()
-            with open(f"Data/File_{self.choice}/questlines.pkl", "rb") as file: player_obj.questlines = pickle.load(file)
-            with open(f"Data/File_{self.choice}/ent.pkl", "rb") as file:        player_obj.ent        = pickle.load(file)
-            with open(f"Data/File_{self.choice}/ents.pkl", "rb") as file:       player_obj.ents       = pickle.load(file)
-            with open(f"Data/File_{self.choice}/envs.pkl", "rb") as file:       player_obj.envs       = pickle.load(file)
-            with open(f"Data/File_{self.choice}/questlog.pkl", "rb") as file:   player_obj.questlog   = pickle.load(file)
+            with open(f"Data/File_{self.choice}/player_obj.pkl", "rb") as file:
+                player_obj = pickle.load(file)
 
             # Load cameras
             for env in player_obj.envs.values():
@@ -1744,8 +1683,40 @@ class NewMenu:
                 else:                   env.camera     = Camera(player_obj.ent)
             
             self.reset(self.name, self.header, self.options, self.options_categories, self.position, self.backgrounds)
+            pyg.game_state = 'play_game'
+            play_game_obj.fadein = None
             pyg.overlay = 'main_menu'
 
+        # Turn on gui
+        pyg.gui_toggle, pyg.msg_toggle = True, True
+
+    def set_controls(self, direction):
+        if pyg.controls_preset == 'numpad 1':
+            if direction == 'right': pyg.set_controls('numpad 2')
+            else:                    pyg.set_controls('arrows')
+        elif pyg.controls_preset == 'numpad 2':
+            if direction == 'right': pyg.set_controls('arrows')
+            else:                    pyg.set_controls('numpad 1')
+        elif pyg.controls_preset == 'arrows':
+            if direction == 'right': pyg.set_controls('numpad 1')
+            else:                    pyg.set_controls('numpad 2')
+    
+        self.options = [
+            f"Move up:                                {pyg.key_UP[0]}                     Exit:                                         {pyg.key_BACK[0]}",
+            f"Move down:                           {pyg.key_DOWN[0]}                     Activate 1:                             {pyg.key_ENTER[0]}",
+            f"Move left:                               {pyg.key_LEFT[0]}                     Activate 2:                               {pyg.key_PERIOD[0]}",
+            f"Move right:                            {pyg.key_RIGHT[0]}",
+            "",
+            
+            f"Toggle inventory:                  {pyg.key_INV[0]}                     Enter combo:                         {pyg.key_HOLD[0]}",
+            f"Toggle DevTools:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
+            f"Toggle GUI:                            {pyg.key_GUI[0]}                     Zoom in:                                {pyg.key_PLUS[0]}",
+            f"View stats:                             {pyg.key_INFO[0]}                     Zoom out:                              {pyg.key_MINUS[0]}",
+            f"View questlog:                      {pyg.key_QUEST[0]}"]
+    
+        for i in range(len(self.options)):
+            self.options_render[i] = pyg.font.render(self.options[i], True, pyg.gray)
+    
     def render(self):
         
         # Render menu background
@@ -1767,7 +1738,7 @@ class NewMenu:
                 if self.options_categories[i] != self.options_categories_cache:
                     self.options_categories_cache = self.options_categories[i]
                     text = pyg.font.render(f'{self.options_categories_cache.upper()}:', True, pyg.gray)
-                    self.options_positions_mutable[1] += tab_Y
+                    self.options_positions_mutable[1] += tab_y
                     pyg.screen.blit(text, (self.category_positions_mutable[0], self.options_positions_mutable[1]))
                 
             # Render option text
@@ -1795,7 +1766,6 @@ class NewGame:
         player_obj.ent.env.camera = Camera(player_obj.ent)
         player_obj.ent.env.camera.fixed = True
         player_obj.ent.env.camera.zoom_in(custom=1)
-        player_obj.questlog = Questlog()
         
         # Initialize cursor
         self.cursor_img = pygame.Surface((16, 16)).convert()
@@ -1819,6 +1789,9 @@ class NewGame:
         self.orientations = ['front', 'right', 'back', 'left']
         self.last_press_time = 0
         self.cooldown_time = 0.7
+        
+        # Triggers fadeout
+        self.fadeout = False
 
     def run(self):
         mech.movement_speed(toggle=False, custom=2)
@@ -1909,13 +1882,16 @@ class NewGame:
                         pyg.startup_toggle = False
                         new_game_obj.new_game()
                         pyg.game_state = 'play_game'
+                        self.fadeout = True
                         return
                     
                     # >>MAIN MENU<<
                     if self.choice == 7:
                         pyg.game_state = 'play_game'
                         pyg.overlay = 'menu'
+                        self.fadeout = False
                         return
+        
         pyg.game_state = 'new_game'
 
     def reset(self):
@@ -1931,25 +1907,31 @@ class NewGame:
         # Clear prior data
         player_obj.envs = {}
         player_obj.ents = {}
-        player_obj.questlog = None
+        questlog_obj = None
         player_obj.envs['garden'] = build_garden()
 
         # Prepare player
         player_obj.ent.role         = 'player'
         player_obj.ent.img_names[1] = 'front'
-        player_obj.questlog         = Questlog()
+        questlog_obj = BigMenu(
+            name      = 'questlog',
+            header    = "                                                        QUESTLOG", 
+            options   = ["Test"])
+        questlog_obj.init_questlog()        
+        questlog_obj.init_gardenlog()        
         
         player_obj.envs['home'] = build_home()
-        place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].center)    # new game
+        env = player_obj.envs['home']
+        place_player(env=env, loc=env.center)    # new game
         
         # Create items
         if player_obj.ent.equipment['chest'].img_names[0] == 'bra': name = 'yellow dress'
-        else: name = 'green clothes'                        
+        else: name = 'green clothes'
         clothes = create_item(name)
         hair    = create_item('bald')
         face    = create_item('clean')
         chest   = create_item('flat')
-        shovel  = create_item('super shovel')
+        shovel  = create_item('shovel')
         lamp    = create_item('iron shield')
         
         clothes.pick_up(ent=player_obj.ent)
@@ -1961,6 +1943,7 @@ class NewGame:
         
         clothes.toggle_equip(player_obj.ent)
         lamp.toggle_equip(player_obj.ent)
+        shovel.durability = 20
         sort_inventory()
         
         # Prepare gui
@@ -1970,8 +1953,9 @@ class NewGame:
         pyg.update_gui("Press it again to hide the message bar.", pyg.dark_gray)
         pyg.msg_toggle = True
         pyg.gui_toggle = True
-    
+
     def render(self):
+        
         # Implement timed rotation of character
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time()) 
@@ -1988,6 +1972,11 @@ class NewGame:
         pyg.display.blit(self.cursor_img, self.cursor_pos)
         pyg.display.blit(self.background_image, (400, 200))
         player_obj.ent.draw(pyg.display, loc=(464, 264))
+        
+        if self.fadeout:
+            self.fadeout = False
+            text = "Your hands tremble, and the ground shudders in tune... something is not right."
+            mech.enter_dungeon(text=text, lvl_num=4)
 
 class PlayGame:
 
@@ -1995,24 +1984,30 @@ class PlayGame:
         self.cooldown_time = 1
         self.last_press_time = 0
         self.gui_set = 0
+        self.death_cooldown = 1
+        
+        self.fadein = "Your hands tremble, and the ground shudders in tune... something is not right."
 
     def run(self):
         active_effects()
+        info_obj.update()
         
         player_obj.ent.role = 'player'
         mech.movement_speed(toggle=False)
         
-        if not pyg.overlay:
-            for event in pygame.event.get():
+        if pyg.overlay in [None, 'stats']:
+            
+            # Play game if alive
+            if not player_obj.ent.dead:
+                for event in pygame.event.get():
 
-                # Save and quit
-                if event.type == QUIT:
-                    save_account()
-                    pygame.quit()
-                    sys.exit()
-                
-                # Keep playing
-                if not player_obj.ent.dead:
+                    # Save and quit
+                    if event.type == QUIT:
+                        save_account()
+                        pygame.quit()
+                        sys.exit()
+                    
+                    # Keep playing
                     if event.type == KEYDOWN:
                         
                         # Movement
@@ -2029,17 +2024,15 @@ class PlayGame:
                         elif event.key in pyg.key_MINUS:  self.key_MINUS()
                         
                         # Menus
-                        elif event.key in pyg.key_INFO:   self.key_INFO()
                         elif event.key in pyg.key_SPEED:  self.key_SPEED()
-                        elif event.key in pyg.key_QUEST:  self.key_QUEST()
-                        
-                        # Other
-                        elif event.key in pyg.key_EQUIP: self.key_EQUIP()
-                        elif event.key in pyg.key_DROP:  self.key_DROP()
                         
                         # >>MAIN MENU<<
                         elif event.key in pyg.key_BACK:
-                            if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                            
+                            if pyg.overlay:
+                                pyg.overlay = None
+                            
+                            elif time.time()-pyg.last_press_time > pyg.cooldown_time:
                                 pyg.last_press_time = float(time.time())
                                 pyg.overlay = 'menu'
                                 pygame.event.clear()
@@ -2047,6 +2040,7 @@ class PlayGame:
             
                         # >>COMBOS<<
                         elif event.key in pyg.key_HOLD:
+                            hold_obj.sequence_toggle = True
                             pyg.overlay = 'hold'
                             pygame.event.clear()
                             return
@@ -2059,42 +2053,125 @@ class PlayGame:
                         
                         # >>CONSTRUCTION<<
                         elif event.key in pyg.key_DEV:
-                            trade_obj.ent = player_obj.ent
+                            #trade_obj.ent = player_obj.ent
                             pyg.overlay = 'dev'
                             pygame.event.clear()
                             return
                 
-                # Handle menus when dead
-                else:
-                    
-                    # Restrict movement speed
-                    mech.movement_speed(toggle=False, custom=2)
-                    
-                    # Menus
-                    if event.type == KEYDOWN:
-                        
-                        # >>MAIN MENU<<
-                        if event.key in pyg.key_BACK:
-                            pyg.overlay = 'menu'
+                        # >>STATS<<
+                        elif event.key in pyg.key_INFO:
+                            if pyg.overlay != 'stats':
+                                small_menu.dic = info_obj.stats
+                                pyg.overlay = 'stats'
+                            else:
+                                pyg.overlay = None
                             pygame.event.clear()
                             return
-                    
-                        # >>TOGGLE MESSAGES<<
-                        elif event.key in pyg.key_PERIOD:
-                            if pyg.msg_toggle: pyg.msg_toggle = False
-                            else:
-                                if pyg.gui_toggle:
-                                    pyg.gui_toggle = False
-                                    pyg.msg_toggle = False
-                                else:
-                                    pyg.msg_toggle = True
-                                    pyg.gui_toggle = True
-                    
-                        # Other
-                        elif event.key in pyg.key_INFO:   self.key_INFO()
-                        elif event.key in pyg.key_SPEED:  self.key_SPEED()
-                        elif event.key in pyg.key_QUEST:  self.key_QUEST()
             
+                        # >>QUESTLOG<<
+                        elif event.key in pyg.key_QUEST:
+                            questlog_obj.update_questlog()
+                            pyg.overlay = 'questlog'
+                            pygame.event.clear()
+                            return
+            
+            # Handle player death
+            else:
+                env      = player_obj.ent.env
+                last_env = player_obj.ent.last_env
+                permadeath_locs = ['garden', 'home', 'overworld', 'cave']
+                drug_locs       = ['hallucination']
+                dream_locs      = ['dungeon']
+                
+                # Survive
+                if env.name not in permadeath_locs:
+                    
+                    # Wait for animations to finish
+                    if not img.render_log:
+                        if not self.death_cooldown:
+                        
+                            # Restore player state
+                            player_obj.ent.dead = False
+                            pyg.gui             = {}
+                            pyg.msg             = []
+                            pyg.msg_history     = {}
+                            mech.movement_speed(toggle=False, custom=0)
+                            self.death_cooldown = 5
+                            
+                            # Regain consciousness
+                            if env.name in drug_locs:
+                                player_obj.ent.hp = player_obj.ent.max_hp // 2
+                                self.fadein = "Delirium passes, but nausea remains."
+                            
+                            # Wake up at home
+                            elif env.name in dream_locs:
+                                player_obj.ent.hp = player_obj.ent.max_hp
+                                self.fadein = "Your cling to life has slipped, yet you wake unscarred in bed."
+                            
+                            else:
+                                print(last_env.name)
+                                player_obj.ent.hp = player_obj.ent.max_hp
+                                self.fadein = "???"
+                            
+                            if last_env.name == 'garden': last_env = player_obj.envs['home']
+                            pyg.overlay = None
+                            pyg.fadeout_screen(
+                                screen  = pyg.screen,
+                                fade_in = False,
+                                env     = last_env,
+                                loc     = last_env.player_coordinates,
+                                text    = self.fadein)
+                            pygame.event.clear()
+                        
+                        else: self.death_cooldown -= 1
+                
+                # End the game
+                else:
+                    
+                    for event in pygame.event.get():
+                        
+                        # Restrict movement speed
+                        mech.movement_speed(toggle=False, custom=2)
+                        
+                        # Menus
+                        if event.type == KEYDOWN:
+                            
+                            # >>MAIN MENU<<
+                            if event.key in pyg.key_BACK:
+                                pyg.overlay = 'menu'
+                                pygame.event.clear()
+                                return
+                        
+                            # >>TOGGLE MESSAGES<<
+                            elif event.key in pyg.key_PERIOD:
+                                if pyg.msg_toggle: pyg.msg_toggle = False
+                                else:
+                                    if pyg.gui_toggle:
+                                        pyg.gui_toggle = False
+                                        pyg.msg_toggle = False
+                                    else:
+                                        pyg.msg_toggle = True
+                                        pyg.gui_toggle = True
+                            
+                            # >>STATS<<
+                            elif event.key in pyg.key_INFO:
+                                if pyg.overlay != 'stats':
+                                    small_menu.dic = info_obj.stats
+                                    pyg.overlay = 'stats'
+                                else:
+                                    pyg.overlay = None
+                                pygame.event.clear()
+                            
+                            # >>QUESTLOG<<
+                            elif event.key in pyg.key_QUEST:
+                                questlog_obj.update_questlog()
+                                pyg.overlay = 'questlog'
+                                pygame.event.clear()
+                                return
+                            
+                            # Other
+                            elif event.key in pyg.key_SPEED:  self.key_SPEED()
+        
         for entity in player_obj.ent.env.entities:
             if not entity.dead: entity.ai()
         
@@ -2126,12 +2203,36 @@ class PlayGame:
             # >>PICKUP/STAIRS<<
             # Check if an item is under the player
             if player_obj.ent.tile.item:
+                tile = player_obj.ent.tile
                 
-                # Dungeon
-                if player_obj.ent.tile.item.name == 'dungeon':     mech.enter_dungeon()
-                elif player_obj.ent.tile.item.name == 'cave':      mech.enter_cave()
-                elif player_obj.ent.tile.item.name == 'overworld': mech.enter_overworld()
-                elif player_obj.ent.tile.item.name == 'home':      mech.enter_home()
+                # Activate entryway
+                if tile.item.name == 'dungeon':     mech.enter_dungeon()
+                elif tile.item.name == 'cave':      mech.enter_cave()
+                elif tile.item.name == 'overworld': mech.enter_overworld()
+                elif tile.item.name == 'home':      mech.enter_home()
+                
+                # Activate bed
+                elif tile.item.name in ['red bed', 'purple bed']:
+                    
+                    # Check if it is the player's bed
+                    if tile.room:
+                        if tile.room.name == 'home room':
+                            
+                            # Go to sleep if it's not daytime
+                            if player_obj.ent.env.env_time in [1, 2, 7, 8]:
+                                player_obj.ent.env.env_time = (player_obj.ent.env.env_time + 3) % 8
+                                mech.enter_dungeon(text="The evening dims to night... sleep trustly follows.")
+                            else: pyg.update_gui("Time to face the day.", pyg.dark_gray)
+                        
+                        # No sleeping in owned beds
+                        else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
+                    
+                    else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
+                
+                # Activate chair
+                elif tile.item.name in ['red chair left', 'red chair right']:
+                    player_obj.ent.env.weather.set_day_and_time(increment=True)
+                    pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 
                 # Pick up or activate
                 else: player_obj.ent.tile.item.pick_up()
@@ -2188,27 +2289,6 @@ class PlayGame:
         # >>ZOOM<<
         player_obj.ent.env.camera.zoom_out()
 
-    def key_INFO(self):
-        
-        # >>VIEW STATS<<
-        player_obj.ent.env.camera.zoom_in(custom=1)
-        
-        level_up_exp = mech.level_up_base + player_obj.ent.rank * mech.level_up_factor
-        new_menu(header  =  'Character Information',
-                 options = ['Rank:                                ' + str(player_obj.ent.rank),
-                            'Experience:                       ' + str(player_obj.ent.exp),
-                            'Experience to level up:    ' + str(level_up_exp),
-                            'Maximum HP:                    ' + str(player_obj.ent.max_hp),
-                            'Attack:                             ' + str(player_obj.ent.attack),
-                            'Defense:                           ' + str(player_obj.ent.defense)])
-        
-        player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
-
-    def key_QUEST(self):
-        
-        # >>VIEW QUESTLOG<<
-        player_obj.questlog.questlog_menu()
-
     def key_SPEED(self):
         
         # >>MOVEMENT SPEED<<
@@ -2216,35 +2296,23 @@ class PlayGame:
             pyg.last_press_time = float(time.time())
             mech.movement_speed()
 
-    def key_EQUIP(self):
-        
-        # >>CHECK INVENTORY<<
-        chosen_item = inventory_menu("INVENTORY:         USE ITEM")
-        if chosen_item is not None:
-            chosen_item.use()
-            pyg.update_gui()
-
-    def key_DROP(self):
-        
-        # >>DROP ITEM<<
-        if player_obj.ent.tile.item:
-            pyg.update_gui("There's already something here", pyg.dark_gray)
-        else:
-            chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
-            if chosen_item is not None:
-                chosen_item.drop()
-                pygame.event.clear()
-
     def render(self):
         pyg.msg_height = 4
         if not pyg.overlay: pyg.update_gui()
         render_all()
+        
+        if self.fadein:
+            pyg.fadeout_screen(
+                screen  = pyg.screen,
+                fade_in = True,
+                text    = self.fadein)
+            self.fadein = False
 
 class PlayGarden:
-    
+
     def run(self):
         
-        # Update pets
+        # Update pets and quests
         pet_obj.update()
         
         # Active or deactivate AI
@@ -2278,24 +2346,28 @@ class PlayGarden:
                         # Actions
                         elif event.key in pyg.key_ENTER:  self.key_ENTER()
                         elif event.key in pyg.key_PERIOD: self.key_PERIOD()
-                        elif event.key in pyg.key_PLUS:   self.key_PLUS()
-                        elif event.key in pyg.key_MINUS:  self.key_MINUS()
                         
                         # Menus
                         elif event.key in pyg.key_SPEED:  self.key_SPEED()
-                        elif event.key in pyg.key_QUEST:  self.key_QUEST()
-                        
-                        # Other
-                        elif event.key in pyg.key_EQUIP:  self.key_EQUIP()
-                        elif event.key in pyg.key_DROP:   self.key_DROP()
                         
                         # >>MAIN MENU<<
                         elif event.key in pyg.key_BACK:
-                            if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                            
+                            if pyg.overlay == 'stats':
+                                pyg.overlay = None
+                            
+                            elif time.time()-pyg.last_press_time > pyg.cooldown_time:
                                 pyg.last_press_time = float(time.time())
                                 pyg.overlay = 'menu'
                                 pygame.event.clear()
                                 return
+                        
+                        # >>COMBOS<<
+                        elif event.key in pyg.key_HOLD:
+                            hold_obj.sequence_toggle = True
+                            pyg.overlay = 'hold'
+                            pygame.event.clear()
+                            return
                         
                         # >>INVENTORY<<
                         elif event.key in pyg.key_INV:
@@ -2312,10 +2384,17 @@ class PlayGarden:
                         # >>STATS<<
                         elif event.key in pyg.key_INFO:
                             if pyg.overlay != 'stats':
-                                stats_obj.dic = pet_obj.stats
+                                small_menu.dic = pet_obj.stats
                                 pyg.overlay = 'stats'
                             else:
                                 pyg.overlay = None
+                            pygame.event.clear()
+                            return
+                
+                        # >>QUESTLOG<<
+                        elif event.key in pyg.key_QUEST:
+                            questlog_obj.update_questlog(questlog = player_obj.ent.gardenlog)
+                            pyg.overlay = 'questlog'
                             pygame.event.clear()
                             return
                 
@@ -2382,18 +2461,6 @@ class PlayGarden:
                 pyg.gui_toggle = True
                 pyg.msg_toggle = True
 
-    def key_HOLD(self):
-        pass
-
-    def key_PLUS(self):
-        pass
-
-    def key_MINUS(self):
-        pass
-
-    def key_QUEST(self):
-        player_obj.questlog.questlog_menu()
-
     def key_SPEED(self):
 
         # >>MOVEMENT SPEED<<
@@ -2401,279 +2468,12 @@ class PlayGarden:
             pyg.last_press_time = float(time.time())
             mech.movement_speed()
 
-    def key_EQUIP(self):
-
-        # >>CHECK INVENTORY<<
-        chosen_item = inventory_menu("INVENTORY:         USE ITEM")
-        if chosen_item is not None:
-            chosen_item.use()
-            pyg.update_gui()
-
-    def key_DROP(self):
-        
-        # >>DROP ITEM<<
-        if player_obj.ent.tile.item:
-            pyg.update_gui("There's already something here", pyg.dark_gray)
-        else:
-            chosen_item = inventory_menu("INVENTORY:         DROP ITEM")
-            if chosen_item is not None:
-                chosen_item.drop()
-                pygame.event.clear()
-
     def render(self):
         pyg.msg_toggle = False
         pyg.gui_toggle = False
         render_all()
 
-## Overlays
-class MainMenu:
-    
-    def __init__(self):
-        
-        # Initialize title
-        self.title_font     = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
-        self.game_title     = self.title_font.render("MORS SOMNIA", True, pyg.gray)
-        self.game_title_pos = (int((pyg.screen_width - self.game_title.get_width())/2), 85)
-        
-        # Initialize cursor
-        self.cursor_img = pygame.Surface((16, 16)).convert()
-        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_img, pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
-        self.cursor_pos = [32, 320]
-        
-        # Initialize menu options
-        self.menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
-        self.menu_choices_surfaces = []
-        
-        img.average()
-        self.color = pygame.Color(img.menu_correct, img.menu_correct, img.menu_correct)
-        for i in range(len(self.menu_choices)):
-            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, self.color))
-        self.choice, self.choices_length = 0, len(self.menu_choices) - 1
-        
-        # Allows access to garden
-        self.menu_toggle = True
-        
-        # Other
-        self.last_press_time, self.cooldown_time = 0, 0.5
-
-    def startup(self):
-        
-        # Startup background
-        background_image = pygame.image.load("Data/.Images/garden.png").convert()
-        background_image = pygame.transform.scale(background_image, (pyg.screen_width, pyg.screen_height))
-
-        # Fade details
-        alpha = 0
-        fade_speed = 10
-        fade_surface = pygame.Surface((pyg.screen_width, pyg.screen_height))
-        fade_surface.fill(pyg.black)
-        
-        # Apply fade
-        while alpha < 255:
-            pyg.clock.tick(30)
-            fade_surface.set_alpha(255 - alpha)
-            
-            # Set menu background to the custom image
-            pyg.screen.blit(background_image, (0, 0))
-            
-            # Draw the menu elements during the fade
-            pyg.screen.blit(self.game_title, self.game_title_pos)
-
-            # Apply the fade effect
-            pyg.screen.blit(fade_surface, (0, 0))
-            
-            pygame.display.flip()
-            
-            # Increase alpha for the next frame
-            alpha += fade_speed
-        pyg.game_state = 'play_garden'
-        pyg.overlay = 'menu'
-        return
-
-    def run(self):
-        
-        # Restrict keystroke speed
-        mech.movement_speed(toggle=False, custom=2)
-        
-        # Prevent saving before a game is started or loaded
-        if pyg.startup_toggle:
-            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, pyg.dark_gray)
-        else:
-            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, self.color)
-
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-            
-                # Navigation
-                if event.key in pyg.key_UP:       self.key_UP()
-                elif event.key in pyg.key_DOWN:   self.key_DOWN()
-                
-                # Music
-                elif event.key in pyg.key_PLUS:   self.key_PLUS()
-                elif event.key in pyg.key_MINUS:  self.key_MINUS()
-                elif event.key in pyg.key_DEV:    self.key_DEV()
-                
-                # Garden
-                elif event.key in pyg.key_PERIOD: self.key_PERIOD()
-        
-                # Unused
-                elif event.key in pyg.key_LEFT:   self.key_LEFT()
-                elif event.key in pyg.key_RIGHT:  self.key_RIGHT()
-                elif event.key in pyg.key_HOLD:   self.key_HOLD()
-                elif event.key in pyg.key_INV:    self.key_INV()
-                elif event.key in pyg.key_INFO:   self.key_INFO()
-                elif event.key in pyg.key_SPEED:  self.key_SPEED()
-                elif event.key in pyg.key_QUEST:  self.key_QUEST()
-                elif event.key in pyg.key_EQUIP:  self.key_EQUIP()
-                elif event.key in pyg.key_DROP:   self.key_DROP()
-                
-                # >>RESUME<<
-                elif event.key in pyg.key_BACK:
-                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
-                        pyg.last_press_time = float(time.time())
-                        pyg.overlay = None
-                        return
-                
-                # Select option
-                elif event.key in pyg.key_ENTER:
-                    
-                    # >>NEW GAME<<
-                    if self.choice == 0:
-                        pyg.game_state = 'new_game'
-                        new_game_obj.reset()
-                        pyg.overlay = None
-                        return
-                    
-                    # >>LOAD<<
-                    elif self.choice == 1:
-                        pyg.overlay = 'load'
-                        return
-                    
-                    # >>SAVE<<
-                    elif self.choice == 2:
-                        
-                        # Prevent saving before a game is started or loaded
-                        if not pyg.startup_toggle:
-                            pyg.overlay = 'save'
-                            return
-                    
-                    # >>CONTROLS<<
-                    elif self.choice == 3:
-                        pyg.overlay = 'controls'
-                        return
-                    
-                    # >>QUIT<<
-                    elif self.choice == 4:
-                        pygame.quit()
-                        sys.exit()
-        
-        pyg.overlay = 'menu'
-        return
-
-    def key_UP(self):
-        
-        # >>SELECT MENU ITEM<<
-        self.cursor_pos[1] -= 24
-        self.choice -= 1
-        if self.choice < 0:
-            self.choice = self.choices_length
-            self.cursor_pos[1] = 320 + (len(self.menu_choices) - 1) * 24
-
-    def key_DOWN(self):
-        
-        # >>SELECT MENU ITEM<<
-        self.cursor_pos[1] += 24
-        self.choice += 1
-        if self.choice > self.choices_length:
-            self.choice = 0
-            self.cursor_pos[1] = 320
-    
-    def key_LEFT(self):
-        pass
-
-    def key_RIGHT(self):
-        pass
-
-    def key_PERIOD(self):
-
-        # >>GARDEN<<
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time())
-            if player_obj.ent.env.name != 'garden':
-                place_player(env=player_obj.envs['garden'], loc=player_obj.envs['garden'].player_coordinates)    # menu (key_PERIOD)
-                pyg.game_state = 'play_garden'
-            elif not pyg.startup_toggle:
-                place_player(env=player_obj.ent.last_env, loc=player_obj.ent.last_env.player_coordinates)    # menu (key_PERIOD)
-                pyg.game_state = 'play_game'
-
-    def key_HOLD(self):
-        pass
-
-    def key_PLUS(self):
-        aud.pause(paused=False)
-
-    def key_MINUS(self):
-        aud.pause(paused=True)
-
-    def key_INFO(self):
-        if pyg.frame:
-            pygame.display.set_mode((pyg.screen_width, pyg.screen_height), pygame.NOFRAME)
-            pyg.frame = False
-        else:
-            pygame.display.set_mode((pyg.screen_width, pyg.screen_height))
-            pyg.frame = True
-
-    def key_QUEST(self):
-        pass
-
-    def key_SPEED(self):
-        pass
-
-    def key_INV(self):
-        pass
-
-    def key_DEV(self):
-        aud.play_track()
-
-    def key_EQUIP(self):
-        pass
-
-    def key_DROP(self):
-        pass
-
-    def render(self):
-        
-        # Blit menu options
-        Y = 316
-        
-        self.menu_choices_surfaces = []
-        
-        img.average()
-        self.color = pygame.Color(img.menu_correct, img.menu_correct, img.menu_correct)
-        for i in range(len(self.menu_choices)):
-            if (i == 2) and pyg.startup_toggle:
-                color = pyg.dark_gray
-            else: color = self.color
-            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, color))
-        for menu_choice_surface in self.menu_choices_surfaces:
-            pyg.screen.blit(menu_choice_surface, (48, Y))
-            Y += 24
-        
-        # Blit cursor
-        pygame.draw.polygon(self.cursor_img, self.color, [(5, 3), (10, 7), (5, 11)], 0)
-        pyg.screen.blit(self.cursor_img, self.cursor_pos)
-
-        # Blit logo
-        if pyg.startup_toggle:
-            pyg.screen.blit(self.game_title, self.game_title_pos)
-        else:
-            for i in range(len(img.big)):
-                for j in range(len(img.big[0])):
-                    X = pyg.screen_width - pyg.tile_width * (i+2)
-                    Y = pyg.screen_height - pyg.tile_height * (j+2)
-                    pyg.screen.blit(img.big[len(img.big)-j-1][len(img.big[0])-i-1], (X, Y))
-
+## Side bars
 class DevTools:
     
     def __init__(self):
@@ -2905,9 +2705,11 @@ class Inventory:
         # Restore last selection
         if len(self.dic_indices) != len(self.dic_categories):
             self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
-        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
-        self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        if self.dic_indices:
+            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
+            self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        else: pyg.overlay = None
 
     def run(self):
         
@@ -3002,8 +2804,9 @@ class Inventory:
                         self.update_data()
 
             # Save for later reference
-            self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
-            self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
+            if self.dic_indices:
+                self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
+                self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
         return
 
     def find_item(self, offset=None):
@@ -3054,6 +2857,7 @@ class Inventory:
         pyg.msg_height = 1
         pyg.update_gui()
         
+        if self.cursor_pos[1] < 32: self.cursor_pos[1] = 32
         pyg.screen.blit(self.cursor_fill, self.cursor_pos)
         img.average()
         color = pygame.Color(img.left_correct, img.left_correct, img.left_correct)
@@ -3101,27 +2905,37 @@ class Inventory:
 class Hold:
     
     def __init__(self):
+        """ Shows a sidebar menu when a key is held down, then processes input as a combo.
+            Options are based on the player's effects, which are managed in Player. 
+            
+            Parameters
+            ----------
+            cursor_pos      : list of two ints; top left corner of the cursor; first value changed by self.run() in multiples of 32
+            dic_indices     : list of lists of two ints; offset from wraparound, and choice index from cursor; one for each dictionary
+            
+            sequence_toggle : bool; True when the botton is held down
+            keys            : list of key codes; sets which keys count as a combo
+            key_sequence    : three csv strings in [⮜, ⮟, ⮞, ⮝]; combo set in self.run() and cleared after some time
+            cooldown_time   : float; the time before the sequence is automatically cleared
+            last_press_time : float; the last time the sequence was cleared
+            
+            detail          : bool; toggles descriptions; altered in self.run() """
         
-        # Data for select_item and locked_item
-        self.cursor_pos = [0, 32]
-        self.dic_index = 0
-        self.locked = False
-        self.img_names = ['null', 'null']
-        self.img_x = 0
-        self.img_y = 0
+        # Cursor and position saving
         self.dic_indices = [[0, 0]]
         
-        self.sequence_toggle = False
-        self.key_sequence = []
-        self.test_sequence_1 = [pyg.key_LEFT, pyg.key_RIGHT]
-        self.test_sequence_2 = [pyg.key_LEFT, pyg.key_RIGHT]
-        self.keys = pyg.key_LEFT + pyg.key_DOWN + pyg.key_RIGHT
-        
-        self.detail = True
-        self.cooldown_time = 0.5
+        # Combo sequences
+        self.sequence_toggle = True
+        self.keys            = pyg.key_LEFT + pyg.key_DOWN + pyg.key_RIGHT
+        self.key_sequence    = []
+        self.cooldown_time   = 0.5
         self.last_press_time = 0
+        
+        # GUI
+        self.detail = True
 
     def run(self):
+        """ Processes input sequences while a key is held down. """
         
         # Restrict movement speed
         mech.movement_speed(toggle=False, custom=2)
@@ -3135,7 +2949,7 @@ class Hold:
             # Clear sequence after some time
             if time.time()-self.last_press_time > self.cooldown_time:
                 self.last_press_time = time.time()
-                self.key_sequence = []
+                self.key_sequence    = []
             
             # Wait for sequence
             if event.type == pygame.KEYDOWN:
@@ -3143,6 +2957,7 @@ class Hold:
                 ## >>SEQUENCE<<
                 if event.key in pyg.key_HOLD:
                     self.sequence_toggle = True
+                
                 if self.sequence_toggle and (event.key in self.keys):                        
                     self.key_sequence.append(event.key)
                     
@@ -3153,18 +2968,6 @@ class Hold:
                 elif event.key in pyg.key_QUEST:
                     if not self.detail: self.detail = True
                     else:               self.detail = False
-                
-                # >>NAVIGATE DICTIONARY<<
-                elif event.key in pyg.key_MINUS:
-                    
-                    self.choice -= 1
-                    if self.cursor_pos[1] == 32: self.offset -= 1
-                    else:                        self.cursor_pos[1] -= pyg.tile_height
-                
-                elif event.key in pyg.key_PLUS:
-                    self.choice += 1
-                    if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-                    else: self.cursor_pos[1] += pyg.tile_height
             
             # Return to game
             elif event.type == pygame.KEYUP:
@@ -3183,40 +2986,26 @@ class Hold:
                     elif key in pyg.key_UP:    sequence_string += '⮝'
                 self.check_sequence(sequence_string)
                 self.key_sequence = []
-
+        
         pyg.overlay = 'hold'
         return
 
     def update_data(self):
+        """ Sets dictionary for icons and restores location. """
         
-        # Initialize cursor
-        if bool(self.locked): size, width, alpha = 30, 2, 192
-        else:                 size, width, alpha = 31, 1, 128
-        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill.fill((255, 255, 255, alpha))
-        pygame.draw.polygon(
-            self.cursor_border, 
-            pygame.Color('white'), 
-            [(0, 0), (size, 0), (size, size), (0, size)],  width)
-        
-        # Initialize tile selection
+        # Finds images and sequences of player effects, then saves them in a dictionary
         inventory_dics      = {'effects': {}}
         self.dic_categories = ['effects']
         self.sequences      = {}
         for effect in player_obj.ent.effects:
             if effect.sequence:
-                inventory_dics['effects'][effect.img_names[1]] = img.dict[effect.img_names[0]][effect.img_names[1]]
-                self.sequences[effect.img_names[1]] = effect.sequence
-        for key, value in inventory_dics.items():
-            if not value: self.dic_categories.remove(key)
+                inventory_dics['effects'][effect.name] = img.dict[effect.img_names[0]][effect.img_names[1]]
+                self.sequences[effect.name] = effect.sequence
         
         # Restore last selection
         if len(self.dic_indices) != len(self.dic_categories):
-            self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
-        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
-        self.dic = inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+            self.dic_indices = [[0, 0] for _ in self.dic_categories]
+        self.dic = inventory_dics[self.dic_categories[0]]
 
     def check_sequence(self, sequence_string):
         
@@ -3232,8 +3021,6 @@ class Hold:
         pyg.msg_height = 1
         pyg.update_gui()
         
-        pyg.screen.blit(self.cursor_fill,   self.cursor_pos)
-        pyg.screen.blit(self.cursor_border, self.cursor_pos)
         img.average()
         color = pygame.Color(img.left_correct, img.left_correct, img.left_correct)
         
@@ -3247,7 +3034,7 @@ class Hold:
                 
                 # Extract image details
                 effects_list = list(self.dic.keys())
-                effect_name  = effects_list[(i+self.offset)%len(self.dic)]
+                effect_name  = effects_list[i%len(self.dic)]
                 
                 # Render details
                 if self.detail:
@@ -3269,7 +3056,6 @@ class Hold:
                 counter += 1
             
             else: break
-        pyg.screen.blit(self.cursor_border, self.cursor_pos)
 
 class Trade:
 
@@ -3318,6 +3104,9 @@ class Trade:
             self.cursor_border_bnm, 
             pygame.Color('white'), 
             [(0, 0), (size, 0), (size, size), (0, size)],  width)
+
+        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade.fill((0, 0, 0, 50))
 
     def run(self):
         
@@ -3593,6 +3382,9 @@ class Trade:
 
     def render(self):
         
+        # Apply background fade
+        pyg.screen.blit(self.background_fade, (0, 0))
+        
         # Basics
         pyg.msg_height = 1
         pyg.update_gui()
@@ -3676,12 +3468,616 @@ class Trade:
         if self.menu_toggle == 'right': pyg.screen.blit(self.cursor_border_bnm, self.cursor_pos_bnm)
         else:                           pyg.screen.blit(self.cursor_border,     self.cursor_pos)
 
-class Stats:
+## Overlays
+class MainMenu:
+    
+    def __init__(self):
+        
+        # Initialize title
+        self.title_font     = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
+        self.game_title     = self.title_font.render("MORS SOMNIA", True, pyg.gray)
+        self.game_title_pos = (int((pyg.screen_width - self.game_title.get_width())/2), 85)
+        
+        # Initialize cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
+        self.cursor_pos = [32, 320]
+        
+        # Initialize menu options
+        self.menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
+        self.menu_choices_surfaces = []
+        
+        img.average()
+        self.color = pygame.Color(img.menu_correct, img.menu_correct, img.menu_correct)
+        for i in range(len(self.menu_choices)):
+            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, self.color))
+        self.choice, self.choices_length = 0, len(self.menu_choices) - 1
+        
+        # Allows access to garden
+        self.menu_toggle = True
+        
+        # Other
+        self.last_press_time, self.cooldown_time = 0, 0.5
+        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade.fill((0, 0, 0, 50))
+
+    def startup(self):
+        
+        # Startup background
+        background_image = pygame.image.load("Data/.Images/garden.png").convert()
+        background_image = pygame.transform.scale(background_image, (pyg.screen_width, pyg.screen_height))
+
+        # Fade details
+        alpha = 0
+        fade_speed = 10
+        fade_surface = pygame.Surface((pyg.screen_width, pyg.screen_height))
+        fade_surface.fill(pyg.black)
+        
+        # Apply fade
+        while alpha < 255:
+            pyg.clock.tick(30)
+            fade_surface.set_alpha(255 - alpha)
+            
+            # Set menu background to the custom image
+            pyg.screen.blit(background_image, (0, 0))
+            
+            # Draw the menu elements during the fade
+            pyg.screen.blit(self.game_title, self.game_title_pos)
+
+            # Apply the fade effect
+            pyg.screen.blit(fade_surface, (0, 0))
+            
+            pygame.display.flip()
+            
+            # Increase alpha for the next frame
+            alpha += fade_speed
+        pyg.game_state = 'play_garden'
+        pyg.overlay = 'menu'
+        return
+
+    def run(self):
+        
+        # Restrict keystroke speed
+        mech.movement_speed(toggle=False, custom=2)
+        
+        # Prevent saving before a game is started or loaded
+        if pyg.startup_toggle:
+            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, pyg.dark_gray)
+        else:
+            self.menu_choices_surfaces[2] = pyg.font.render(self.menu_choices[2], True, self.color)
+
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+            
+                # Navigation
+                if event.key in pyg.key_UP:       self.key_UP()
+                elif event.key in pyg.key_DOWN:   self.key_DOWN()
+                
+                # Music
+                elif event.key in pyg.key_PLUS:   self.key_PLUS()
+                elif event.key in pyg.key_MINUS:  self.key_MINUS()
+                elif event.key in pyg.key_DEV:    self.key_DEV()
+                
+                # Garden
+                elif event.key in pyg.key_PERIOD: self.key_PERIOD()
+        
+                # Unused
+                elif event.key in pyg.key_HOLD:   self.key_HOLD()
+                elif event.key in pyg.key_INFO:   self.key_INFO()
+                
+                # >>RESUME<<
+                elif event.key in pyg.key_BACK:
+                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        pyg.last_press_time = float(time.time())
+                        pyg.overlay = None
+                        return
+                
+                # Select option
+                elif event.key in pyg.key_ENTER:
+                    
+                    # >>NEW GAME<<
+                    if self.choice == 0:
+                        pyg.game_state = 'new_game'
+                        new_game_obj.reset()
+                        pyg.overlay = None
+                        return
+                    
+                    # >>LOAD<<
+                    elif self.choice == 1:
+                        pyg.overlay = 'load'
+                        return
+                    
+                    # >>SAVE<<
+                    elif self.choice == 2:
+                        
+                        # Prevent saving before a game is started or loaded
+                        if not pyg.startup_toggle:
+                            pyg.overlay = 'save'
+                            return
+                    
+                    # >>CONTROLS<<
+                    elif self.choice == 3:
+                        pyg.overlay = 'controls'
+                        return
+                    
+                    # >>QUIT<<
+                    elif self.choice == 4:
+                        pygame.quit()
+                        sys.exit()
+        
+        pyg.overlay = 'menu'
+        return
+
+    def key_UP(self):
+        
+        # >>SELECT MENU ITEM<<
+        self.cursor_pos[1] -= 24
+        self.choice -= 1
+        if self.choice < 0:
+            self.choice = self.choices_length
+            self.cursor_pos[1] = 320 + (len(self.menu_choices) - 1) * 24
+
+    def key_DOWN(self):
+        
+        # >>SELECT MENU ITEM<<
+        self.cursor_pos[1] += 24
+        self.choice += 1
+        if self.choice > self.choices_length:
+            self.choice = 0
+            self.cursor_pos[1] = 320
+    
+    def key_PERIOD(self):
+
+        # >>GARDEN<<
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time())
+            if player_obj.ent.env.name != 'garden':
+                place_player(env=player_obj.envs['garden'], loc=player_obj.envs['garden'].player_coordinates)    # menu (key_PERIOD)
+                pyg.game_state = 'play_garden'
+            elif not pyg.startup_toggle:
+                place_player(env=player_obj.ent.last_env, loc=player_obj.ent.last_env.player_coordinates)    # menu (key_PERIOD)
+                pyg.game_state = 'play_game'
+
+    def key_HOLD(self):
+        pass
+
+    def key_PLUS(self):
+        aud.pause(paused=False)
+
+    def key_MINUS(self):
+        aud.pause(paused=True)
+
+    def key_INFO(self):
+        if pyg.frame:
+            pygame.display.set_mode((pyg.screen_width, pyg.screen_height), pygame.NOFRAME)
+            pyg.frame = False
+        else:
+            pygame.display.set_mode((pyg.screen_width, pyg.screen_height))
+            pyg.frame = True
+
+    def key_DEV(self):
+        aud.play_track()
+
+    def render(self):
+        
+        # Apply background fade
+        pyg.screen.blit(self.background_fade, (0, 0))
+        
+        # Blit menu options
+        Y = 316
+        
+        self.menu_choices_surfaces = []
+        
+        img.average()
+        #self.color = pygame.Color(img.menu_correct, img.menu_correct, img.menu_correct)
+        self.color = pygame.Color(255-img.bottom_color[0], 255-img.bottom_color[1], 255-img.bottom_color[2])
+        for i in range(len(self.menu_choices)):
+            if (i == 2) and pyg.startup_toggle:
+                color = pyg.dark_gray
+            else: color = self.color
+            self.menu_choices_surfaces.append(pyg.font.render(self.menu_choices[i], True, color))
+        for menu_choice_surface in self.menu_choices_surfaces:
+            pyg.screen.blit(menu_choice_surface, (48, Y))
+            Y += 24
+        
+        # Blit cursor
+        pygame.draw.polygon(self.cursor_img, self.color, [(5, 3), (10, 7), (5, 11)], 0)
+        pyg.screen.blit(self.cursor_img, self.cursor_pos)
+
+        # Blit logo
+        if pyg.startup_toggle:
+            pyg.screen.blit(self.game_title, self.game_title_pos)
+        else:
+            for i in range(len(img.big)):
+                for j in range(len(img.big[0])):
+                    X = pyg.screen_width - pyg.tile_width * (i+2)
+                    Y = pyg.screen_height - pyg.tile_height * (j+2)
+                    pyg.screen.blit(img.big[len(img.big)-j-1][len(img.big[0])-i-1], (X, Y))
+
+class BigMenu:
+
+    def __init__(self, name, header, options, options_categories=None, position='top left'):
+        """ IMPORTANT. Creates cursor, background, and menu options, then returns index of choice.
+
+            header             : string; top line of text
+            options            : list of strings; menu choices
+            options_categories : list of strings; categorization; same length as options
+            position           : chooses layout preset """
+        
+        self.name               = name
+        self.header             = header
+        self.options            = options
+        self.options_categories = options_categories
+        self.position           = position
+        
+        # Initialize temporary data containers
+        self.choice                   = 0                   # holds index of option pointed at by cursor
+        self.choices_length           = len(self.options)-1 # number of choices
+        self.options_categories_cache = ''                  # holds current category
+        self.options_render           = self.options.copy()
+        
+        # Alter layout if categories are present
+        if self.options_categories: 
+            self.tab_x, self.tab_y = 70, 10
+            self.options_categories_cache_2 = self.options_categories[0]
+        else:
+            self.tab_x, self.tab_y = 0, 0
+
+        # Set initial position of each text type
+        self.header_position = {
+            'top left':     [5+32, 32],
+            'center':       [pyg.screen_width//2, 85],
+            'bottom left':  [5, 10],
+            'bottom right': [60 ,70]}
+        self.cursor_position = {
+            'top left':     [43+self.tab_x, 27+32+self.tab_y],
+            'center':       [50, 300],
+            'bottom left':  [50+self.tab_x, 65-self.tab_y],
+            'bottom right': [60 ,70]}
+        self.options_positions = {
+            'top left':     [pyg.tile_height*3+self.tab_x-34, 22+32],
+            'center':       [80, 300],
+            'bottom left':  [5, 10],
+            'bottom right': [60 ,70]}
+        self.category_positions = {
+            'top left':     [pyg.tile_height+pyg.tile_height // 4, 22+32],
+            'center':       [80, 300],
+            'bottom left':  [5, 10],
+            'bottom right': [60 ,70]}
+        
+        # Set mutable copies of text positions
+        self.cursor_position_mutable    = self.cursor_position[self.position].copy()
+        self.options_positions_mutable  = self.options_positions[self.position].copy()
+        self.category_positions_mutable = self.category_positions[self.position].copy()
+        
+        # Initialize cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
+        
+        # Initialize menu options
+        self.header_render = pyg.font.render(self.header, True, pyg.white)
+        for i in range(len(self.options)):
+            color = pyg.gray
+            self.options_render[i] = pyg.font.render(options[i], True, color)
+        
+        self.msg_toggle = None
+        self.gui_toggle = None
+        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade.fill((0, 0, 0, 50))
+
+    def reset(self, name, header, options, options_categories, position):
+        self.__init__(name, header, options, options_categories, position)
+
+    def run(self):
+        mech.movement_speed(toggle=False, custom=2)
+        
+        # Save gui settings before clearing the screen
+        if self.msg_toggle is None:
+            self.msg_toggle = pyg.msg_toggle
+            self.gui_toggle = pyg.gui_toggle
+        
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                
+                # Navigation
+                if event.key in pyg.key_UP:     self.key_UP()
+                elif event.key in pyg.key_DOWN: self.key_DOWN()
+                
+                # Handle selection
+                elif event.key in (pyg.key_ENTER + pyg.key_LEFT + pyg.key_RIGHT):
+                    
+                    # >>TEXT MENU<<
+                    if self.name == 'temp':
+                        pyg.overlay = None
+                        return
+                    
+                    # >>QUESTLOG<<
+                    elif self.name == 'questlog':
+                        if self.header == "                                                        QUESTLOG":
+                            
+                            # Select questlog or gardenlog
+                            if pyg.game_state != 'play_garden':
+                                self.selected_quest = player_obj.ent.questlog[list(player_obj.ent.questlog.keys())[self.choice]]
+                            else:
+                                self.selected_quest = player_obj.ent.gardenlog[list(player_obj.ent.gardenlog.keys())[self.choice]]
+                            
+                            # Set new values to be displayed
+                            self.reset(
+                                name               = 'questlog',
+                                header             = self.selected_quest.name,
+                                options            = self.selected_quest.content,
+                                options_categories = self.selected_quest.categories,
+                                position           = self.position)
+                        
+                        else:
+                            
+                            # Select questlog or gardenlog
+                            if pyg.game_state != 'play_garden': options = list(player_obj.ent.questlog.keys())
+                            else:                               options = list(player_obj.ent.gardenlog.keys())
+                            
+                            self.reset(
+                                name      = 'questlog',
+                                header    = "                                                        QUESTLOG",
+                                options   = options,
+                                options_categories = self.categories,
+                                position = self.position)
+                    
+                else:
+                    pyg.overlay = None
+                    pyg.msg_toggle = self.msg_toggle
+                    pyg.gui_toggle = self.gui_toggle
+                    self.msg_toggle = None
+                    self.gui_toggle = None
+                    return
+
+        pyg.overlay = copy.copy(self.name)
+        return
+
+    def key_UP(self):
+
+        # >>SELECT MENU ITEM<<        
+        # Move cursor up
+        self.cursor_position_mutable[1]     -= 16
+        self.choice                         -= 1
+        
+        # Move to lowest option
+        if self.choice < 0:
+            self.choice                     = self.choices_length
+            self.cursor_position_mutable[1] = self.cursor_position[self.position][1] + (len(self.options)-1) * 16
+            if self.options_categories:
+                self.cursor_position_mutable[1] += self.tab_y * (len(set(self.options_categories)) - 1)
+                self.options_categories_cache_2 = self.options_categories[self.choice]
+        
+        # Move cursor again if there are categories
+        elif self.options_categories:
+            if self.options_categories[self.choice] != self.options_categories_cache_2:
+                self.options_categories_cache_2 = self.options_categories[self.choice]
+                self.cursor_position_mutable[1] -= self.tab_y
+
+    def key_DOWN(self):
+
+        # >>SELECT MENU ITEM<<        
+        # Move cursor down
+        self.cursor_position_mutable[1]     += 16
+        self.choice                         += 1
+        
+        # Move to highest option
+        if self.choice > self.choices_length:
+            self.choice                     = 0
+            self.cursor_position_mutable[1] = self.cursor_position[self.position][1]
+            if self.options_categories:
+                self.options_categories_cache_2 = self.options_categories[self.choice]
+        
+        # Move cursor again if there are categories
+        elif self.options_categories:
+            if self.options_categories[self.choice] != self.options_categories_cache_2:
+                self.options_categories_cache_2 = self.options_categories[self.choice]
+                self.cursor_position_mutable[1] += self.tab_y
+
+    def init_questlog(self):
+        """ Sets intro quests and updates menu. Only runs once when a new game is started.
+
+            quests          : list of Quest objects
+            quest_names     : list of strings
+            categories      : list of strings; 'main' or 'side'
+            main_quests     : list of Quest objects
+            side_quests     : list of Quest objects
+            selected_quest  : Quest object
+            
+            menu_index      : int; toggles questlog pages """
+        
+        # Initialize parameters
+        self.menu_index = 0
+        
+        # Create default quests
+        gathering_supplies = Quest(
+            name='Gathering supplies',
+            notes=['My bag is nearly empty.',
+                   'It would be good to have some items on hand.'],
+            tasks=['☐ Collect 3 potions.',
+                   '☐ Find a spare shovel.'],
+            category='Main')
+
+        finding_a_future = Quest(
+            name='Finding a future',
+            notes=['I should make my way into town.'],
+            tasks=['☐ Wander east.'],
+            category='Main')
+        
+        furnishing_a_home = Quest(
+            name='Furnishing a home',
+            notes=['My house is empty. Maybe I can spruce it up.'],
+            tasks=['☐ Use the shovel to build new rooms.',
+                   '☐ Drop items to be saved for later use.',
+                   '☐ Look for anything interesting.'],
+            category='Side')
+        
+        gathering_supplies.content = gathering_supplies.notes + gathering_supplies.tasks
+        finding_a_future.content   = finding_a_future.notes + finding_a_future.tasks
+        furnishing_a_home.content  = furnishing_a_home.notes + furnishing_a_home.tasks
+
+        player_obj.ent.questlog = {
+            gathering_supplies.name: gathering_supplies,
+            finding_a_future.name:   finding_a_future,
+            furnishing_a_home.name:  furnishing_a_home}
+        self.update_questlog()
+
+    def init_gardenlog(self):
+        
+        # Initialize parameters
+        self.menu_index = 0
+        
+        # Create default quests
+        water = Quest(
+            name='Leading a radix to water',
+            notes=['These odd beings seem thirsty.',
+                   'I should pour out some water for them.'],
+            tasks=['☐ Empty your jug of water.',
+                   '☐ Make a radix drink.'],
+            category='Main')
+
+        food = Quest(
+            name='Fruit of the earth',
+            notes=['Set out some food.'],
+            tasks=['☐ Get a radix to eat.'],
+            category='Main')
+        
+        building_shelter = Quest(
+            name='Build a house',
+            notes=['Shelter would be nice.'],
+            tasks=['☐ Contruct walls.',
+                   '☐ Set a floor.',
+                   '☐ Decorate.'],
+            category='Side')
+        
+        water.content = water.notes + water.tasks
+        food.content   = food.notes + food.tasks
+        building_shelter.content  = building_shelter.notes + building_shelter.tasks
+
+        player_obj.ent.gardenlog = {
+            water.name: water,
+            food.name:   food,
+            building_shelter.name:  building_shelter}
+        self.update_questlog()
+
+    def update_questlog(self, name=None, questlog=None):
+        """ Updates and sorts main quests and side quests. """
+        
+        if not questlog: questlog = player_obj.ent.questlog
+        
+        ## Look for completed tasks and quests
+        if name:
+            quest = questlog[name]
+            
+            # Check off task
+            if not quest.finished:
+                for i in range(len(quest.tasks)):
+                    task = quest.tasks[i]
+                    if task[0] == "☐":
+                        quest.tasks[i] = task.replace("☐", "☑")
+                        pyg.update_gui(quest.tasks[i], pyg.violet)
+                        quest.content = quest.notes + quest.tasks
+                        break
+            
+            # Remove finished quests
+            else:
+                quest.tasks[-1] = quest.tasks[-1].replace("☐", "☑")
+                pyg.update_gui(quest.tasks[-1], pyg.violet)
+                pyg.update_gui(f"Quest complete: {quest.name}", pyg.violet)
+                del questlog[quest.name]
+        
+        ## Sort quests
+        self.main_quests = []
+        self.side_quests = []
+        self.categories  = []
+        quests_cache     = {}
+        
+        # Find main quests
+        for quest in questlog.values():
+            if not quest.finished:
+                if quest.category == 'Main':
+                    quests_cache[quest.name] = quest
+                    self.main_quests.append(quest)
+                    self.categories.append(quest.category)
+        
+        # Find side quests
+        for quest in questlog.values():
+            if not quest.finished:
+                if quest.category == 'Side':
+                    quests_cache[quest.name] = quest
+                    self.side_quests.append(quest)
+                    self.categories.append(quest.category)
+        questlog = quests_cache
+        self.reset(
+            name      = 'questlog',
+            header    = "                                                        QUESTLOG", 
+            options   = list(questlog.keys()),
+            options_categories = self.categories,
+            position = self.position)
+
+    def render(self):
+        
+        # Apply background fade
+        pyg.screen.blit(self.background_fade, (0, 0))
+        
+        ## Update tiles
+        if self.msg_toggle is not None:
+            pyg.msg_toggle = False
+            pyg.gui_toggle = False
+        pyg.update_gui()
+        render_all()
+        if player_obj.ent.env.name != 'garden': player_obj.ent.env.weather.render()
+        
+        ## Render background
+        fill_width  = pyg.tile_width  * 18
+        fill_height = pyg.tile_height * 13
+        self.backdrop = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
+        self.backdrop.fill((0, 0, 0, 128))
+        pyg.screen.blit(self.backdrop, (32, 32))
+        
+        # Render border
+        self.cursor_border = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
+        self.backdrop.fill((0, 0, 0, 128))
+        pygame.draw.polygon(
+            self.cursor_border, 
+            pyg.gray,
+            [(0, 0),
+             (fill_width-1, 0),
+             (fill_width-1, fill_height-1),
+             (0, fill_height-1)], 1)
+        pyg.screen.blit(self.cursor_border, (32, 32))
+        
+        # Render header and cursor
+        pyg.screen.blit(self.header_render, self.header_position[self.position])
+        pyg.screen.blit(self.cursor_img, self.cursor_position_mutable)
+        
+        ## Render categories and options
+        for i in range(len(self.options_render)):
+            
+            # Render category text if it is not present 
+            if self.options_categories:
+                if self.options_categories[i] != self.options_categories_cache:
+                    self.options_categories_cache = self.options_categories[i]
+                    text = pyg.font.render(f'{self.options_categories_cache.lower()}', True, pyg.gray)
+                    self.options_positions_mutable[1] += self.tab_y
+                    pyg.screen.blit(text, (self.category_positions_mutable[0], self.options_positions_mutable[1]))
+                
+            # Render option text
+            pyg.screen.blit(self.options_render[i], self.options_positions_mutable)
+            self.options_positions_mutable[1] += pyg.tile_height//2
+        self.options_positions_mutable = self.options_positions[self.position].copy()
+        self.category_positions_mutable = self.category_positions[self.position].copy()
+        pygame.display.flip()
+
+class SmallMenu:
     
     def render(self):
         pyg.msg_height = 1
         pyg.update_gui()
         render_all()
+        if player_obj.ent.env.name != 'garden': player_obj.ent.env.weather.render()
         
         # Render background
         fill_width  = pyg.tile_width  * 5 + pyg.tile_width // 2
@@ -3713,6 +4109,327 @@ class Stats:
             pyg.screen.blit(key, (X1, Y))
             pyg.screen.blit(val, (X2, Y))
             Y += pyg.tile_height//2
+
+class Info:
+    """ Manages stats in the Garden. """
+
+    def __init__(self):
+
+        self.stats = {
+            'Character Information': None,
+            '': None,
+            'rank':       None,
+            'rigor':      None,
+            'attack':     None,
+            'defense':    None}
+
+    def update(self):
+
+        self.stats['rank']  = '★' * int(player_obj.ent.rank)
+        if len(self.stats['rank']) < 5:
+            while len(self.stats['rank']) < 5:
+                self.stats['rank'] += '☆'
+            
+        self.stats['rigor']   = '★' * int(player_obj.ent.max_hp // 10)
+        if len(self.stats['rigor']) < 5:
+            while len(self.stats['rigor']) < 5:
+                self.stats['rigor'] += '☆'
+        
+        self.stats['attack']   = '★' * int(player_obj.ent.attack // 10)
+        if len(self.stats['attack']) < 5:
+            while len(self.stats['attack']) < 5:
+                self.stats['attack'] += '☆'
+        
+        self.stats['defense']   = '★' * int(player_obj.ent.defense // 10)
+        if len(self.stats['defense']) < 5:
+            while len(self.stats['defense']) < 5:
+                self.stats['defense'] += '☆'
+
+class Pets:
+    """ Manages stats in the Garden. """
+
+    def __init__(self):
+        
+        # General
+        if player_obj.envs['garden']: self.ents = player_obj.envs['garden'].entities
+        else:                         self.ents = None
+        
+        self.stats = {
+            '      RADIX ATRIUM': None,
+            '': None,
+            'mood':     None,
+            'stamina':  None,
+            'strength': None,
+            'appeal':   None}
+        
+        # Numerical stats
+        self.levels = {
+            'stamina':  0,
+            'strength': 1,
+            'appeal':   1}
+        
+        self.moods = {
+            'happiness': 5,
+            'sadness':   0,
+            'anger':     0,
+            'boredom':   0,
+            'lethargy':  0,
+            'confusion': 0}
+        
+        # String conversions
+        self.faces = {
+            'happiness': '( ^_^ )',
+            'sadness':   '( Q_Q )',
+            'anger':     '( >_< )',
+            'boredom':   '( . _ .  )',
+            'lethargy':  '( =_= )',
+            'confusion': '(@_@)'}
+        
+        # Utility
+        self.happiness_cooldown = 10
+        self.happiness_press = 0
+        self.emoji_cooldown = 10
+        self.emoji_press = 0
+
+    def import_pets(self):
+        self.ents = player_obj.envs['garden'].entities
+
+    def stat_check(self, dic):
+        for key, value in dic.items():
+            if value > 10:  dic[key] = 10
+            elif value < 0: dic[key] = 0
+
+    def update(self):
+        
+        # Lose happiness
+        if self.moods['happiness']:
+            if time.time() - self.happiness_press > self.happiness_cooldown:
+                self.happiness_press = time.time()
+                
+                if not random.randint(0, 1):
+                    self.moods['happiness'] -= 1
+                    self.moods[random.choice(list(self.moods.keys()))] += 1
+        
+        # Clean up
+        self.stat_check(self.levels)
+        self.stat_check(self.moods)
+        
+        # Set mood
+        max_val = max(self.moods.values())
+        current_moods = [mood for mood, val in self.moods.items() if val == max_val]
+        
+        # Alternate between tied moods
+        if len(current_moods) > 1:
+            if time.time() - self.emoji_press > self.emoji_cooldown:
+                self.emoji_press = time.time()
+                self.stats['mood'] = self.faces[random.choice(current_moods)]        
+        
+        # Set the current mood
+        else:
+            self.stats['mood'] = self.faces[current_moods[0]]
+        
+        # Set levels
+        self.stats['stamina']  = '★' * self.levels['stamina']
+        while len(self.stats['stamina']) < 5:
+            self.stats['stamina'] += '☆'
+        self.stats['strength'] = '★' * self.levels['strength']
+        while len(self.stats['strength']) < 5:
+            self.stats['strength'] += '☆'
+        self.stats['appeal']   = '★' * self.levels['appeal']
+        while len(self.stats['appeal']) < 5:
+            self.stats['appeal'] += '☆'
+
+class Weather:
+
+    def __init__(self, light_set=None, clouds=True):
+        
+        # Dark blue background
+        self.overlay = pygame.Surface((pyg.screen_width * 10, pyg.screen_height * 10), pygame.SRCALPHA)
+        
+        self.last_hour = time.localtime().tm_hour + 1
+        self.last_min  = time.localtime().tm_min + 1
+
+        self.lamp_list = []
+        
+        self.light_set = light_set
+        self.cloudy = clouds
+        self.clouds = []
+
+    def run(self):
+        
+        # Set day
+        if (time.localtime().tm_hour + 1) != self.last_hour:
+            self.last_hour = time.localtime().tm_hour + 1
+            player_obj.ent.env.env_date = ((player_obj.ent.env.env_date+1) % 8) + 1
+        
+        # Set time of day
+        if int(time.localtime().tm_min / 10) != self.last_min:
+            self.last_min = int(time.localtime().tm_min / 10)
+            player_obj.ent.env.env_time = (player_obj.ent.env.env_time + 1) % 8
+        
+        # Change the weather
+        if self.light_set is None:
+            
+            # Make days bright and nights dark
+            self.change_brightness()
+            
+            # Create and move clouds
+            if self.cloudy:
+                if not random.randint(0, 20+len(self.clouds)*2): self.create_cloud()
+                self.move_clouds()
+        
+        # Set a constant brightness
+        else:
+            self.overlay.set_alpha(self.light_set)
+
+    def set_day_and_time(self, day=None, time=None, increment=False):
+        
+        # Set a specific day and time
+        if not increment:
+            if day is not None:  player_obj.ent.env.env_date = (day % 8) + 1
+            if time is not None: player_obj.ent.env.env_time = time % 8
+        
+        # Move forwards in time by one step
+        else: player_obj.ent.env.env_time = (player_obj.ent.env.env_time + 1) % 8
+
+    def change_brightness(self):
+        if player_obj.ent.env.env_time == 0:   alpha = 170 # 🌖
+        elif player_obj.ent.env.env_time == 1: alpha = 85  # 🌗
+        elif player_obj.ent.env.env_time == 2: alpha = 34  # 🌘
+        elif player_obj.ent.env.env_time == 3: alpha = 0   # 🌑
+        elif player_obj.ent.env.env_time == 4: alpha = 34  # 🌒
+        elif player_obj.ent.env.env_time == 5: alpha = 85  # 🌓
+        elif player_obj.ent.env.env_time == 6: alpha = 170 # 🌔
+        elif player_obj.ent.env.env_time == 7: alpha = 255 # 🌕
+        self.overlay.set_alpha(alpha)
+
+    def create_cloud(self):
+        
+        # Set direction of travel
+        env       = player_obj.ent.env
+        x_range   = [0, (env.size * pyg.screen_width) // pyg.tile_width]
+        y_range   = [0, (env.size * pyg.screen_height) // pyg.tile_height]
+        direction = random.choice(['up', 'down', 'left', 'right'])
+        position = [random.randint(x_range[0], x_range[1]), random.randint(y_range[0], y_range[1])]
+        
+        # Set delay and time
+        delay     = random.randint(1, 10)
+        last_time = time.time()
+        
+        # Create shape
+        width  = random.randint(5, 20)
+        height = random.randint(5, 20)
+        shape  = create_text_room(width, height)
+        
+        # Add cloud to list
+        self.clouds.append({
+            'position':  position,
+            'shape':     shape,
+            'delay':     delay,
+            'direction': direction,
+            'time':      last_time})
+
+    def move_clouds(self):
+        # check time and speed; move if sufficient
+        # remove if out of map
+        for cloud in self.clouds:
+            if cloud:
+                if time.time()-cloud['time'] > cloud['delay']:
+                    cloud['time'] = time.time()
+                    
+                    if cloud['direction'] == 'up':      cloud['position'][1] -= 1
+                    elif cloud['direction'] == 'down':  cloud['position'][1] += 1
+                    elif cloud['direction'] == 'left':  cloud['position'][0] -= 1
+                    elif cloud['direction'] == 'right': cloud['position'][0] += 1
+            
+            # Remove clouds
+            if not random.randint(0, 2000):
+                self.clouds.remove(cloud)
+
+    def render_clouds(self):
+        camera = player_obj.ent.env.camera
+        
+        # Draw visible tiles
+        for y in range(int(camera.Y/32), int(camera.bottom/pyg.tile_height + 1)):
+            for x in range(int(camera.X/32), int(camera.right/pyg.tile_width + 1)):
+                try:    tile = player_obj.ent.env.map[x][y]
+                except: continue
+                
+                if not tile.hidden:
+                    for cloud in self.clouds:
+                        if cloud:
+                            
+                            # Check if the tile is in the cloud
+                            if x in range(cloud['position'][0], cloud['position'][0]+len(cloud['shape'])):
+                                if y in range(cloud['position'][1], cloud['position'][1]+len(cloud['shape'][0])):
+                                    x_char, y_char = x-cloud['position'][0], y-cloud['position'][1]
+                                    char = cloud['shape'][x_char][y_char]
+                                    if char != ' ':
+                                        
+                                        # Set image and pixel shift
+                                        image = img.shift(img.dict['concrete']['gray floor'], [int((x_char+y_char)*13)%32, int(abs(x_char-y_char)*10)%32])
+                                        
+                                        # Set transparency
+                                        if char == '-':   image.set_alpha(64)
+                                        elif char == '.': image.set_alpha(128)
+                                        else:             image.set_alpha(96)
+                                        
+                                        # Set the corresponding map tile
+                                        X = x * pyg.tile_width - player_obj.ent.env.camera.X
+                                        Y = y * pyg.tile_height - player_obj.ent.env.camera.Y
+                                        
+                                        pyg.display.blit(image, [X, Y])
+
+    def render_lamps(self):
+        for lamp in self.lamp_list:
+            
+            # Center light on entity
+            if lamp.owner and lamp.equipped:
+                X = lamp.owner.X - player_obj.ent.env.camera.X
+                Y = lamp.owner.Y - player_obj.ent.env.camera.Y
+                failed = False
+            
+            # Center light on item
+            elif not lamp.owner:
+                X = lamp.X - player_obj.ent.env.camera.X
+                Y = lamp.Y - player_obj.ent.env.camera.Y
+                failed = False
+            
+            else:  failed = True
+            if not failed:
+                
+                # Render
+                size   = lamp.effect.other
+                width  = pyg.tile_width * size
+                height = pyg.tile_height * size
+                alpha  = 255//size
+                left   = X - size*pyg.tile_width//2
+                top    = Y - size*pyg.tile_height//2
+                for i in range(size+1):
+                    transparent_rect = pygame.Rect(
+                        left   + (i+1) * 16,
+                        top    + (i+1) * 16,
+                        width  - i * 32,
+                        height - i * 32)
+                    self.overlay.fill((0, 0, 0, 255-alpha*i), transparent_rect)
+
+    def render(self):
+        """ Creates a black overlay and cuts out regions for lighting.
+            Light is shown for any of the following conditions.
+                1. The object has mech.lamp as an effect and is not owned by an entity.
+                2. The object has mech.lamp as an effect and is equipped by an entity. """
+        
+        # Set background color
+        self.overlay.fill((0, 0, 0))
+        
+        # Render lights
+        self.render_lamps()
+        
+        # Render clouds
+        if self.cloudy: self.render_clouds()
+        
+        # Blit to screen
+        pyg.display.blit(self.overlay, (0, 0))
 
 ## Constructions
 class Tile:
@@ -3808,8 +4525,9 @@ class Item:
         self.owner  = None
         
         # Seed a seed for individual adjustments
-        self.rand_X = random.randint(-self.rand_set, self.rand_set)
-        self.rand_Y = random.randint(0,              self.rand_set)
+        self.rand_X = random.randint(-self.rand_X, self.rand_X)
+        self.rand_Y = random.randint(0,            self.rand_Y)
+        self.flipped = random.choice([0, self.rand_Y])
         
         # Notify code of big object
         self.big = False
@@ -3817,7 +4535,8 @@ class Item:
         # Initialize effect if passive
         if self.effect:
             if self.effect.trigger == 'passive':
-                self.effect.function(self)
+                if self.role != 'weapons':
+                    self.effect.function(self)
 
     def draw(self, surface):
         """ Draws the object at its position. """
@@ -3827,8 +4546,7 @@ class Item:
             
             # Set custom placement
             if self.img_names[0] == 'decor':
-                if self.img_names[1] == 'blades': X = self.X - player_obj.ent.env.camera.X - self.rand_X
-                else:                             X = self.X - player_obj.ent.env.camera.X
+                X = self.X - player_obj.ent.env.camera.X - self.rand_X
                 Y = self.Y - player_obj.ent.env.camera.Y - self.rand_Y
             
             else:
@@ -3836,12 +4554,12 @@ class Item:
                 Y = self.Y-player_obj.ent.env.camera.Y
         
             # Add effects and draw
-            if self.rand_set:
-                if (self.img_names[1] in ['tree', 'leafy']) and not self.rand_Y:
-                    surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]), (X-32, Y-32))
-                else:
-                    surface.blit(img.dict[self.img_names[0]][self.img_names[1]], (X, Y))
-            else: surface.blit(img.dict[self.img_names[0]][self.img_names[1]], (X, Y))
+            if (self.img_names[1] in ['leafy']) and not self.rand_Y:
+                surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]), (X-32, Y-32))
+            else:
+                if self.flipped: surface.blit(img.flipped.dict[self.img_names[0]][self.img_names[1]], (X, Y))
+                else:            surface.blit(img.dict[self.img_names[0]][self.img_names[1]], (X, Y))
+                
         
         # Blit multiple tiles
         else:
@@ -3867,6 +4585,11 @@ class Item:
             if self.movable:
                 
                 # Add to inventory
+                self.owner = ent
+                if self.effect:
+                    if self.effect.trigger == 'passive':
+                        ent.item_effects.append(self.effect)
+                
                 ent.inventory[self.role].append(self)
                 sort_inventory(ent)
                 
@@ -3874,9 +4597,7 @@ class Item:
                 if ent.tile:
                     if ent.tile.item:
                         ent.tile.item = None
-                
-                # Assign parameters
-                self.owner = ent
+                        self.tile     = ent.tile
                 
                 if ent.role == 'player':
                     pyg.update_gui("Picked up " + self.name + ".", pyg.dark_gray)
@@ -3899,6 +4620,8 @@ class Item:
             self.owner = None
             self.X     = ent.X
             self.Y     = ent.Y
+            if self.effect:
+                if self.effect in ent.effects: ent.effects.remove(self.effect)
             ent.inventory[self.role].remove(self)
             ent.tile.item = self
 
@@ -3967,8 +4690,7 @@ class Item:
         ent.attack  += self.attack_bonus
         ent.defense += self.defense_bonus
         if self.effect:
-            ent.effects.append(self.effect)
-        
+            if self.effect.trigger == 'active': ent.effects.append(self.effect)
         self.equipped = True
 
         if ent.role == 'player':
@@ -3984,15 +4706,27 @@ class Item:
         player_obj.ent.defense -= self.defense_bonus
         player_obj.ent.max_hp  -= self.hp_bonus
         if player_obj.ent.hp > player_obj.ent.max_hp: 
-            player_obj.ent.hp = player_obj.ent.max_hp 
+            player_obj.ent.hp = player_obj.ent.max_hp
         if self.effect:
-            player_obj.ent.effects.remove(self.effect)
-        
+            if self.effect in ent.effects: ent.effects.remove(self.effect)
+
         self.equipped = False
         
         if self.role == 'player':
             if not self.hidden:
                 pyg.update_gui("Dequipped " + self.name + " from " + self.slot + ".", pyg.dark_gray)
+
+    def move(self, direction):
+        
+        self.direction = direction
+        
+        if direction == 'up':      self.Y += 32
+        elif direction == 'down':  self.Y -= 32
+        elif direction == 'left':  self.X += 32
+        elif direction == 'right': self.X -= 32
+        
+        if self.tile: self.tile.item = None
+        place_object(self, [self.X//32, self.Y//32], player_obj.ent.env)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -4040,8 +4774,9 @@ class Entity:
             setattr(self, key, value)
         
         # Images
-        self.direction   = self.img_names[1]
-        self.handedness  = 'left'
+        self.img_names_backup = self.img_names
+        self.direction        = self.img_names[1]
+        self.handedness       = 'left'
 
         # Location
         self.env        = None
@@ -4057,32 +4792,70 @@ class Entity:
         # Movement
         self.cooldown   = 0.25
         self.last_press = 0
+        self.motions_log = [] # list of lists of int; prescribed motions for ai
         
         # Mechanics
         self.dead       = False
         self.dialogue   = None
         self.default_dialogue = []
         self.quest      = None
-        self.wallet     = 5
+        self.wallet     = 25
         self.trader     = False
         self.inventory  = {'weapons': [], 'armor': [],  'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
         self.equipment  = {'head': None,  'face': None, 'chest': None, 'body': None,  'dominant hand': None, 'non-dominant hand': None}
-        self.effects    = [Effect(
-            name          = 'suicide',
-            img_names     = ['decor', 'bones'],
-            function      = mech.suicide,
-            trigger       = 'active',
-            sequence      = '⮟⮟⮟',
-            cooldown_time = 1,
-            other         = None)]
+        
+        # Effects
+        self.garden_effects = [
+            Effect(
+                name          = 'excite',
+                img_names     = ['bubbles', 'exclamation'],
+                function      = mech.entity_scare,
+                trigger       = 'active',
+                sequence      = '⮟⮜⮟',
+                cooldown_time = 1,
+                other         = None),
+            
+            Effect(
+                name          = 'comfort',
+                img_names     = ['bubbles', 'heart'],
+                function      = mech.pet_comfort,
+                trigger       = 'active',
+                sequence      = '⮟⮞⮜',
+                cooldown_time = 1,
+                other         = None),
+            
+            Effect(
+                name          = 'clean',
+                img_names     = ['bubbles', 'dots'],
+                function      = mech.pet_clean,
+                trigger       = 'active',
+                sequence      = '⮟⮟⮟',
+                cooldown_time = 1,
+                other         = None)]
+        
+        self.item_effects = [
+            Effect(
+                name          = 'suicide',
+                img_names     = ['decor', 'bones'],
+                function      = mech.suicide,
+                trigger       = 'active',
+                sequence      = '⮟⮟⮟',
+                cooldown_time = 1,
+                other         = None),
+            Effect(
+                name          = 'scare',
+                img_names     = ['bubbles', 'exclamation'],
+                function      = mech.entity_scare,
+                trigger       = 'active',
+                sequence      = '⮟⮜⮟',
+                cooldown_time = 1,
+                other         = None)]
+        self.effects    = []
         
         # Randomizer
         self.rand_X = random.randint(-pyg.tile_width,  pyg.tile_width)
         self.rand_Y = random.randint(-pyg.tile_height, pyg.tile_height)
-        
-        # World clock
-        self.world_time = 3
-
+    
     def ai(self):
         """ Preset movements. """
         
@@ -4092,39 +4865,48 @@ class Entity:
         if not self.dead:
             if time.time()-self.last_press > self.cooldown:
                 self.last_press = float(time.time())
-                distance = self.distance_to(player_obj.ent)
                 
-                # Flee
-                if self.fear and (type(self.fear) == int):
-                    if not random.randint(0, self.lethargy//10):
-                        self.move_towards(self.X0, self.Y0)
-                        self.fear -= 1
-                        if self.fear < 0: self.fear = 0
-                
-                # Follow or idle
-                elif self.follow and (distance < 320):
-                    if not random.randint(0, self.lethargy//2):
-                        self.move_towards(player_obj.ent.X, player_obj.ent.Y)
-                
-                    # Attack if close and aggressive; chance based on miss_rate
-                    if self.aggression:
+                # Move or follow
+                if not self.motions_log:
+                    distance = self.distance_to(player_obj.ent)
+                    
+                    # Flee
+                    if self.fear and (type(self.fear) == int):
+                        if not random.randint(0, self.lethargy//10):
+                            self.move_towards(self.X0, self.Y0)
+                            self.fear -= 1
+                            if self.fear < 0: self.fear = 0
+                    
+                    # Follow or idle
+                    elif self.follow and (distance < 320):
+                        if not random.randint(0, self.lethargy//2):
+                            self.move_towards(player_obj.ent.X, player_obj.ent.Y)
+                    
+                        # Attack if close and aggressive; chance based on miss_rate
+                        if self.aggression:
+                            if (distance < 64) and not random.randint(0, self.miss_rate):
+                                self.attack_target(player_obj.ent)
+                    
+                    # Attack or move if aggressive
+                    elif self.aggression and (player_obj.ent.hp > 0):
+                        
+                        # Attack if close and aggressive; chance based on miss_rate
                         if (distance < 64) and not random.randint(0, self.miss_rate):
                             self.attack_target(player_obj.ent)
-                
-                # Attack or move if aggressive
-                elif self.aggression and (player_obj.ent.hp > 0):
+                        
+                        # Move towards the player if distant; chance based on lethargy
+                        elif (distance < self.aggression*pyg.tile_width) and not random.randint(0, self.lethargy//2) and not moved:
+                            self.move_towards(player_obj.ent.X, player_obj.ent.Y)
                     
-                    # Attack if close and aggressive; chance based on miss_rate
-                    if (distance < 64) and not random.randint(0, self.miss_rate):
-                        self.attack_target(player_obj.ent)
-                    
-                    # Move towards the player if distant; chance based on lethargy
-                    elif (distance < self.aggression*pyg.tile_width) and not random.randint(0, self.lethargy//2) and not moved:
-                        self.move_towards(player_obj.ent.X, player_obj.ent.Y)
+                    # Idle if not following or aggressive
+                    else:
+                        if self.role != 'player': self.idle()
                 
-                # Idle if not following or aggressive
+                # Continue a prescribed pattern
                 else:
-                    if self.role != 'player': self.idle()
+                    loc = self.motions_log[0]
+                    self.move(loc[0], loc[1])
+                    self.motions_log.remove(loc)
 
     def idle(self):
         """ Randomly walks around """
@@ -4165,7 +4947,9 @@ class Entity:
         
         # Change orientation before moving
         if self.img_names[1] != self.direction:
-            if self.img_names[1]: self.img_names[1] = self.direction
+            if self.img_names[1]:
+                self.img_names[1] = self.direction
+
         else:
             
             # Find new position
@@ -4180,25 +4964,28 @@ class Entity:
             
             # Move NPC or enemy
             else:
-                if not is_blocked(self.env, [x, y]):
-                    
-                    # Keep the entity in its native habitat
-                    if self.env.map[x][y].biome in img.biomes[self.habitat]:
+                try:
+                    if not is_blocked(self.env, [x, y]):
                         
-                        if self.env.map[x][y].item and self.role == 'enemy':
-                            if self.env.map[x][y].item.img_names[0] != 'stairs':
+                        # Keep the entity in its native habitat
+                        if self.env.map[x][y].biome in img.biomes[self.habitat]:
+                            
+                            if self.env.map[x][y].item and self.role == 'enemy':
+                                if self.env.map[x][y].item.img_names[0] != 'stairs':
+                                    self.X          += dX
+                                    self.Y          += dY
+                                    self.tile.entity = None
+                                    player_obj.ent.env.map[x][y].entity = self
+                                    self.tile        = player_obj.ent.env.map[x][y]
+                            
+                            else:
                                 self.X          += dX
                                 self.Y          += dY
                                 self.tile.entity = None
                                 player_obj.ent.env.map[x][y].entity = self
                                 self.tile        = player_obj.ent.env.map[x][y]
-                        
-                        else:
-                            self.X          += dX
-                            self.Y          += dY
-                            self.tile.entity = None
-                            player_obj.ent.env.map[x][y].entity = self
-                            self.tile        = player_obj.ent.env.map[x][y]
+                except:
+                    print('Cannot move!')
 
     def move_player(self, x, y, dX, dY):
         """ Annex of move() for player actions. """
@@ -4244,8 +5031,9 @@ class Entity:
                     
                     # Trading
                     if ent.trader:
-                        trade_obj.ent = ent
-                        pyg.overlay = 'trade'
+                        if player_obj.ent.env.env_time in ent.trader:
+                            trade_obj.ent = ent
+                            pyg.overlay = 'trade'
                 
                 # Play speech and update quests
                 if time.time() - aud.last_press_time_speech > aud.speech_speed//100:
@@ -4258,11 +5046,13 @@ class Entity:
             elif type(ent.fear) == int: ent.fear += 30
             
             # Attack the entity
-            elif self.env.name != 'home': self.attack_target(ent)
+            elif (self.env.name != 'home') or (self.equipment['dominant hand'] in ['blood dagger', 'blood sword']):
+                self.attack_target(ent)
         
         # Dig a tunnel
         elif self.equipment['dominant hand'] is not None:
             if self.equipment['dominant hand'].name in ['shovel', 'super shovel']:
+                
                 # Move player and reveal tiles
                 if self.X >= 64 and self.Y >= 64:
                     if super_dig or not self.env.map[x][y].unbreakable:
@@ -4285,6 +5075,7 @@ class Entity:
                     if self.equipment['dominant hand'].durability <= 100:
                         self.equipment['dominant hand'].durability -= 1
                     if self.equipment['dominant hand'].durability <= 0:
+                        pyg.update_gui(f"Broken {self.equipment['dominant hand'].name}!", color=pyg.dark_gray)
                         self.equipment['dominant hand'].drop()
                         self.tile.item = None # removes item from world
         
@@ -4305,7 +5096,8 @@ class Entity:
         # Trigger floor effects
         if self.env.map[x][y].item:
             if self.env.map[x][y].item.effect:
-                self.env.map[x][y].item.effect.function(self)
+                if self.env.map[x][y].item.effect.function == mech.radish_eat:
+                    self.env.map[x][y].item.effect.function(self)
 
     def move_towards(self, target_X, target_Y):
         """ Moves object towards target. """
@@ -4355,21 +5147,44 @@ class Entity:
     def get_vicinity(self):
         (x, y) = self.X//pyg.tile_width, self.Y//pyg.tile_width
         self.vicinity = [
-            self.env.map[x-1][y-1], self.env.map[x][y-1], self.env.map[x+1][y-1],
-            self.env.map[x-1][y],                         self.env.map[x+1][y],
-            self.env.map[x-1][y+1], self.env.map[x][y+1], self.env.map[x+1][y+1]]
+            self.env.map[x][y-1],   self.env.map[x+1][y-1], self.env.map[x+1][y],
+            self.env.map[x+1][y+1], self.env.map[x][y+1],   self.env.map[x-1][y+1],
+            self.env.map[x-1][y],   self.env.map[x-1][y-1]]
         return self.vicinity
 
-    def attack_target(self, target):
+    def attack_target(self, target, effect_check=True):
         """ Calculates and applies attack damage. """
         
-        if self.name != target.name:
-            damage = self.attack - target.defense
-            if damage > 0:
-                pyg.update_gui(self.name.capitalize() + " attacks " + target.name + " for " + str(damage) + " hit points.", pyg.red)
-                target.take_damage(damage)
-            elif self.role != 'player':
-                pyg.update_gui(self.name.capitalize() + " attacks " + target.name + " but it has no effect!", pyg.red)
+        # Only attack living targets
+        if not target.dead:
+            
+            # No attacking yourself
+            if self.name != target.name:
+                
+                # Default damage calculation
+                damage = self.attack - target.defense
+                
+                # Deal damage
+                if damage > 0:
+                    
+                    # Apply an effect
+                    if effect_check and not random.randint(0, 1):
+                        if self.equipment['dominant hand']:
+                            if self.equipment['dominant hand'].effect:
+                                if self.equipment['dominant hand'].effect.trigger == 'passive':
+                                    self.equipment['dominant hand'].effect.function(self)
+                        
+                        # Regular attack
+                        else:
+                            pyg.update_gui(self.name.capitalize() + " attacks " + target.name + " for " + str(damage) + " hit points.", pyg.red)
+                            target.take_damage(damage)
+                    
+                    # Regular attack
+                    else:
+                        pyg.update_gui(self.name.capitalize() + " attacks " + target.name + " for " + str(damage) + " hit points.", pyg.red)
+                        target.take_damage(damage)
+                else:
+                    pyg.update_gui(self.name.capitalize() + " attacks " + target.name + " but it has no effect!", pyg.red)
         return
 
     def take_damage(self, damage):
@@ -4381,7 +5196,7 @@ class Entity:
             self.hp -= damage
             
             # Damage animation
-            img.entity_flash(self)
+            img.flash_over(self)
             
             # Check for death
             if self.hp <= 0:
@@ -4400,6 +5215,7 @@ class Entity:
             pyg.update_gui("You died!", pyg.red)
             player_obj.ent.dead        = True
             player_obj.ent.tile.entity = None
+            player_obj.ent.img_names   = player_obj.ent.img_names_backup
             
             item = create_item('skeleton')
             item.name = f"the corpse of {self.name}"
@@ -4411,6 +5227,7 @@ class Entity:
             self.dead        = True
             self.role        = 'corpse'
             self.tile.entity = None
+            if self.role == 'player': self.tile.blocked = True
             self.env.entities.remove(self)
             if self in player_obj.ent.env.entities: player_obj.ent.env.entities.remove(self)
             
@@ -4429,7 +5246,23 @@ class Entity:
         self.hp += amount
         if self.hp > self.max_hp:
             self.hp = self.max_hp
-    
+
+    def jug_of_blood(self, amount):
+        """ Heals player by the given amount without going over the maximum. """
+        
+        self.hp -= amount
+        if self.hp <= 0:
+            self.hp = 0
+            self.dead = True
+        else:
+            self.attack += 1
+
+    def toggle_effects(self):
+        """ Switches between different sets of effects. """
+        
+        if self.env.name == 'garden': self.effects = self.garden_effects
+        else:                         self.effects = self.item_effects
+
     def draw(self, surface, loc=None):
         """ Draws the object at its position.
 
@@ -4449,7 +5282,7 @@ class Entity:
         # Swimming
         if self.tile.biome in img.biomes['sea']: swimming = True
         else:                                    swimming = False
-        
+
         # Blit skin
         if self.handedness == 'left': 
             if swimming: surface.blit(img.halved([self.img_names[0], self.img_names[1]]), (X, Y))
@@ -4460,78 +5293,82 @@ class Entity:
             if swimming: surface.blit(img.halved([self.img_names[0], self.img_names[1]], flipped=True), (X, Y))
             else:        surface.blit(img.flipped.dict[self.img_names[0]][self.img_names[1]],           (X, Y))
         
-        # Blit chest
-        for item in self.equipment.values():
-            if item is not None:
-                if item.slot == 'chest':
-                    if self.handedness == 'left':
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
-                        else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
-                    else:
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
-                        else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
-                else: pass
-
-        # Blit armor
-        for item in self.equipment.values():
-            if item is not None:
-                if item.slot == 'body':
-                    if self.handedness == 'left':
-                        if swimming:          surface.blit(img.halved([item.img_names[0], self.img_names[1]]),        (X, Y))
-                        elif not self.rand_Y: surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]), (X, Y))
-                        else:                 surface.blit(img.dict[item.img_names[0]][self.img_names[1]],            (X, Y))
-                    else:
-                        if swimming:          surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
-                        elif not self.rand_Y: surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]), (X, Y))
-                        else:                 surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
-                else: pass
-
-        # Blit face
-        for item in self.equipment.values():
-            if item is not None:
-                if item.slot == 'face':
-                    if self.handedness == 'left':
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
-                        else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
-                    else:
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
-                        else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
-                else: pass
-        
-        # Blit hair
-        for item in self.equipment.values():
-            if item is not None:
-                if item.slot == 'head':
-                    if self.handedness == 'left':
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
-                        else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
-                    else:
-                        if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
-                        else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
-                else: pass
-        
-        # Blit weapons and shields
-        for item in self.equipment.values():
-            if item is not None:
-                if item.role in ['weapons', 'armor']:
-                    if item.slot in ['dominant hand', 'non-dominant hand']:
+        # Apply equipment to humans
+        if self.img_names[0] in img.skin_options:
+            
+            # Blit chest
+            for item in self.equipment.values():
+                if item is not None:
+                    if item.slot == 'chest':
                         if self.handedness == 'left':
-                            if swimming:          surface.blit(img.halved([item.img_names[0], self.img_names[1]]),               (X, Y))
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
+                            else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
+                        else:
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
+                            else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
+                    else: pass
+
+            # Blit armor
+            for item in self.equipment.values():
+                if item is not None:
+                    if item.slot == 'body':
+                        if self.handedness == 'left':
+                            if swimming:          surface.blit(img.halved([item.img_names[0], self.img_names[1]]),        (X, Y))
                             elif not self.rand_Y: surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]), (X, Y))
-                            else:                 surface.blit(img.dict[item.img_names[0]][self.img_names[1]],                   (X, Y))
+                            else:                 surface.blit(img.dict[item.img_names[0]][self.img_names[1]],            (X, Y))
                         else:
                             if swimming:          surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
-                            elif not self.rand_Y: surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]), (X, Y))
+                            elif not self.rand_Y: surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]),        (X, Y))
                             else:                 surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
                     else: pass
+
+            # Blit face
+            for item in self.equipment.values():
+                if item is not None:
+                    if item.slot == 'face':
+                        if self.handedness == 'left':
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
+                            else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
+                        else:
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
+                            else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
+                    else: pass
+            
+            # Blit hair
+            for item in self.equipment.values():
+                if item is not None:
+                    if item.slot == 'head':
+                        if self.handedness == 'left':
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]]), (X, Y))
+                            else:        surface.blit(img.dict[item.img_names[0]][self.img_names[1]],     (X, Y))
+                        else:
+                            if swimming: surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
+                            else:        surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
+                    else: pass
+            
+            # Blit weapons and shields
+            for item in self.equipment.values():
+                if item is not None:
+                    if not item.hidden:
+                        if item.role in ['weapons', 'armor']:
+                            if item.slot in ['dominant hand', 'non-dominant hand']:
+                                if self.handedness == 'left':
+                                    if swimming:          surface.blit(img.halved([item.img_names[0], self.img_names[1]]),               (X, Y))
+                                    elif not self.rand_Y: surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]),        (X, Y))
+                                    else:                 surface.blit(img.dict[item.img_names[0]][self.img_names[1]],                   (X, Y))
+                                else:
+                                    if swimming:          surface.blit(img.halved([item.img_names[0], self.img_names[1]], flipped=True), (X, Y))
+                                    elif not self.rand_Y: surface.blit(img.scale(img.dict[self.img_names[0]][self.img_names[1]]),        (X, Y))
+                                    else:                 surface.blit(img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
+                            else: pass
         
         # Blit dialogue bubble
-            if self.dialogue: pyg.display.blit(img.dict['bubbles']['dots'], (X, Y-pyg.tile_height))
+        if self.dialogue: pyg.display.blit(img.dict['bubbles']['dots'], (X, Y-pyg.tile_height))
         
         # Blit trading bubble
-            elif self.trader:
-                if 2 < player_obj.ent.world_time < 7:
-                    pyg.display.blit(img.dict['bubbles']['cart'], (X, Y-pyg.tile_height))
+        elif self.trader:
+            if player_obj.ent.env.env_time in self.trader:
+                pyg.display.blit(img.dict['bubbles']['cart'], (X, Y-pyg.tile_height))
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -4574,6 +5411,10 @@ class Environment:
         self.lvl_num    = lvl_num
         self.size       = size
         self.soundtrack = soundtrack
+        
+        # World clock
+        self.env_date = 0
+        self.env_time = 3
         
         # Images and rooms
         self.walls  = walls
@@ -4646,34 +5487,40 @@ class Environment:
     def create_h_tunnel(self, x1, x2, y, img_set=None):
         """ Creates horizontal tunnel. min() and max() are used if x1 is greater than x2. """
         
-        if img_set: img_names = img_set
-        else:       img_names = self.floors
-        
+        # Sort through tiles
         for x in range(min(x1, x2), max(x1, x2) + 1):
-            self.map[x][y].blocked   = False
-            self.map[x][y].img_names = img_set
+            tile = self.map[x][y]
             
-            # Remove items and entities
-            self.map[x][y].item = None
-            if self.map[x][y].entity:
-                self.entities.remove(self.map[x][y].entity)
-                self.map[x][y].entity = None
+            # Find image
+            if not img_set:
+                if tile.room: img_set = tile.room.floor
+                else:         img_set = self.floors
+            
+            # Empty and alter tile
+            tile.blocked   = False
+            tile.img_names = img_set
+            if tile.entity:
+                self.entities.remove(tile.entity)
+                tile.entity = None
 
     def create_v_tunnel(self, y1, y2, x, img_set=None):
         """ Creates vertical tunnel. min() and max() are used if y1 is greater than y2. """
         
-        if img_set: img_names = img_set
-        else:       img_names = self.floors
-        
+        # Sort through tiles
         for y in range(min(y1, y2), max(y1, y2) + 1):
-            self.map[x][y].blocked   = False
-            self.map[x][y].img_names = img_set
+            tile = self.map[x][y]
             
-            # Remove items and entities
-            self.map[x][y].item = None
-            if self.map[x][y].entity:
-                self.entities.remove(self.map[x][y].entity)
-                self.map[x][y].entity = None
+            # Find image
+            if not img_set:
+                if tile.room: img_set = tile.room.floor
+                else:         img_set = self.floors
+            
+            # Empty and alter tile
+            tile.blocked   = False
+            tile.img_names = img_set
+            if tile.entity:
+                self.entities.remove(tile.entity)
+                tile.entity = None
 
     @debug_call
     def combine_rooms(self):
@@ -4750,15 +5597,20 @@ class Environment:
 
     def __getstate__(self):
         state = self.__dict__.copy()
+        if "weather" in state:
+            del state["weather"]
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+        self.weather = Weather(
+            light_set = self.weather_backup['light_set'],
+            clouds    = self.weather_backup['clouds'])
 
 class Room:
     """ Defines rectangles on the map. Used to characterize a room. """
     
-    def __init__(self, name, env, x1, y1, width, height, hidden, floor, walls, roof, objects, biome):
+    def __init__(self, name, env, x1, y1, width, height, hidden, floor, walls, roof, objects, biome, plan=None, movable=False):
         """ Assigns tiles to a room and adjusts their properties.
 
             Parameters
@@ -4811,11 +5663,15 @@ class Room:
         self.hidden  = hidden
         self.delete  = False
         self.objects = objects
+        self.plan    = plan
+        self.movable = movable
         
-        self.set_tiles()
+        # Create square room or text-based design
+        if not self.plan:  self.set_tiles()
+        else:              self.text_to_room()
 
     def set_tiles(self):
-
+        
         # Assign tiles to room
         for x in range(self.x1, self.x2+1):
             for y in range(self.y1, self.y2+1):
@@ -4861,6 +5717,86 @@ class Room:
                     elif (x == self.x2) and (y == self.y2): self.corners_list.append(tile)
         
         self.noncorners_list = list(set(self.walls_list) - set(self.corners_list))
+
+    def text_to_room(self):
+        try:
+            self.text_to_room_fr()
+        
+        except:
+            try:
+                self.x1 -= 5
+                self.y1 -= 5
+                self.text_to_room_fr()
+            except:
+                self.x1 += 10
+                self.y1 += 10
+                self.text_to_room_fr()
+
+    def text_to_room_fr(self):
+        
+        for y in range(len(self.plan)):
+            layer = list(self.plan[y])
+            for x in range(len(layer)):
+                tile_x, tile_y = self.x1+x, self.y1+y
+                tile = self.env.map[tile_x][tile_y]
+                tile.item = None
+                tile.entity = None
+                if layer[x] != ' ':
+                    
+                    ## Apply properties
+                    tile.room   = self
+                    tile.hidden = self.hidden
+                    self.tiles_list.append(tile)
+
+                    if self.roof: tile.img_names = self.roof
+                    else:         tile.img_names = self.floor
+                    tile.blocked = False
+
+                    # Change biome
+                    tile.biome = self.biome
+                    
+                    # Remove items and entities
+                    if not self.objects:
+                        tile.item = None
+                        if tile.entity:
+                            self.env.entities.remove(tile.entity)
+                            tile.entity = None
+                    
+                    ## Handle symbols
+                    # Place walls and doors
+                    if self.plan[y][x] in ['-', '|']:
+                        tile.img_names = self.env.walls
+                        tile.blocked   = True
+                        self.walls_list.append(tile)
+                        if self.plan[y][x] != '|':
+                            
+                            # Remove items and entities
+                            tile.item = None
+                            if tile.entity:
+                                self.env.entities.remove(tile.entity)
+                                tile.entity = None
+                        
+                        else:
+                            
+                            # Place door
+                            tile.blocked = False
+                            place_object(create_item('door'), [tile_x, tile_y], self.env)           
+                    
+                    # Place floor
+                    if self.plan[y][x] == '.':
+                        tile.blocked   = False
+                    
+                    # Place furniture
+                    elif self.plan[y][x] == '=': place_object(create_item('red bed'),         [tile_x, tile_y], self.env)                    
+                    elif self.plan[y][x] == 'b': place_object(create_item('red chair left'),  [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'T': place_object(create_item('table'),           [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'd': place_object(create_item('red chair right'), [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == '[': place_object(create_item('shelf left'),      [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == ']': place_object(create_item('shelf right'),     [tile_x, tile_y], self.env)
+                    
+                    # Place items
+                    elif self.plan[y][x] == 'g': place_object(create_item('jug of grapes'),   [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'c': place_object(create_item('jug of cement'),   [tile_x, tile_y], self.env)
 
     def center(self):
         """ Finds the center of the rectangle. """
@@ -4922,33 +5858,35 @@ class Mechanics:
         
         self.movement_speed_toggle = 0
         self.speed_list = [
-            ['Default', (250, 150)],
-            ['Fast',    (1,   130)],
+            ['Default', (250, 200)],
+            ['Fast',    (1,   150)],
             ['Fixed',   (0,   0)]]
         self.slow_list = [
             ['Fixed',   (0,   0)],
-            ['Default', (250, 150)]]
+            ['Default', (250, 200)]]
         
         self.cooldown_time = 10
         self.last_press_time = 0
 
-    def bowl(self):
-        if 'dungeon' not in player_obj.envs.keys(): player_obj.envs['dungeon'] = []
-        build_dungeon_level()
-        place_player(env=player_obj.envs['dungeon'][-1], loc=player_obj.envs['dungeon'][-1].center)    # mech (bowl)
-
-    @debug_call
-    def enter_dungeon(self):
+    # Environments
+    def enter_dungeon(self, ent=None, text='', lvl_num=0):
         """ Advances player to the next level. """
         
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
             pygame.event.clear()
             
-            if 'dungeon' not in player_obj.envs.keys(): 
-                pyg.update_gui("You step into the darkness.", pyg.dark_gray)
+            if text:
+                pyg.fadeout_screen(
+                    screen   = pyg.screen,
+                    fade_in  = False,
+                    text     = text,
+                    duration = 2)
+                play_game_obj.fadein = text
+            
+            if 'dungeon' not in player_obj.envs.keys():
                 player_obj.envs['dungeon'] = []
-                build_dungeon_level()
+                build_dungeon_level(lvl_num)
             
             # Enter the first dungeon
             if player_obj.ent.env.name != 'dungeon':
@@ -4961,11 +5899,43 @@ class Mechanics:
             
             # Enter a new dungeon
             else:
-                build_dungeon_level()
+                build_dungeon_level(lvl_num)
                 place_player(env=player_obj.envs['dungeon'][-1], loc=player_obj.envs['dungeon'][-1].center)    # mech (dungeon)
 
-    @debug_call
-    def enter_cave(self):
+    def enter_hallucination(self, ent=None, text='. . . ! Your vision blurs as the substance seeps through your veins.'):
+        """ Advances player to the next level. """
+        
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
+            pygame.event.clear()
+            
+            if 'hallucination' not in player_obj.envs.keys():
+                player_obj.envs['hallucination'] = []
+                
+                pyg.fadeout_screen(
+                    screen   = pyg.screen,
+                    fade_in  = False,
+                    text     = text,
+                    duration = 2)
+                pyg.overlay = None
+                build_hallucination_level()
+                play_game_obj.fadein = text
+
+            # Enter the first hallucination
+            if player_obj.ent.env.name != 'hallucination':
+                place_player(env=player_obj.envs['hallucination'][0], loc=player_obj.envs['hallucination'][0].center)    # mech (hallucination)
+            
+            # Enter the next saved hallucination
+            elif player_obj.ent.env.lvl_num < len(player_obj.envs['hallucination']):
+                lvl_num = player_obj.ent.env.lvl_num
+                place_player(env=player_obj.envs['hallucination'][lvl_num], loc=player_obj.envs['hallucination'][lvl_num].center)    # mech (hallucination)
+            
+            # Enter a new hallucination
+            else:
+                build_hallucination_level()
+                place_player(env=player_obj.envs['hallucination'][-1], loc=player_obj.envs['hallucination'][-1].center)    # mech (hallucination)
+
+    def enter_cave(self, ent=None):
         """ Advances player to the next level. """
         
         if time.time()-self.last_press_time > self.cooldown_time:
@@ -4991,18 +5961,17 @@ class Mechanics:
                 build_cave_level()
                 place_player(env=player_obj.envs['cave'][-1], loc=player_obj.envs['cave'][-1].center)    # mech (cave)
 
-    @debug_call
-    def enter_overworld(self):
+    def enter_overworld(self, ent=None):
         
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
             pygame.event.clear()
             
             if 'overworld' not in player_obj.envs.keys(): build_overworld()
-            place_player(env=player_obj.envs['overworld'], loc=player_obj.envs['overworld'].center)    # mech (overworld)
+            loc = player_obj.envs['overworld'].center
+            place_player(env=player_obj.envs['overworld'], loc=[loc[0]+1, loc[1]+5])    # mech (overworld)
 
-    @debug_call
-    def enter_home(self):
+    def enter_home(self, ent=None):
         
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
@@ -5010,6 +5979,100 @@ class Mechanics:
             
             place_player(env=player_obj.envs['home'], loc=player_obj.envs['home'].player_coordinates)    # mech (home)
 
+    # Item effects
+    def cast_heal(self, ent=None):
+        """ Heals the player. """
+        
+        if player_obj.ent.fighter.hp == player_obj.ent.fighter.max_hp:
+            pyg.update_gui("You are already at full health.", pyg.dark_gray)
+            return 'cancelled'
+        pyg.update_gui("Your wounds start to feel better!", pyg.dark_gray)
+        player_obj.ent.fighter.heal(mech.heal_amount)
+
+    def cast_lightning(self, ent=None):
+        """ Finds the closest enemy within a maximum range and attacks it. """
+        
+        monster = closest_monster(mech.lightning_range)
+        if monster is None:  #no enemy found within maximum range
+            pyg.update_gui("No enemy is close enough to strike.", pyg.dark_gray)
+            return 'cancelled'
+        pyg.update_gui("A lighting bolt strikes the " + monster.name + " with a loud thunder! The damage is "
+            + str(mech.lightning_damage) + ' hit points.', pyg.red)
+        monster.fighter.take_damage(mech.lightning_damage)
+
+    def cast_fireball(self, ent=None):
+        """ Asks the player for a target tile to throw a fireball at. """
+        
+        pyg.update_gui("Left-click a target tile for the fireball, or right-click to cancel.", pyg.red)
+        (X, Y) = target_tile()
+        if X is None: return 'cancelled'
+        pyg.update_gui("The fireball explodes, burning everything within " + str(int(mech.fireball_radius/pyg.tile_width)) + " tiles!", pyg.red)
+        for ent in player_obj.ent.env.entities: # Damages every fighter in range, including the player
+            if ent.distance(X, Y) <= mech.fireball_radius and ent.fighter:
+                pyg.update_gui("The " + ent.name + " gets burned for " + str(mech.fireball_damage) + " hit points.", pyg.red)
+                ent.fighter.take_damage(mech.fireball_damage)
+
+    def cast_confuse(self, ent=None):
+        """ Asks the player for a target to confuse, then replaces the monster's AI with a "confused" one. After some turns, it restores the old AI. """
+        
+        pyg.update_gui("Left-click an enemy to confuse it, or right-click to cancel.", pyg.red)
+        monster = target_monster(mech.confuse_range)
+        if monster is None: return 'cancelled'
+        old_ai = monster.ai
+        monster.ai = ConfusedMonster(old_ai)
+        pyg.update_gui("The eyes of the " + monster.name + " look vacant, as he starts to stumble around!", pyg.red)
+
+    def swing(self, ent=None):
+        
+        # Set entity
+        if not ent: ent = player_obj.ent
+        
+        # Check for remaining stamina
+        if ent.stamina:
+            
+            # Send animation to queue
+            image = img.dict[ent.equipment['dominant hand'].img_names[0]]['dropped']
+            img.vicinity_flash(ent, image)
+            
+            # Apply attack to enemies
+            for tile in ent.get_vicinity():
+                if tile.entity:
+                    ent.attack += 5
+                    ent.attack_target(tile.entity, effect_check=False)
+                    ent.attack -= 5
+            
+            # Decrease stamina
+            ent.stamina -= 5
+
+    def boost_stamina(self, ent):
+        ent.stamina += 50
+        if ent.stamina > 100: ent.stamina = 100
+        pyg.update_gui()
+
+    def lamp(self, item):
+        """ Adds or removes a light to be rendered under the following conditions.
+            1. The object is not owned by an entity.
+            2. The object is equipped by an entity. """
+        
+        if item.owner:
+            if item.equipped:
+                if item not in player_obj.ent.env.weather.lamp_list:
+                    player_obj.ent.env.weather.lamp_list.append(item)
+            else:
+                if item in player_obj.ent.env.weather.lamp_list:
+                    player_obj.ent.env.weather.lamp_list.remove(item)
+        
+        else:
+            if item not in player_obj.ent.env.weather.lamp_list:
+                player_obj.ent.env.weather.lamp_list.append(item)
+            else:
+                player_obj.ent.env.weather.lamp_list.remove(item)
+
+    def jug_of_cement(self):
+        """ Allow righthand gui construction for 10 placements. """
+        pass
+
+    # Gameplay
     def movement_speed(self, toggle=True, custom=None):
         """ Toggles and sets movement speed. """
         
@@ -5036,7 +6099,7 @@ class Mechanics:
                 (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
             
-        else:        
+        else:            
             
             # Change speed
             if toggle:
@@ -5059,61 +6122,11 @@ class Mechanics:
                 (hold_time, repeat_time) = self.slow_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
 
-    def cast_heal(self):
-        """ Heals the player. """
-        
-        if player_obj.ent.fighter.hp == player_obj.ent.fighter.max_hp:
-            pyg.update_gui("You are already at full health.", pyg.dark_gray)
-            return 'cancelled'
-        pyg.update_gui("Your wounds start to feel better!", pyg.dark_gray)
-        player_obj.ent.fighter.heal(mech.heal_amount)
-
-    def cast_lightning(self):
-        """ Finds the closest enemy within a maximum range and attacks it. """
-        
-        monster = closest_monster(mech.lightning_range)
-        if monster is None:  #no enemy found within maximum range
-            pyg.update_gui("No enemy is close enough to strike.", pyg.dark_gray)
-            return 'cancelled'
-        pyg.update_gui("A lighting bolt strikes the " + monster.name + " with a loud thunder! The damage is "
-            + str(mech.lightning_damage) + ' hit points.', pyg.red)
-        monster.fighter.take_damage(mech.lightning_damage)
-
-    def cast_fireball(self):
-        """ Asks the player for a target tile to throw a fireball at. """
-        
-        pyg.update_gui("Left-click a target tile for the fireball, or right-click to cancel.", pyg.red)
-        (X, Y) = target_tile()
-        if X is None: return 'cancelled'
-        pyg.update_gui("The fireball explodes, burning everything within " + str(int(mech.fireball_radius/pyg.tile_width)) + " tiles!", pyg.red)
-        for ent in player_obj.ent.env.entities: # Damages every fighter in range, including the player
-            if ent.distance(X, Y) <= mech.fireball_radius and ent.fighter:
-                pyg.update_gui("The " + ent.name + " gets burned for " + str(mech.fireball_damage) + " hit points.", pyg.red)
-                ent.fighter.take_damage(mech.fireball_damage)
-
-    def cast_confuse(self):
-        """ Asks the player for a target to confuse, then replaces the monster's AI with a "confused" one. After some turns, it restores the old AI. """
-        
-        pyg.update_gui("Left-click an enemy to confuse it, or right-click to cancel.", pyg.red)
-        monster = target_monster(mech.confuse_range)
-        if monster is None: return 'cancelled'
-        old_ai = monster.ai
-        monster.ai = ConfusedMonster(old_ai)
-        pyg.update_gui("The eyes of the " + monster.name + " look vacant, as he starts to stumble around!", pyg.red)
-
-    def swing(self):
-        image = img.dict[player_obj.ent.equipment['dominant hand'].img_names[0]]['dropped']
-        img.vicinity_flash(player_obj.ent, image)
-        for tile in player_obj.ent.get_vicinity():
-            if tile.entity:
-                player_obj.ent.attack_target(tile.entity)
-
     def suicide(self):
         
         # Activate animation
         image = img.dict['decor']['bones']
         img.vicinity_flash(player_obj.ent, image)
-        img.entity_flash(player_obj.ent)
         
         # Kill player
         player_obj.ent.death()
@@ -5123,35 +6136,201 @@ class Mechanics:
         self.attack_init = pyg.key_BACK
         self.attack_crit = [pyg.key_INFO, pyg.key_EQUIP, pyg.key_DROP]
 
+    def spin(self, ent):
+        """ Does not work. """
+        
+        # Prepare movements
+        motions_log = []
+        
+        # Look forward first
+        if ent.img_names[0] != 'front':
+            motions_log.append([0, pyg.tile_height])
+        motions_log.append([-pyg.tile_width, 0])
+        
+        # Spin around
+        motions_log.append([0, -pyg.tile_height])
+        motions_log.append([pyg.tile_width, 0])
+        motions_log.append([0, pyg.tile_height])
+        
+        # Send directions to entity
+        ent.motions_log = motions_log
+
+    def find_water(self, ent):
+        """ Moves entity towards water. """
+        
+        # Look for water
+        if ent.tile.img_names[1] != 'water':
+            
+            # Prepare movements
+            motions_log = []
+            
+            # Look for water
+            for y in range(len(ent.env.map[0])):
+                for x in range(len(ent.env.map)):
+                    if ent.env.map[x][y].img_names[1] == 'water':
+                        
+                        # Construct a path
+                        dX       = int(x*32) - ent.X
+                        dY       = int(y*32) - ent.Y
+                        distance = (dX ** 2 + dY ** 2)**(1/2)
+                        while distance > 0:
+                            
+                            if dX and not dY:
+                                dX = round(dX/distance) * pyg.tile_width
+                                dY = 0
+                            
+                            elif dY and not dX:
+                                dX = 0
+                                dY = round(dX/distance) * pyg.tile_width
+                            
+                            elif dX and dY:
+                                if random.randint(0, 1):
+                                    dX = round(dX/distance) * pyg.tile_width
+                                    dY = 0
+                                else:
+                                    dX = 0
+                                    dY = round(dY/distance) * pyg.tile_width
+                            
+                            motions_log.append([dX, dY])
+                            motions_log.append([dX, dY])
+                            distance -= 32
+            
+            # Send directions to entity
+            ent.motions_log = motions_log
+            image = img.dict['bubbles']['question']
+
+        # Bathe
+        else:
+            if pet_obj.moods['anger']:
+                pet_obj.moods['anger'] -= 1
+                image = img.dict['bubbles']['heart']
+            
+            else:
+                pet_obj.moods['boredom'] += 1
+                image = img.dict['bubbles']['dots']
+            
+        img.flash_above(ent, image)
+
+    def find_bed(self, ent):
+        """ Moves entity towards water. """
+        
+        # Look for a bed
+        item = bool(ent.tile.item)
+        if item: bed = bool(ent.tile.item.name == 'bed')
+        else:    bed = False
+        if not item and not bed:
+            
+            # Prepare movements
+            motions_log = []
+            
+            # Look for a bed
+            for y in range(len(ent.env.map[0])):
+                for x in range(len(ent.env.map)):
+                    if ent.env.map[x][y].item:
+                        if ent.env.map[x][y].item.name == 'bed':
+                            if not ent.env.map[x][y].item.occupied:
+                                ent.env.map[x][y].item.occupied = True
+                                
+                                # Construct a path
+                                dX       = int(x*32) - ent.X
+                                dY       = int(y*32) - ent.Y
+                                distance = (dX ** 2 + dY ** 2)**(1/2)
+                                while distance > 0:
+                                    
+                                    if dX and not dY:
+                                        dX = round(dX/distance) * pyg.tile_width
+                                        dY = 0
+                                    
+                                    elif dY and not dX:
+                                        dX = 0
+                                        dY = round(dX/distance) * pyg.tile_width
+                                    
+                                    elif dX and dY:
+                                        if random.randint(0, 1):
+                                            dX = round(dX/distance) * pyg.tile_width
+                                            dY = 0
+                                        else:
+                                            dX = 0
+                                            dY = round(dY/distance) * pyg.tile_width
+                                    
+                                    motions_log.append([dX, dY])
+                                    motions_log.append([dX, dY])
+                                    distance -= 32
+            
+            # Send directions to entity
+            ent.motions_log = motions_log
+            image = img.dict['bubbles']['question']
+
+        # Sleep
+        else:
+            image = img.dict['bubbles']['dots']
+            
+        img.flash_above(ent, image)
+
+    # Garden
     def radish_eat(self, ent):
+        """ Dropped item effect. """
+        
         pet_obj.moods['happiness'] += 1
+        pet_obj.moods['boredom']   -= 1
         image = img.dict['bubbles']['heart']
         img.flash_above(ent, image)
         ent.tile.item = None
 
-    def boost_stamina(self, ent):
-        ent.stamina += 50
-        if ent.stamina > 100: ent.stamina = 100
-        pyg.update_gui()
+    def entity_scare(self):
+        """ Combo effect. """
+        
+        # Find entities in vicinity
+        ent_list = []
+        for tile in player_obj.ent.get_vicinity():
+            if tile.entity:
+                ent_list.append(tile.entity)
+        
+        # Activate effect if entities are found
+        if ent_list:
+            
+            if player_obj.ent.env.name == 'garden':
+                pet_obj.moods['lethargy'] -= 1
+                pet_obj.moods['boredom']  -= 1
+            
+            image = img.dict['bubbles']['exclamation']
+            for ent in ent_list:
+                for tile in ent.get_vicinity():
+                    if not tile.blocked:
+                        ent.move_towards(tile.X, tile.Y)
+                img.flash_above(ent, image)
 
-    def lamp(self, item):
-        """ Adds or removes a light to be rendered under the following conditions.
-            1. The object is not owned by an entity.
-            2. The object is equipped by an entity. """
+    def pet_comfort(self):
+        """ Combo effect. """
         
-        if item.owner:
-            if item.equipped:
-                if item not in weather.lamp_list:
-                    weather.lamp_list.append(item)
-            else:
-                if item in weather.lamp_list:
-                    weather.lamp_list.remove(item)
+        # Find pets in vicinity
+        ent_list = []
+        for tile in player_obj.ent.get_vicinity():
+            if tile.entity:
+                ent_list.append(tile.entity)
         
-        else:
-            if item not in weather.lamp_list:
-                weather.lamp_list.append(item)
-            else:
-                weather.lamp_list.remove(item)
+        # Activate effect if entities are found
+        if ent_list:
+            pet_obj.moods['sadness'] -= 1
+            if pet_obj.moods['sadness'] <= 0: pet_obj.moods['boredom'] += 1
+            image = img.dict['bubbles']['heart']
+            for ent in ent_list:
+                img.flash_above(ent, image)
+                self.spin(ent)
+
+    def pet_clean(self):
+        """ Combo effect. """
+        
+        # Find pets in vicinity
+        ent_list = []
+        for tile in player_obj.ent.get_vicinity():
+            if tile.entity:
+                ent_list.append(tile.entity)
+        
+        # Activate effect if entities are found
+        if ent_list:
+            for ent in ent_list:
+                self.find_water(ent)
 
 class Effect:
 
@@ -5202,18 +6381,21 @@ class Camera:
         self.target          = target
         self.width           = int(pyg.screen_width / pyg.zoom)
         self.height          = int((pyg.screen_height + pyg.tile_height) / pyg.zoom)
-        self.X               = int((self.target.X * pyg.zoom) - int(self.width / 2))
-        self.Y               = int((self.target.Y * pyg.zoom) - int(self.height / 2))
-        self.center_X        = int(self.X + int(self.width / 2))
-        self.center_Y        = int(self.Y + int(self.height / 2))
-        self.right           = self.X + self.width
-        self.bottom          = self.Y + self.height
-        self.tile_map_x      = int(self.X / pyg.tile_width)
-        self.tile_map_y      = int(self.Y / pyg.tile_height)
         self.tile_map_width  = int(self.width / pyg.tile_width)
         self.tile_map_height = int(self.height / pyg.tile_height)
+        
+        self.X               = int((self.target.X * pyg.zoom) - int(self.width / 2))
+        self.Y               = int((self.target.Y * pyg.zoom) - int(self.height / 2))
+        self.tile_map_x      = int(self.X / pyg.tile_width)
+        self.tile_map_y      = int(self.Y / pyg.tile_height)
+        
+        self.right           = self.X + self.width
+        self.bottom          = self.Y + self.height
         self.x_range         = self.tile_map_x + self.tile_map_width
         self.y_range         = self.tile_map_y + self.tile_map_height
+        
+        self.center_X        = int(self.X + int(self.width / 2))
+        self.center_Y        = int(self.Y + int(self.height / 2))
         
         self.fixed           = False
         self.fix_position()
@@ -5257,7 +6439,7 @@ class Camera:
         if self.Y < 0:
             self.Y          = 0
             self.center_Y   = self.Y + int(self.height / 2)
-            self.bottom     = (self.Y + self.height) / pyg.zoom
+            self.bottom     = (self.Y + self.height + 320) / pyg.zoom
             self.tile_map_y = int(self.Y / (pyg.tile_height / pyg.zoom))
             self.y_range    = self.tile_map_y + self.tile_map_height
         
@@ -5322,177 +6504,6 @@ class Camera:
         self.y_range         = self.tile_map_y + self.tile_map_height
         self.fix_position()
 
-class Pets:
-    """ Manages stats in the Garden. """
-
-    def __init__(self):
-        
-        # General
-        if player_obj.envs['garden']: self.ents = player_obj.envs['garden'].entities
-        else:                         self.ents = None
-        
-        self.stats = {
-            '      RADIX ATRIUM': None,
-            '': None,
-            'mood':     None,
-            'stamina':  None,
-            'strength': None,
-            'appeal':   None}
-        
-        # Numerical stats
-        self.levels = {
-            'stamina':  0,
-            'strength': 1,
-            'appeal':   1}
-        
-        self.moods = {
-            'happiness': 5,
-            'sadness':   0,
-            'anger':     0,
-            'boredom':   0,
-            'lethargy':  0,
-            'confusion': 0}
-        
-        # String conversions
-        self.faces = {
-            'happiness': '( ^_^ )',
-            'sadness':   '( Q_Q )',
-            'anger':     '( >_< )',
-            'boredom':   '( . _ .  )',
-            'lethargy':  '( =_= )',
-            'confusion': '(@_@)'}
-        
-        # Utility
-        self.happiness_cooldown = 10
-        self.happiness_press = 0
-        self.emoji_cooldown = 10
-        self.emoji_press = 0
-
-    def import_pets(self):
-        self.ents = player_obj.envs['garden'].entities
-
-    def stat_check(self, dic):
-        try:
-            dic = copy.copy(dic)
-            for key, value in dic.items():
-                if value > 10:  dic[value] = 10
-                elif value < 0: dic[value] = 0
-        except: print(dic)
-
-    def update(self):
-        
-        # Lose happiness
-        if self.moods['happiness']:
-            if time.time() - self.happiness_press > self.happiness_cooldown:
-                self.happiness_press = time.time()
-                
-                if not random.randint(0, 1):
-                    self.moods['happiness'] -= 1
-                    self.moods[random.choice(list(self.moods.keys()))] += 1
-        
-        # Clean up
-        self.stat_check(self.levels)
-        self.stat_check(self.moods)
-        
-        # Set mood
-        max_val = max(self.moods.values())
-        current_moods = [mood for mood, val in self.moods.items() if val == max_val]
-        
-        # Alternate between tied moods
-        if len(current_moods) > 1:
-            if time.time() - self.emoji_press > self.emoji_cooldown:
-                self.emoji_press = time.time()
-                self.stats['mood'] = self.faces[random.choice(current_moods)]        
-        
-        # Set the current mood
-        else:
-            self.stats['mood'] = self.faces[current_moods[0]]
-        
-        # Set levels
-        self.stats['stamina']  = '★' * self.levels['stamina']
-        while len(self.stats['stamina']) < 5:
-            self.stats['stamina'] += '☆'
-        self.stats['strength'] = '★' * self.levels['strength']
-        while len(self.stats['strength']) < 5:
-            self.stats['strength'] += '☆'
-        self.stats['appeal']   = '★' * self.levels['appeal']
-        while len(self.stats['appeal']) < 5:
-            self.stats['appeal'] += '☆'
-
-class Weather:
-
-    def __init__(self):
-        
-        # Dark blue background
-        self.overlay = pygame.Surface((pyg.screen_width * 10, pyg.screen_height * 10), pygame.SRCALPHA)
-        
-        self.lamp_list = []
-        
-        self.last_hour = time.localtime().tm_hour + 1
-    
-    def run(self):
-        
-        # Set time of day
-        if (time.localtime().tm_hour + 1) != self.last_hour:
-            self.last_hour  = time.localtime().tm_hour + 1
-            player_obj.ent.world_time = ((player_obj.ent.world_time+1) % 8) + 1
-        
-        # Set brightness
-        if player_obj.ent.world_time == 1:   alpha = 170 # 🌖
-        elif player_obj.ent.world_time == 2: alpha = 85  # 🌗
-        elif player_obj.ent.world_time == 3: alpha = 17  # 🌘
-        elif player_obj.ent.world_time == 4: alpha = 0   # 🌑
-        elif player_obj.ent.world_time == 5: alpha = 17  # 🌒
-        elif player_obj.ent.world_time == 6: alpha = 85  # 🌓
-        elif player_obj.ent.world_time == 7: alpha = 170 # 🌔
-        elif player_obj.ent.world_time == 8: alpha = 255 # 🌕
-        self.overlay.set_alpha(alpha)
-
-    def lamp(self, mask, x, y, size):
-        width  = pyg.tile_width * size
-        height = pyg.tile_height * size
-        alpha  = 255//size
-        left   = x - size*pyg.tile_width//2
-        top    = y - size*pyg.tile_height//2
-        
-        for i in range(size+1):
-            transparent_rect = pygame.Rect(
-                left   + (i+1) * 16,
-                top    + (i+1) * 16,
-                width  - i * 32,
-                height - i * 32)
-            self.overlay.fill((0, 0, 0, 255-alpha*i), transparent_rect)
-    
-    def render(self):
-        """ Creates a black overlay and cuts out regions for lighting.
-            Light is shown for any of the following conditions.
-                1. The object has mech.lamp as an effect and is not owned by an entity.
-                2. The object has mech.lamp as an effect and is equipped by an entity. """
-        
-        # Dark blue background
-        self.overlay.fill((0, 0, 0))
-
-        # Create light
-        for lamp in self.lamp_list:
-            
-            # Center light on entity
-            if lamp.owner and lamp.equipped:
-                self.lamp(
-                    self.overlay,
-                    lamp.owner.X - player_obj.ent.env.camera.X,
-                    lamp.owner.Y - player_obj.ent.env.camera.Y,
-                    lamp.effect.other)
-            
-            # Center light on item
-            elif not lamp.owner:
-                self.lamp(
-                    self.overlay,
-                    lamp.X - player_obj.ent.env.camera.X,
-                    lamp.Y - player_obj.ent.env.camera.Y,
-                    lamp.effect.other)
-        
-        pyg.display.blit(self.overlay, (0, 0))
-
 ## Quests
 class Quest:
     """ Holds quest information. """
@@ -5530,147 +6541,6 @@ class Quest:
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-class Questlog:
-    """ Manages quest menu and modifies Quest objects. """
-    
-    def __init__(self):
-        """ Only runs once when a new game is started.
-
-            quests          : list of Quest objects
-            quest_names     : list of strings
-            categories      : list of strings; 'main' or 'side'
-            main_quests     : list of Quest objects
-            side_quests     : list of Quest objects
-            selected_quest  : Quest object
-            
-            menu_index      : int; toggles questlog pages
-            categories      : 
-            achievements    : """
-        
-        # Initialize parameters
-        self.menu_index = 0
-        
-        # Create default quests
-        gathering_supplies  = Quest(name='Gathering supplies',
-                                    notes=['My bag is nearly empty.',
-                                           'It would be good to have some items on hand.'],
-                                    tasks=['☐ Collect 3 potions.',
-                                           '☐ Find a spare shovel.'],
-                                    category='Main')
-
-        finding_a_future    = Quest(name='Finding a future',
-                                    notes=['I should make my way into town.'],
-                                    tasks=['☐ Wander east.'],
-                                    category='Main')
-        
-        furnishing_a_home   = Quest(name='Furnishing a home',
-                                    notes=['My house is empty. Maybe I can spruce it up.'],
-                                    tasks=['☐ Use the shovel to build new rooms.',
-                                           '☐ Drop items to be saved for later use.',
-                                           '☐ Look for anything interesting.'],
-                                    category='Side')
-        gathering_supplies.content = gathering_supplies.notes + gathering_supplies.tasks
-        finding_a_future.content   = finding_a_future.notes + finding_a_future.tasks
-        furnishing_a_home.content  = furnishing_a_home.notes + furnishing_a_home.tasks
-
-        self.quests = {
-            gathering_supplies.name: gathering_supplies,
-            finding_a_future.name:   finding_a_future,
-            furnishing_a_home.name:  furnishing_a_home}
-        self.update_questlog()
-
-    def back_to_menu(self):
-        """ Toggle menus. """
-        
-        if self.menu_index == 0: self.menu_index += 1
-        else:                    self.menu_index  = 0
-    
-    def update_questlog(self, name=None):
-        """ Updates and sorts main quests and side quests. """
-        
-        # Update quest
-        if name:
-            quest = self.quests[name]
-            
-            # Check off task
-            if not quest.finished:
-                for i in range(len(quest.tasks)):
-                    task = quest.tasks[i]
-                    if task[0] == "☐":
-                        quest.tasks[i] = task.replace("☐", "☑")
-                        pyg.update_gui(quest.tasks[i], pyg.violet)
-                        quest.content = quest.notes + quest.tasks
-                        break
-            
-            # Remove finished quests
-            else:
-                quest.tasks[-1] = quest.tasks[-1].replace("☐", "☑")
-                pyg.update_gui(quest.tasks[-1], pyg.violet)
-                pyg.update_gui(f"Quest complete: {quest.name}", pyg.violet)
-                del self.quests[quest.name]
-
-        # Initialize data containers
-        self.main_quests = []
-        self.side_quests = []
-        self.categories  = []
-        quests_cache     = {}
-        
-        # Find main quests
-        for quest in self.quests.values():
-            if not quest.finished:
-                if quest.category == 'Main':
-                    quests_cache[quest.name] = quest
-                    self.main_quests.append(quest)
-                    self.categories.append(quest.category)
-        
-        # Find side quests
-        for quest in self.quests.values():
-            if not quest.finished:
-                if quest.category == 'Side':
-                    quests_cache[quest.name] = quest
-                    self.side_quests.append(quest)
-                    self.categories.append(quest.category)
-        self.quests = quests_cache
-
-    def questlog_menu(self):
-        """ Manages menu for quest titles and details. """
-        
-        # Show list of quests
-        if self.menu_index == 0:
-        
-            # List of quests
-            quest_index = new_menu(
-                header             = 'Questlog',
-                options            = list(self.quests.keys()),
-                options_categories = self.categories)
-            
-            # Description of selected quest
-            if type(quest_index) == int:
-                self.selected_quest = self.quests[list(self.quests.keys())[quest_index]]
-                self.update_questlog()
-                
-                selected_index = new_menu(
-                    header             = self.selected_quest.name,
-                    options            = self.selected_quest.content,
-                    options_categories = self.selected_quest.categories)
-                
-                # Go back to list of quests
-                if type(selected_index) != int:
-                    self.back_to_menu()
-        
-        # Show description of selected quest
-        else:
-            
-            # Description of selected quest
-            selected_index = new_menu(
-                header             = self.selected_quest.name,
-                options            = self.selected_quest.content,
-                options_categories = self.selected_quest.categories)
-            
-            # Go back to list of quests
-            if type(selected_index) == int:
-                player_obj.questlog.back_to_menu()
-
 class QuestTemplate:
     """ Steps
         -----
@@ -5701,10 +6571,10 @@ class QuestTemplate:
         # Run something upon activating an effect
         if not dialogue and not ent:
             note_text = ["line 1", "line 2", "line 3"]
-            new_menu(header="header", options=note_text)
+            #BigMenu(header="header", options=note_text)
         
         # Generate the Quest object
-        if "quest name" not in player_obj.questlog.quests.keys():
+        if "quest name" not in player_obj.ent.questlog.keys():
             quest = Quest(
                 name     = 'quest name',
                 notes    = ["description", "", "details"],
@@ -5717,8 +6587,8 @@ class QuestTemplate:
             quest.content = quest.notes + quest.tasks
             
             # Add quest to questlog
-            player_obj.questlog.quests[quest.name] = quest
-            player_obj.questlog.update_questlog()
+            player_obj.ent.questlog[quest.name] = quest
+            questlog_obj.update_questlog()
             pyg.update_gui("Quest added!", pyg.violet)
             
             # Generate main characters
@@ -5735,12 +6605,12 @@ class QuestTemplate:
             
             # Check off a task
             if quest_lvl == 1:
-                player_obj.questlog.update_questlog(name='quest name')
+                questlog_obj.update_questlog(name='quest name')
             
             # Complete quest
             if quest_lvl == 9:
-                player_obj.questlog.quests['quest name'].finished = True
-                player_obj.questlog.update_questlog(name='quest name')
+                player_obj.ent.questlog['quest name'].finished = True
+                questlog_obj.update_questlog(name='quest name')
                 
                 # Place object to trigger next subquest
                 pass
@@ -5769,31 +6639,22 @@ class Bloodkin:
             Disquised as an aging trader, he indirectly leads the player to a path of assured demise. """
 
     def __init__(self):
-        pass
+        
+        # One string for each subquest
+        self.path_vals = []
 
     def making_a_friend(self, ent, dialogue):
         """ Manages friend quest, including initialization and dialogue. """
         
         # Initialization
-        if dialogue == "Walk into something to interact with it, or press Enter if you're above it.":
+        if dialogue == "Walk into something to interact with it, or press Enter (↲) if you're above it.":
             ent.quest.dialogue_list = [
-                "Walk into something to interact with it, or press Enter if you're above it.",
-                "Press / to view the main menu. Try it again to return!",
-                "Press 9 to view your questlog. Hold Enter to see more details.",
-                "Press 4 to open your inventory. Slash returns you, and Enter activates!",
-                "Try holding 0. Press the arrow keys for special actions, or press 9 to toggle details.",
-                "Check out Options in the main menu."]
-            
-            #ent.quest.dialogue_list = [
-            #    "... The creature seems curious.",
-            #    "A creakng sound reverberates from its body.",
-            #    "The creature seems affectionate.",
-            #    "Your friend looks happy to see you.",
-            #    "Your friend seems friendlier now.",
-            #    "Who is this, anyways?",
-            #    "You give your friend a playful nudge.",
-            #    "Your friend feels calmer in your presence.",
-            #    "Your friend fidgets but seems content."]
+                "Walk into something to interact with it, or press Enter (↲) if you're above it.",
+                "Press Slash (/) to view the main menu. Try it again to return!",
+                "Use Plus (+) to zoom in, or use Minus (-) to zoom out.",
+                "Press Four (4) to open your inventory. Period (.) drops, and Enter activates!",
+                "Try holding Zero (0) to enter combos. Nine (9) can be used to view details.",
+                "Check out Options in the Main Menu!"]
         
         # Increase friendship level
         ent.quest.dialogue_list.remove(dialogue)
@@ -5801,13 +6662,13 @@ class Bloodkin:
         
         # First checkpoint
         if friend_level == 1:
-            player_obj.questlog.update_questlog(name="Making a friend")
+            questlog_obj.update_questlog(name="Making a friend")
         
         # Complete quest
         if friend_level == 9:
             
-            player_obj.questlog.quests['Making a friend'].finished = True
-            player_obj.questlog.update_questlog(name="Making a friend")
+            player_obj.ent.questlog['Making a friend'].finished = True
+            questlog_obj.update_questlog(name="Making a friend")
             pyg.update_gui("Woah! What's that?", pyg.violet)
             
             x = lambda dX : int((player_obj.ent.X + dX)/pyg.tile_width)
@@ -5852,14 +6713,20 @@ class Bloodkin:
             
             Church: Coax a lizard to the altar (by following). """
         
+        global big_menu
+        
         # Read the note
         if not dialogue:
             note_text = ["ξνμλ λξ ξλι ξγθιβξ ξ θθ.", "Ηκρσ σρσ λβνξθι νθ.", "Ψπθ αβνιθ πθμ."]
-            new_menu(header="mysterious note", options=note_text, position="top left")
+            big_menu = BigMenu(
+                name     = 'temp',
+                header   = "mysterious note",
+                options  = note_text,
+                position = 'top left')
+            pyg.overlay = 'temp'
         
-        if 'Learning a language' not in player_obj.questlog.quests.keys():
-            
-            # Initialize quest
+        # Initialize quest and characters
+        if 'Learning a language' not in player_obj.ent.questlog.keys():
             quest = Quest(
                 name = 'Learning a language',
                 notes = [
@@ -5869,70 +6736,113 @@ class Bloodkin:
                 tasks = [
                     "☐ See if anyone in town can decipher the note."],
                 category = 'Main',
-                function = player_obj.questlines['Bloodkin'].mysterious_note)
-            
-            # Add quest to questlog
+                function = player_obj.ent.questlines['Bloodkin'].mysterious_note)
+
             quest.content = quest.notes + quest.tasks
-            player_obj.questlog.quests[quest.name] = quest
-            player_obj.questlog.update_questlog()
+            player_obj.ent.questlog[quest.name] = quest
+            questlog_obj.update_questlog()
             pyg.update_gui(f"Quest added: {quest.name}", pyg.violet)
             
-            # Generate characters and dialogue
-            if 'Kyrio' not in player_obj.ents.keys(): player_obj.ents['Kyrio'] = create_NPC('Kyrio')
-            quest.Kyrio_dialogue = [
-                "Kyrio: Huh? I know nothing about such things.",
-                "Kyrio: Rather inquisitive, are you? Never turns out well.",
-                "Kyrio: Fine, yes, my brother might know. I am busy."]
-            quest.Kyrio_progress              = 0
-            player_obj.ents['Kyrio'].quest    = quest
-            player_obj.ents['Kyrio'].dialogue = quest.Kyrio_dialogue[0]
-            
-            if 'Kapno' not in player_obj.ents.keys(): player_obj.ents['Kapno'] = create_NPC('Kapno')
-            quest.Kapno_dialogue = [
-                "Kapno: Exquisite! Where was this symbol found?",
-                "Kapno: I have a strange curiosity for such things. They seem more frequent as of late.",
-                "Kapno: Let me know if you find anything else."]
-            quest.Kapno_progress              = 0
-            player_obj.ents['Kapno'].quest    = quest
-            player_obj.ents['Kapno'].dialogue = quest.Kapno_dialogue[0]
+            self.names_list, self.dialogue_list, self.progress_list = self.set_entities(quest)
         
+        # Update quest
         if dialogue and ent:
             quest = player_obj.ents['Kyrio'].quest
             
-            # Talk to Kyrio
-            if ent.name == 'Kyrio':
+            # Look for checkpoints
+            for i in range(len(self.names_list)):
+                if ent.name == self.names_list[i]:
                 
-                # Check for task completion
-                quest.Kyrio_dialogue.remove(dialogue)
-                quest.Kyrio_progress = 3 - len(ent.quest.Kyrio_dialogue)
-                if quest.Kyrio_progress == 2:
-                    player_obj.questlog.update_questlog(name='Learning a language')
-                
-                # Provide next piece of dialogue
-                if quest.Kyrio_dialogue:
-                    return quest.Kyrio_dialogue[0]
-            
-            elif ent.name == 'Kapno':
-                
-                # Check for task completion
-                quest.Kapno_dialogue.remove(dialogue)
-                quest.Kapno_progress = 3 - len(ent.quest.Kapno_dialogue)
-                if quest.Kapno_progress == 2:
-                    player_obj.questlog.update_questlog(name='Learning a language')
-                
-                # Provide next piece of dialogue
-                if quest.Kapno_dialogue:
-                    return quest.Kapno_dialogue[0]
+                    # Check for task completion
+                    if self.progress_list[i] < 3:
+                        self.dialogue_list[i].remove(dialogue)
+                        self.progress_list[i] = 3 - len(self.dialogue_list[i])
+                    
+                        # Provide next piece of dialogue
+                        if self.dialogue_list[i]:
+                            return self.dialogue_list[i][0]
             
             # Complete quest
-            if (quest.Kyrio_progress == 3) or (quest.Kapno_progress == 3):
-                
-                player_obj.questlog.quests['Learning a language'].finished = True
-                player_obj.questlog.update_questlog(name='Learning a language')
+            if (self.progress_list[0] == 3) and (self.progress_list[1] == 3):
+                self.path_vals.append('religion')
+                player_obj.ent.questlog['Learning a language'].finished = True
+                questlog_obj.update_questlog(name='Learning a language')
+            
+            elif self.progress_list[2] == 3:
+                self.path_vals.append('drugs')
+                player_obj.ent.questlog['Learning a language'].finished = True
+                questlog_obj.update_questlog(name='Learning a language')
+
+    def set_entities(self, quest):
+        names_list, dialogue_list, progress_list = [], [], []
+        
+        # Generate characters and dialogue
+        if 'Kyrio' not in player_obj.ents.keys(): player_obj.ents['Kyrio'] = create_NPC('Kyrio')
+        quest.Kyrio_dialogue = [
+            "Kyrio: Huh? A glyph of some sort? I know nothing of such things.",
+            "Kyrio: Rather inquisitive, are you? Never turns out well.",
+            "Kyrio: Fine, yes, my brother might know. I am busy."]
+        quest.Kyrio_progress              = 0
+        player_obj.ents['Kyrio'].quest    = quest
+        player_obj.ents['Kyrio'].dialogue = quest.Kyrio_dialogue[0]
+        names_list.append('Kyrio')
+        dialogue_list.append(quest.Kyrio_dialogue)
+        progress_list.append(quest.Kyrio_progress)
+        
+        if 'Kapno' not in player_obj.ents.keys(): player_obj.ents['Kapno'] = create_NPC('Kapno')
+        quest.Kapno_dialogue = [
+            "Kapno: Exquisite! Where was this symbol found?",
+            "Kapno: It certainly peaks my interest. Strange occurances are frequent as of late.",
+            "Kapno: Let me know if you find anything else, and check out my shop if you need anything."]
+        quest.Kapno_progress              = 0
+        player_obj.ents['Kapno'].quest    = quest
+        player_obj.ents['Kapno'].dialogue = quest.Kapno_dialogue[0]
+        names_list.append('Kapno')
+        dialogue_list.append(quest.Kapno_dialogue)
+        progress_list.append(quest.Kapno_progress)
+        
+        if 'Oxi' not in player_obj.ents.keys(): player_obj.ents['Oxi'] = create_NPC('Oxi')
+        quest.Oxi_dialogue = [
+            "Oxi: What do you want? You selling something?",
+            "Oxi: Hey! Don't just wave the arcane around like that.",
+            "Oxi: Yeah, I've seen it before. Come find me later tonight... we can talk then."]
+        quest.Oxi_progress              = 0
+        player_obj.ents['Oxi'].quest    = quest
+        player_obj.ents['Oxi'].dialogue = quest.Oxi_dialogue[0]
+        names_list.append('Oxi')
+        dialogue_list.append(quest.Oxi_dialogue)
+        progress_list.append(quest.Oxi_progress)
+        
+        if 'Erasti' not in player_obj.ents.keys(): player_obj.ents['Erasti'] = create_NPC('Erasti')
+        quest.Erasti_dialogue = [
+            "Erasti: Oh...! Hi!",
+            "Erasti: That symbol... have you seen it before? It gives me an eerie sense of déjà vu.",
+            "Erasti: I saw Kyrio with something like that once. Or maybe it was a dream..."]
+        quest.Erasti_progress              = 0
+        player_obj.ents['Erasti'].quest    = quest
+        player_obj.ents['Erasti'].dialogue = quest.Erasti_dialogue[0]
+        names_list.append('Erasti')
+        dialogue_list.append(quest.Erasti_dialogue)
+        progress_list.append(quest.Erasti_progress)
+    
+        if 'Merci' not in player_obj.ents.keys(): player_obj.ents['Merci'] = create_NPC('Merci')
+        quest.Merci_dialogue = [
+            "Merci: Welcome! ...are you not here for my merchandise?",
+            "Merci: I do not deal in the occult, so I will be of no help to you. Sorry.",
+            "Merci: Oxi is shady enough... he seems like the type to ask."]
+        quest.Merci_progress              = 0
+        player_obj.ents['Merci'].quest    = quest
+        player_obj.ents['Merci'].dialogue = quest.Merci_dialogue[0]
+        names_list.append('Merci')
+        dialogue_list.append(quest.Merci_dialogue)
+        progress_list.append(quest.Merci_progress)
+    
+        return names_list, dialogue_list, progress_list
 
 #######################################################################################################################################################
 # Creation
 ## Environments
+@debug_call
 def build_garden():
     """ Generates the overworld environment. """
     
@@ -5952,7 +6862,13 @@ def build_garden():
     player_obj.envs['garden'].camera = Camera(player_obj.ent)
     player_obj.envs['garden'].camera.fixed = True
     player_obj.envs['garden'].camera.zoom_in(custom=1)
-
+    
+    # Set weather
+    env.weather_backup = {
+        'light_set': 0,
+        'clouds':    False}
+    env.weather = Weather(light_set=0, clouds=False)
+    
     ## Generate biomes
     biomes = [['forest', ['floors', 'grass4']]]
     voronoi_biomes(env, biomes)
@@ -5981,7 +6897,7 @@ def build_garden():
     
     # Generate items and entities
     items    = [['forest', 'tree',   10]]
-    entities = [['forest', 'radish', 50]]
+    entities = [['forest', 'radish', 50, [None]]]
     place_objects(env, items, entities)
     
     # Create pet management
@@ -5996,11 +6912,12 @@ def build_garden():
     
     return env
 
+@debug_call
 def build_home():
     """ Generates player's home. """
 
-    # Initialize environment
-    player_obj.envs['home'] = Environment(
+    ## Initialize environment
+    env = Environment(
         name       = 'home',
         lvl_num    = 0,
         size       = 5,
@@ -6009,123 +6926,103 @@ def build_home():
         floors     = ['floors', 'green'],
         walls      = ['walls', 'gray'],
         roofs      = ['roofs', 'tiled'])
-
-    # Construct rooms
+    player_obj.envs['home'] = env
+    center = [14, 14]
+    
+    # Set weather
+    env.weather_backup = {
+        'light_set': 32,
+        'clouds':    False}
+    env.weather = Weather(light_set=32)
+    
+    ## Construct rooms
     main_room = Room(
-        name    = 'home room 1',
-        env     = player_obj.envs['home'],
-        x1      = 1,
-        y1      = 10,
+        name    = 'home room',
+        env     = env,
+        x1      = center[0]-4,
+        y1      = center[1]-4,
         width   = mech.room_max_size,
         height  = mech.room_max_size,
         biome   = 'any',
         hidden  = False,
         objects = False,
-        floor   = player_obj.envs['home'].floors,
-        walls   = player_obj.envs['home'].walls,
-        roof    = None)
-    hallway = Room(
-        name    = 'home room 1',
-        env     = player_obj.envs['home'],
-        x1      = 0,
-        y1      = 14,
-        width   = 10,
-        height  = 2,
-        biome   = 'any',
-        hidden  = False,
-        objects = False,
-        floor   = player_obj.envs['home'].floors,
-        walls   = player_obj.envs['home'].walls,
-        roof    = None)
-    player_obj.envs['home'].combine_rooms()
-    
+        floor   = env.floors,
+        walls   = env.walls,
+        roof    = None,
+        plan = ['  -----     ',
+                ' --[].----- ',
+                ' -=.......--',
+                ' -........g-',
+                '--........c-',
+                '-.........--',
+                '--.....---- ',
+                ' --bTd--    ',
+                '  -----     '])
+    env.center = [center[0]-1, center[1]-2]
+
     secret_room = Room(
         name    = 'secret room',
-        env     = player_obj.envs['home'],
-        x1      = 30,
-        y1      = 30,
+        env     = env,
+        x1      = center[0]+8,
+        y1      = center[1]+7,
         width   = mech.room_min_size*2,
         height  = mech.room_min_size*2,
         biome   = 'any',
         hidden  = True,
         objects = False,
-        floor   = player_obj.envs['home'].floors,
-        walls   = player_obj.envs['home'].walls,
+        floor   = env.floors,
+        walls   = env.walls,
         roof    = None)
-    player_obj.envs['home'].center = main_room.center()
-
-    # Place items in home
-    # Healing potion
-    x, y = 4, 11
-    item = create_item('jug of blood')
-    place_object(item, [x, y], player_obj.envs['home'])
     
-    # Lightning scroll
-    x, y = 5, 11
-    item = create_item('scroll of lightning bolt')
-    place_object(item, [x, y], player_obj.envs['home'])
-
-    # Fireball scroll
-    x, y = 6, 11
-    item = create_item('scroll of fireball')
-    place_object(item, [x, y], player_obj.envs['home'])
-
-    # Blood sword
-    x, y = 24, 33
+    # Hidden objects
+    x, y = center[0]+10, center[1]+9
     item = create_item('blood sword')
-    place_object(item, [x, y], player_obj.envs['home'])
-
-    # Shield
-    x, y = 29, 34
+    place_object(item, [x, y], env)
+    x, y = center[0]+5, center[1]+10
     item = create_item('iron shield')
-    place_object(item, [x, y], player_obj.envs['home'])
-
+    place_object(item, [x, y], env)
+    
     # Bug fix
     x, y = 0, 0
     item = create_item('scroll of fireball')
-    place_object(item, [x, y], player_obj.envs['home'])
+    place_object(item, [x, y], env)
     
-    # Generate stairs
-    x, y = 9, 15
-    item = create_item('portal')
-    item.name = 'dungeon'
-    place_object(item, [x, y], player_obj.envs['home'])
-    
-    # Generate door
-    x, y = 0, 15
+    # Door
+    x, y = center[0]-3, center[1]+1
     item = create_item('door')
     item.name = 'overworld'
-    place_object(item, [x, y], player_obj.envs['home'])
-    player_obj.envs['home'].map[x][y].blocked = False
-    player_obj.envs['home'].map[x][y].unbreakable = False
+    place_object(item, [x, y], env)
+    env.map[x][y].blocked = False
+    env.map[x][y].unbreakable = False
     
-    # Generate friend
-    x, y = 9, 18
+    # Friend
+    x, y = center[0]+1, center[1]
     ent = create_entity('friend')
-    place_object(ent, [x, y], player_obj.envs['home'])
-    ent.dialogue = "Walk into something to interact with it, or press Enter if you're above it."
-    player_obj.questlines = {}
-    player_obj.questlines['Bloodkin'] = Bloodkin()
+    place_object(ent, [x, y], env)
+    ent.dialogue = "Walk into something to interact with it, or press Enter (↲) if you're above it."
+    player_obj.ent.questlines = {}
+    player_obj.ent.questlines['Bloodkin'] = Bloodkin()
     ent.quest    = Quest(
         name     = "Making a friend",
         notes    = ["I wonder who this is. Maybe I should say hello."],
         tasks    = ["☐ Say hello to the creature.",
                     "☐ Get to know them."],
         category = 'Side',
-        function = player_obj.questlines['Bloodkin'].making_a_friend)
+        function = player_obj.ent.questlines['Bloodkin'].making_a_friend)
     ent.quest.content = ent.quest.notes + ent.quest.tasks
-    player_obj.questlog.quests['Making a friend'] = ent.quest
-    player_obj.questlog.update_questlog()
+    player_obj.ent.questlog['Making a friend'] = ent.quest
+    questlog_obj.update_questlog()
     
-    return player_obj.envs['home']
+    return env
 
 @debug_call
-def build_dungeon_level():
+def build_dungeon_level(lvl_num=0):
     """ Generates the overworld environment. """
     
     # Initialize environment
-    if not player_obj.envs['dungeon']: lvl_num = 1
-    else:                              lvl_num = 1 + player_obj.envs['dungeon'][-1].lvl_num
+    if lvl_num:                          lvl_num = lvl_num
+    elif not player_obj.envs['dungeon']: lvl_num = 1
+    else:                                lvl_num = 1 + player_obj.envs['dungeon'][-1].lvl_num
     
     env = Environment(
         name       = 'dungeon',
@@ -6139,6 +7036,12 @@ def build_dungeon_level():
         blocked    = True,
         hidden     = True)
     
+    # Set weather
+    env.weather_backup = {
+        'light_set': None,
+        'clouds':    False}
+    env.weather = Weather(clouds=False)
+    
     player_obj.envs['dungeon'].append(env)
     env.camera = Camera(player_obj.ent)
     env.camera.fixed = False
@@ -6150,7 +7053,7 @@ def build_dungeon_level():
     
     # Construct rooms
     rooms, room_counter, counter = [], 0, 0
-    num_rooms = int(mech.max_rooms * env.lvl_num) + 1
+    num_rooms = int(mech.max_rooms * env.lvl_num) + 2
     for i in range(num_rooms):
         
         # Construct room
@@ -6158,6 +7061,11 @@ def build_dungeon_level():
         height   = random.randint(mech.room_min_size, mech.room_max_size)
         x        = random.randint(0, len(env.map)    - width  - 1)
         y        = random.randint(0, len(env.map[0]) - height - 1)
+        
+        floor = random.choice([
+            ['floors', 'dark green'],
+            ['floors', 'dark green'],
+            ['floors', 'green']])
         
         new_room = Room(
             name    = 'dungeon room',
@@ -6169,10 +7077,10 @@ def build_dungeon_level():
             biome   = 'any',
             hidden  = True,
             objects = True,
-            floor   = env.floors,
+            floor   = floor,
             walls   = env.walls,
             roof    = env.roofs)
-        
+    
     # Combine rooms and add doors
     env.combine_rooms()
     
@@ -6184,26 +7092,26 @@ def build_dungeon_level():
             (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
             if not chance_2:
                 try:
-                    env.create_h_tunnel(x_1, x_2, y_1, img_set=new_room.floor)
-                    env.create_v_tunnel(y_1, y_2, x_2, img_set=new_room.floor)
+                    env.create_h_tunnel(x_1, x_2, y_1)
+                    env.create_v_tunnel(y_1, y_2, x_2)
                 except: raise Exception('Error')
             else:
-                env.create_v_tunnel(y_1, y_2, y_1, img_set=new_room.floor)
-                env.create_h_tunnel(x_1, x_2, y_2, img_set=new_room.floor)
+                env.create_v_tunnel(y_1, y_2, y_1)
+                env.create_h_tunnel(x_1, x_2, y_2)
     
     # Generate items and entities
     items = [
-        ['dungeon', 'jug of blood',   10],
-        ['dungeon', 'bones',          50],
-        ['dungeon', 'sword',          1000//env.lvl_num],
-        ['dungeon', 'iron shield',    1000//env.lvl_num],
-        ['dungeon', 'skeleton',       500],
-        ['dungeon', 'fire',           100]]
+        ['land', 'jug of blood',   10],
+        ['land', 'bones',          50],
+        ['land', 'sword',          1000//env.lvl_num],
+        ['land', 'iron shield',    1000//env.lvl_num],
+        ['land', 'skeleton',       500],
+        ['land', 'fire',           100]]
     entities = [
-        ['dungeon', 'plant',          100],
-        ['dungeon', 'eye',            5],
-        ['dungeon', 'radish',         1000],
-        ['dungeon', 'round1',         10]]
+        ['land', 'plant',          300,   [None]],
+        ['land', 'eye',            15,    ['eye']],
+        ['land', 'radish',         1000,  [None]],
+        ['land', 'round1',         30,    [None]]]
     place_objects(env, items, entities)
     
     # Place player in first room
@@ -6215,9 +7123,171 @@ def build_dungeon_level():
     
     # Generate stairs in the last room
     (x, y) = env.rooms[-2].center()
-    stairs = create_item('portal')
+    stairs = create_item('door')
     stairs.name = 'dungeon'
     place_object(stairs, [x, y], player_obj.envs['dungeon'][-1])
+
+@debug_call
+def build_hallucination_level():
+    """ Generates the overworld environment. """
+    
+    ## Initialize environment
+    if not player_obj.envs['hallucination']: lvl_num = 1
+    else:                                    lvl_num = 1 + player_obj.envs['hallucination'][-1].lvl_num
+    env = Environment(
+        name       = 'hallucination',
+        lvl_num    = lvl_num,
+        size       = 3,
+        soundtrack = [f'hallucination {lvl_num}'],
+        img_names  = ['walls',  'gold'],
+        floors     = ['floors', 'green'],
+        walls      = ['walls',  'gold'],
+        roofs      = None,
+        blocked    = True,
+        hidden     = True)
+    
+    # Set weather
+    env.weather_backup = {
+        'light_set': 32,
+        'clouds':    False}
+    env.weather = Weather(light_set=32, clouds=False)
+
+    ## Generate biomes
+    biomes = [
+        ['any', ['walls', 'gold']],
+        ['any', ['walls', 'gold']],
+        ['any', ['walls', 'gold']],
+        ['any', ['walls', 'gold']]]
+    voronoi_biomes(env, biomes)
+    
+    player_obj.envs['hallucination'].append(env)
+    env.camera = Camera(player_obj.ent)
+    env.camera.fixed = False
+    env.camera.zoom_in(custom=1)
+    
+    # Construct rooms
+    rooms, room_counter, counter = [], 0, 0
+    num_rooms = int(mech.max_rooms*2 * env.lvl_num) + 2
+    for i in range(num_rooms):
+        
+        # Construct room
+        width    = random.randint(mech.room_min_size*2, mech.room_max_size*2)
+        height   = random.randint(mech.room_min_size*2, mech.room_max_size*2)
+        x        = random.randint(0, len(env.map)    - width  - 1)
+        y        = random.randint(0, len(env.map[0]) - height - 1)
+        
+        new_room = Room(
+            name    = 'hallucination backdrop',
+            env     = env,
+            x1      = x,
+            y1      = y,
+            width   = width,
+            height  = height,
+            biome   = 'any',
+            hidden  = True,
+            objects = True,
+            floor   = env.floors,
+            walls   = env.walls,
+            roof    = env.roofs)
+    
+    # Combine rooms and add doors
+    env.combine_rooms()
+    
+    ## Construct rooms
+    num_rooms             = 5
+    rooms                 = []
+    room_counter, counter = 0, 0
+    center                = env.center
+    (x_1, y_1)            = center
+    x_2                   = lambda width:  len(env.map)    - width  - 1
+    y_2                   = lambda height: len(env.map[0]) - height - 1
+    while room_counter < num_rooms:
+        
+        # Generate location
+        width  = random.randint(mech.room_min_size, mech.room_max_size)
+        height = random.randint(mech.room_min_size, mech.room_max_size)
+        x      = random.randint(x_1, x_2(width))
+        y      = random.randint(y_1, y_2(height))
+        
+        # Check for solid ground
+        failed = False
+        for u in range(width):
+            for v in range(height):
+                if env.map[x+u][y+v].biome in img.biomes['sea']: failed = True
+        if not failed:
+            
+            ## Construct room
+            new_room = Room(
+                name   = 'hallucination room',
+                env    = env,
+                x1     = x,
+                y1     = y,
+                width  = width,
+                height = height,
+                biome   = 'city',
+                hidden = False,
+                objects = False,
+                floor  = ['floors', 'dark green'],
+                walls  = env.walls,
+                roof   = env.roofs,
+                plan = create_text_room(width, height, doors=False))
+
+            room_counter += 1
+            x, y = new_room.center()[0], new_room.center()[1]
+        
+        # Spawn rooms elsewhere if needed
+        else: counter += 1
+        if counter > num_rooms:
+            counter = 0
+            (x_1, y_1) = (0, 0)
+    
+    # Paths
+    for i in range(len(env.rooms)):
+        room_1, room_2 = env.rooms[i], env.rooms[i-1]
+        chance_1, chance_2 = 0, random.randint(0, 1)
+        if not chance_1:
+            (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
+            if not chance_2:
+                try:
+                    env.create_h_tunnel(x_1, x_2, y_1)
+                    env.create_v_tunnel(y_1, y_2, x_2)
+                except: raise Exception('Error')
+            else:
+                env.create_v_tunnel(y_1, y_2, y_1)
+                env.create_h_tunnel(x_1, x_2, y_2)
+    
+    # Generate items and entities
+    items = [
+        ['any', 'jug of grapes',  100],
+        ['any', 'shrooms',        10],
+        ['any', 'shrooms',        10],
+        ['any', 'purple bulbs',   10],
+        ['any', 'cup shroom',     25],
+        ['any', 'sword',          1000//env.lvl_num],
+        ['any', 'yellow dress',   200]]
+    entities = [
+        ['any', 'triangle',       200,  [None]],
+        ['any', 'tentacles',      100,  [None]],
+        ['any', 'radish',         1000, [None]],
+        ['any', 'star',           150,  [None]]]
+    place_objects(env, items, entities)
+    
+    # Change player into tentacles
+    player_obj.ent.img_names_backup = player_obj.ent.img_names
+    player_obj.ent.img_names = ['tentacles', 'front']
+    
+    # Place player in first room
+    (x, y) = env.rooms[0].center()
+    env.player_coordinates = [x, y]
+    env.entity = player_obj.ent
+    env.center = new_room.center()
+    player_obj.ent.tile = env.map[x][y]
+    
+    # Generate stairs in the last room
+    (x, y) = env.rooms[-2].center()
+    stairs = create_item('portal')
+    stairs.name = 'hallucination'
+    place_object(stairs, [x, y], env)
 
 @debug_call
 def build_overworld():
@@ -6241,6 +7311,14 @@ def build_overworld():
         hidden     = False)
     player_obj.envs['overworld'] = env
     
+    # Set weather
+    env.weather_backup = {
+        'light_set': None,
+        'clouds':    True}
+    env.weather = Weather(clouds=True)
+    for _ in range(random.randint(0, 10)):
+        env.weather.create_cloud()
+
     ## Generate biomes
     biomes = [
         ['forest', ['floors', 'grass3']],
@@ -6263,10 +7341,10 @@ def build_overworld():
         ['desert', 'plant',  1000],
         ['desert', 'cave',  100]]
     entities = [
-        ['forest', 'radish', 50],
-        ['wet',    'frog',   500],
-        ['forest', 'grass',  1000],
-        ['desert', 'rock',   50]]
+        ['forest', 'radish', 50,   [None]],
+        ['wet',    'frog',   500,  [None]],
+        ['forest', 'grass',  1000, [None]],
+        ['desert', 'rock',   50,   [None]]]
     place_objects(env, items, entities)
     
     ## Construct rooms
@@ -6290,6 +7368,7 @@ def build_overworld():
         for u in range(width):
             for v in range(height):
                 if env.map[x+u][y+v].biome in img.biomes['sea']: failed = True
+                elif env.map[x+u][y+v].room:                     failed = True
         if not failed:
             
             ## Construct room
@@ -6305,7 +7384,8 @@ def build_overworld():
                 objects = False,
                 floor  = ['floors', 'dark green'],
                 walls  = player_obj.envs['overworld'].walls,
-                roof   = player_obj.envs['overworld'].roofs)
+                roof   = player_obj.envs['overworld'].roofs,
+                plan = create_text_room(width, height))
 
             room_counter += 1
             x, y = new_room.center()[0], new_room.center()[1]
@@ -6316,22 +7396,70 @@ def build_overworld():
             counter = 0
             (x_1, y_1) = (0, 0)
     
-    # Combine rooms and add doors
-    player_obj.envs['overworld'].combine_rooms()
-    for room in player_obj.envs['overworld'].rooms:
-        add_doors(room)
-    
-    # Place player in first room
-    (x, y) = player_obj.envs['overworld'].rooms[-1].center()
-    env.player_coordinates = [x, y]
+    ## Create player's house
+    main_room = Room(
+        name    = 'home room',
+        env     = player_obj.envs['overworld'],
+        x1      = player_obj.envs['overworld'].center[0],
+        y1      = player_obj.envs['overworld'].center[1],
+        width   = mech.room_max_size,
+        height  = mech.room_max_size,
+        biome   = 'any',
+        hidden  = False,
+        objects = False,
+        floor   = ['floors', 'dark green'],
+        walls   = player_obj.envs['overworld'].walls,
+        roof    = player_obj.envs['overworld'].roofs,
+        plan = ['  -----     ',
+                ' --...----- ',
+                ' -........--',
+                ' -.........-',
+                '--.........|',
+                '-.........--',
+                '--.....---- ',
+                ' --...--    ',
+                '  -----     '])
+    #player_obj.envs['overworld'].center = main_room.center()
+    env.player_coordinates = player_obj.envs['overworld'].center # [0, 10]
     player_obj.envs['overworld'].entity = player_obj.ent
-    player_obj.ent.tile                 = player_obj.envs['overworld'].map[x][y]
-    player_obj.envs['overworld'].center = new_room.center()
+    player_obj.ent.tile                 = player_obj.envs['overworld'].map[0][10]
     
-    # Generate stairs
-    stairs = create_item('door')
-    stairs.name = 'home'
-    place_object(stairs, [x, y], player_obj.envs['overworld'])
+    # Door
+    x, y = center[0]+1, center[1]+5
+    item = create_item('door')
+    item.name = 'home'
+    place_object(item, [x, y], player_obj.envs['overworld'])
+    player_obj.envs['overworld'].map[x][y].blocked = False
+    player_obj.envs['overworld'].map[x][y].unbreakable = False
+    
+    ## Create church
+    main_room = Room(
+        name    = 'church',
+        env     = player_obj.envs['overworld'],
+        x1      = 20,
+        y1      = 20,
+        width   = mech.room_max_size,
+        height  = mech.room_max_size,
+        biome   = 'any',
+        hidden  = False,
+        objects = False,
+        floor   = ['floors', 'red'],
+        walls   = player_obj.envs['overworld'].walls,
+        roof    = player_obj.envs['overworld'].roofs,
+        plan = ['  --------------           ---------- ',
+                ' --............-----      --........--',
+                ' -.................-      -..........-',
+                ' -.................--------..........-',
+                ' -...................................-',
+                '--.................---------........--',
+                '-..................-       -----..--- ',
+                '--...........-------           -||-   ',
+                ' --.....------                        ',
+                '  -.....-                             ',
+                '  -.....-                             ',
+                '  --...--                             ',
+                '   --.--                              ',
+                '    -|-                               '])
     
     ## Place NPCs
     bools = lambda room, i: [
@@ -6339,7 +7467,7 @@ def build_overworld():
         env.map[room.center()[0]+i][room.center()[1]+i].entity]
     
     # Set named characters to spawn
-    for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci']:
+    for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci', 'Oxi', 'Aya', 'Zung', 'Lilao']:
         
         # Create NPC if needed
         if name not in player_obj.ents.keys(): player_obj.ents[name] = create_NPC(name)
@@ -6359,7 +7487,7 @@ def build_overworld():
         place_object(player_obj.ents[name], (x, y), env)
     
     # Set number of random characters
-    for _ in range(10):
+    for _ in range(5):
         
         # Create entity
         ent = create_NPC('random')
@@ -6397,6 +7525,12 @@ def build_cave_level():
         roofs      = None,
         blocked    = True,
         hidden     = True)
+    
+    # Set weather
+    env.weather_backup = {
+        'light_set': 16,
+        'clouds':    False}
+    env.weather = Weather(light_set=16)
     
     player_obj.envs['cave'].append(env)
     env.camera = Camera(player_obj.ent)
@@ -6443,8 +7577,8 @@ def build_cave_level():
             (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
             if not chance_2:
                 try:
-                    env.create_h_tunnel(x_1, x_2, y_1, img_set=new_room.floor)
-                    env.create_v_tunnel(y_1, y_2, x_2, img_set=new_room.floor)
+                    env.create_h_tunnel(x_1, x_2, y_1)
+                    env.create_v_tunnel(y_1, y_2, x_2)
                 except: raise Exception('Error')
             else:
                 env.create_v_tunnel(y_1, y_2, y_1, img_set=new_room.floor)
@@ -6457,9 +7591,9 @@ def build_cave_level():
         ['dungeon', 'bones',          500],
         ['dungeon', 'sword',          1000//env.lvl_num]]
     entities = [
-        ['dungeon', 'radish',         1000],
-        ['dungeon', 'red',            300],
-        ['dungeon', 'round3',         50]]
+        ['dungeon', 'radish',         1000, [None]],
+        ['dungeon', 'red',            300,  [None]],
+        ['dungeon', 'round3',         50,   [None]]]
     place_objects(env, items, entities)
     
     # Place player in first room
@@ -6528,8 +7662,8 @@ def create_item(names, effect=None):
     item = None
     item_dict = {
     
-    # Decor (decor_options)
-
+    ## Decor (decor_options)
+    
         'tree': {
             'name':           'tree',
             'role':           'other',
@@ -6542,7 +7676,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        True,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           20,
             
             'hp_bonus':       0,
@@ -6562,7 +7697,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           5,
             
             'hp_bonus':       0,
@@ -6582,7 +7718,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        True,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           5,
             
             'hp_bonus':       0,
@@ -6602,7 +7739,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        True,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           20,
             
             'hp_bonus':       0,
@@ -6622,7 +7760,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        True,
             'movable':        True,
-            'rand_set':       2,
+            'rand_X':         0,
+            'rand_Y':         2,
             'cost':           25,
             
             'hp_bonus':       0,
@@ -6642,7 +7781,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6662,7 +7802,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         10,
+            'rand_Y':         10,
             'cost':           15,
             
             'hp_bonus':       0,
@@ -6682,7 +7823,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           15,
             
             'hp_bonus':       0,
@@ -6702,7 +7844,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           15,
             
             'hp_bonus':       0,
@@ -6722,7 +7865,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           15,
             
             'hp_bonus':       0,
@@ -6742,7 +7886,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           15,
             
             'hp_bonus':       0,
@@ -6762,7 +7907,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       10,
+            'rand_X':         10,
+            'rand_Y':         10,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6770,8 +7916,29 @@ def create_item(names, effect=None):
             'defense_bonus':  0,
             'effect':         effect},
 
+        'purple bulbs': {
+            'name':           'purple bulbs',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['decor', 'purple bulbs'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_X':         10,
+            'rand_Y':         10,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+    
     # Dialogue bubbles (bubbles_options)
-
+    
         'dots': {
             'name':           'dots',
             'role':           'other',
@@ -6783,8 +7950,9 @@ def create_item(names, effect=None):
             'equipped':       False,
             'hidden':         True,
             'blocked':        False,
-            'movable':        True,
-            'rand_set':       0,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6803,8 +7971,9 @@ def create_item(names, effect=None):
             'equipped':       False,
             'hidden':         True,
             'blocked':        False,
-            'movable':        True,
-            'rand_set':       0,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6823,8 +7992,9 @@ def create_item(names, effect=None):
             'equipped':       False,
             'hidden':         True,
             'blocked':        False,
-            'movable':        True,
-            'rand_set':       0,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6843,8 +8013,9 @@ def create_item(names, effect=None):
             'equipped':       False,
             'hidden':         True,
             'blocked':        False,
-            'movable':        True,
-            'rand_set':       0,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6863,8 +8034,9 @@ def create_item(names, effect=None):
             'equipped':       False,
             'hidden':         True,
             'blocked':        False,
-            'movable':        True,
-            'rand_set':       0,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6883,8 +8055,9 @@ def create_item(names, effect=None):
             'equipped':       False,
             'hidden':         True,
             'blocked':        False,
-            'movable':        True,
-            'rand_set':       0,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6903,8 +8076,32 @@ def create_item(names, effect=None):
             'equipped':       False,
             'hidden':         True,
             'blocked':        False,
-            'movable':        True,
-            'rand_set':       0,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+    
+    # Furniture
+    
+        'purple bed': {
+            'name':           'purple bed',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'purple bed'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -6912,7 +8109,175 @@ def create_item(names, effect=None):
             'defense_bonus':  0,
             'effect':         effect},
 
-    # Drugs (drugs_options)
+        'red bed': {
+            'name':           'red bed',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'red bed'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'shelf left': {
+            'name':           'shelf left',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'shelf left'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'shelf right': {
+            'name':           'shelf right',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'shelf right'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'long table left': {
+            'name':           'long table left',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'long table left'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'long table right': {
+            'name':           'long table right',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'long table right'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'table': {
+            'name':           'table',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'table'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'red chair left': {
+            'name':           'red chair left',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'red chair left'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'red chair right': {
+            'name':           'red chair right',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['furniture', 'red chair right'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+    ## Drugs (drugs_options)
 
         'needle': {
             'name':           'needle',
@@ -6926,13 +8291,21 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           25,
             
             'hp_bonus':       0,
             'attack_bonus':   0,
             'defense_bonus':  0,
-            'effect':         effect},
+            'effect':         Effect(
+                name          = 'bowl',
+                img_names     = ['drugs', 'bowl'],
+                function      = mech.enter_hallucination,
+                trigger       = 'active',
+                sequence      = None,
+                cooldown_time = 0.1,
+                other         = None)},
 
         'skin': {
             'name':           'skin',
@@ -6946,13 +8319,21 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
             'attack_bonus':   0,
             'defense_bonus':  0,
-            'effect':         effect},
+            'effect':         Effect(
+                name          = 'bowl',
+                img_names     = ['drugs', 'bowl'],
+                function      = mech.enter_hallucination,
+                trigger       = 'active',
+                sequence      = None,
+                cooldown_time = 0.1,
+                other         = None)},
 
         'teeth': {
             'name':           'teeth',
@@ -6966,13 +8347,21 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
             'attack_bonus':   0,
             'defense_bonus':  0,
-            'effect':         effect},
+            'effect':         Effect(
+                name          = 'bowl',
+                img_names     = ['drugs', 'bowl'],
+                function      = mech.enter_hallucination,
+                trigger       = 'active',
+                sequence      = None,
+                cooldown_time = 0.1,
+                other         = None)},
 
         'bowl': {
             'name':           'bowl',
@@ -6986,7 +8375,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           30,
             
             'hp_bonus':       0,
@@ -6995,7 +8385,7 @@ def create_item(names, effect=None):
             'effect':         Effect(
                 name          = 'bowl',
                 img_names     = ['drugs', 'bowl'],
-                function      = mech.bowl,
+                function      = mech.enter_hallucination,
                 trigger       = 'active',
                 sequence      = None,
                 cooldown_time = 0.1,
@@ -7013,7 +8403,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
@@ -7040,7 +8431,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           50,
             
             'hp_bonus':       0,
@@ -7056,7 +8448,7 @@ def create_item(names, effect=None):
                 other         = None)},
 
     # Potions and scrolls (potions_options, scrolls_options)
-    
+
         'jug of blood': {
             'name':          'jug of blood',
             'role':          'potions',
@@ -7069,7 +8461,8 @@ def create_item(names, effect=None):
             'hidden':        False,
             'blocked':       False,
             'movable':       True,
-            'rand_set':      0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':          10,
             
             'hp_bonus':      0,
@@ -7089,7 +8482,8 @@ def create_item(names, effect=None):
             'hidden':        False,
             'blocked':       False,
             'movable':       True,
-            'rand_set':      0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':          10,
             
             'hp_bonus':      0,
@@ -7109,7 +8503,8 @@ def create_item(names, effect=None):
             'hidden':        False,
             'blocked':       False,
             'movable':       True,
-            'rand_set':      0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':          10,
             
             'hp_bonus':      0,
@@ -7129,7 +8524,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
@@ -7149,7 +8545,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           20,
             
             'hp_bonus':       0,
@@ -7169,7 +8566,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           20,
             
             'hp_bonus':       0,
@@ -7189,7 +8587,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           20,
             
             'hp_bonus':       0,
@@ -7209,7 +8608,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           1000,
             
             'hp_bonus':       0,
@@ -7218,6 +8618,7 @@ def create_item(names, effect=None):
             'effect':         effect},
 
     # Structures (stairs_options, floors_options)
+
         'door': {
             'name':           'door',
             'role':           'other',
@@ -7230,7 +8631,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7250,7 +8652,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7270,7 +8673,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7290,7 +8694,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7310,7 +8715,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7330,7 +8736,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7350,7 +8757,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7370,7 +8778,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7390,16 +8799,145 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
             'attack_bonus':   0,
             'defense_bonus':  0,
             'effect':         effect},
-    
+
+    # Concrete structures (concrete_options)
+
+        'gray window': {
+            'name':           'gray window',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['concrete', 'gray window'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'gray door': {
+            'name':           'gray door',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['concrete', 'gray door'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'gray wall left': {
+            'name':           'gray wall left',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['concrete', 'gray wall left'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'gray wall': {
+            'name':           'gray wall',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['concrete', 'gray wall'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'gray wall right': {
+            'name':           'gray wall right',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['concrete', 'gray wall right'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        True,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
+        'gray floor': {
+            'name':           'gray floor',
+            'role':           'other',
+            'slot':           None,
+            'img_names':      ['concrete', 'gray floor'],
+            
+            'durability':     101,
+            'equippable':     False,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        False,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         effect},
+
     # Weapons (equip_names)
-    
+
         'shovel': {
             'name':           'shovel',
             'role':           'weapons',
@@ -7412,13 +8950,21 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           15,
             
             'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
+            'attack_bonus':   2,
+            'defense_bonus':  10,
+            'effect':         Effect(
+                name          = 'the way of the spade',
+                img_names     = ['shovel', 'dropped'],
+                function      = mech.suicide,
+                trigger       = 'active',
+                sequence      = '⮟⮟⮟',
+                cooldown_time = 1,
+                other         = None)},
 
         'super shovel': {
             'name':           'super shovel',
@@ -7432,11 +8978,12 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
-            'attack_bonus':   1000,
+            'attack_bonus':   100,
             'defense_bonus':  0,
             'effect':         effect},
 
@@ -7452,13 +8999,21 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           25,
             
             'hp_bonus':       0,
             'attack_bonus':   2,
             'defense_bonus':  0,
-            'effect':         effect},
+            'effect':         Effect(
+                name          = 'swing',
+                img_names     = ['decor', 'boxes'],
+                function      = mech.swing,
+                trigger       = 'active',
+                sequence      = '⮜⮟⮞',
+                cooldown_time = 0.1,
+                other         = None)},
 
         'sword': {
             'name':           'sword',
@@ -7472,7 +9027,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           75,
             
             'hp_bonus':       0,
@@ -7492,7 +9048,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           500,
             
             'hp_bonus':       0,
@@ -7512,13 +9069,44 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           1000,
             
             'hp_bonus':       0,
             'attack_bonus':   15,
             'defense_bonus':  0,
             'effect':         effect},
+
+    # Effects
+
+        'eye': {
+            'name':           'eye',
+            'role':           'weapons',
+            'slot':           'dominant hand',
+            'img_names':      ['blood dagger', 'dropped'],
+            
+            'durability':     101,
+            'equippable':     True,
+            'equipped':       False,
+            'hidden':         True,
+            'blocked':        False,
+            'movable':        True,
+            'rand_X':         0,
+            'rand_Y':         0,
+            'cost':           0,
+            
+            'hp_bonus':       0,
+            'attack_bonus':   0,
+            'defense_bonus':  0,
+            'effect':         Effect(
+                name          = 'swing',
+                img_names     = ['null', 'null'],
+                function      = mech.swing,
+                trigger       = 'passive',
+                sequence      = None,
+                cooldown_time = 0.1,
+                other         = None)},
 
     # Armor (equip_names)
 
@@ -7534,7 +9122,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
@@ -7554,7 +9143,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
@@ -7574,7 +9164,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           20,
             
             'hp_bonus':       1,
@@ -7594,7 +9185,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           10,
             
             'hp_bonus':       0,
@@ -7614,7 +9206,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           20,
             
             'hp_bonus':       0,
@@ -7634,7 +9227,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           100,
             
             'hp_bonus':       0,
@@ -7654,14 +9248,15 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        False,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
             'attack_bonus':   0,
             'defense_bonus':  0,
             'effect':         effect},
-        
+
         'brown hair': {
             'name':           'brown hair',
             'role':           'armor',
@@ -7674,7 +9269,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7694,7 +9290,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7714,7 +9311,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7734,7 +9332,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7754,7 +9353,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7774,7 +9374,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7794,7 +9395,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7814,7 +9416,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7834,7 +9437,8 @@ def create_item(names, effect=None):
             'hidden':         True,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -7854,7 +9458,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           50,
             
             'hp_bonus':       0,
@@ -7881,7 +9486,8 @@ def create_item(names, effect=None):
             'hidden':         False,
             'blocked':        False,
             'movable':        True,
-            'rand_set':       0,
+            'rand_X':         0,
+            'rand_Y':         0,
             'cost':           0,
             
             'hp_bonus':       0,
@@ -8005,16 +9611,16 @@ def create_entity(names):
             
             'exp':         35,
             'rank':        1,
-            'hp':          20,
-            'max_hp':      20,
-            'attack':      4,
-            'defense':     0,
+            'hp':          100,
+            'max_hp':      100,
+            'attack':      20,
+            'defense':     20,
             'stamina':     100,
             
             'follow':      True,
             'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
+            'miss_rate':   20,
+            'aggression':  50,
             'fear':        None,
             'reach':       1000},
         
@@ -8066,18 +9672,18 @@ def create_entity(names):
             'img_names':   ['triangle', 'front'],
             'habitat':     'land',
 
-            'exp':         500,
+            'exp':         100,
             'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
+            'hp':          25,
+            'max_hp':      25,
             'attack':      15,
-            'defense':     5,
+            'defense':     10,
             'stamina':     100,
             
             'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
+            'lethargy':    1,
+            'miss_rate':   5,
+            'aggression':  100,
             'fear':        None,
             'reach':       1000},
     
@@ -8108,18 +9714,18 @@ def create_entity(names):
             'img_names':   ['tentacles', 'front'],
             'habitat':     'any',
 
-            'exp':         500,
+            'exp':         50,
             'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
+            'hp':          35,
+            'max_hp':      35,
+            'attack':      10,
+            'defense':     10,
             'stamina':     100,
             
             'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
+            'lethargy':    2,
+            'miss_rate':   1,
+            'aggression':  100,
             'fear':        None,
             'reach':       1000},
     
@@ -8129,7 +9735,7 @@ def create_entity(names):
             'img_names':   ['round1', 'front'],
             'habitat':     'land',
             
-            'exp':         500,
+            'exp':         50,
             'rank':        1,
             'hp':          50,
             'max_hp':      50,
@@ -8138,9 +9744,9 @@ def create_entity(names):
             'stamina':     100,
             
             'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
+            'lethargy':    0,
+            'miss_rate':   5,
+            'aggression':  100,
             'fear':        None,
             'reach':       1000},
     
@@ -8348,9 +9954,9 @@ def create_entity(names):
             'stamina':     100,
             
             'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
+            'lethargy':    20,
+            'miss_rate':   20,
+            'aggression':  10,
             'fear':        None,
             'reach':       1000},
     
@@ -8378,20 +9984,25 @@ def create_entity(names):
     if type(names) in [tuple, list]:
         for val in ent_dict.values():
             if val.img_names == names:
-                item = Entity(**val)
+                ent = Entity(**val)
+                ent.handedness = random.choice(['left', 'right'])
     else:
-        item = Entity(**ent_dict[names])
+        ent = Entity(**ent_dict[names])
     
-    if not item: raise Exception(names)
-    else:        return item
+    if not ent: raise Exception(names)
+    else:        return ent
 
 def create_NPC(name):
     """ A more specific version of create_entity. """
     
     if name == 'Kyrio':
         
+        # Basics
+        ent       = create_entity('black')
+        ent.name  = 'Kyrio'
+        ent.reach = 1000
+        
         # Equipment
-        ent = create_entity('black')
         clothes = create_item('exotic clothes')
         beard   = create_item('white beard')
         dagger  = create_item('blood dagger')
@@ -8413,8 +10024,12 @@ def create_NPC(name):
     
     elif name == 'Kapno':
         
+        # Basics
+        ent       = create_entity('black')
+        ent.name  = 'Kapno'
+        ent.reach = 2
+
         # Equipment
-        ent     = create_entity('black')
         clothes = create_item('exotic clothes')
         beard   = create_item('white beard')
         dagger  = create_item('blood dagger')
@@ -8428,7 +10043,7 @@ def create_NPC(name):
         dagger.toggle_equip(ent)
         
         # Inventory
-        ent.trader = True
+        ent.trader = [3, 4, 5, 6]
         inv = ['shovel', 'sword', 'iron shield',
                'orange clothes', 'exotic clothes',
                'jug of blood', 'jug of grapes', 'jug of water', 'jug of cement',
@@ -8445,10 +10060,52 @@ def create_NPC(name):
             "Kapno: My bones may be brittle, but I know good products when I see them.",
             "Kapno: *mumbles*"]
     
+    elif name == 'Blodo':
+        
+        # Basics
+        ent       = create_entity('black')
+        ent.name  = 'Blodo'
+        ent.reach = 2
+
+        # Equipment
+        clothes = create_item('exotic clothes')
+        beard   = create_item('white beard')
+        dagger  = create_item('blood dagger')
+        
+        clothes.pick_up(ent=ent)
+        beard.pick_up(ent=ent)
+        dagger.pick_up(ent=ent)
+        
+        clothes.toggle_equip(ent)
+        beard.toggle_equip(ent)
+        dagger.toggle_equip(ent)
+        
+        # Inventory
+        ent.trader = [3, 4, 5, 6]
+        inv = ['shovel', 'sword', 'iron shield',
+               'orange clothes', 'exotic clothes',
+               'jug of blood', 'jug of grapes', 'jug of water', 'jug of cement',
+               'boxes', 'fire', 'shrooms', 'cup shroom']
+        for item in inv:
+            item = create_item(item)
+            item.pick_up(ent=ent)
+        
+        # Dialogue
+        ent.default_dialogue = [
+            "Blodo: Huh?",
+            "Blodo: Too many dry days, it seems. The lake is rather shallow.",
+            "Blodo: Have you seen my brother? He seems distracted as of late.",
+            "Blodo: My bones may be brittle, but I know good products when I see them.",
+            "Blodo: *mumbles*"]
+    
     elif name == 'Erasti':
         
+        # Basics
+        ent       = create_entity('black')
+        ent.name  = 'Erasti'
+        ent.reach = 10
+        
         # Equipment
-        ent     = create_entity('black')
         hair    = create_item('brown hair')
         bra     = create_item('bra')
         clothes = create_item('yellow dress')
@@ -8475,8 +10132,12 @@ def create_NPC(name):
     
     elif name == 'Merci':
         
+        # Basics
+        ent       = create_entity('white')
+        ent.name  = 'Merci'
+        ent.reach = 4
+        
         # Equipment
-        ent     = create_entity('white')
         hair    = create_item('blue hair')
         bra     = create_item('bra')
         clothes = create_item('chain dress')
@@ -8493,7 +10154,7 @@ def create_NPC(name):
         shovel.toggle_equip(ent)
         
         # Inventory
-        ent.trader = True
+        ent.trader = [3, 4, 5, 6]
         inv = ['shovel',
                'chain dress', 'green clothes', 'yellow dress',
                'bubbles', 'plant']
@@ -8510,29 +10171,318 @@ def create_NPC(name):
             "Merci: We have many items for sale.",
             "Merci: ... Oh, welcome in!"]
     
-    elif name == 'random':
-        ent     = create_entity(str(random.choice(img.skin_options)))
-        hair    = create_item(str(random.choice(img.hair_options)))
-        bra     = create_item(str(random.choice(img.chest_options)))
-        face    = create_item(str(random.choice(img.face_options)))
-        clothes = create_item(str(random.choice(img.armor_names)))
+    elif name == 'Oxi':
+        
+        # Basics
+        ent       = create_entity('white')
+        ent.name  = 'Oxi'
+        ent.reach = 25
+        
+        # Equipment
+        hair    = create_item('blue hair')
+        face    = create_item('blue beard')
+        clothes = create_item('orange clothes')
         
         hair.pick_up(ent=ent)
-        bra.pick_up(ent=ent)
         face.pick_up(ent=ent)
         clothes.pick_up(ent=ent)
         
         hair.toggle_equip(ent)
-        bra.toggle_equip(ent)
         face.toggle_equip(ent)
         clothes.toggle_equip(ent)
-        ent.lethargy = random.randint(1, 10)
+        clothes.hidden = True
+        
+        # Inventory
+        ent.trader = [1, 2, 7, 8]
+        inv = ['needle', 'skin', 'teeth', 'bowl', 'plant', 'bubbles']
+        for item in inv:
+            item = create_item(item)
+            item.pick_up(ent=ent)
+        
+        # Dialogue
         ent.default_dialogue = [
-            "NPC: ...",
-            "NPC: Howdy!",
-            "NPC: *seems busy*"]
+            "Oxi: Yeah, I got it... talk to me later. You'd be surprised by what I can find.",
+            "Oxi: Don't run your mouth about this. Just buy and leave.",
+            "Oxi: Weren't you just here? Buy what you need, I guess.",
+            "Oxi: ..."]
+    
+    elif name == 'Aya':
+        
+        # Basics
+        ent       = create_entity('white')
+        ent.name  = 'Aya'
+        ent.reach = 50
+        
+        # Equipment
+        hair    = create_item('brown hair')
+        bra     = create_item('bra')
+        clothes = create_item('chain dress')
+        sword  = create_item('sword')
+        shield  = create_item('iron shield')
+        
+        hair.pick_up(ent=ent)
+        bra.pick_up(ent=ent)
+        clothes.pick_up(ent=ent)
+        sword.pick_up(ent=ent)
+        shield.pick_up(ent=ent)
+        
+        hair.toggle_equip(ent)
+        bra.toggle_equip(ent)
+        clothes.toggle_equip(ent)
+        sword.toggle_equip(ent)
+        shield.toggle_equip(ent)
+        
+        # Dialogue
+        ent.default_dialogue = [
+            "Aya: ...",
+            "Aya: I chop trees, vines, grass -- whatever needs to be cut.",
+            "Aya: Huh, haven't seen you around. Been busy clearing paths.",
+            "Aya: Careful! My blades are sharp.",
+            "Aya: I can only dream of what's out there, beyond the town.",
+            "Aya: The trickle of the lake lulls me to sleep.",
+            "Aya: You don't talk much, huh? Just like Kyrio... what a curious old man."]
+    
+    elif name == 'Zung':
+        
+        # Basics
+        ent       = create_entity('white')
+        ent.name  = 'Zung'
+        ent.reach = 6
+        
+        # Equipment
+        hair    = create_item('bald')
+        clothes = create_item('green clothes')
+        
+        hair.pick_up(ent=ent)
+        clothes.pick_up(ent=ent)
+        
+        hair.toggle_equip(ent)
+        clothes.toggle_equip(ent)
+        
+        # Dialogue
+        ent.default_dialogue = [
+            "Zung: ...",
+            "Zung: Have you seen my sister, Aya? She's scary, right?",
+            "Zung: No, I deal in rumors. If you want goods, ask Merci or Kapno.",
+            "Zung: I always thought we were the only town... until recently.",
+            "Zung: The jail also houses the bank. Secure? You bet.",
+            "Zung: *mumbles something about Erasti and Oxi*",
+            "Zung: Kyrio is fit for his age, but he hides it well."]
+    
+    elif name == 'Lilao':
+        
+        # Basics
+        ent     = create_entity('black')
+        ent.name  = 'Lilao'
+        ent.reach = 15
+        
+        # Equipment
+        hair    = create_item('blue hair')
+        bra     = create_item('bra')
+        clothes = create_item('yellow dress')
+        
+        hair.pick_up(ent=ent)
+        bra.pick_up(ent=ent)
+        clothes.pick_up(ent=ent)
+        
+        hair.toggle_equip(ent)
+        bra.toggle_equip(ent)
+        clothes.toggle_equip(ent)
+        
+        # Dialogue
+        ent.default_dialogue = [
+            "Lilao: ..."]
+    
+    elif name == 'random':
+        
+        # Basics
+        ent       = create_entity(str(random.choice(img.skin_options)))
+        ent.name  = 'NPC'
+        ent.reach = 20
+        
+        # Equipment
+        hair    = create_item(str(random.choice(img.hair_options)))
+        bra     = create_item(str(random.choice(img.chest_options)))
+        clothes = create_item(str(random.choice(img.armor_names)))
+        
+        hair.pick_up(ent=ent)
+        bra.pick_up(ent=ent)
+        clothes.pick_up(ent=ent)
+        
+        hair.toggle_equip(ent)
+        bra.toggle_equip(ent)
+        clothes.toggle_equip(ent)
+        
+        if bra.name == 'flat':
+            face = create_item(str(random.choice(img.face_options)))
+            face.pick_up(ent=ent)
+            face.toggle_equip(ent)
+        
+        ent.lethargy = random.randint(1, 10)
+        dialogue_options = [
+            ["NPC: ...",
+            "NPC: I had the strangest dream last night... Huh? Just talking to myself.",
+            "NPC: *seems busy*"],
+            ["NPC: Howdy!",
+            "NPC: Have you seen those cracks in the sand? My neighbor fell right through one!",
+            "NPC: Yeah, Merci is good. I always go to her for clothes and everyday items.",
+            "NPC: Grapes are great for health, but you can't build without concrete!"],
+            ["NPC: Oxi can get whatever you need, but he only sells at night.",
+            "NPC: Sometimes, I just pick weeds for fun. The ground looks nice without them.",
+            "NPC: ...Did you see that? Maybe I should spend less time with Oxi..."]]
+
+        ent.default_dialogue = random.choice(dialogue_options)
     
     return ent
+
+def create_text_room(width=5, height=5, doors=True):
+    
+    ## Initialize size
+    if not width:  width = random.randint(5, 7)
+    if not height: height = random.randint(5, 7)
+    plan = [['' for x in range(width)] for y in range(height)]
+
+    ## Create a floor
+    last_left = 1
+    last_right = width - 1
+    for i in range(height):
+        
+        if not random.choice([0, 1]):
+            for j in range(width):
+                if last_left <= j <= last_right: plan[i][j] = '.'
+                else:                            plan[i][j] = ' '
+        
+        left = random.randint(1, width//2-1)
+        right = random.randint(width//2+1, width-1)
+        if (abs(left - last_left) < 2) or (abs(right - last_right) < 2):
+            for j in range(width):
+                if left <= j <= right: plan[i][j] = '.'
+                else:                  plan[i][j] = ' '
+        
+        elif random.choice([0, 1]):
+            left = random.choice([left, last_left])
+            right = random.choice([right, last_right])
+            for j in range(width):
+                if left <= j <= right: plan[i][j] = '.'
+                else:                  plan[i][j] = ' '
+        
+        else:
+            for j in range(width):
+                if last_left <= j <= last_right: plan[i][j] = '.'
+                else:                            plan[i][j] = ' '
+        
+        last_left  = left
+        last_right = right
+
+    ## Surround the floor with walls
+    plan[0] = [' ' for _ in range(width)]
+    plan[1] = [' ' for _ in range(width)]
+    plan.append([' ' for _ in range(width)])
+    for i in range(len(plan)): plan[i].append(' ')
+
+    for i in range(len(plan)):
+        for j in range(len(plan[0])):
+            for key in plan[i][j]:
+                if key == '.':
+                    if plan[i-1][j-1] != key: plan[i-1][j-1] = '-'
+                    if plan[i-1][j] != key:   plan[i-1][j]   = '-'
+                    if plan[i-1][j+1] != key: plan[i-1][j+1] = '-'
+                    if plan[i][j-1] != key:   plan[i][j-1]   = '-'
+                    if plan[i][j+1] != key:   plan[i][j+1]   = '-'
+                    if plan[i+1][j-1] != key: plan[i+1][j-1] = '-'
+                    if plan[i+1][j] != key:   plan[i+1][j]   = '-'
+                    if plan[i+1][j+1] != key: plan[i+1][j+1] = '-'
+
+    ## Place a door or two
+    if doors:
+        plan[0] = [' ' for _ in range(width)]
+        plan.append([' ' for _ in range(width)])
+        for i in range(len(plan)): plan[i].append(' ')
+
+        placed = False
+        for i in range(len(plan)):
+            for j in range(len(plan[0])):
+                if not placed:
+                    if plan[i][j] == '-':
+                        vertical = [
+                            plan[i-1][j],
+                            plan[i+1][j]]
+                        horizontal = [
+                            plan[i][j-1],
+                            plan[i][j+1]]
+                        if ('-' in vertical) and ('-' in horizontal):
+                            placed = False
+                        elif (' ' not in vertical) and (' ' not in horizontal):
+                            placed = False
+                        else:
+                            if not random.randint(0, 10):
+                                plan[i][j] = '|'
+                                if random.randint(0, 1): placed = True
+                    else: placed = False
+        if not placed:
+            for i in range(len(plan)):
+                for j in range(len(plan[0])):
+                    if not placed:
+                        if plan[i][j] == '-':
+                            vertical = [
+                                plan[i-1][j],
+                                plan[i+1][j]]
+                            horizontal = [
+                                plan[i][j-1],
+                                plan[i][j+1]]
+                            if ('-' in vertical) and ('-' in horizontal):
+                                placed = False
+                            elif (' ' not in vertical) and (' ' not in horizontal):
+                                placed = False
+                            else:
+                                if not random.randint(0, 10):
+                                    plan[i][j] = '|'
+                                    placed = True
+                        else: placed = False
+
+    ## Place furniture and decorations
+    def neighbors(i, j):
+        neighbors = [
+            plan[i-1][j-1],
+            plan[i-1][j],
+            plan[i-1][j+1],
+            plan[i][j-1],
+            plan[i][j+1],
+            plan[i+1][j-1],
+            plan[i+1][j],
+            plan[i+1][j+1]]
+        return neighbors
+
+    bed = False
+    dining = False
+    shelf = False
+
+    for i in range(len(plan)):
+        for j in range(len(plan[0])):
+            if random.randint(0, 1):
+                if (plan[i][j] == '.') and ('|' not in neighbors(i, j)):
+                    if (plan[i][j+1] == '.') and ('|' not in neighbors(i, j+1)):
+                        if (plan[i][j+2] == '.') and ('|' not in neighbors(i, j+2)):
+                            if not dining and not random.randint(0, 5):
+                                
+                                plan[i][j] = 'b'
+                                plan[i][j+1] = 'T'
+                                plan[i][j+2] = 'd'
+                                dining = True
+                        else:
+                            if not bed and not random.randint(0, 3):
+                                plan[i][j] = '='
+                                if not random.randint(0, 2): bed = True
+                            
+                            else:
+                                if (not shelf) and (plan[i-1][j] == '-') and (plan[i-1][j+1] == '-'):
+                                    plan[i][j] = '['
+                                    plan[i][j+1] = ']'
+                                    shelf = True
+    export = []
+    for row in plan:
+        export.append("".join(row))
+    return export
 
 def add_doors(room):
     """ Add one or two doors to a room, and adds a entryway. """
@@ -8679,7 +10629,7 @@ def place_objects(env, items, entities):
                         ## Place object
                         item = create_item(selection[1])
                         place_object(item, [x, y], env)
-                    
+                
                 ## Randomly select and place an entity
                 selection = random.choice(entities)
                 
@@ -8687,8 +10637,17 @@ def place_objects(env, items, entities):
                 if env.map[x][y].biome in img.biomes[selection[0]]:
                     if not random.randint(0, selection[2]) and not env.map[x][y].item:
                         
-                        ## Place entity
+                        ## Create and place entity
                         entity = create_entity(selection[1])
+                        for item in selection[3]:
+                            if item:
+                                obj = create_item(item)
+                                obj.pick_up(ent=entity)
+                                if obj.equippable:
+                                    obj.toggle_equip(entity)
+                                    if obj.effect:
+                                        obj.effect.trigger = 'passive'
+                        
                         entity.biome = env.map[x][y].biome
                         env.entities.append(entity)
                         place_object(entity, [x, y], env)
@@ -8705,8 +10664,9 @@ def place_player(env, loc):
     if not player_obj.ent.dead:
         if not pyg.startup_toggle:
             
-            # Remove and extra motions
+            # Remove extra motions and animations
             pygame.event.clear()
+            img.render_log = []
             
             # Remove from current location
             if player_obj.ent.env:
@@ -8726,20 +10686,29 @@ def place_player(env, loc):
             player_obj.ent.X0   = loc[0] * pyg.tile_width
             player_obj.ent.Y    = loc[1] * pyg.tile_height
             player_obj.ent.Y0   = loc[1] * pyg.tile_height
+            player_obj.ent.toggle_effects()
+            
+            # Set time and date
+            if player_obj.ent.env.name in ['home', 'overworld', 'cave']:
+                if player_obj.ent.last_env.name in ['home', 'overworld', 'cave']:
+                    player_obj.ent.env.env_date = player_obj.ent.last_env.env_date
+                    player_obj.ent.env.env_time = player_obj.ent.last_env.env_time
 
-            # Notify environmnet of player position
+            # Notify environment of player position
             player_obj.ent.env.entities.append(player_obj.ent)
             player_obj.ent.tile.entity = player_obj.ent
+            check_tile(loc[0], loc[1], startup=True)
             
-            check_tile(loc[0], loc[1])
-            
+            # Update camera
             if not env.camera: env.camera = Camera(player_obj.ent)
             env.camera.update()
             player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
             
+            # Render
             time.sleep(0.5)
             pyg.update_gui()
             
+            # Change song
             if player_obj.ent.env.name != last_env_name:
                 aud.control(soundtrack=env.soundtrack)
         
@@ -8754,23 +10723,23 @@ def place_player(env, loc):
             player_obj.ent.X0   = loc[0] * pyg.tile_width
             player_obj.ent.Y    = loc[1] * pyg.tile_height
             player_obj.ent.Y0   = loc[1] * pyg.tile_height
+            player_obj.ent.toggle_effects()
 
             # Notify environmnet of player position
             player_obj.ent.env.entities.append(player_obj.ent)
             player_obj.ent.tile.entity = player_obj.ent
-            
             check_tile(loc[0], loc[1])
             
+            # Update camera
             if not env.camera: env.camera = Camera(player_obj.ent)
             env.camera.update()
             player_obj.ent.env.camera.zoom_in(custom=pyg.zoom_cache)
             
-            time.sleep(0.5)
             pyg.update_gui()
 
 #######################################################################################################################################################
-# Mechanics
-## Common
+# Utilities
+## General
 def check_level_up():
     """ Checks if the player's experience is enough to level-up. """
     
@@ -8778,65 +10747,19 @@ def check_level_up():
     if player_obj.ent.exp >= level_up_exp:
         player_obj.ent.rank += 1
         player_obj.ent.exp -= level_up_exp
-        pyg.update_gui("Leveled up to " + str(player_obj.ent.rank) + "!", pyg.yellow)
-        choice = None
-        while choice == None: # Keeps asking until a choice is made
-            choice = new_menu(
-                header   = 'Leveled up! Choose your progress:',
-                options  = ['Max HP (+20 HP, from ' + str(player_obj.ent.max_hp)  + ')',
-                            'Attack (+1 attack, from '  + str(player_obj.ent.attack)  + ')',
-                            'Defense (+1 defense, from '  + str(player_obj.ent.defense) + ')'], 
-                position = 'center')
+        
+        dialogue = [
+            "You feel stronger.",
+            "Flow state!",
+            "Resilience flows through you."]
+        pyg.update_gui(random.choice(dialogue), pyg.gray)
 
-        if choice == 0:
-            player_obj.ent.max_hp += 20
-            player_obj.ent.hp += 20
-        elif choice == 1:
-            player_obj.ent.attack += 1
-        elif choice == 2:
-            player_obj.ent.defense += 1
+        player_obj.ent.rank += 1
+        player_obj.ent.max_hp += 20
+        player_obj.ent.hp += 20
+        player_obj.ent.attack += 1
+        player_obj.ent.defense += 1
         pyg.update_gui()
-
-## Effects
-def floor_effects(floor_effect):
-    if floor_effect:
-        if floor_effect == 'damage':
-            player_obj.ent.take_damage(10)
-
-def active_effects():
-    """ Applies effects from items and equipment. Runs constantly. """
-    global super_dig
-    
-    if player_obj.ent.equipment['dominant hand']:     dom = player_obj.ent.equipment['dominant hand']
-    if player_obj.ent.equipment['non-dominant hand']: non = player_obj.ent.equipment['non-dominant hand']
-    
-    try:
-        if dom.name == 'super shovel':       super_dig = True
-        else:                                super_dig = False
-        if non.effect.function == mech.lamp: non.effect.function(non)
-    except:                                  super_dig = False
-
-#######################################################################################################################################################
-# Utilities
-## Gameplay
-def is_blocked(env, loc):
-    """ Checks for barriers and triggers dialogue. """
-    
-    # Check for barriers
-    if env.map[loc[0]][loc[1]].blocked:
-        return True
-    
-    # Check for monsters
-    if env.map[loc[0]][loc[1]].entity: 
-        return True
-    
-    # Triggers message for hidden passages
-    if env.map[loc[0]][loc[1]].unbreakable:
-        pyg.update_gui("A mysterious breeze seeps through the cracks.", pyg.dark_gray)
-        pygame.event.clear()
-        return True
-    
-    return False
 
 def sort_inventory(ent=None):   
     
@@ -8860,35 +10783,6 @@ def sort_inventory(ent=None):
 
     player_obj.ent.inventory = inventory_cache
 
-def from_dungeon_level(table):
-    """ Returns a value that depends on the dungeon level. Runs in groups.
-        The table specifies what value occurs after each level with 0 as the default. """
-    
-    for (value, level) in reversed(table):
-        if player_obj.ent.env.lvl_num >= level:
-            return value
-    return 0
-
-def random_choice_index(chances):
-    """ Chooses an option from a list of possible values, then returns its index. """
-        
-    dice = random.randint(1, sum(chances))
-    running_sum = 0
-    choice = 0
-    # Checks if the random choice corresponds to one of the possible values
-    for w in chances:
-        running_sum += w
-        if dice <= running_sum:
-            return choice
-        choice += 1
-
-def random_choice(chances_dict):
-    """ Chooses one option from dictionary of chances, then returning its key. """
-        
-    chances = chances_dict.values()
-    strings = list(chances_dict.keys())
-    return strings[random_choice_index(chances)]
-
 def screenshot(size='display', visible=False, folder="Data/.Cache", filename="screenshot.png", blur=False):
     """ Takes a screenshot.
         cache:  saves a regular screenshot under Data/.Cache/screenshot.png
@@ -8896,12 +10790,13 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
         blur:   adds a blur effect """
     
     # Turn off gui
+    gui_cache, msg_cache = copy.copy(pyg.gui_toggle), copy.copy(pyg.msg_toggle)
     pyg.gui_toggle, pyg.msg_toggle = False, False
     
     # Select display size
     if size == 'full':
         camera_cache = [player_obj.ent.env.camera.X, player_obj.ent.env.camera.Y]
-        pyg.display = pygame.display.set_mode((len(player_obj.ent.env.map[0])*16, len(player_obj.ent.env.map)*16),)
+        pyg.screen = pygame.display.set_mode((len(player_obj.ent.env.map[0])*16, len(player_obj.ent.env.map)*16),)
         player_obj.ent.env.camera.X = 0
         player_obj.ent.env.camera.Y = 0
         player_obj.ent.env.camera.update()
@@ -8909,7 +10804,7 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
     
     # Save image
     path = folder + '/' + filename
-    pygame.image.save(pyg.display, path)
+    pygame.image.save(pyg.screen, path)
     
     # Add effects
     if blur:
@@ -8919,12 +10814,64 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
     
     # Reset everthing to normal
     if size == 'full':
-        pyg.display = pygame.display.set_mode((pyg.screen_width, pyg.screen_height),)
+        pyg.screen = pygame.display.set_mode((pyg.screen_width, pyg.screen_height),)
         player_obj.ent.env.camera.X = camera_cache[0]
         player_obj.ent.env.camera.Y = camera_cache[1]
         player_obj.ent.env.camera.update()
+    
+    pyg.gui_toggle, pyg.msg_toggle = gui_cache, msg_cache
     render_all()
-    pyg.gui_toggle, pyg.msg_toggle = True, True
+
+def is_blocked(env, loc):
+    """ Checks for barriers and triggers dialogue. """
+    
+    # Check for barriers
+    if env.map[loc[0]][loc[1]].blocked:
+        return True
+    
+    # Check for monsters
+    if env.map[loc[0]][loc[1]].entity: 
+        return True
+    
+    # Triggers message for hidden passages
+    if env.map[loc[0]][loc[1]].unbreakable:
+        #pyg.update_gui("A mysterious breeze seeps through the cracks.", pyg.dark_gray)
+        pygame.event.clear()
+        return True
+    
+    return False
+
+def resource_path(relative_path):
+    """ Get the absolute path to a resource, works for dev and PyInstaller. """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+## Effects
+def floor_effects(floor_effect):
+    if floor_effect:
+        if floor_effect == 'damage':
+            player_obj.ent.take_damage(10)
+
+def active_effects():
+    """ Applies effects from items and equipment. Runs constantly. """
+    global super_dig
+    
+    # Check for equipment
+    if player_obj.ent.equipment['dominant hand']:     hand_1 = player_obj.ent.equipment['dominant hand']
+    else:                                             hand_1 = None
+    if player_obj.ent.equipment['non-dominant hand']: hand_2 = player_obj.ent.equipment['non-dominant hand']
+    else:                                             hand_2 = None
+    
+    # Apply dominant hand function
+    if hand_1:
+        if hand_1.name == 'super shovel': super_dig = True
+        else:                             super_dig = False
+    
+    # Apply non-dominant hand function
+    if hand_2:
+        if hand_2.effect.name == 'lamp':
+            hand_2.effect.function(hand_2)
 
 #######################################################################################################################################################
 # Global scripts
