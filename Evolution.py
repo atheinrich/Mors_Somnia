@@ -386,6 +386,7 @@ def check_tile(x, y, startup=False):
     
     # Reveal a hidden room
     if tile.room:
+        
         if tile.room.hidden:
             tile.room.hidden = False
             for room_tile in tile.room.tiles_list:
@@ -400,7 +401,7 @@ def check_tile(x, y, startup=False):
                     for spot in tile.room.tiles_list:
                         if spot not in tile.room.walls_list:
                             spot.img_names = tile.room.floor
-        
+    
     # Reveal the roof if the player leaves the room
     if player_obj.ent.prev_tile:
         prev_tile = player_obj.ent.prev_tile
@@ -1133,7 +1134,7 @@ class Images:
         """ Death animation. """
         
         self.impact = True
-        vicinity_list = ent.get_vicinity()
+        vicinity_list = list(get_vicinity(ent).values())
         for i in range(len(vicinity_list)):
             
             image     = image
@@ -1463,6 +1464,7 @@ class Player:
                           'wood':   ['floors', 'wood'],
                           'water':  ['floors', 'water']},
             'paths':     {},
+            'stairs':    {'door': ['stairs', 'door']},
             'decor':     {'blades': ['decor', 'blades'],
                           'lights': ['decor', 'lights']},
             'furniture': {'table':  ['furniture', 'table'],
@@ -2710,11 +2712,14 @@ class DevTools:
         
         # Place tile
         if self.img_names[0] in ['floors', 'walls', 'roofs']:
+            obj = player_obj.ent.env.map[self.img_x][self.img_y]
+            obj.placed = True
             place_object(
-                obj = player_obj.ent.env.map[self.img_x][self.img_y],
+                obj = obj,
                 loc = [self.img_x, self.img_y],
                 env = player_obj.ent.env,
                 names = self.img_names.copy())
+            self.build_room(obj)
         
         # Place entity
         elif self.img_names[0] in img.ent_names:
@@ -2735,6 +2740,8 @@ class DevTools:
                 loc   = [self.img_x, self.img_y],
                 env   = player_obj.ent.env,
                 names = self.img_names.copy())
+            if item.img_names[0] == 'stairs':
+                item.tile.blocked = False
         
         else:
             ent = create_entity(
@@ -2748,6 +2755,91 @@ class DevTools:
         self.img_x, self.img_y = None, None
         pyg.overlay = None
 
+    def build_room(self, obj):
+        """ Checks if a placed tile has other placed tiles around it.
+            If so, it creates a room if these placed tiles form a closed shape. """
+        
+        # Make a list of the tile and its neighbors
+        first_neighbors = [obj]        # list of initial set of tiles; temporary
+        for first_neighbor in get_vicinity(obj).values():
+            if first_neighbor.placed:
+                first_neighbors.append(first_neighbor)
+        
+        # Look for a chain of adjacent-placed tiles
+        connected = dict()             # final dictionary of connected tiles
+        queue = list(first_neighbors)  # holds additional tiles outside of nearest neighbors
+        visited = set()                # avoids revisiting tiles
+        while queue:
+            tile = queue.pop(0)
+            if tile in visited: continue
+            visited.add(tile)
+            connected[tile] = []
+            
+            # Add new links to the chain
+            for neighbor in get_vicinity(tile).values():
+                if neighbor.placed:
+                    connected[tile].append(neighbor)
+                    if neighbor not in visited and neighbor not in queue:
+                        queue.append(neighbor)
+        
+        # Check if the chain forms a closed boundary
+        def has_closed_boundary(graph):
+            visited = set()
+
+            def dfs(node, parent, path):
+                visited.add(node)
+                path.append(node)
+                for neighbor in graph[node]:
+                    if neighbor not in visited:
+                        if dfs(neighbor, node, path):
+                            return True
+                    elif neighbor != parent:
+                        cycle_start_index = path.index(neighbor)
+                        cycle_length = len(path) - cycle_start_index
+                        if cycle_length >= 4:
+                            return True
+                path.pop()
+                return False
+
+            for node in graph:
+                if node not in visited:
+                    if dfs(node, None, []):
+                        return True
+            return False
+        
+        # Look for enclosed tiles and create room
+        if has_closed_boundary(connected):
+            
+            # Get bounds of the area to check
+            boundary_coords = set((tile.X//32, tile.Y//32) for tile in connected.keys())
+            xs = [tile.X//32 for tile in connected.keys()]
+            ys = [tile.Y//32 for tile in connected.keys()]
+            min_x, max_x = min(xs), max(xs)
+            min_y, max_y = min(ys), max(ys)
+        
+            boundary = {
+                'boundary tiles':       list(connected.keys()),
+                'boundary coordinates': boundary_coords,
+                'min x':                min_x,
+                'max x':                max_x,
+                'min y':                min_y,
+                'max y':                max_y}
+        
+            main_room = Room(
+                name    = 'placed',
+                env     = player_obj.ent.env,
+                x1      = min_x,
+                y1      = min_y,
+                width   = int(max_x - min_x),
+                height  = int(max_y - min_y),
+                biome   = 'city',
+                hidden  = False,
+                objects = True,
+                floor   = player_obj.ent.env.floors,
+                walls   = player_obj.ent.env.walls,
+                roof    = player_obj.ent.env.roofs,
+                boundary = boundary)
+    
     def export_env(self):
         with open(f"Data/File_{player_obj.file_num}/env.pkl", 'wb') as file:
             pickle.dump(player_obj.ent.env, file)
@@ -4608,18 +4700,27 @@ class Tile:
     def __init__(self, **kwargs):
         """ Parameters
             ----------
-            name        : str; identifier for image
+            number      : int; identifier for convenience
             room        : Room object
             entity      : Entity object; entity that occupies the tile
             item        : Item object; entity that occupies the tile
-            img_names   : list of strings
+            
+            img_names   : list of str; current image names
+            walls       : list of str; default image name for wall
+            floor       : list of str; default image name for floor
+            roof        : list of str; default image name for roof
+            timer       : int; fixed amount of time between animations
             
             X           : int; location of the tile in screen coordinate
             Y           : int; location of the tile in screen coordinate
-
+            rand_X      : int; fixed amount of shift allowed in horizontal direction
+            rand_Y      : int; fixed amount of shift allowed in vertical direction
+            
+            biome       : str; identifier for assigning biomes
             blocked     : bool; prevents items and entities from occupying the tile 
             hidden      : bool; prevents player from seeing the tile
-            unbreakable : bool; prevents player from changing the tile """
+            unbreakable : bool; prevents player from changing the tile
+            placed      : bool; notifies custom placement via DevTools """
         
         # Import parameters
         for key, value in kwargs.items():
@@ -5337,14 +5438,6 @@ class Entity:
     def distance_new(self, loc_1, loc_2):
         return ((loc_2[0] - loc_1[0]) ** 2 + (loc_2[1] - loc_1[1]) ** 2)**(1/2)
 
-    def get_vicinity(self):
-        (x, y) = self.X//pyg.tile_width, self.Y//pyg.tile_width
-        self.vicinity = [
-            self.env.map[x][y-1],   self.env.map[x+1][y-1], self.env.map[x+1][y],
-            self.env.map[x+1][y+1], self.env.map[x][y+1],   self.env.map[x-1][y+1],
-            self.env.map[x-1][y],   self.env.map[x-1][y-1]]
-        return self.vicinity
-
     def attack_target(self, target, effect_check=True):
         """ Calculates and applies attack damage. """
         
@@ -5635,14 +5728,16 @@ class Environment:
         self.map = []
         X_range  = [0, self.size * pyg.screen_width]
         Y_range  = [0, self.size * pyg.screen_height]
+        number    = 0
         for X in range(X_range[0], X_range[1]+1, pyg.tile_width):
             row = [] 
             for Y in range(Y_range[0], Y_range[1]+1, pyg.tile_height):
+                number += 1
                 
                 # Handle edges
                 if (X in X_range) or (Y in Y_range):
                     tile = Tile(
-                        name        = None,
+                        number      = number,
                         room        = None,
                         entity      = None,
                         item        = None,
@@ -5651,7 +5746,8 @@ class Environment:
                         walls       = walls,
                         floor       = floors,
                         roof        = roofs,
-                        
+                        timer       = random.randint(0, 3) * 2,
+
                         X           = X,
                         Y           = Y,
                         rand_X      = random.randint(-pyg.tile_width, pyg.tile_width),
@@ -5661,12 +5757,12 @@ class Environment:
                         blocked     = True,
                         hidden      = hidden,
                         unbreakable = True,
-                        
-                        timer       = random.randint(0, 3) * 2)
+                        placed      = False)
                 
                 # Handle bulk
                 else:
                     tile = Tile(
+                        number      = number,
                         room        = None,
                         entity      = None,
                         item        = None,
@@ -5675,7 +5771,8 @@ class Environment:
                         walls       = walls,
                         floor       = floors,
                         roof        = roofs,
-                        
+                        timer       = random.randint(0, 3) * 2,
+
                         X           = X,
                         Y           = Y,
                         rand_X      = random.randint(-pyg.tile_width, pyg.tile_width),
@@ -5685,8 +5782,7 @@ class Environment:
                         blocked     = blocked,
                         hidden      = hidden,
                         unbreakable = False,
-                        
-                        timer       = random.randint(0, 3) * 2)
+                        placed      = False)
                 
                 row.append(tile)
             self.map.append(row)
@@ -5823,7 +5919,7 @@ class Environment:
 class Room:
     """ Defines rectangles on the map. Used to characterize a room. """
     
-    def __init__(self, name, env, x1, y1, width, height, hidden, floor, walls, roof, objects, biome, plan=None, movable=False):
+    def __init__(self, name, env, x1, y1, width, height, hidden, floor, walls, roof, objects, biome, plan=None, boundary=None):
         """ Assigns tiles to a room and adjusts their properties.
 
             Parameters
@@ -5846,9 +5942,34 @@ class Room:
             walls_list         : list of Tile objects; all outer tiles
             corners_list       : list of Tile objects; corner tiles
             noncorners_list    : list of Tile objects; all outer tiles that are not corners
-
-            delete             : bool; mark to be removed from environment """
+            
+            plan               : list of str; custom floorplan
+            boundary           : list of Tile objects; custom walls_list
+            delete             : bool; mark to be removed from environment
+            
+            Plan details
+            ------------
+            - : wall
+            . : floor
+            | : door
+            
+            = : bed
+            b : left chair
+            d : right chair
+            [ : left shelf
+            ] : right shelf
+            
+            g : jug of grapes
+            c : jug of cement
+            L : light
+            
+            Construction methods
+            --------------------
+            standard : square room; uses from_size()
+            plan     : custom room by floorplan; uses from_plan()
+            boundary : custom room by boundary; uses from_boundary() """
         
+        # Name
         self.name = name
         
         # Location
@@ -5868,22 +5989,24 @@ class Room:
         self.env.rooms.append(self)
 
         # Tiles
-        self.tiles_list   = []
-        self.walls_list   = []
-        self.corners_list = []
+        self.tiles_list      = []
+        self.walls_list      = []
+        self.corners_list    = []
+        self.noncorners_list = []
         
         # Properties
-        self.hidden  = hidden
-        self.delete  = False
-        self.objects = objects
-        self.plan    = plan
-        self.movable = movable
+        self.hidden   = hidden
+        self.delete   = False
+        self.objects  = objects
+        self.plan     = plan
+        self.boundary = boundary
         
         # Create square room or text-based design
-        if not self.plan:  self.set_tiles()
-        else:              self.text_to_room()
+        if self.plan:       self.from_plan()
+        elif self.boundary: self.from_boundary()
+        else:               self.from_size()
 
-    def set_tiles(self):
+    def from_size(self):
         
         # Assign tiles to room
         for x in range(self.x1, self.x2+1):
@@ -5931,21 +6054,21 @@ class Room:
         
         self.noncorners_list = list(set(self.walls_list) - set(self.corners_list))
 
-    def text_to_room(self):
+    def from_plan(self):
         try:
-            self.text_to_room_fr()
+            self.from_plan_fr()
         
         except:
             try:
                 self.x1 -= 5
                 self.y1 -= 5
-                self.text_to_room_fr()
+                self.from_plan_fr()
             except:
                 self.x1 += 10
                 self.y1 += 10
-                self.text_to_room_fr()
+                self.from_plan_fr()
 
-    def text_to_room_fr(self):
+    def from_plan_fr(self):
         
         for y in range(len(self.plan)):
             layer = list(self.plan[y])
@@ -6018,6 +6141,73 @@ class Room:
                     
                     # Place items
                     if self.plan[y][x] == 'L':   place_object(create_item('lights'),          [tile_x, tile_y], self.env)
+
+    def from_boundary(self):
+        
+        # Import details
+        walls = self.boundary['boundary tiles']
+        boundary_coords = self.boundary['boundary coordinates']
+        min_x, max_x = self.boundary['min x'], self.boundary['max x']
+        min_y, max_y = self.boundary['min y'], self.boundary['max y']
+        
+        visited = set()
+        queue = []
+        
+        # Add all boundary-adjacent tiles from the outer edge of the bounding box
+        for x in range(min_x, max_x + 1):
+            if (x, min_y) not in boundary_coords:
+                queue.append((x, min_y))
+            if (x, max_y) not in boundary_coords:
+                queue.append((x, max_y))
+        for y in range(min_y + 1, max_y):
+            if (min_x, y) not in boundary_coords:
+                queue.append((min_x, y))
+            if (max_x, y) not in boundary_coords:
+                queue.append((max_x, y))
+        
+        # Flood-fill all reachable, unplaced tiles from outside
+        while queue:
+            x, y = queue.pop(0)  # pop from front of list = BFS
+            if (x, y) in visited:
+                continue
+            if not (0 <= x < len(player_obj.ent.env.map) and 0 <= y < len(player_obj.ent.env.map[0])):
+                continue
+            
+            tile = player_obj.ent.env.map[x][y]
+            if tile.placed:
+                continue  # Skip placed tiles — they are solid
+            
+            visited.add((x, y))
+            
+            # Add 4-connected neighbors
+            for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
+                nx, ny = x + dx, y + dy
+                if (nx, ny) not in visited:
+                    queue.append((nx, ny))
+        
+        # Anything inside bounds and not reachable = enclosed
+        floors = []
+        for x in range(min_x + 1, max_x):
+            for y in range(min_y + 1, max_y):
+                if (x, y) not in visited and (x, y) not in boundary_coords:
+                    floors.append(player_obj.ent.env.map[x][y])
+        
+        # Assign tiles to room
+        for wall in walls:
+            wall.room = self
+            wall.hidden = self.hidden
+            self.tiles_list.append(wall)
+            wall.biome = self.biome
+            self.walls_list.append(wall)
+        for floor in floors:
+            floor.room = self
+            floor.hidden = self.hidden
+            self.tiles_list.append(floor)
+            floor.biome = self.biome
+            if self.roof and (player_obj.ent.tile not in self.tiles_list):
+                floor.img_names = self.roof
+            else:
+                floor.img_names = self.floor
 
     def center(self):
         """ Finds the center of the rectangle. """
@@ -6239,7 +6429,7 @@ class Mechanics:
             img.vicinity_flash(ent, image)
             
             # Apply attack to enemies
-            for tile in ent.get_vicinity():
+            for tile in get_vicinity(ent).values():
                 if tile.entity:
                     ent.attack += 5
                     ent.attack_target(tile.entity, effect_check=False)
@@ -6518,7 +6708,7 @@ class Mechanics:
         
         # Find entities in vicinity
         ent_list = []
-        for tile in player_obj.ent.get_vicinity():
+        for tile in get_vicinity(player_obj.ent).values():
             if tile.entity:
                 ent_list.append(tile.entity)
         
@@ -6531,7 +6721,7 @@ class Mechanics:
             
             image = img.dict['bubbles']['exclamation']
             for ent in ent_list:
-                for tile in ent.get_vicinity():
+                for tile in get_vicinity(ent).values():
                     if not tile.blocked:
                         ent.move_towards(tile.X, tile.Y)
                 img.flash_above(ent, image)
@@ -6544,7 +6734,7 @@ class Mechanics:
         
         # Find entities in vicinity
         ent = None
-        for tile in player_obj.ent.get_vicinity():
+        for tile in get_vicinity(player_obj.ent).values():
             if tile.entity:
                 if tile.entity.role != 'NPC':
                     ent = tile.entity
@@ -6573,7 +6763,7 @@ class Mechanics:
         
         # Find pets in vicinity
         ent_list = []
-        for tile in player_obj.ent.get_vicinity():
+        for tile in get_vicinity(player_obj.ent).values():
             if tile.entity:
                 ent_list.append(tile.entity)
         
@@ -6591,7 +6781,7 @@ class Mechanics:
         
         # Find pets in vicinity
         ent_list = []
-        for tile in player_obj.ent.get_vicinity():
+        for tile in get_vicinity(player_obj.ent).values():
             if tile.entity:
                 ent_list.append(tile.entity)
         
@@ -7901,7 +8091,6 @@ def build_overworld():
             place_object(item, [door_x, door_y], env)
             env.map[door_x][door_y].blocked = False
             env.map[door_x][door_y].unbreakable = False
-            print((door_x, door_y))
             
             room_counter += 1
         
@@ -12100,6 +12289,36 @@ def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
+
+def get_vicinity(obj):
+    """ Returns a list of tiles surrounding the given location.
+    
+        Returns
+        -------
+        obj.vicinity : dict of Tile objects
+
+        Details
+        -------
+        'top left'      : 
+        'top middle'    : 
+        'top right'     : 
+        'left'          : 
+        'right'         : 
+        'bottom left'   : 
+        'bottom middle' : 
+        'bottom right'  : """
+    
+    (x, y) = obj.X//pyg.tile_width, obj.Y//pyg.tile_width
+    obj.vicinity = {
+        'top middle'    : player_obj.ent.env.map[x][y-1],
+        'top right'     : player_obj.ent.env.map[x+1][y-1],
+        'right'         : player_obj.ent.env.map[x+1][y],
+        'bottom right'  : player_obj.ent.env.map[x+1][y+1],
+        'bottom middle' : player_obj.ent.env.map[x][y+1],
+        'bottom left'   : player_obj.ent.env.map[x-1][y+1],
+        'middle left'   : player_obj.ent.env.map[x-1][y],
+        'top left'      : player_obj.ent.env.map[x-1][y-1]}
+    return obj.vicinity
 
 ## Effects
 def floor_effects(floor_effect):
