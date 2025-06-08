@@ -20,7 +20,7 @@ Features
 
 **Stats**: View stats and active effects.
 
-**Questlog**: View storyline and tasks.
+**Questlog**: View storylines and tasks.
 
 **Abilities**: Enter combos to interact with the environment.
 
