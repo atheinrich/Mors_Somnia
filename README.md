@@ -31,7 +31,7 @@ Locations
 
 **Overworld**: The town and player's home.
 
-**Caves**: Hollows beneath the Overworld.
+**Hollows**: Caves beneath the Overworld.
 
 **Dreams**: Strange lands accessed through sleep.
 
