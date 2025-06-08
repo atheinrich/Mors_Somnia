@@ -1,43 +1,47 @@
 Mors Somnia
 ===========
 
-                                                                                             
-                                                                                      
-                                                                                             
-             AAAAAAAAA      AAAAAAAA                                  AAAAAAAAAAAAA          
-            AAAAAAAAAAAA  AAAAAAAAAAA   AAAA                       AAAAAAAAAAAAAAAAAA        
-           AAA     AAAAAAAAAAAAAAAAAAAAAAAAAAA   AAAAAAAAAAAAAA   AAAAAAAAAAAAAAAAAAAA       
-           AA       AAAAAAA      AAAAAAA  AAAAAAAAAAAAAAAAAAAAAAAAAAA        AA   AAAA       
-          AAA        AAAA        AAAA      AAAAAAA            AAAAA    AA         AAA        
-          AA    A    AAA    A     AAA      AAAAAAA  AA     AA   AAA       AAAAAAAAA          
-        AAA   AAAAA  AAA  AAAAA   AAAAA   AA AAAA     AAAAAA    AA     AAAAAAAAAAAA          
-        AAA    AAA   AAA   AAA    AAA         AA    AAA AAA   AA     AAAAA                   
-        AAA          AAA          AAA         AA    AAAAAAA AAAA    AAAAAAAAAA               
-        AAA         AAA      A    AAAAAAAA    AA          AAAAAAAAAA  AAAAAAAAAAAA           
-        AAA     AA   AA      AA   AAAAA AAAA  AA          AAAAAA AAAAA  AAAAAAAAAAA          
-        AAA     AA         AA     AAAAAAAAA   AA              AAA  AAAA       AAAAA          
-        AAA      AAAA    AAA      AAAAAAA    AAA               AAAAAAAAAA      AAAA          
-        AAA       AAAAAAAAAA      AAA       AAAA   AAAAAAA      AAA           AAAAA          
-        AAAA      AAAA    AA     AAA       AAAAA  AAAA AAA       AAA         AAAAA           
-          AA     AAAAA    AA     AAA      AA  AA  AAAA  AAAA   AAAAAA        AA              
-          AA     AAAAA    AA     AAAA   AAA  AAAAAAAAA    AAAAAAAAAAAAAAAAAAAAA              
-          AAAAAAAAAAAAAA  AAAAAAAAAAAAAAA   AAAAAAAAA    AAA AAAAAA      AAA                 
-          AAAAAAAAA  AAA   AAAAAAA   AAAA AAAAA   AAAA   AAA    AAA    AA AA                 
-             AAAA   AAA    AAAA      AAAAAAA AA AAAAAAA  AAA    AAA    AA AAAA               
-             AAA   AA     AAAAAAA  AAA AAAA  AA  AA  AAAAAAA    AAAA   AAA AAAA              
-             AAAA AAA    AAA   AA  AAA AA    AA  AA    AAAAA    AAAAA  AAAAAAAA              
-             AAAA  AAA  AAAAAA  AA AAA       AA  AA    AAAAA    AAA   AAAA  AAA              
-                   AAA   AAA AAAAA AAA       AA  AA      AAAAA  AAA   AAA   AAA              
-             A  AAAAAA   AAA AAAAA AAA       AA  AA       AAAA   AA   AAA    AA              
-             AAAAAAAA    A AAAAAA  AAA       AA  AAAA     AAAA   AA   AAA    AAA             
-             AA             AAA    AAA       AA   AAA     AAAA   AA   AAA     AAA            
-             AA           AAAA     AA       AAA   AAA      AAA   AA   AAA     AAA            
-            AAA           AA       AA       AAA   AAA      AAA   AA   AAA                    
-           AAA           AAA       AAA      AAA   AAA      AAA   AA    AA                    
-          AAA           AAA         AA     AAA    AAA      AAA   AA    AA                    
-                                    AA     AAA     AA      AAA   AA                          
-                                    AA     AAA     AA            AA                          
-                                    AA     AAA     AAA                                       
-                                    AA     AAA       AAA                                     
-                                           AAA       AAA                                     
-                                                      AA   
+It was all a dream...
+<br />
+...right?
+
+In Mors Somnia, only you can seal the fate of the town as death and cryptic communion fill the air. There are people to meet, creatures to defeat, decisions to be made... By dream or drug, these corners are yours to explore freely.
+
+While awake, you build and barter in an unsuspecting town, living a regular life among kernels of secrets waiting to be revealed. While asleep -- or lost in the violent haze of a potent elixir -- you venture to shifting lands of danger and promise, whose walls breathe with the pulse of forgotten gods. Mortality blurs in between -- a transience some seek to harness. Will you aid in their search for power, or will you pave a path of your own?
+
+Features
+--------
+
+**Main Menu**: Learn the controls, manage save files, and idle in a pleasant garden.
+
+**Inventory**: View and toggle items and equipment.
+
+**Catalog**: Build structures and spawn creatures.
+
+**Stats**: View stats and active effects.
+
+**Questlog**: View storyline and tasks.
+
+**Abilities**: Enter combos to interact with the environment.
+
+**Exchange**: Buy and sell items or trade with followers.
+
+Locations
+---------
+
+**Overworld**: The town and player's home.
+
+**Caves**: Hollows beneath the Overworld.
+
+**Dreams**: Strange lands accessed through sleep.
+
+**Hallucinations**: Strange lands accessed through drugs.
+
+People
+------
+
+**Townsfolk**: Average settlers of the Overworld.
+
+**Bloodkin**: Worshipers of an unknown force.
+
+**Deities**: Formless beings with mysterious influence.
