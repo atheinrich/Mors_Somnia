@@ -37,6 +37,8 @@ Locations
 
 **Hallucinations**: Strange lands accessed through drugs.
 
+**Abyssal Gallery**: The realm of the gods.
+
 People
 ------
 
