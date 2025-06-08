@@ -1,9 +1,9 @@
 Mors Somnia
 ===========
 
-It was all a dream...
+*It was all a dream...*
 <br />
-...right?
+*...right?*
 
 In Mors Somnia, only you can seal the fate of the town as death and cryptic communion fill the air. There are people to meet, creatures to defeat, decisions to be made... By dream or drug, these corners are yours to explore freely.
 
