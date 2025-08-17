@@ -95,12 +95,30 @@ import sys
 # Aesthetics
 from PIL import Image, ImageFilter, ImageOps
 
+# API
+from pypresence import Presence
+
 ########################################################################################################################################################
 # Global values
 super_dig = False
+API_toggle = False
 
 ########################################################################################################################################################
 # Core
+def API(state, details, init=False):
+    global RPC
+    
+    if init:
+        RPC = Presence(1384311591662780586)
+        RPC.connect()
+    
+    else:
+        RPC.update(
+            state       = state,
+            details     = details,
+            large_image = "logo",
+            start       = time.time())
+    
 def debug_call(func):
     """ Just a print statement for debugging. Shows which function is called alongside variable details. """
     def wrapped_function(*args, **kwargs):
@@ -111,40 +129,44 @@ def debug_call(func):
 def main():
     """ Initializes the essentials and opens the main menu. """
     
-    global pyg, mech, img, aud
-    global player_obj, play_game_obj, new_game_obj, garden_obj, weather
-    global dev, inv, hold_obj, trade_obj
-    global main_menu_obj, big_menu, small_menu, ctrl_menu, info_obj, questlog_obj, pet_obj
-    global save_account_obj, load_account_obj
-
-    # Initialize pygame (parameters, display, clock, etc.)
+    # API
+    if API_toggle: API(state=None, details=None, init=True)
+    
+    # Pygame
+    global pyg
     pyg              = Pygame()
     pyg.game_state   = 'startup'
     pyg.overlay      = None
-
-    # Initialize mechanics and audio
+    
+    # Mechanics and audio
+    global mech, aud
     mech             = Mechanics()
     aud              = Audio()
     
-    # Import images (sorted dictionary and cache)
+    # Images (sorted dictionary and cache)
+    global img
     img              = Images()
     img.flipped      = Images(flipped=True)
     pygame.display.set_icon(img.dict['decor']['skeleton'])
     
-    # Create player
+    # Player data
+    global player_obj
     player_obj       = Player()
     player_obj.temp  = True
     
-    # Initialize gamestates
-    play_game_obj    = PlayGame()
+    # Gamestates
+    global play_game_obj, new_game_obj, garden_obj, pet_obj
     new_game_obj     = NewGame()
+    
+    play_game_obj    = PlayGame()
     garden_obj       = PlayGarden()
     pet_obj          = Pets()
     
-    # Initialize overlays
+    # Overlays
+    global main_menu_obj, ctrl_menu, save_account_obj, load_account_obj
     main_menu_obj    = MainMenu()
     ctrl_menu        = NewMenu(
-        name         = 'controls',
+        name         = 'ctrl_menu',
         header       = "Controls", 
         options = [
             f"Move up:                                {pyg.key_UP[0]}                     Exit:                                         {pyg.key_BACK[0]}",
@@ -154,44 +176,48 @@ def main():
             "",
             
             f"Toggle inventory:                  {pyg.key_INV[0]}                     Enter combo:                         {pyg.key_HOLD[0]}",
-            f"Toggle DevTools:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
+            f"Toggle Catalog:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
             f"Toggle GUI:                            {pyg.key_GUI[0]}                     Zoom in:                                {pyg.key_PLUS[0]}",
             f"View stats:                             {pyg.key_INFO[0]}                     Zoom out:                              {pyg.key_MINUS[0]}",
             f"View questlog:                      {pyg.key_QUEST[0]}"])
     save_account_obj = NewMenu(
-        name        = 'save',
-        header      = "Save",
-        options     = ["File 1",
-                       "File 2",
-                       "File 3"],
-        backgrounds = ["Data/File_1/screenshot.png",
-                       "Data/File_2/screenshot.png",
-                       "Data/File_3/screenshot.png"])
+        name         = 'save',
+        header       = "Save",
+        options      = ["File 1",
+                        "File 2",
+                        "File 3"],
+        backgrounds  = ["Data/File_1/screenshot.png",
+                        "Data/File_2/screenshot.png",
+                        "Data/File_3/screenshot.png"])
     load_account_obj = NewMenu(
-        name        = 'load',
-        header      = "Load",
-        options     = ["File 1",
-                       "File 2",
-                       "File 3"],
-        backgrounds = ["Data/File_1/screenshot.png",
-                       "Data/File_2/screenshot.png",
-                       "Data/File_3/screenshot.png"])
+        name         = 'load',
+        header       = "Load",
+        options      = ["File 1",
+                        "File 2",
+                        "File 3"],
+        backgrounds  = ["Data/File_1/screenshot.png",
+                        "Data/File_2/screenshot.png",
+                        "Data/File_3/screenshot.png"])
+    
+    
+    global questlog_obj, inv, dev, hold_obj, trade_obj, small_menu, info_obj, big_menu
     questlog_obj = BigMenu(
         name      = 'questlog',
         header    = "                                                        QUESTLOG", 
         options   = ["Test"])
-    questlog_obj.init_questlog()
-    questlog_obj.init_gardenlog()
+    questlog_obj.init_questlog('overworld')
+    questlog_obj.init_questlog('garden')
     inv              = Inventory()
-    dev              = DevTools()
-    hold_obj         = Hold()
-    trade_obj        = Trade()
+    dev              = Catalog()
+    hold_obj         = Abilities()
+    trade_obj        = Exchange()
     small_menu       = SmallMenu()
     info_obj         = Info()
     big_menu         = BigMenu(
         name      = 'temp',
         header    = "temp", 
         options   = [""])
+    
     game_states()
 
 def game_states():
@@ -199,7 +225,7 @@ def game_states():
     pyg.running    = True
     while pyg.running:
         
-        ## Primary
+        # Primary
         if pyg.game_state == 'startup':
             main_menu_obj.startup()
         
@@ -219,12 +245,12 @@ def game_states():
             garden_obj.run()
             garden_obj.render()
         
-        ## Overlays
+        # Overlays
         if pyg.overlay == 'menu':
             game_state = main_menu_obj.run()
             main_menu_obj.render()
         
-        elif pyg.overlay == 'controls':
+        elif pyg.overlay == 'ctrl_menu':
             ctrl_menu.run()
             ctrl_menu.render()
         
@@ -263,10 +289,16 @@ def game_states():
             big_menu.run()
             big_menu.render()
         
+        # Finish up
         img.render()
         pygame.display.flip()
         pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
         pyg.clock.tick(30)
+        
+        # Update API
+        if API_toggle: API(
+            details = player_obj.ent.env.name.capitalize(),
+            state   = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'][player_obj.ent.env.env_time-1])
 
 def render_all(size='display', visible=False):
     """ Draws tiles and stuff. Constantly runs. """
@@ -472,7 +504,7 @@ class Pygame:
             
             # Menus
             self.key_INV      = ['4', K_4, K_KP4]               # inventory
-            self.key_DEV      = ['6', K_6, K_KP6]               # DevTools
+            self.key_DEV      = ['6', K_6, K_KP6]               # Catalog
             self.key_INFO     = ['7', K_7, K_KP7]               # player information
             self.key_SPEED    = ['8', K_8, K_KP8]               # movement speed
             self.key_QUEST    = ['9', K_9, K_KP9]               # questlog
@@ -501,7 +533,7 @@ class Pygame:
             
             # Menus
             self.key_INV      = ['4', K_4, K_KP4]                 # inventory
-            self.key_DEV      = ['6', K_6, K_KP6]                 # DevTools
+            self.key_DEV      = ['6', K_6, K_KP6]                 # Catalog
             self.key_INFO     = ['7', K_7, K_KP7]                 # player information
             self.key_SPEED    = ['8', K_8, K_KP8]                 # movement speed
             self.key_QUEST    = ['9', K_9, K_KP9]                 # questlog
@@ -530,7 +562,7 @@ class Pygame:
             
             # Menus
             self.key_INV      = ['7', K_7, K_KP7]                 # inventory
-            self.key_DEV      = ['9', K_9, K_KP9]                 # DevTools
+            self.key_DEV      = ['9', K_9, K_KP9]                 # Catalog
             self.key_INFO     = ['1', K_1, K_KP1]                 # player information
             self.key_SPEED    = ['2', K_2, K_KP2]                 # movement speed
             self.key_QUEST    = ['3', K_3, K_KP3]                 # questlog
@@ -541,18 +573,18 @@ class Pygame:
 
     def set_colors(self):
         
-        self.black             = pygame.color.THECOLORS['black']
-        self.dark_gray         = pygame.color.THECOLORS['gray60']
-        self.gray              = pygame.color.THECOLORS['gray90']
-        self.white             = pygame.color.THECOLORS['white']
-        self.red               = pygame.color.THECOLORS['orangered3']
-        self.green             = pygame.color.THECOLORS['palegreen4']
-        self.blue              = pygame.color.THECOLORS['blue']
-        self.yellow            = pygame.color.THECOLORS['yellow']
-        self.orange            = pygame.color.THECOLORS['orange']
-        self.violet            = pygame.color.THECOLORS['violet']
-        self.colors            = [self.black, self.dark_gray, self.gray, self.white,
-                                  self.red, self.orange, self.yellow, self.green, self.blue, self.violet]
+        self.black     = pygame.color.THECOLORS['black']
+        self.dark_gray = pygame.color.THECOLORS['gray60']
+        self.gray      = pygame.color.THECOLORS['gray90']
+        self.white     = pygame.color.THECOLORS['white']
+        self.red       = pygame.color.THECOLORS['orangered3']
+        self.green     = pygame.color.THECOLORS['palegreen4']
+        self.blue      = pygame.color.THECOLORS['blue']
+        self.yellow    = pygame.color.THECOLORS['yellow']
+        self.orange    = pygame.color.THECOLORS['orange']
+        self.violet    = pygame.color.THECOLORS['violet']
+        self.colors    = [self.black, self.dark_gray, self.gray, self.white,
+                          self.red, self.orange, self.yellow, self.green, self.blue, self.violet]
 
     def set_graphics(self):
         
@@ -578,6 +610,8 @@ class Pygame:
         self.msg_history       = {}
 
     def textwrap(self, text, width):
+        """ Separates long chunks of text into consecutive lines. """
+        
         words = text.split()
         lines = []
         current_line = []
@@ -595,6 +629,7 @@ class Pygame:
         return lines
 
     def fadeout_screen(self, screen, fade_in, env=None, loc=None, text="", font=None, duration=4):
+        """ Fades screen and displays text. """
         
         # Set functionality
         if not fade_in:
@@ -675,10 +710,8 @@ class Pygame:
             lines = list(self.msg_history.keys())[index:]
             colors = list(self.msg_history.values())[index:]
             for i in range(len(lines)):
-                if colors[i] in pyg.colors:
-                    self.msg.append(self.font.render(lines[i], True, colors[i]))
-                else:
-                    self.msg.append(self.font.render(lines[i], True, color))
+                if colors[i] in pyg.colors: self.msg.append(self.font.render(lines[i], True, colors[i]))
+                else:                       self.msg.append(self.font.render(lines[i], True, color))
             
             ## Lower gui
             # Health
@@ -698,11 +731,11 @@ class Pygame:
             if not pyg.overlay:
                 
                 self.gui = {
-                    'first':   self.minifont.render('', True, self.white),
+                    'first':   self.minifont.render('',      True, self.white),
                     'health':  self.minifont.render(health,  True, self.red),
-                    'time':    self.minifont.render(time, True, bottom_color),
+                    'time':    self.minifont.render(time,    True, bottom_color),
                     'stamina': self.minifont.render(stamina, True, self.green),
-                    'last':    self.minifont.render('', True, self.white)}
+                    'last':    self.minifont.render('',      True, self.white)}
             
             # Additional details
             else:
@@ -714,10 +747,10 @@ class Pygame:
                 
                 self.gui = {
                     'wallet':   self.minifont.render('⨋ '+str(player_obj.ent.wallet), True, bottom_color),
-                    'health':  self.minifont.render(health,  True, self.red),
-                    'time':    self.minifont.render(time, True, bottom_color),
-                    'stamina': self.minifont.render(stamina, True, self.green),
-                    'location': self.minifont.render(env, True, bottom_color)}
+                    'health':   self.minifont.render(health,  True, self.red),
+                    'time':     self.minifont.render(time,    True, bottom_color),
+                    'stamina':  self.minifont.render(stamina, True, self.green),
+                    'location': self.minifont.render(env,     True, bottom_color)}
 
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -1411,30 +1444,37 @@ class Audio:
 class Player:
     """ Manages player file. One save for each file. """
 
-    def __init__(self, env=None):
+    def __init__(self):
         """ Holds everything regarding the player.
-            Parameters
-            ----------
-            envs     : dict of list of Environment objects
-            dungeon : list of Environment objects; dungeon levels """
+
+            Details
+            -------
+            ent      : Entity object; player
+            ents     : dict of Entity objects; NPCs, such as Kyrio
+            envs     : dict of Environment objects; worlds, such as overworld
+            file_num : int in [0, 1, 2, 3, 4]; index for data management
+            temp     : something to do with NewGame """
         
+        # Gameplay
         self.ent      = None
         self.ents     = {}
         self.envs     = {}
+        
+        # File management
         self.file_num = 0
+        
+        # Debugging
         self.temp     = False
 
     @debug_call
     def create_player(self):
         
-        if self.ent:
-            if self.ent.tile:
-                self.ent.tile.entity = None
-                self.ent.env.entities.remove(self.ent)
-                self.ent.env = None
+        # Remove from environment
+        if self.ent: self.clear_prior()
         
+        # Create default entity
         self.ent = Entity(
-            name       = 'Alex',
+            name       = 'Player',
             role       = 'player',
             img_names  = ['white', 'front'],
 
@@ -1444,6 +1484,7 @@ class Player:
             max_hp     = 10,
             attack     = 0,
             defense    = 1,
+            sanity     = 1,
             stamina    = 100,
             
             X          = 0,
@@ -1457,21 +1498,33 @@ class Player:
             fear       = None,
             reach      = 1000)
         
-        self.ent.discoveries = {
-            'walls':     {'gray':   ['walls', 'gray'],
-                          'green':  ['walls', 'green']},
-            'floors':    {'grass4': ['floors', 'grass4'],
-                          'wood':   ['floors', 'wood'],
-                          'water':  ['floors', 'water']},
-            'paths':     {},
-            'stairs':    {'door': ['stairs', 'door']},
-            'decor':     {'blades': ['decor', 'blades'],
-                          'lights': ['decor', 'lights']},
-            'furniture': {'table':  ['furniture', 'table'],
-                          'red chair left': ['furniture', 'red chair left'],
-                          'red chair right': ['furniture', 'red chair right']},
-            'entities':  {}}
+        # Initialize player-specific attributes
+        self.ent.questlog = {}
+        self.ent.garden_questlog = {}
+        self.ent.discoveries = {}
         
+        # Set default discoveries
+        self.ent.discoveries = {
+            'walls': {
+                'gray':            ['walls',     'gray'],
+                'green':           ['walls',     'green']},
+            'floors': {
+                'grass4':          ['floors',    'grass4'],
+                'wood':            ['floors',    'wood'],
+                'water':           ['floors',    'water']},
+            'stairs': {
+                'door':            ['stairs',    'door']},
+            'decor': {
+                'blades':          ['decor',     'blades'],
+                'lights':          ['decor',     'lights']},
+            'furniture': {
+                'table':           ['furniture', 'table'],
+                'red chair left':  ['furniture', 'red chair left'],
+                'red chair right': ['furniture', 'red chair right']},
+            'paths': {},
+            'entities': {}}
+        
+        # Set default items
         hair   = create_item('bald')
         face   = create_item('clean')
         chest  = create_item('flat')
@@ -1498,7 +1551,8 @@ class Player:
 
 ## States
 class NewMenu:
-    
+    """ Uses mech, pyg,  """
+
     def __init__(self, name, header, options, options_categories=None, position='top left', backgrounds=None):
         """ IMPORTANT. Creates cursor, background, and menu options, then returns index of choice.
 
@@ -1507,6 +1561,7 @@ class NewMenu:
             options_categories : list of strings; categorization; same length as options
             position           : chooses layout preset """
         
+        # Basics
         self.name               = name
         self.header             = header
         self.options            = options
@@ -1514,11 +1569,33 @@ class NewMenu:
         self.position           = position
         self.backgrounds        = backgrounds
         
-        # Initialize temporary data containers
+        # Temporary data containers
         self.choice                   = 0                   # holds index of option pointed at by cursor
         self.choices_length           = len(self.options)-1 # number of choices
         self.options_categories_cache = ''                  # holds current category
         self.options_render           = self.options.copy()
+        
+        # Cursor and text positions
+        self.set_positions()
+        
+        # Cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0,0)))
+        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        
+        # Menu options
+        self.header_render = pyg.font.render(self.header, True, pyg.white)
+        for i in range(len(self.options)):
+            color = pyg.gray
+            self.options_render[i] = pyg.font.render(options[i], True, color)
+        
+        # Backgrounds
+        if self.backgrounds:
+            self.backgrounds_render = copy.copy(self.backgrounds)
+            for i in range(len(self.backgrounds)):
+                self.backgrounds_render[i] = pygame.image.load(self.backgrounds[i]).convert()
+
+    def set_positions(self):
         
         # Alter layout if categories are present
         if self.options_categories: 
@@ -1533,16 +1610,19 @@ class NewMenu:
             'center':       [int((pyg.screen_width - main_menu_obj.game_title.get_width())/2), 85],
             'bottom left':  [5, 10],
             'bottom right': [60 ,70]}
+        
         self.cursor_position = {
             'top left':     [50+tab_x, 38+tab_y],
             'center':       [50, 300],
             'bottom left':  [50+tab_x, 65-tab_y],
             'bottom right': [60 ,70]}
+        
         self.options_positions = {
             'top left':     [80+tab_x, 34],
             'center':       [80, 300],
             'bottom left':  [5, 10],
             'bottom right': [60 ,70]}
+        
         self.category_positions = {
             'top left':     [5, 34],
             'center':       [80, 300],
@@ -1553,23 +1633,6 @@ class NewMenu:
         self.cursor_position_mutable    = self.cursor_position[self.position].copy()
         self.options_positions_mutable  = self.options_positions[self.position].copy()
         self.category_positions_mutable = self.category_positions[self.position].copy()
-
-        # Initialize cursor
-        self.cursor_img = pygame.Surface((16, 16)).convert()
-        self.cursor_img.set_colorkey(self.cursor_img.get_at((0,0)))
-        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-        
-        # Initialize menu options
-        self.header_render = pyg.font.render(self.header, True, pyg.white)
-        for i in range(len(self.options)):
-            color = pyg.gray
-            self.options_render[i] = pyg.font.render(options[i], True, color)
-        
-        # Initialize backgrounds
-        if self.backgrounds:
-            self.backgrounds_render = copy.copy(self.backgrounds)
-            for i in range(len(self.backgrounds)):
-                self.backgrounds_render[i] = pygame.image.load(self.backgrounds[i]).convert()
 
     def reset(self, name, header, options, options_categories, position, backgrounds):
         self.__init__(self.name, self.header, self.options, self.options_categories, self.position, self.backgrounds)
@@ -1588,9 +1651,9 @@ class NewMenu:
                 if event.key in pyg.key_UP:       self.key_UP()
                 elif event.key in pyg.key_DOWN:   self.key_DOWN()
                 elif event.key in pyg.key_LEFT:
-                    if self.name == 'controls': self.set_controls('left')
+                    if self.name == 'ctrl_menu':  self.set_controls('left')
                 elif event.key in pyg.key_RIGHT:
-                    if self.name == 'controls': self.set_controls('right')
+                    if self.name == 'ctrl_menu':  self.set_controls('right')
                 
                 # Process selection or return to main menu
                 elif event.key in pyg.key_ENTER:
@@ -1614,11 +1677,10 @@ class NewMenu:
         return
 
     def key_UP(self):
-
-        # >>SELECT MENU ITEM<<        
+        
         # Move cursor up
-        self.cursor_position_mutable[1]     -= 24
-        self.choice                         -= 1
+        self.cursor_position_mutable[1] -= 24
+        self.choice                     -= 1
         
         # Move to lowest option
         if self.choice < 0:
@@ -1635,11 +1697,10 @@ class NewMenu:
                 self.cursor_position_mutable[1] -= tab_y
 
     def key_DOWN(self):
-
-        # >>SELECT MENU ITEM<<        
+        
         # Move cursor down
-        self.cursor_position_mutable[1]     += 24
-        self.choice                         += 1
+        self.cursor_position_mutable[1] += 24
+        self.choice                     += 1
         
         # Move to highest option
         if self.choice > self.choices_length:
@@ -1654,10 +1715,9 @@ class NewMenu:
                 self.options_categories_cache_2 = self.options_categories[self.choice]
                 self.cursor_position_mutable[1] += tab_y
 
-        pass
-
     def save_account(self):    
         """ Shows a menu with each item of the inventory as an option, then returns an item if it is chosen.
+            
             Structures
             ----------
             = player_obj
@@ -1774,7 +1834,7 @@ class NewMenu:
             "",
             
             f"Toggle inventory:                  {pyg.key_INV[0]}                     Enter combo:                         {pyg.key_HOLD[0]}",
-            f"Toggle DevTools:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
+            f"Toggle Catalog:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
             f"Toggle GUI:                            {pyg.key_GUI[0]}                     Zoom in:                                {pyg.key_PLUS[0]}",
             f"View stats:                             {pyg.key_INFO[0]}                     Zoom out:                              {pyg.key_MINUS[0]}",
             f"View questlog:                      {pyg.key_QUEST[0]}"]
@@ -2008,8 +2068,8 @@ class NewGame:
             name      = 'questlog',
             header    = "                                                        QUESTLOG", 
             options   = ["Test"])
-        questlog_obj.init_questlog()        
-        questlog_obj.init_gardenlog()
+        questlog_obj.init_questlog('overworld')
+        questlog_obj.init_questlog('garden')
             
         player_obj.envs['home'] = build_home()
         env = player_obj.envs['home']
@@ -2557,7 +2617,7 @@ class PlayGarden:
         render_all()
 
 ## Side bars
-class DevTools:
+class Catalog:
     
     def __init__(self):
         """ Parameters
@@ -2826,18 +2886,18 @@ class DevTools:
                 'max y':                max_y}
         
             main_room = Room(
-                name    = 'placed',
-                env     = player_obj.ent.env,
-                x1      = min_x,
-                y1      = min_y,
-                width   = int(max_x - min_x),
-                height  = int(max_y - min_y),
-                biome   = 'city',
-                hidden  = False,
-                objects = True,
-                floor   = player_obj.ent.env.floors,
-                walls   = player_obj.ent.env.walls,
-                roof    = player_obj.ent.env.roofs,
+                name     = 'placed',
+                env      = player_obj.ent.env,
+                x1       = min_x,
+                y1       = min_y,
+                width    = int(max_x - min_x),
+                height   = int(max_y - min_y),
+                biome    = 'city',
+                hidden   = False,
+                objects  = True,
+                floor    = ['floors', 'wood'],
+                walls    = obj.img_names,
+                roof     = player_obj.ent.env.roofs,
                 boundary = boundary)
     
     def export_env(self):
@@ -2850,7 +2910,7 @@ class DevTools:
                 env = pickle.load(file)
             env.camera = Camera(player_obj.ent)
             env.camera.update()
-            place_player(env, env.player_coordinates)    # DevTools (import)
+            place_player(env, env.player_coordinates)    # Catalog (import)
         except: print("No file found!")
 
     def render(self):
@@ -3119,7 +3179,7 @@ class Inventory:
             else: break
         pyg.screen.blit(self.cursor_border, self.cursor_pos)
 
-class Hold:
+class Abilities:
     
     def __init__(self):
         """ Shows a sidebar menu when a key is held down, then processes input as a combo.
@@ -3274,7 +3334,7 @@ class Hold:
             
             else: break
 
-class Trade:
+class Exchange:
 
     def __init__(self):
         
@@ -3814,7 +3874,7 @@ class MainMenu:
                     
                     # >>CONTROLS<<
                     elif self.choice == 3:
-                        pyg.overlay = 'controls'
+                        pyg.overlay = 'ctrl_menu'
                         return
                     
                     # >>QUIT<<
@@ -4118,7 +4178,7 @@ class BigMenu:
                 self.options_categories_cache_2 = self.options_categories[self.choice]
                 self.cursor_position_mutable[1] += self.tab_y
 
-    def init_questlog(self):
+    def init_questlog(self, env_name):
         """ Sets intro quests and updates menu. Only runs once when a new game is started.
 
             quests          : list of Quest objects
@@ -4126,84 +4186,101 @@ class BigMenu:
             categories      : list of strings; 'main' or 'side'
             main_quests     : list of Quest objects
             side_quests     : list of Quest objects
-            selected_quest  : Quest object
+            selected_quest  : Quest object """
+        
+        # GUI text and Quest objects for each quest in the current log
+        for quest in self.default_Quests(env_name):
+            quest.content = quest.notes + quest.tasks
+        
+        self.update_questlog()
+
+    def default_Quests(self, env_name):
+        
+        # Stage 0: 
+        if env_name == 'garden':
+        
+            water = Quest(
+                name='Leading a radix to water',
+                notes=['These odd beings seem thirsty.',
+                       'I should pour out some water for them.'],
+                tasks=['☐ Empty your jug of water.',
+                       '☐ Make a radix drink.'],
+                category='Main')
+
+            food = Quest(
+                name='Fruit of the earth',
+                notes=['Set out some food.'],
+                tasks=['☐ Get a radix to eat.'],
+                category='Main')
             
-            menu_index      : int; toggles questlog pages """
+            building_shelter = Quest(
+                name='Build a house',
+                notes=['Shelter would be nice.'],
+                tasks=['☐ Contruct walls.',
+                       '☐ Set a floor.',
+                       '☐ Decorate.'],
+                category='Side')
+            
+            player_obj.ent.gardenlog = {
+                water.name:             water,
+                food.name:              food,
+                building_shelter.name:  building_shelter}
+            
+            return water, food, building_shelter
         
-        # Initialize parameters
-        self.menu_index = 0
+        # Stage one: first dream
+        elif env_name in [f'dungeon {n}' for n in range(10)]:
+            
+            surviving = Quest(
+                name='Surviving \'til Dawn',
+                notes=['/...huh? Where... am I?/',
+                       'You find youself appeared as if an apparition.',
+                       'Danger is afoot. How will you survive?'],
+                tasks=['☐ Search for aid.',
+                       '☐ Dig a tunnel.',
+                       '☐ Escape.'],
+                category='Main')
+            
+            player_obj.ent.envlog = {
+                surviving.name: surviving}
+            
+            return surviving
         
-        # Create default quests
-        gathering_supplies = Quest(
-            name='Gathering supplies',
-            notes=['My bag is nearly empty.',
-                   'It would be good to have some items on hand.'],
-            tasks=['☐ Collect 3 potions.',
-                   '☐ Find a spare shovel.'],
-            category='Main')
-
-        finding_a_future = Quest(
-            name='Finding a future',
-            notes=['I should make my way into town.'],
-            tasks=['☐ Wander east.'],
-            category='Main')
+        # Stage two: meeting the town
+        elif env_name == 'overworld':
+            
+            gathering_supplies = Quest(
+                name='Gathering supplies',
+                notes=['My bag is nearly empty.',
+                       'It would be good to have some items on hand.'],
+                tasks=['☐ Collect 3 potions.',
+                       '☐ Find a spare shovel.'],
+                category='Main')
+            
+            finding_a_future = Quest(
+                name='Finding a future',
+                notes=['I should make my way into town.'],
+                tasks=['☐ Wander east.'],
+                category='Main')
+            
+            furnishing_a_home = Quest(
+                name='Furnishing a home',
+                notes=['My house is empty. Maybe I can spruce it up.'],
+                tasks=['☐ Use the shovel to build new rooms.',
+                       '☐ Drop items to be saved for later use.',
+                       '☐ Look for anything interesting.'],
+                category='Side')
+            
+            player_obj.ent.questlog = {
+                gathering_supplies.name: gathering_supplies,
+                finding_a_future.name:   finding_a_future,
+                furnishing_a_home.name:  furnishing_a_home}
+            
+            return gathering_supplies, finding_a_future, furnishing_a_home
         
-        furnishing_a_home = Quest(
-            name='Furnishing a home',
-            notes=['My house is empty. Maybe I can spruce it up.'],
-            tasks=['☐ Use the shovel to build new rooms.',
-                   '☐ Drop items to be saved for later use.',
-                   '☐ Look for anything interesting.'],
-            category='Side')
+        else:
+            print(env_name)
         
-        gathering_supplies.content = gathering_supplies.notes + gathering_supplies.tasks
-        finding_a_future.content   = finding_a_future.notes + finding_a_future.tasks
-        furnishing_a_home.content  = furnishing_a_home.notes + furnishing_a_home.tasks
-
-        player_obj.ent.questlog = {
-            gathering_supplies.name: gathering_supplies,
-            finding_a_future.name:   finding_a_future,
-            furnishing_a_home.name:  furnishing_a_home}
-        self.update_questlog()
-
-    def init_gardenlog(self):
-        
-        # Initialize parameters
-        self.menu_index = 0
-        
-        # Create default quests
-        water = Quest(
-            name='Leading a radix to water',
-            notes=['These odd beings seem thirsty.',
-                   'I should pour out some water for them.'],
-            tasks=['☐ Empty your jug of water.',
-                   '☐ Make a radix drink.'],
-            category='Main')
-
-        food = Quest(
-            name='Fruit of the earth',
-            notes=['Set out some food.'],
-            tasks=['☐ Get a radix to eat.'],
-            category='Main')
-        
-        building_shelter = Quest(
-            name='Build a house',
-            notes=['Shelter would be nice.'],
-            tasks=['☐ Contruct walls.',
-                   '☐ Set a floor.',
-                   '☐ Decorate.'],
-            category='Side')
-        
-        water.content = water.notes + water.tasks
-        food.content   = food.notes + food.tasks
-        building_shelter.content  = building_shelter.notes + building_shelter.tasks
-
-        player_obj.ent.gardenlog = {
-            water.name: water,
-            food.name:   food,
-            building_shelter.name:  building_shelter}
-        self.update_questlog()
-
     def update_questlog(self, name=None, questlog=None):
         """ Updates and sorts main quests and side quests. """
         
@@ -4324,7 +4401,7 @@ class SmallMenu:
         
         # Render background
         fill_width  = pyg.tile_width  * 5 + pyg.tile_width // 2
-        fill_height = pyg.tile_height * 3 + pyg.tile_height // 2
+        fill_height = pyg.tile_height * 4 + pyg.tile_height // 2
         self.cursor_fill   = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
         self.cursor_fill.fill((0, 0, 0, 128))
         pyg.screen.blit(self.cursor_fill, (32, 32))
@@ -4364,10 +4441,11 @@ class Info:
             'rank':       None,
             'rigor':      None,
             'attack':     None,
-            'defense':    None}
+            'defense':    None,
+            'sanity':     None}
 
     def update(self):
-
+        
         self.stats['rank']  = '★' * int(player_obj.ent.rank)
         if len(self.stats['rank']) < 5:
             while len(self.stats['rank']) < 5:
@@ -4388,6 +4466,11 @@ class Info:
             while len(self.stats['defense']) < 5:
                 self.stats['defense'] += '☆'
 
+        self.stats['sanity']   = '★' * int(player_obj.ent.sanity // 10)
+        if len(self.stats['sanity']) < 5:
+            while len(self.stats['sanity']) < 5:
+                self.stats['sanity'] += '☆'
+
 class Pets:
     """ Manages stats in the Garden. """
 
@@ -4398,7 +4481,7 @@ class Pets:
         
         self.stats = {
             '      RADIX ATRIUM': None,
-            '': None,
+            '':         None,
             'mood':     None,
             'stamina':  None,
             'strength': None,
@@ -4406,9 +4489,9 @@ class Pets:
         
         # Numerical stats
         self.levels = {
-            'stamina':  0,
-            'strength': 1,
-            'appeal':   1}
+            'stamina':   1,
+            'strength':  1,
+            'appeal':    1}
         
         self.moods = {
             'happiness': 5,
@@ -4427,11 +4510,13 @@ class Pets:
             'lethargy':  '( =_= )',
             'confusion': '(@_@)'}
         
-        # Utility
+        # Time to lose happiness and gain something else
         self.happiness_cooldown = 10
-        self.happiness_press = 0
-        self.emoji_cooldown = 10
-        self.emoji_press = 0
+        self.happiness_press    = 0
+        
+        # Time between mood switches if tied
+        self.emoji_cooldown     = 10
+        self.emoji_press        = 0
 
     def import_pets(self):
         self.ents = player_obj.envs['garden'].entities
@@ -4443,34 +4528,35 @@ class Pets:
 
     def update(self):
         
-        ## Lose happiness
+        # Lose happiness
         if self.moods['happiness']:
             if time.time() - self.happiness_press > self.happiness_cooldown:
                 self.happiness_press = time.time()
                 
+                # Random chance to lose happiness and gain something else
                 if not random.randint(0, 1):
                     self.moods['happiness'] -= 1
                     self.moods[random.choice(list(self.moods.keys()))] += 1
         
-        # Clean up
+        ## Keep stats to [0, 10]
         self.stat_check(self.levels)
         self.stat_check(self.moods)
         
-        ## Set mood
+        # Set mood to those with the highest value
         max_val = max(self.moods.values())
         current_moods = [mood for mood, val in self.moods.items() if val == max_val]
         
-        # Alternate between tied moods
+        ## Alternate between tied moods
         if len(current_moods) > 1:
             if time.time() - self.emoji_press > self.emoji_cooldown:
                 self.emoji_press = time.time()
                 self.stats['mood'] = self.faces[random.choice(current_moods)]        
         
-        # Set the current mood
+        ## Set the current mood
         else:
             self.stats['mood'] = self.faces[current_moods[0]]
         
-        # Apply mood effects
+        ## Apply mood effects
         if self.moods['happiness'] <= 2:
             if self.ents[-1].img_names[0] != 'purple radish':
                 for ent in self.ents:
@@ -4490,7 +4576,7 @@ class Pets:
                         if ent.img_names[0] != 'red radish':
                             ent.img_names[0] = 'red radish'
         
-        ## Set levels
+        # Set levels
         self.stats['stamina']  = '★' * self.levels['stamina']
         while len(self.stats['stamina']) < 5:
             self.stats['stamina'] += '☆'
@@ -4720,7 +4806,7 @@ class Tile:
             blocked     : bool; prevents items and entities from occupying the tile 
             hidden      : bool; prevents player from seeing the tile
             unbreakable : bool; prevents player from changing the tile
-            placed      : bool; notifies custom placement via DevTools """
+            placed      : bool; notifies custom placement via Catalog """
         
         # Import parameters
         for key, value in kwargs.items():
@@ -6790,6 +6876,55 @@ class Mechanics:
             for ent in ent_list:
                 self.find_water(ent)
 
+    # Item interactions
+    def skeleton(self):
+        
+        # Find location
+        loc = player_obj.ent.env
+        locs = ['garden', 'womb', 'home', 'dungeon', 'hallucination', 'overworld', 'bitworld', 'cave']
+        
+        # Define dialogue bank
+        dead_log = {
+            'garden': [
+                "... this must be a dream."],
+            
+            'womb': [
+                "... this must be a dream."],
+            
+            'home': [
+                "A skeleton... in your home."],
+            
+            'dungeon': [
+                "Skeleton. Looks like a Greg.",
+                "Ow! Shouldn't poke around with bones.",
+                "Wait... is this Jerry?",
+                "The pile of bones lay motionless, thankfully.",
+                "Decay is swift.",
+                "..."],
+            
+            'hallucination': [
+                "Bones? I must be seeing things.",
+                "..."],
+            
+            'overworld': [
+                "Should I be concerned about this?",
+                "Looks human. Something bad happened here.",
+                "..."],
+            
+            'bitworld': [
+                "Are these dots inside of me too?",
+                "What is...?",
+                "..."
+                ],
+            
+            'cave': [
+                "Typical.",
+                "Caves can kill in mysterious ways."]}
+        
+        if random.randint(0, 4): image = img.dict['bubbles']['skull']
+        else:                    image = img.dict['bubbles']['exclamation']
+        img.flash_above(player_obj.ent, image)
+
 class Effect:
 
     def __init__(self, name, img_names, function, trigger, sequence, cooldown_time, other):
@@ -8647,7 +8782,14 @@ def create_item(names, effect=None):
             'hp_bonus':       0,
             'attack_bonus':   0,
             'defense_bonus':  0,
-            'effect':         effect},
+            'effect':         Effect(
+                name          = 'info',
+                img_names     = ['bubbles', 'exclamation'],
+                function      = mech.skeleton,
+                trigger       = 'active',
+                sequence      = None,
+                cooldown_time = 0.1,
+                other         = None)},
 
         'shrooms': {
             'name':           'shrooms',
@@ -10864,6 +11006,7 @@ def create_entity(names):
             
             'exp':         0,
             'rank':        1,
+            'sanity':      100,
             'hp':          50,
             'max_hp':      50,
             'attack':      15,
@@ -10890,6 +11033,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      False,
             'lethargy':    5,
@@ -10911,6 +11055,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      False,
             'lethargy':    5,
@@ -10932,6 +11077,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     100,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      False,
             'lethargy':    5,
@@ -10953,6 +11099,7 @@ def create_entity(names):
             'attack':      20,
             'defense':     20,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    5,
@@ -10974,6 +11121,7 @@ def create_entity(names):
             'attack':      4,
             'defense':     0,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    5,
@@ -10995,6 +11143,7 @@ def create_entity(names):
             'attack':      8,
             'defense':     2,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    5,
@@ -11016,6 +11165,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     10,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    1,
@@ -11037,6 +11187,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    5,
@@ -11058,6 +11209,7 @@ def create_entity(names):
             'attack':      10,
             'defense':     10,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    2,
@@ -11079,6 +11231,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    0,
@@ -11100,6 +11253,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    5,
@@ -11121,6 +11275,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    5,
@@ -11142,6 +11297,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     0,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      False,
             'lethargy':    10,
@@ -11163,6 +11319,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    5,
@@ -11184,6 +11341,7 @@ def create_entity(names):
             'attack':      15,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      False,
             'lethargy':    100,
@@ -11205,6 +11363,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     500,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      False,
             'lethargy':    2,
@@ -11226,6 +11385,7 @@ def create_entity(names):
             'attack':      1,
             'defense':     5,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      False,
             'lethargy':    10,
@@ -11247,6 +11407,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -11268,6 +11429,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -11289,6 +11451,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -11310,6 +11473,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -11331,6 +11495,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -11352,6 +11517,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -11373,6 +11539,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    20,
@@ -11394,6 +11561,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -11417,6 +11585,7 @@ def create_entity(names):
             'attack':      0,
             'defense':     25,
             'stamina':     100,
+            'sanity':      100,
             
             'follow':      True,
             'lethargy':    6,
@@ -12245,6 +12414,7 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
     
     # Save image
     path = folder + '/' + filename
+    pyg.gui_toggle, pyg.msg_toggle = False, False
     pygame.image.save(pyg.screen, path)
     
     # Add effects
@@ -12283,12 +12453,6 @@ def is_blocked(env, loc):
     except: return False
     
     return False
-
-def resource_path(relative_path):
-    """ Get the absolute path to a resource, works for dev and PyInstaller. """
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
 
 def get_vicinity(obj):
     """ Returns a list of tiles surrounding the given location.
