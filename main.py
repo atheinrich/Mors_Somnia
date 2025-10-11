@@ -86,10 +86,11 @@ from   pygame.locals import *
 
 ## Modules
 import session
-from utilities import API, Images, Audio, MainMenu, FileMenu, SmallMenu, Info
-from mechanics import Pygame, Mechanics, NewGame, PlayGame, PlayGarden, Pets, Inventory, Catalog, Abilities
-from mechanics import Exchange
 from items_entities import Player
+from utilities import API, Images, Audio, MainMenu, FileMenu, SmallMenu, Info, Pets
+from mechanics import Pygame, Mechanics, NewGame, PlayGame, PlayGarden, Inventory, Catalog, Abilities
+from mechanics import Exchange
+from environments import Environments
 from quests import BigMenu
 
 ########################################################################################################################################################
@@ -122,6 +123,7 @@ def main():
     # Player data
     session.player_obj       = Player()
     session.player_obj.temp  = True
+    session.player_obj.envs  = Environments()
     
     # Gamestates
     session.new_game_obj     = NewGame()

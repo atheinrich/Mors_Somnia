@@ -8,7 +8,6 @@ class Session:
 
         self.mech             = None # Mechamics object
         self.aud              = None # Audio object
-
         self.img              = None # Images object
 
         self.player_obj       = None # Player object

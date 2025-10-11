@@ -10,7 +10,6 @@ import random
 
 ## Modules
 import session
-from mechanics import Item, Entity
 
 ########################################################################################################################################################
 
@@ -33,7 +32,7 @@ class Player:
         # Gameplay
         self.ent      = None
         self.ents     = {}
-        self.envs     = {}
+        self.envs     = None
         
         # File management
         self.file_num = 0
@@ -42,6 +41,8 @@ class Player:
         self.temp     = False
 
     def create_player(self):
+
+        from mechanics import Entity
         
         # Remove from environment
         if self.ent: self.clear_prior()
@@ -132,2341 +133,2855 @@ class Effect:
 
 ########################################################################################################################################################
 # Tools
+item_dict = {
+
+## Decor (decor_options)
+
+    'tree': {
+        'name':           'tree',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'tree'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        True,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           20,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'bones': {
+        'name':           'bones',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'bones'],
+
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           5,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'boxes': {
+        'name':           'boxes',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'boxes'],
+
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           5,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'fire': {
+        'name':           'fire',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'fire'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           20,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'leafy': {
+        'name':           'leafy tree',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'leafy'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        True,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         2,
+        'cost':           25,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'skeleton': {
+        'name':           'skeleton',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'skeleton'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'shrooms': {
+        'name':           'shrooms',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'shrooms'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         10,
+        'rand_Y':         10,
+        'cost':           15,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red plant left': {
+        'name':           'red plant left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'red plant left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           15,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red plant right': {
+        'name':           'red plant right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'red plant right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           15,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'cup shroom': {
+        'name':           'cup shroom',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'cup shroom'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           15,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'frond': {
+        'name':           'frond',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'frond'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           15,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'blades': {
+        'name':           'blades',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'blades'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         10,
+        'rand_Y':         10,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'purple bulbs': {
+        'name':           'purple bulbs',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'purple bulbs'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         10,
+        'rand_Y':         10,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'lights': {
+        'name':           'lights',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['decor', 'lights'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         5,
+        'rand_Y':         5,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Dialogue bubbles (bubbles_options)
+
+    'dots': {
+        'name':           'dots',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'dots'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'exclamation': {
+        'name':           'exclamation',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'exclamation'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'dollar': {
+        'name':           'dollar',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'dollar'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'cart': {
+        'name':           'cart',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'cart'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'question': {
+        'name':           'question',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'question'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'skull': {
+        'name':           'skull',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'skull'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'heart': {
+        'name':           'heart',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'heart'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'water': {
+        'name':           'water',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['bubbles', 'water'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Furniture
+
+    'purple bed': {
+        'name':           'purple bed',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'purple bed'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red bed': {
+        'name':           'red bed',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red bed'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'shelf left': {
+        'name':           'shelf left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'shelf left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'shelf right': {
+        'name':           'shelf right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'shelf right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'long table left': {
+        'name':           'long table left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'long table left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'long table right': {
+        'name':           'long table right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'long table right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'table': {
+        'name':           'table',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'table'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red chair left': {
+        'name':           'red chair left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red chair left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red chair right': {
+        'name':           'red chair right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red chair right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug bottom left': {
+        'name':           'red rug bottom left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug bottom left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug bottom middle': {
+        'name':           'red rug bottom middle',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug bottom middle'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug bottom right': {
+        'name':           'red rug bottom right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug bottom right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug middle left': {
+        'name':           'red rug middle left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug middle left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug middle middle': {
+        'name':           'red rug middle middle',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug middle middle'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug middle right': {
+        'name':           'red rug middle right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug middle right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug top left': {
+        'name':           'red rug top left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug top left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug top middle': {
+        'name':           'red rug top middle',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug top middle'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'red rug top right': {
+        'name':           'red rug top right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'red rug top right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug bottom left': {
+        'name':           'green rug bottom left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug bottom left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug bottom middle': {
+        'name':           'green rug bottom middle',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug bottom middle'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug bottom right': {
+        'name':           'green rug bottom right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug bottom right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug middle left': {
+        'name':           'green rug middle left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug middle left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug middle middle': {
+        'name':           'green rug middle middle',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug middle middle'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug middle right': {
+        'name':           'green rug middle right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug middle right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug top left': {
+        'name':           'green rug top left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug top left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug top middle': {
+        'name':           'green rug top middle',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug top middle'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'green rug top right': {
+        'name':           'green rug top right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['furniture', 'green rug top right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+## Drugs (drugs_options)
+
+    'needle': {
+        'name':           'needle',
+        'role':           'drugs',
+        'slot':           None,
+        'img_names':      ['drugs', 'needle'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           25,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'skin': {
+        'name':           'skin',
+        'role':           'drugs',
+        'slot':           None,
+        'img_names':      ['drugs', 'skin'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'teeth': {
+        'name':           'teeth',
+        'role':           'drugs',
+        'slot':           None,
+        'img_names':      ['drugs', 'teeth'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'bowl': {
+        'name':           'bowl',
+        'role':           'drugs',
+        'slot':           None,
+        'img_names':      ['drugs', 'bowl'],
+
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           30,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'plant': {
+        'name':           'plant',
+        'role':           'drugs',
+        'slot':           None,
+        'img_names':      ['drugs', 'plant'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'bubbles': {
+        'name':           'bubbles',
+        'role':           'drugs',
+        'slot':           None,
+        'img_names':      ['drugs', 'bubbles'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           50,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Potions and scrolls (potions_options, scrolls_options)
+
+    'jug of blood': {
+        'name':          'jug of blood',
+        'role':          'potions',
+        'slot':          None,
+        'img_names':     ['potions', 'red'],
+
+        'durability':    101,
+        'equippable':    False,
+        'equipped':      False,
+        'hidden':        False,
+        'blocked':       False,
+        'movable':       True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':          10,
+        
+        'hp_bonus':      0,
+        'attack_bonus':  0,
+        'defense_bonus': 0,
+        'effect':        None},
+
+    'jug of grapes': {
+        'name':          'jug of grapes',
+        'role':          'potions',
+        'slot':          None,
+        'img_names':     ['potions', 'purple'],
+
+        'durability':    101,
+        'equippable':    False,
+        'equipped':      False,
+        'hidden':        False,
+        'blocked':       False,
+        'movable':       True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':          10,
+        
+        'hp_bonus':      0,
+        'attack_bonus':  0,
+        'defense_bonus': 0,
+        'effect':        None},
+
+    'jug of water': {
+        'name':          'jug of water',
+        'role':          'potions',
+        'slot':          None,
+        'img_names':     ['potions', 'blue'],
+
+        'durability':    101,
+        'equippable':    False,
+        'equipped':      False,
+        'hidden':        False,
+        'blocked':       False,
+        'movable':       True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':          10,
+        
+        'hp_bonus':      0,
+        'attack_bonus':  0,
+        'defense_bonus': 0,
+        'effect':        None},
+
+    'jug of cement': {
+        'name':           'jug of cement',
+        'role':           'potions',
+        'slot':           None,
+        'img_names':      ['potions', 'gray'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'scroll of lightning bolt': {
+        'name':           'scroll of lightning bolt',
+        'role':           'scrolls',
+        'slot':           None,
+        'img_names':      ['scrolls', 'closed'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           20,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'scroll of fireball': {
+        'name':           'scroll of fireball',
+        'role':           'scrolls',
+        'slot':           None,
+        'img_names':      ['scrolls', 'closed'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           20,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'scroll of confusion': {
+        'name':           'scroll of confusion',
+        'role':           'scrolls',
+        'slot':           None,
+        'img_names':      ['scrolls', 'closed'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           20,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'scroll of death': {
+        'name':           'scroll of death',
+        'role':           'scrolls',
+        'slot':           None,
+        'img_names':      ['scrolls', 'open'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           1000,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Structures (stairs_options, floors_options)
+
+    'door': {
+        'name':           'door',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['stairs', 'door'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'portal': {
+        'name':           'portal',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['stairs', 'portal'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'cave': {
+        'name':           'cave',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['floors', 'sand2'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'path left right': {
+        'name':           'path',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['paths', 'left right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'path up down': {
+        'name':           'path',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['paths', 'up down'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'path down right': {
+        'name':           'path',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['paths', 'down right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'path down left': {
+        'name':           'path',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['paths', 'down left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'paths up right': {
+        'name':           'path',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['paths', 'up right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'paths up left': {
+        'name':           'path',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['paths', 'up left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Concrete structures (concrete_options)
+
+    'gray window': {
+        'name':           'gray window',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['concrete', 'gray window'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'gray door': {
+        'name':           'gray door',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['concrete', 'gray door'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'gray wall left': {
+        'name':           'gray wall left',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['concrete', 'gray wall left'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'gray wall': {
+        'name':           'gray wall',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['concrete', 'gray wall'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'gray wall right': {
+        'name':           'gray wall right',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['concrete', 'gray wall right'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        True,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'gray floor': {
+        'name':           'gray floor',
+        'role':           'other',
+        'slot':           None,
+        'img_names':      ['concrete', 'gray floor'],
+        
+        'durability':     101,
+        'equippable':     False,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Weapons (equip_names)
+
+    'shovel': {
+        'name':           'shovel',
+        'role':           'weapons',
+        'slot':           'dominant hand',
+        'img_names':      ['shovel', 'dropped'],
+
+        'durability':     100,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           15,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   2,
+        'defense_bonus':  10,
+        'effect':         None},
+
+    'super shovel': {
+        'name':           'super shovel',
+        'role':           'weapons',
+        'slot':           'dominant hand',
+        'img_names':      ['super shovel', 'dropped'],
+
+        'durability':     1000,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   100,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'dagger': {
+        'name':           'dagger',
+        'role':           'weapons',
+        'slot':           'dominant hand',
+        'img_names':      ['dagger', 'dropped'],
+        
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           25,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   2,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'sword': {
+        'name':           'sword',
+        'role':           'weapons',
+        'slot':           'dominant hand',
+        'img_names':      ['sword', 'dropped'],
+        
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           75,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   5,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'blood dagger': {
+        'name':           'blood dagger',
+        'role':           'weapons',
+        'slot':           'dominant hand',
+        'img_names':      ['blood dagger', 'dropped'],
+        
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           500,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   10,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'blood sword': {
+        'name':           'blood sword',
+        'role':           'weapons',
+        'slot':           'dominant hand',
+        'img_names':      ['blood sword', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           1000,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   15,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Effects
+
+    'eye': {
+        'name':           'eye',
+        'role':           'weapons',
+        'slot':           'dominant hand',
+        'img_names':      ['blood dagger', 'dropped'],
+        
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+# Armor (equip_names)
+
+    'green clothes': {
+        'name':           'green clothes',
+        'role':           'armor',
+        'slot':           'body',
+        'img_names':      ['green clothes', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  1,
+        'effect':         None},
+
+    'orange clothes': {
+        'name':           'orange clothes',
+        'role':           'armor',
+        'slot':           'body',
+        'img_names':      ['orange clothes', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  1,
+        'effect':         None},
+
+    'exotic clothes': {
+        'name':           'exotic clothes',
+        'role':           'armor',
+        'slot':           'body',
+        'img_names':      ['exotic clothes', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           20,
+        
+        'hp_bonus':       1,
+        'attack_bonus':   0,
+        'defense_bonus':  1,
+        'effect':         None},
+
+    'yellow dress': {
+        'name':           'yellow dress',
+        'role':           'armor',
+        'slot':           'body',
+        'img_names':      ['yellow dress', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           10,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  1,
+        'effect':         None},
+
+    'chain dress': {
+        'name':           'chain dress',
+        'role':           'armor',
+        'slot':           'body',
+        'img_names':      ['chain dress', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           20,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  2,
+        'effect':         None},
+
+    'iron armor': {
+        'name':           'iron armor',
+        'role':           'armor',
+        'slot':           'body',
+        'img_names':      ['iron armor', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           100,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  10,
+        'effect':         None},
+
+    'lamp': {
+        'name':           'lamp',
+        'role':           'armor',
+        'slot':           'non-dominant hand',
+        'img_names':      ['lamp', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           100,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'bald': {
+        'name':           'bald',
+        'role':           'armor',
+        'slot':           'head',
+        'img_names':      ['bald', 'front'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        False,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'brown hair': {
+        'name':           'brown hair',
+        'role':           'armor',
+        'slot':           'head',
+        'img_names':      ['brown hair', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'blue hair': {
+        'name':           'blue hair',
+        'role':           'armor',
+        'slot':           'head',
+        'img_names':      ['blue hair', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'short brown hair': {
+        'name':           'short brown hair',
+        'role':           'armor',
+        'slot':           'head',
+        'img_names':      ['short brown hair', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'clean': {
+        'name':           'clean',
+        'role':           'armor',
+        'slot':           'face',
+        'img_names':      ['clean', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'brown beard': {
+        'name':           'brown beard',
+        'role':           'armor',
+        'slot':           'face',
+        'img_names':      ['brown beard', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'blue beard': {
+        'name':           'blue beard',
+        'role':           'armor',
+        'slot':           'face',
+        'img_names':      ['blue beard', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'white beard': {
+        'name':           'white beard',
+        'role':           'armor',
+        'slot':           'face',
+        'img_names':      ['white beard', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'flat': {
+        'name':           'flat',
+        'role':           'armor',
+        'slot':           'chest',
+        'img_names':      ['flat', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'bra': {
+        'name':           'bra',
+        'role':           'armor',
+        'slot':           'chest',
+        'img_names':      ['bra', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'glasses': {
+        'name':           'glasses',
+        'role':           'armor',
+        'slot':           'face',
+        'img_names':      ['glasses', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         True,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  0,
+        'effect':         None},
+
+    'iron shield': {
+        'name':           'iron shield',
+        'role':           'armor',
+        'slot':           'non-dominant hand',
+        'img_names':      ['iron shield', 'dropped'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           50,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  10,
+        'effect':         None},
+
+# Big objects
+        'logo': {
+        'name':           'logo',
+        'role':           'decor',
+        'img_names':      ['top', 'left'],
+
+        'durability':     101,
+        'equippable':     True,
+        'equipped':       False,
+        'hidden':         False,
+        'blocked':        False,
+        'movable':        True,
+        'rand_X':         0,
+        'rand_Y':         0,
+        'cost':           0,
+        
+        'hp_bonus':       0,
+        'attack_bonus':   0,
+        'defense_bonus':  10,
+        'effect':         None}}
+
+ent_dict = {
+
+## Actual entities
+
+    'white': {
+        'name':        'white NPC',
+        'role':        'NPC',
+        'img_names':   ['white', 'front'],
+        'habitat':     'any',
+        
+        'exp':         0,
+        'rank':        1,
+        'sanity':      100,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        
+        'follow':      False,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000},
+
+    'black': {
+        'name':        'black NPC',
+        'role':        'NPC',
+        'img_names':   ['black', 'front'],
+        'habitat':     'any',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      False,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000},
+
+    'fat': {
+        'name':        'fat NPC',
+        'role':        'NPC',
+        'img_names':   ['fat', 'front'],
+        'habitat':     'any',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      False,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000},
+
+    'friend': {
+        'name':        'friend',
+        'role':        'NPC',
+        'img_names':   ['friend', 'front'],
+        'habitat':     'land',
+
+        'exp':         0,
+        'rank':        100,
+        'hp':          100,
+        'max_hp':      100,
+        'attack':      0,
+        'defense':     100,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      False,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       640},
+
+    'eye': {
+        'name':        'eye',
+        'role':        'enemy',
+        'img_names':   ['eye', 'front'],
+        'habitat':     'land',
+        
+        'exp':         35,
+        'rank':        1,
+        'hp':          100,
+        'max_hp':      100,
+        'attack':      20,
+        'defense':     20,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    5,
+        'miss_rate':   20,
+        'aggression':  50,
+        'fear':        None,
+        'reach':       1000},
+
+    'eyes': {
+        'name':        'eyes',
+        'role':        'enemy',
+        'img_names':   ['eyes', 'front'],
+        'habitat':     'land',
+        
+        'exp':         35,
+        'rank':        1,
+        'hp':          20,
+        'max_hp':      20,
+        'attack':      4,
+        'defense':     0,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  10,
+        'fear':        None,
+        'reach':       1000},
+
+    'troll': {
+        'name':        'troll',
+        'role':        'enemy',
+        'img_names':   ['troll', 'front'],
+        'habitat':     'land',
+
+        'exp':         100,
+        'rank':        1,
+        'hp':          30,
+        'max_hp':      30,
+        'attack':      8,
+        'defense':     2,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  10,
+        'fear':        None,
+        'reach':       1000},
+
+    'triangle': {
+        'name':        'triangle',
+        'role':        'enemy',
+        'img_names':   ['triangle', 'front'],
+        'habitat':     'land',
+
+        'exp':         100,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      15,
+        'defense':     10,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    1,
+        'miss_rate':   5,
+        'aggression':  100,
+        'fear':        None,
+        'reach':       1000},
+
+    'purple': {
+        'name':        'purple',
+        'role':        'enemy',
+        'img_names':   ['purple', 'front'],
+        'habitat':     'land',
+        
+        'exp':         500,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  10,
+        'fear':        None,
+        'reach':       1000},
+
+    'tentacles': {
+        'name':        'tentacles',
+        'role':        'enemy',
+        'img_names':   ['tentacles', 'front'],
+        'habitat':     'any',
+
+        'exp':         50,
+        'rank':        1,
+        'hp':          35,
+        'max_hp':      35,
+        'attack':      10,
+        'defense':     10,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    2,
+        'miss_rate':   1,
+        'aggression':  100,
+        'fear':        None,
+        'reach':       1000},
+
+    'round1': {
+        'name':        'round1',
+        'role':        'enemy',
+        'img_names':   ['round1', 'front'],
+        'habitat':     'land',
+        
+        'exp':         50,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    0,
+        'miss_rate':   5,
+        'aggression':  100,
+        'fear':        None,
+        'reach':       1000},
+
+    'round2': {
+        'name':        'round2',
+        'role':        'enemy',
+        'img_names':   ['round2', 'front'],
+        'habitat':     'land',
+        
+        'exp':         500,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  10,
+        'fear':        None,
+        'reach':       1000},
+
+    'grass': {
+        'name':        'grass',
+        'role':        'enemy',
+        'img_names':   ['grass', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         500,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    5,
+        'miss_rate':   40,
+        'aggression':  20,
+        'fear':        None,
+        'reach':       1000},
+
+    'round3': {
+        'name':        'round3',
+        'role':        'enemy',
+        'img_names':   ['round3', 'front'],
+        'habitat':     'any',
+        
+        'exp':         500,
+        'rank':        1,
+        'hp':          1,
+        'max_hp':      1,
+        'attack':      0,
+        'defense':     0,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      False,
+        'lethargy':    10,
+        'miss_rate':   10,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       64},
+
+    'lizard': {
+        'name':        'lizard',
+        'role':        'enemy',
+        'img_names':   ['lizard', 'front'],
+        'habitat':     'desert',
+        
+        'exp':         500,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    5,
+        'miss_rate':   10,
+        'aggression':  10,
+        'fear':        None,
+        'reach':       1000},
+
+    'red': {
+        'name':        'red',
+        'role':        'enemy',
+        'img_names':   ['red', 'front'],
+        'habitat':     'land',
+        
+        'exp':         500,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      15,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      False,
+        'lethargy':    100,
+        'miss_rate':   10,
+        'aggression':  1,
+        'fear':        None,
+        'reach':       0},
+
+    'rock': {
+        'name':        'rock',
+        'role':        'enemy',
+        'img_names':   ['rock', 'front'],
+        'habitat':     'desert',
+        
+        'exp':         500,
+        'rank':        1,
+        'hp':          10,
+        'max_hp':      10,
+        'attack':      0,
+        'defense':     500,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      False,
+        'lethargy':    2,
+        'miss_rate':   0,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       0},
+
+    'frog': {
+        'name':        'frog',
+        'role':        'enemy',
+        'img_names':   ['frog', 'front'],
+        'habitat':     'any',
+        
+        'exp':         15,
+        'rank':        1,
+        'hp':          50,
+        'max_hp':      50,
+        'attack':      1,
+        'defense':     5,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      False,
+        'lethargy':    10,
+        'miss_rate':   10,
+        'aggression':  10,
+        'fear':        None,
+        'reach':       32},
+
+    'red radish': {
+        'name':        'red radish',
+        'role':        'enemy',
+        'img_names':   ['red radish', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        0,
+        'reach':       1000},
+
+    'orange radish': {
+        'name':        'orange radish',
+        'role':        'enemy',
+        'img_names':   ['orange radish', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        0,
+        'reach':       1000},
+
+    'purple radish': {
+        'name':        'purple radish',
+        'role':        'enemy',
+        'img_names':   ['purple radish', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        0,
+        'reach':       1000},
+
+    'snake': {
+        'name':        'snake',
+        'role':        'enemy',
+        'img_names':   ['snake', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000},
+
+    'buzz': {
+        'name':        'buzz',
+        'role':        'enemy',
+        'img_names':   ['buzz', 'front'],
+        'habitat':     'city',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000},
+
+    'egg': {
+        'name':        'egg',
+        'role':        'enemy',
+        'img_names':   ['egg', 'front'],
+        'habitat':     'any',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000},
+
+    'star': {
+        'name':        'star',
+        'role':        'enemy',
+        'img_names':   ['star', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    20,
+        'miss_rate':   20,
+        'aggression':  10,
+        'fear':        None,
+        'reach':       1000},
+
+    'plant': {
+        'name':        'plant',
+        'role':        'enemy',
+        'img_names':   ['plant', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000},
+
+## Projectiles
+
+    'green blob': {
+        'name':        'green blob',
+        'role':        'projectile',
+        'img_names':   ['green blob', 'front'],
+        'habitat':     'forest',
+        
+        'exp':         0,
+        'rank':        1,
+        'hp':          25,
+        'max_hp':      25,
+        'attack':      0,
+        'defense':     25,
+        'stamina':     100,
+        'sanity':      100,
+        
+        'follow':      True,
+        'lethargy':    6,
+        'miss_rate':   6,
+        'aggression':  0,
+        'fear':        None,
+        'reach':       1000}}
+
 def create_item(names, effect=None):
     """ Creates and returns an object.
     
         Parameters
         ----------
-        names : string or list of strings; name of object """
+        names  : string or list of strings; name of object
+        effect : Effect object or None """
     
+    from mechanics import Item
+
+    # Look for item
     item = None
-    item_dict = {
-    
-    ## Decor (decor_options)
-    
-        'tree': {
-            'name':           'tree',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'tree'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        True,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           20,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'bones': {
-            'name':           'bones',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'bones'],
-
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           5,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'boxes': {
-            'name':           'boxes',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'boxes'],
-
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           5,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'fire': {
-            'name':           'fire',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'fire'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           20,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'leafy': {
-            'name':           'leafy tree',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'leafy'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        True,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         2,
-            'cost':           25,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'skeleton': {
-            'name':           'skeleton',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'skeleton'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'info',
-                img_names     = ['bubbles', 'exclamation'],
-                function      = session.mech.skeleton,
-                trigger       = 'active',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-        'shrooms': {
-            'name':           'shrooms',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'shrooms'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         10,
-            'rand_Y':         10,
-            'cost':           15,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red plant left': {
-            'name':           'red plant left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'red plant left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           15,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red plant right': {
-            'name':           'red plant right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'red plant right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           15,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'cup shroom': {
-            'name':           'cup shroom',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'cup shroom'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           15,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'frond': {
-            'name':           'frond',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'frond'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           15,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'blades': {
-            'name':           'blades',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'blades'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         10,
-            'rand_Y':         10,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'purple bulbs': {
-            'name':           'purple bulbs',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'purple bulbs'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         10,
-            'rand_Y':         10,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'lights': {
-            'name':           'lights',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['decor', 'lights'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         5,
-            'rand_Y':         5,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'lamp',
-                img_names     = ['lights', 'dropped'],
-                function      = session.mech.lamp,
-                trigger       = 'passive',
-                sequence      = None,
-                cooldown_time = 0,
-                other         = 5)},
-
-    # Dialogue bubbles (bubbles_options)
-
-        'dots': {
-            'name':           'dots',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'dots'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'exclamation': {
-            'name':           'exclamation',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'exclamation'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'dollar': {
-            'name':           'dollar',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'dollar'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'cart': {
-            'name':           'cart',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'cart'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'question': {
-            'name':           'question',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'question'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'skull': {
-            'name':           'skull',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'skull'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'heart': {
-            'name':           'heart',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'heart'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'water': {
-            'name':           'water',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['bubbles', 'water'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-    # Furniture
-    
-        'purple bed': {
-            'name':           'purple bed',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'purple bed'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red bed': {
-            'name':           'red bed',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red bed'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'shelf left': {
-            'name':           'shelf left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'shelf left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'shelf right': {
-            'name':           'shelf right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'shelf right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'long table left': {
-            'name':           'long table left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'long table left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'long table right': {
-            'name':           'long table right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'long table right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'table': {
-            'name':           'table',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'table'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red chair left': {
-            'name':           'red chair left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red chair left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red chair right': {
-            'name':           'red chair right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red chair right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug bottom left': {
-            'name':           'red rug bottom left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug bottom left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug bottom middle': {
-            'name':           'red rug bottom middle',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug bottom middle'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug bottom right': {
-            'name':           'red rug bottom right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug bottom right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug middle left': {
-            'name':           'red rug middle left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug middle left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug middle middle': {
-            'name':           'red rug middle middle',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug middle middle'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug middle right': {
-            'name':           'red rug middle right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug middle right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug top left': {
-            'name':           'red rug top left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug top left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug top middle': {
-            'name':           'red rug top middle',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug top middle'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'red rug top right': {
-            'name':           'red rug top right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'red rug top right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug bottom left': {
-            'name':           'green rug bottom left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug bottom left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug bottom middle': {
-            'name':           'green rug bottom middle',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug bottom middle'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug bottom right': {
-            'name':           'green rug bottom right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug bottom right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug middle left': {
-            'name':           'green rug middle left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug middle left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug middle middle': {
-            'name':           'green rug middle middle',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug middle middle'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug middle right': {
-            'name':           'green rug middle right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug middle right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug top left': {
-            'name':           'green rug top left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug top left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug top middle': {
-            'name':           'green rug top middle',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug top middle'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'green rug top right': {
-            'name':           'green rug top right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['furniture', 'green rug top right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-    ## Drugs (drugs_options)
-
-        'needle': {
-            'name':           'needle',
-            'role':           'drugs',
-            'slot':           None,
-            'img_names':      ['drugs', 'needle'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           25,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'bowl',
-                img_names     = ['drugs', 'bowl'],
-                function      = session.mech.enter_hallucination,
-                trigger       = 'active',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-        'skin': {
-            'name':           'skin',
-            'role':           'drugs',
-            'slot':           None,
-            'img_names':      ['drugs', 'skin'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'bowl',
-                img_names     = ['drugs', 'bowl'],
-                function      = session.mech.enter_hallucination,
-                trigger       = 'active',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-        'teeth': {
-            'name':           'teeth',
-            'role':           'drugs',
-            'slot':           None,
-            'img_names':      ['drugs', 'teeth'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'bowl',
-                img_names     = ['drugs', 'bowl'],
-                function      = session.mech.enter_bitworld,
-                trigger       = 'active',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-        'bowl': {
-            'name':           'bowl',
-            'role':           'drugs',
-            'slot':           None,
-            'img_names':      ['drugs', 'bowl'],
-
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           30,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'bowl',
-                img_names     = ['drugs', 'bowl'],
-                function      = session.mech.enter_hallucination,
-                trigger       = 'active',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-        'plant': {
-            'name':           'plant',
-            'role':           'drugs',
-            'slot':           None,
-            'img_names':      ['drugs', 'plant'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'food',
-                img_names     = ['drugs', 'plant'],
-                function      = session.mech.boost_stamina,
-                trigger       = 'active',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-        'bubbles': {
-            'name':           'bubbles',
-            'role':           'drugs',
-            'slot':           None,
-            'img_names':      ['drugs', 'bubbles'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           50,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'food',
-                img_names     = ['drugs', 'bubbles'],
-                function      = session.mech.entity_eat,
-                trigger       = 'active',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-    # Potions and scrolls (potions_options, scrolls_options)
-
-        'jug of blood': {
-            'name':          'jug of blood',
-            'role':          'potions',
-            'slot':          None,
-            'img_names':     ['potions', 'red'],
-
-            'durability':    101,
-            'equippable':    False,
-            'equipped':      False,
-            'hidden':        False,
-            'blocked':       False,
-            'movable':       True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':          10,
-            
-            'hp_bonus':      0,
-            'attack_bonus':  0,
-            'defense_bonus': 0,
-            'effect':        effect},
-
-        'jug of grapes': {
-            'name':          'jug of grapes',
-            'role':          'potions',
-            'slot':          None,
-            'img_names':     ['potions', 'purple'],
-
-            'durability':    101,
-            'equippable':    False,
-            'equipped':      False,
-            'hidden':        False,
-            'blocked':       False,
-            'movable':       True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':          10,
-            
-            'hp_bonus':      0,
-            'attack_bonus':  0,
-            'defense_bonus': 0,
-            'effect':        effect},
-
-        'jug of water': {
-            'name':          'jug of water',
-            'role':          'potions',
-            'slot':          None,
-            'img_names':     ['potions', 'blue'],
-
-            'durability':    101,
-            'equippable':    False,
-            'equipped':      False,
-            'hidden':        False,
-            'blocked':       False,
-            'movable':       True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':          10,
-            
-            'hp_bonus':      0,
-            'attack_bonus':  0,
-            'defense_bonus': 0,
-            'effect':        effect},
-
-        'jug of cement': {
-            'name':           'jug of cement',
-            'role':           'potions',
-            'slot':           None,
-            'img_names':      ['potions', 'gray'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'scroll of lightning bolt': {
-            'name':           'scroll of lightning bolt',
-            'role':           'scrolls',
-            'slot':           None,
-            'img_names':      ['scrolls', 'closed'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           20,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'scroll of fireball': {
-            'name':           'scroll of fireball',
-            'role':           'scrolls',
-            'slot':           None,
-            'img_names':      ['scrolls', 'closed'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           20,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'scroll of confusion': {
-            'name':           'scroll of confusion',
-            'role':           'scrolls',
-            'slot':           None,
-            'img_names':      ['scrolls', 'closed'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           20,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'scroll of death': {
-            'name':           'scroll of death',
-            'role':           'scrolls',
-            'slot':           None,
-            'img_names':      ['scrolls', 'open'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           1000,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-    # Structures (stairs_options, floors_options)
-
-        'door': {
-            'name':           'door',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['stairs', 'door'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'portal': {
-            'name':           'portal',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['stairs', 'portal'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'cave': {
-            'name':           'cave',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['floors', 'sand2'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'path left right': {
-            'name':           'path',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['paths', 'left right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-    
-        'path up down': {
-            'name':           'path',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['paths', 'up down'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-    
-        'path down right': {
-            'name':           'path',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['paths', 'down right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-    
-        'path down left': {
-            'name':           'path',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['paths', 'down left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-    
-        'paths up right': {
-            'name':           'path',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['paths', 'up right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-    
-        'paths up left': {
-            'name':           'path',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['paths', 'up left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-    # Concrete structures (concrete_options)
-
-        'gray window': {
-            'name':           'gray window',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['concrete', 'gray window'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'gray door': {
-            'name':           'gray door',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['concrete', 'gray door'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'gray wall left': {
-            'name':           'gray wall left',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['concrete', 'gray wall left'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'gray wall': {
-            'name':           'gray wall',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['concrete', 'gray wall'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'gray wall right': {
-            'name':           'gray wall right',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['concrete', 'gray wall right'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        True,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'gray floor': {
-            'name':           'gray floor',
-            'role':           'other',
-            'slot':           None,
-            'img_names':      ['concrete', 'gray floor'],
-            
-            'durability':     101,
-            'equippable':     False,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-    # Weapons (equip_names)
-
-        'shovel': {
-            'name':           'shovel',
-            'role':           'weapons',
-            'slot':           'dominant hand',
-            'img_names':      ['shovel', 'dropped'],
-
-            'durability':     100,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           15,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   2,
-            'defense_bonus':  10,
-            'effect':         Effect(
-                name          = 'dirtball',
-                img_names     = ['green blob', 'right'],
-                function      = session.mech.propagate,
-                trigger       = 'active',
-                sequence      = '⮞⮜⮞',
-                cooldown_time = 1,
-                other         = None)},
-
-        'super shovel': {
-            'name':           'super shovel',
-            'role':           'weapons',
-            'slot':           'dominant hand',
-            'img_names':      ['super shovel', 'dropped'],
-
-            'durability':     1000,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   100,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'the way of the spade',
-                img_names     = ['shovel', 'dropped'],
-                function      = session.mech.suicide,
-                trigger       = 'active',
-                sequence      = '⮟⮟⮟',
-                cooldown_time = 1,
-                other         = None)},
-
-        'dagger': {
-            'name':           'dagger',
-            'role':           'weapons',
-            'slot':           'dominant hand',
-            'img_names':      ['dagger', 'dropped'],
-            
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           25,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   2,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'swing',
-                img_names     = ['dagger', 'dropped'],
-                function      = session.mech.swing,
-                trigger       = 'active',
-                sequence      = '⮜⮟⮞',
-                cooldown_time = 0.1,
-                other         = None)},
-
-        'sword': {
-            'name':           'sword',
-            'role':           'weapons',
-            'slot':           'dominant hand',
-            'img_names':      ['sword', 'dropped'],
-            
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           75,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   5,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'blood dagger': {
-            'name':           'blood dagger',
-            'role':           'weapons',
-            'slot':           'dominant hand',
-            'img_names':      ['blood dagger', 'dropped'],
-            
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           500,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   10,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'blood sword': {
-            'name':           'blood sword',
-            'role':           'weapons',
-            'slot':           'dominant hand',
-            'img_names':      ['blood sword', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           1000,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   15,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-    # Effects
-
-        'eye': {
-            'name':           'eye',
-            'role':           'weapons',
-            'slot':           'dominant hand',
-            'img_names':      ['blood dagger', 'dropped'],
-            
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'swing',
-                img_names     = ['null', 'null'],
-                function      = session.mech.swing,
-                trigger       = 'passive',
-                sequence      = None,
-                cooldown_time = 0.1,
-                other         = None)},
-
-    # Armor (equip_names)
-
-        'green clothes': {
-            'name':           'green clothes',
-            'role':           'armor',
-            'slot':           'body',
-            'img_names':      ['green clothes', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  1,
-            'effect':         effect},
-
-        'orange clothes': {
-            'name':           'orange clothes',
-            'role':           'armor',
-            'slot':           'body',
-            'img_names':      ['orange clothes', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  1,
-            'effect':         effect},
-
-        'exotic clothes': {
-            'name':           'exotic clothes',
-            'role':           'armor',
-            'slot':           'body',
-            'img_names':      ['exotic clothes', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           20,
-            
-            'hp_bonus':       1,
-            'attack_bonus':   0,
-            'defense_bonus':  1,
-            'effect':         effect},
-
-        'yellow dress': {
-            'name':           'yellow dress',
-            'role':           'armor',
-            'slot':           'body',
-            'img_names':      ['yellow dress', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           10,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  1,
-            'effect':         effect},
-
-        'chain dress': {
-            'name':           'chain dress',
-            'role':           'armor',
-            'slot':           'body',
-            'img_names':      ['chain dress', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           20,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  2,
-            'effect':         effect},
-
-        'iron armor': {
-            'name':           'iron armor',
-            'role':           'armor',
-            'slot':           'body',
-            'img_names':      ['iron armor', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           100,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  10,
-            'effect':         effect},
-
-        'lamp': {
-            'name':           'lamp',
-            'role':           'armor',
-            'slot':           'non-dominant hand',
-            'img_names':      ['lamp', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           100,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         Effect(
-                name          = 'lamp',
-                img_names     = ['iron shield', 'dropped'],
-                function      = session.mech.lamp,
-                trigger       = 'passive',
-                sequence      = None,
-                cooldown_time = 0,
-                other         = 5)},
-
-        'bald': {
-            'name':           'bald',
-            'role':           'armor',
-            'slot':           'head',
-            'img_names':      ['bald', 'front'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        False,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'brown hair': {
-            'name':           'brown hair',
-            'role':           'armor',
-            'slot':           'head',
-            'img_names':      ['brown hair', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'blue hair': {
-            'name':           'blue hair',
-            'role':           'armor',
-            'slot':           'head',
-            'img_names':      ['blue hair', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'short brown hair': {
-            'name':           'short brown hair',
-            'role':           'armor',
-            'slot':           'head',
-            'img_names':      ['short brown hair', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'clean': {
-            'name':           'clean',
-            'role':           'armor',
-            'slot':           'face',
-            'img_names':      ['clean', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'brown beard': {
-            'name':           'brown beard',
-            'role':           'armor',
-            'slot':           'face',
-            'img_names':      ['brown beard', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'blue beard': {
-            'name':           'blue beard',
-            'role':           'armor',
-            'slot':           'face',
-            'img_names':      ['blue beard', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'white beard': {
-            'name':           'white beard',
-            'role':           'armor',
-            'slot':           'face',
-            'img_names':      ['white beard', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'flat': {
-            'name':           'flat',
-            'role':           'armor',
-            'slot':           'chest',
-            'img_names':      ['flat', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'bra': {
-            'name':           'bra',
-            'role':           'armor',
-            'slot':           'chest',
-            'img_names':      ['bra', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'glasses': {
-            'name':           'glasses',
-            'role':           'armor',
-            'slot':           'face',
-            'img_names':      ['glasses', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         True,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  0,
-            'effect':         effect},
-
-        'iron shield': {
-            'name':           'iron shield',
-            'role':           'armor',
-            'slot':           'non-dominant hand',
-            'img_names':      ['iron shield', 'dropped'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           50,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  10,
-            'effect':         effect},
-
-    # Big objects
-            'logo': {
-            'name':           'logo',
-            'role':           'decor',
-            'img_names':      ['top', 'left'],
-
-            'durability':     101,
-            'equippable':     True,
-            'equipped':       False,
-            'hidden':         False,
-            'blocked':        False,
-            'movable':        True,
-            'rand_X':         0,
-            'rand_Y':         0,
-            'cost':           0,
-            
-            'hp_bonus':       0,
-            'attack_bonus':   0,
-            'defense_bonus':  10,
-            'effect':         effect}}
-    
-    # Search with image names
     if type(names) in [tuple, list]:
         for val in item_dict.values():
             if val['img_names'] == names:
                 item = Item(**val)
+    else:       item = Item(**item_dict[names])
     
-    # Search with dictionary names
-    else: item = Item(**item_dict[names])
+    # Add effect
+    if effect: item.effect = effect
     
+    # Return if found
     if not item: raise Exception(names)
     else:        return item
 
@@ -2475,618 +2990,20 @@ def create_entity(names):
     
         Parameters
         ----------
-        names : string; name of object
-        location  : list of int; coordinates of item location """
+        names : str; name of object """
 
+    from mechanics import Entity
+
+    # Look for entity
     item = None
-    ent_dict = {
-
-    ## Actual entities
-
-        'white': {
-            'name':        'white NPC',
-            'role':        'NPC',
-            'img_names':   ['white', 'front'],
-            'habitat':     'any',
-            
-            'exp':         0,
-            'rank':        1,
-            'sanity':      100,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            
-            'follow':      False,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000},
-
-        'black': {
-            'name':        'black NPC',
-            'role':        'NPC',
-            'img_names':   ['black', 'front'],
-            'habitat':     'any',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      False,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000},
-
-        'fat': {
-            'name':        'fat NPC',
-            'role':        'NPC',
-            'img_names':   ['fat', 'front'],
-            'habitat':     'any',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      False,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000},
-
-        'friend': {
-            'name':        'friend',
-            'role':        'NPC',
-            'img_names':   ['friend', 'front'],
-            'habitat':     'land',
-
-            'exp':         0,
-            'rank':        100,
-            'hp':          100,
-            'max_hp':      100,
-            'attack':      0,
-            'defense':     100,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      False,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       640},
-
-        'eye': {
-            'name':        'eye',
-            'role':        'enemy',
-            'img_names':   ['eye', 'front'],
-            'habitat':     'land',
-            
-            'exp':         35,
-            'rank':        1,
-            'hp':          100,
-            'max_hp':      100,
-            'attack':      20,
-            'defense':     20,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   20,
-            'aggression':  50,
-            'fear':        None,
-            'reach':       1000},
-
-        'eyes': {
-            'name':        'eyes',
-            'role':        'enemy',
-            'img_names':   ['eyes', 'front'],
-            'habitat':     'land',
-            
-            'exp':         35,
-            'rank':        1,
-            'hp':          20,
-            'max_hp':      20,
-            'attack':      4,
-            'defense':     0,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
-            'fear':        None,
-            'reach':       1000},
-
-        'troll': {
-            'name':        'troll',
-            'role':        'enemy',
-            'img_names':   ['troll', 'front'],
-            'habitat':     'land',
-
-            'exp':         100,
-            'rank':        1,
-            'hp':          30,
-            'max_hp':      30,
-            'attack':      8,
-            'defense':     2,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
-            'fear':        None,
-            'reach':       1000},
-
-        'triangle': {
-            'name':        'triangle',
-            'role':        'enemy',
-            'img_names':   ['triangle', 'front'],
-            'habitat':     'land',
-
-            'exp':         100,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      15,
-            'defense':     10,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    1,
-            'miss_rate':   5,
-            'aggression':  100,
-            'fear':        None,
-            'reach':       1000},
-
-        'purple': {
-            'name':        'purple',
-            'role':        'enemy',
-            'img_names':   ['purple', 'front'],
-            'habitat':     'land',
-            
-            'exp':         500,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
-            'fear':        None,
-            'reach':       1000},
-
-        'tentacles': {
-            'name':        'tentacles',
-            'role':        'enemy',
-            'img_names':   ['tentacles', 'front'],
-            'habitat':     'any',
-
-            'exp':         50,
-            'rank':        1,
-            'hp':          35,
-            'max_hp':      35,
-            'attack':      10,
-            'defense':     10,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    2,
-            'miss_rate':   1,
-            'aggression':  100,
-            'fear':        None,
-            'reach':       1000},
-
-        'round1': {
-            'name':        'round1',
-            'role':        'enemy',
-            'img_names':   ['round1', 'front'],
-            'habitat':     'land',
-            
-            'exp':         50,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    0,
-            'miss_rate':   5,
-            'aggression':  100,
-            'fear':        None,
-            'reach':       1000},
-
-        'round2': {
-            'name':        'round2',
-            'role':        'enemy',
-            'img_names':   ['round2', 'front'],
-            'habitat':     'land',
-            
-            'exp':         500,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
-            'fear':        None,
-            'reach':       1000},
-
-        'grass': {
-            'name':        'grass',
-            'role':        'enemy',
-            'img_names':   ['grass', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         500,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   40,
-            'aggression':  20,
-            'fear':        None,
-            'reach':       1000},
-
-        'round3': {
-            'name':        'round3',
-            'role':        'enemy',
-            'img_names':   ['round3', 'front'],
-            'habitat':     'any',
-            
-            'exp':         500,
-            'rank':        1,
-            'hp':          1,
-            'max_hp':      1,
-            'attack':      0,
-            'defense':     0,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      False,
-            'lethargy':    10,
-            'miss_rate':   10,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       64},
-
-        'lizard': {
-            'name':        'lizard',
-            'role':        'enemy',
-            'img_names':   ['lizard', 'front'],
-            'habitat':     'desert',
-            
-            'exp':         500,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    5,
-            'miss_rate':   10,
-            'aggression':  10,
-            'fear':        None,
-            'reach':       1000},
-
-        'red': {
-            'name':        'red',
-            'role':        'enemy',
-            'img_names':   ['red', 'front'],
-            'habitat':     'land',
-            
-            'exp':         500,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      15,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      False,
-            'lethargy':    100,
-            'miss_rate':   10,
-            'aggression':  1,
-            'fear':        None,
-            'reach':       0},
-
-        'rock': {
-            'name':        'rock',
-            'role':        'enemy',
-            'img_names':   ['rock', 'front'],
-            'habitat':     'desert',
-            
-            'exp':         500,
-            'rank':        1,
-            'hp':          10,
-            'max_hp':      10,
-            'attack':      0,
-            'defense':     500,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      False,
-            'lethargy':    2,
-            'miss_rate':   0,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       0},
-
-        'frog': {
-            'name':        'frog',
-            'role':        'enemy',
-            'img_names':   ['frog', 'front'],
-            'habitat':     'any',
-            
-            'exp':         15,
-            'rank':        1,
-            'hp':          50,
-            'max_hp':      50,
-            'attack':      1,
-            'defense':     5,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      False,
-            'lethargy':    10,
-            'miss_rate':   10,
-            'aggression':  10,
-            'fear':        None,
-            'reach':       32},
-
-        'red radish': {
-            'name':        'red radish',
-            'role':        'enemy',
-            'img_names':   ['red radish', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        0,
-            'reach':       1000},
-
-        'orange radish': {
-            'name':        'orange radish',
-            'role':        'enemy',
-            'img_names':   ['orange radish', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        0,
-            'reach':       1000},
-
-        'purple radish': {
-            'name':        'purple radish',
-            'role':        'enemy',
-            'img_names':   ['purple radish', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        0,
-            'reach':       1000},
-
-        'snake': {
-            'name':        'snake',
-            'role':        'enemy',
-            'img_names':   ['snake', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000},
-
-        'buzz': {
-            'name':        'buzz',
-            'role':        'enemy',
-            'img_names':   ['buzz', 'front'],
-            'habitat':     'city',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000},
-
-        'egg': {
-            'name':        'egg',
-            'role':        'enemy',
-            'img_names':   ['egg', 'front'],
-            'habitat':     'any',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000},
-
-        'star': {
-            'name':        'star',
-            'role':        'enemy',
-            'img_names':   ['star', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    20,
-            'miss_rate':   20,
-            'aggression':  10,
-            'fear':        None,
-            'reach':       1000},
-
-        'plant': {
-            'name':        'plant',
-            'role':        'enemy',
-            'img_names':   ['plant', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000},
-
-    ## Projectiles
-
-        'green blob': {
-            'name':        'green blob',
-            'role':        'projectile',
-            'img_names':   ['green blob', 'front'],
-            'habitat':     'forest',
-            
-            'exp':         0,
-            'rank':        1,
-            'hp':          25,
-            'max_hp':      25,
-            'attack':      0,
-            'defense':     25,
-            'stamina':     100,
-            'sanity':      100,
-            
-            'follow':      True,
-            'lethargy':    6,
-            'miss_rate':   6,
-            'aggression':  0,
-            'fear':        None,
-            'reach':       1000}}
-    
     if type(names) in [tuple, list]:
         for val in ent_dict.values():
             if val.img_names == names:
                 ent = Entity(**val)
                 ent.handedness = random.choice(['left', 'right'])
-    else:
-        ent = Entity(**ent_dict[names])
+    else:       ent = Entity(**ent_dict[names])
     
+    # Return if found
     if not ent: raise Exception(names)
     else:        return ent
 

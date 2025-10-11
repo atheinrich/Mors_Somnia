@@ -12,9 +12,6 @@ from   pygame.locals import *
 
 # Modules
 import session
-from items_entities import create_item, create_NPC
-from mechanics import Effect, place_object
-from main import render_all
 
 ########################################################################################################################################################
 # Classes
@@ -385,6 +382,8 @@ class BigMenu:
 
     def render(self):
         
+        from utilities import render_all
+
         # Apply background fade
         session.pyg.screen.blit(self.background_fade, (0, 0))
         
@@ -502,7 +501,9 @@ class QuestTemplate:
         pass
     
     def subquest(self, dialogue=None, ent=None):
-        
+
+        from items_entities import create_NPC
+
         # Run something upon activating an effect
         if not dialogue and not ent:
             note_text = ["line 1", "line 2", "line 3"]
@@ -580,7 +581,11 @@ class Bloodkin:
 
     def making_a_friend(self, ent, dialogue):
         """ Manages friend quest, including initialization and dialogue. """
-        
+
+        from items_entities import create_item
+        from mechanics import Effect
+        from mechanics import place_object
+
         # Initialization
         if dialogue == "Walk into something to interact with it, or press Enter (↲) if you're above it.":
             ent.quest.dialogue_list = [
@@ -709,6 +714,9 @@ class Bloodkin:
                 session.questlog_obj.update_questlog(name='Learning a language')
 
     def set_entities(self, quest):
+
+        from items_entities import create_NPC
+
         names_list, dialogue_list, progress_list = [], [], []
         
         # Generate characters and dialogue
@@ -817,6 +825,9 @@ class FriendlyFaces:
                 session.questlog_obj.update_questlog(name='Making an introduction')
 
     def set_entities(self, quest):
+
+        from items_entities import create_NPC
+
         names_list, dialogue_list, progress_list = [], [], []
         
         # Generate characters and dialogue

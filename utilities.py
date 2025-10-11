@@ -18,9 +18,6 @@ import sys
 
 ## Modules
 import session
-from main import render_all
-from items_entities import Player
-from mechanics import place_player
 
 ########################################################################################################################################################
 # Classes
@@ -944,7 +941,9 @@ class FileMenu:
             == ent 
             == ents 
             == questlog """
-                
+        
+        from items_entities import Player
+
         # Update file menu
         if session.player_obj.file_num: self.options[session.player_obj.file_num - 1] += ' *'
         
@@ -964,7 +963,7 @@ class FileMenu:
                 session.player_obj = pickle.load(file)
 
             # Load cameras
-            for env in session.player_obj.envs.values():
+            for env in session.player_obj.envs.dict.values():
                 if type(env) == list:
                     for sub_env in env: sub_env.camera = Camera(session.player_obj.ent)
                 else:                   env.camera     = Camera(session.player_obj.ent)
@@ -1082,7 +1081,7 @@ class Pets:
     def __init__(self):
         
         # General
-        self.ents = session.player_obj.envs['garden'].entities
+        self.ents = session.player_obj.envs.dict['garden'].entities
         
         self.stats = {
             '      RADIX ATRIUM': None,
@@ -1124,7 +1123,7 @@ class Pets:
         self.emoji_press        = 0
 
     def import_pets(self):
-        self.ents = session.player_obj.envs['garden'].entities
+        self.ents = session.player_obj.envs.dict['garden'].entities
 
     def stat_check(self, dic):
         for key, value in dic.items():
@@ -1351,13 +1350,15 @@ class MainMenu:
     
     def key_PERIOD(self):
 
+        from mechanics import place_player
+
         # >>GARDEN<<
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time())
             if session.player_obj.ent.env.name != 'garden':
                 place_player(
-                    env = session.player_obj.envs['garden'],
-                    loc = session.player_obj.envs['garden'].player_coordinates)
+                    env = session.player_obj.envs.dict['garden'],
+                    loc = session.player_obj.envs.dict['garden'].player_coordinates)
                 session.pyg.game_state = 'play_garden'
             elif not session.pyg.startup_toggle:
                 place_player(
@@ -1624,12 +1625,12 @@ def check_tile(x, y, startup=False):
     """ Reveals newly explored regions with respect to the player's position. """
     
     # Define some shorthand
-    tile = session.session.player_obj.ent.env.map[x][y]
+    tile = session.player_obj.ent.env.map[x][y]
     
     # Reveal a square around the player
     for u in range(x-1, x+2):
         for v in range(y-1, y+2):
-            session.session.player_obj.ent.env.map[u][v].hidden = False
+            session.player_obj.ent.env.map[u][v].hidden = False
     
     # Reveal a hidden room
     if tile.room:
@@ -1640,8 +1641,8 @@ def check_tile(x, y, startup=False):
                 room_tile.hidden = False
         
         # Check if the player enters or leaves a room
-        if session.session.player_obj.ent.prev_tile:
-            if (tile.room != session.session.player_obj.ent.prev_tile.room) or (startup == True):
+        if session.player_obj.ent.prev_tile:
+            if (tile.room != session.player_obj.ent.prev_tile.room) or (startup == True):
                 
                 # Hide the roof if the player enters a room
                 if tile.room and tile.room.roof:
@@ -1650,8 +1651,8 @@ def check_tile(x, y, startup=False):
                             spot.img_names = tile.room.floor
     
     # Reveal the roof if the player leaves the room
-    if session.session.player_obj.ent.prev_tile:
-        prev_tile = session.session.player_obj.ent.prev_tile
+    if session.player_obj.ent.prev_tile:
+        prev_tile = session.seion.player_obj.ent.prev_tile
         if prev_tile.room and not tile.room:
             if prev_tile.room.roof:
                 for spot in prev_tile.room.tiles_list:
@@ -1672,7 +1673,7 @@ def is_blocked(env, loc):
         
         # Triggers message for hidden passages
         if env.map[loc[0]][loc[1]].unbreakable:
-            #session.session.pyg.update_gui("A mysterious breeze seeps through the cracks.", session.session.pyg.dark_gray)
+            #session.pyg.update_gui("A mysterious breeze seeps through the cracks.", session.pyg.dark_gray)
             pygame.event.clear()
             return True
     except: return False
@@ -1702,13 +1703,13 @@ def get_vicinity(obj):
 def sort_inventory(ent=None):   
     
     # Allow for NPC actions
-    if not ent: ent = session.session.player_obj.ent
+    if not ent: ent = session.player_obj.ent
         
     inventory_cache = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
     other_cache     = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
 
     # Sort by category
-    for item_list in session.session.player_obj.ent.inventory.values():
+    for item_list in session.player_obj.ent.inventory.values():
         for item in item_list:
             inventory_cache[item.role].append(item)
     
@@ -1719,7 +1720,7 @@ def sort_inventory(ent=None):
     sorted(inventory_cache['scrolls'], key=lambda obj: obj.name)
     sorted(inventory_cache['other'],  key=lambda obj: obj.name)
 
-    session.session.player_obj.ent.inventory = inventory_cache
+    session.player_obj.ent.inventory = inventory_cache
 
 def screenshot(size='display', visible=False, folder="Data/.Cache", filename="screenshot.png", blur=False):
     """ Takes a screenshot.

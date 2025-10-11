@@ -16,11 +16,6 @@ import copy
 
 ## Modules
 import session
-from utilities import check_tile, is_blocked, sort_inventory, get_vicinity, Camera
-from items_entities import Effect, create_item, create_entity
-from environments import Tile, build_dungeon_level, build_bitworld, build_hallucination_level, build_cave_level, build_overworld
-from main import render_all
-from quests import BigMenu
 
 ########################################################################################################################################################
 # Interactions
@@ -108,7 +103,8 @@ class Item:
 
     def pick_up(self, ent=None):
         """ Adds an item to the player's inventory and removes it from the map. """
-        
+        from utilities import sort_inventory
+
         # Allow for NPC actions
         if not ent: ent = session.player_obj.ent
         
@@ -263,13 +259,6 @@ class Item:
         if self.tile: self.tile.item = None
         place_object(self, [self.X//32, self.Y//32], session.player_obj.ent.env)
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
 class Entity:
     """ Player, enemies, and NPCs. Manages stats, inventory, and basic mechanics. """
     
@@ -306,6 +295,8 @@ class Entity:
             aggression     : int; toggles attack functions
             dialogue       : list or tuple of strings; quest or general dialogue """
         
+        from items_entities import Effect
+
         # Import parameters
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -483,7 +474,8 @@ class Entity:
             - dialogue
             - combat
             - digging """
-        
+        from utilities import is_blocked
+
         # Determine direction
         if   dY > 0: self.direction = 'front'
         elif dY < 0: self.direction = 'back'
@@ -544,7 +536,8 @@ class Entity:
 
     def move_player(self, x, y, dX, dY):
         """ Annex of move() for player actions. """
-        
+        from utilities import check_tile, is_blocked
+
         # Move forwards
         if not is_blocked(self.env, [x, y]):
             
@@ -637,7 +630,8 @@ class Entity:
         self.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
 
     def move_pet(self, x, y, dX, dY):
-        
+        from utilities import is_blocked
+
         # Move forwards
         if not is_blocked(self.env, [x, y]):
             
@@ -759,6 +753,8 @@ class Entity:
 
     def death(self):
         
+        from items_entities import create_item
+
         # Player death
         if self.role == 'player':
             session.pyg.update_gui("You died!", session.pyg.red)
@@ -933,19 +929,10 @@ class Entity:
             if session.player_obj.ent.env.env_time in self.trader:
                 session.pyg.display.blit(session.img.dict['bubbles']['cart'], (X, Y-session.pyg.tile_height))
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
 class Mechanics:
     """ Game parameters. Does not need to be saved. """
     
-    def __init__(self, player_obj):
-
-        session.player_obj        = player_obj
+    def __init__(self):
         
         # Combat
         self.heal_amount       = 4
@@ -989,29 +976,29 @@ class Mechanics:
                     duration = 2)
                 session.play_game_obj.fadein = text
             
-            if 'dungeon' not in session.player_obj.envs.keys():
-                session.player_obj.envs['dungeon'] = []
-                build_dungeon_level(lvl_num)
+            if 'dungeon' not in session.player_obj.envs.dict.keys():
+                session.player_obj.envs.dict['dungeon'] = []
+                session.player_obj.envs.build_dungeon_level(lvl_num)
             
             # Enter the first dungeon
             if session.player_obj.ent.env.name != 'dungeon':
                 place_player(
-                    env = session.player_obj.envs['dungeon'][0],
-                    loc = session.player_obj.envs['dungeon'][0].center)
+                    env = session.player_obj.envs.dict['dungeon'][0],
+                    loc = session.player_obj.envs.dict['dungeon'][0].center)
             
             # Enter the next saved dungeon
-            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs['dungeon']):
+            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.dict['dungeon']):
                 lvl_num = session.player_obj.ent.env.lvl_num
                 place_player(
-                    env = session.player_obj.envs['dungeon'][lvl_num],
-                    loc = session.player_obj.envs['dungeon'][lvl_num].center)
+                    env = session.player_obj.envs.dict['dungeon'][lvl_num],
+                    loc = session.player_obj.envs.dict['dungeon'][lvl_num].center)
             
             # Enter a new dungeon
             else:
-                build_dungeon_level(lvl_num)
+                session.player_obj.envs.build_dungeon_level(lvl_num)
                 place_player(
-                    env = session.player_obj.envs['dungeon'][-1],
-                    loc = session.player_obj.envs['dungeon'][-1].center)
+                    env = session.player_obj.envs.dict['dungeon'][-1],
+                    loc = session.player_obj.envs.dict['dungeon'][-1].center)
 
     def enter_hallucination(self, ent=None, text='. . . ! Your vision blurs as the substance seeps through your veins.'):
         """ Advances player to the next level. """
@@ -1020,8 +1007,8 @@ class Mechanics:
             self.last_press_time = time.time()
             pygame.event.clear()
             
-            if 'hallucination' not in session.player_obj.envs.keys():
-                session.player_obj.envs['hallucination'] = []
+            if 'hallucination' not in session.player_obj.envs.dict.keys():
+                session.player_obj.envs.dict['hallucination'] = []
                 
                 session.pyg.fadeout_screen(
                     screen   = session.pyg.screen,
@@ -1029,28 +1016,28 @@ class Mechanics:
                     text     = text,
                     duration = 2)
                 session.pyg.overlay = None
-                build_hallucination_level()
+                session.player_obj.envs.build_hallucination_level()
                 session.play_game_obj.fadein = text
 
             # Enter the first hallucination
             if session.player_obj.ent.env.name != 'hallucination':
                 place_player(
-                    env = session.player_obj.envs['hallucination'][0],
-                    loc = session.player_obj.envs['hallucination'][0].center)
+                    env = session.player_obj.envs.dict['hallucination'][0],
+                    loc = session.player_obj.envs.dict['hallucination'][0].center)
             
             # Enter the next saved hallucination
-            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs['hallucination']):
+            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.dict['hallucination']):
                 lvl_num = session.player_obj.ent.env.lvl_num
                 place_player(
-                    env = session.player_obj.envs['hallucination'][lvl_num],
-                    loc = session.player_obj.envs['hallucination'][lvl_num].center)
+                    env = session.player_obj.envs.dict['hallucination'][lvl_num],
+                    loc = session.player_obj.envs.dict['hallucination'][lvl_num].center)
             
             # Enter a new hallucination
             else:
-                build_hallucination_level()
+                session.player_obj.envs.build_hallucination_level()
                 place_player(
-                    env = session.player_obj.envs['hallucination'][-1],
-                    loc = session.player_obj.envs['hallucination'][-1].center)
+                    env = session.player_obj.envs.dict['hallucination'][-1],
+                    loc = session.player_obj.envs.dict['hallucination'][-1].center)
 
     def enter_bitworld(self, ent=None, text='. . . ! Your vision blurs as the substance seeps through your veins.'):
         """ Advances player to bitworld. """
@@ -1059,8 +1046,8 @@ class Mechanics:
             self.last_press_time = time.time()
             pygame.event.clear()
             
-            if 'bitworld' not in session.player_obj.envs.keys():
-                session.player_obj.envs['bitworld'] = []
+            if 'bitworld' not in session.player_obj.envs.dict.keys():
+                session.player_obj.envs.dict['bitworld'] = []
                 
                 session.pyg.fadeout_screen(
                     screen   = session.pyg.screen,
@@ -1068,14 +1055,14 @@ class Mechanics:
                     text     = text,
                     duration = 2)
                 session.pyg.overlay = None
-                build_bitworld()
+                session.player_obj.envs.build_bitworld()
                 session.play_game_obj.fadein = text
 
             if session.player_obj.ent.env.name != 'bitworld':
                 session.img.render_fx = 'bw_binary'
                 place_player(
-                    env = session.player_obj.envs['bitworld'],
-                    loc = session.player_obj.envs['bitworld'].center)
+                    env = session.player_obj.envs.dict['bitworld'],
+                    loc = session.player_obj.envs.dict['bitworld'].center)
     
     def enter_cave(self, ent=None):
         """ Advances player to the next level. """
@@ -1084,30 +1071,30 @@ class Mechanics:
             self.last_press_time = time.time()
             pygame.event.clear()
             
-            if 'cave' not in session.player_obj.envs.keys(): 
+            if 'cave' not in session.player_obj.envs.dict.keys(): 
                 session.pyg.update_gui("The ground breaks beneath you and reveals a cave.", session.pyg.dark_gray)
-                session.player_obj.envs['cave'] = []
-                build_cave_level()
+                session.player_obj.envs.dict['cave'] = []
+                session.player_obj.envs.build_cave_level()
             
             # Enter the first cave
             if session.player_obj.ent.env.name != 'cave':
                 place_player(
-                    env = session.player_obj.envs['cave'][0],
-                    loc = session.player_obj.envs['cave'][0].center)
+                    env = session.player_obj.envs.dict['cave'][0],
+                    loc = session.player_obj.envs.dict['cave'][0].center)
             
             # Enter the next saved cave
-            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs['cave']):
+            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.dict['cave']):
                 lvl_num = session.player_obj.ent.env.lvl_num
                 place_player(
-                    env = session.player_obj.envs['cave'][lvl_num],
-                    loc = session.player_obj.envs['cave'][lvl_num].center)
+                    env = session.player_obj.envs.dict['cave'][lvl_num],
+                    loc = session.player_obj.envs.dict['cave'][lvl_num].center)
             
             # Enter a new cave
             else:
-                build_cave_level()
+                session.player_obj.envs.build_cave_level()
                 place_player(
-                    env = session.player_obj.envs['cave'][-1],
-                    loc = session.player_obj.envs['cave'][-1].center)
+                    env = session.player_obj.envs.dict['cave'][-1],
+                    loc = session.player_obj.envs.dict['cave'][-1].center)
 
     def enter_overworld(self, ent=None):
         
@@ -1115,11 +1102,11 @@ class Mechanics:
             self.last_press_time = time.time()
             pygame.event.clear()
             
-            if 'overworld' not in session.player_obj.envs.keys(): build_overworld()
-            loc = session.player_obj.envs['overworld'].center
+            if 'overworld' not in session.player_obj.envs.dict.keys(): session.player_obj.envs.build_overworld()
+            loc = session.player_obj.envs.dict['overworld'].center
             print(1, session.player_obj.ent.env.weather)
             place_player(
-                env = session.player_obj.envs['overworld'],
+                env = session.player_obj.envs.dict['overworld'],
                 loc = [loc[0], loc[1]])
             print(session.player_obj.ent.env.weather)
 
@@ -1130,12 +1117,14 @@ class Mechanics:
             pygame.event.clear()
             
             place_player(
-                env = session.player_obj.envs['home'],
-                loc = session.player_obj.envs['home'].player_coordinates)
+                env = session.player_obj.envs.dict['home'],
+                loc = session.player_obj.envs.dict['home'].player_coordinates)
 
     # Item effects
     def swing(self, ent=None):
-        
+
+        from utilities import get_vicinity
+
         # Set entity
         if not ent: ent = session.player_obj.ent
         
@@ -1184,6 +1173,8 @@ class Mechanics:
 
     def propagate(self, ent=None):
         
+        from items_entities import create_entity
+
         # Set entity
         if not ent: ent = session.player_obj.ent
         
@@ -1423,7 +1414,9 @@ class Mechanics:
 
     def entity_scare(self):
         """ Combo effect. """
-        
+
+        from utilities import get_vicinity
+
         # Find entities in vicinity
         ent_list = []
         for tile in get_vicinity(session.player_obj.ent).values():
@@ -1449,7 +1442,9 @@ class Mechanics:
 
     def entity_capture(self):
         """ Combo effect. """
-        
+
+        from utilities import get_vicinity
+
         # Find entities in vicinity
         ent = None
         for tile in get_vicinity(session.player_obj.ent).values():
@@ -1478,7 +1473,9 @@ class Mechanics:
 
     def entity_comfort(self):
         """ Combo effect. """
-        
+
+        from utilities import get_vicinity
+
         # Find pets in vicinity
         ent_list = []
         for tile in get_vicinity(session.player_obj.ent).values():
@@ -1496,6 +1493,8 @@ class Mechanics:
 
     def entity_clean(self):
         """ Combo effect. """
+
+        from utilities import get_vicinity
         
         # Find pets in vicinity
         ent_list = []
@@ -1691,7 +1690,7 @@ class PlayGame:
                                 session.player_obj.ent.hp = session.player_obj.ent.max_hp
                                 self.fadein = "???"
                             
-                            if last_env.name in ['garden', 'womb']: last_env = session.player_obj.envs['home']
+                            if last_env.name in ['garden', 'womb']: last_env = session.player_obj.envs.dict['home']
                             session.pyg.overlay = None
                             session.pyg.fadeout_screen(
                                 screen  = session.pyg.screen,
@@ -1849,7 +1848,7 @@ class PlayGame:
                 
                     # Go up by one floor
                     if session.player_obj.ent.env.lvl_num > 1:
-                        env = session.player_obj.envs[session.player_obj.ent.env.name][session.player_obj.ent.env.lvl_num-2]
+                        env = session.player_obj.envs.dict[session.player_obj.ent.env.name][session.player_obj.ent.env.lvl_num-2]
                         place_player(
                             env = env,
                             loc = env.player_coordinates)
@@ -1878,6 +1877,9 @@ class PlayGame:
             session.mech.movement_speed()
 
     def render(self):
+        
+        from utilities import render_all
+
         session.pyg.msg_height = 4
         if not session.pyg.overlay: session.pyg.update_gui()
         render_all()
@@ -1901,7 +1903,7 @@ class PlayGarden:
         else:                     session.player_obj.ent.role = 'player'
         
         # Set camera and movement speed
-        session.player_obj.envs['garden'].camera.zoom_in(custom=1)
+        session.player_obj.envs.dict['garden'].camera.zoom_in(custom=1)
         session.mech.movement_speed(toggle=False, custom=2)
         
         # Handle input
@@ -2050,6 +2052,9 @@ class PlayGarden:
             session.mech.movement_speed()
 
     def render(self):
+        
+        from utilities import render_all
+
         session.pyg.msg_toggle = False
         session.pyg.gui_toggle = False
         render_all()
@@ -2440,6 +2445,8 @@ class Catalog:
 
     def place_item(self):
 
+        from items_entities import create_item, create_entity
+
         # Note location and image names
         self.img_x, self.img_y = int(session.player_obj.ent.X/session.pyg.tile_width), int(session.player_obj.ent.Y/session.pyg.tile_height)
         self.img_names[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
@@ -2501,6 +2508,9 @@ class Catalog:
             pickle.dump(session.player_obj.ent.env, file)
 
     def import_env(self):
+
+        from utilities import Camera
+
         try:
             with open(f"Data/File_{session.player_obj.file_num}/env.pkl", "rb") as file:
                 env = pickle.load(file)
@@ -3112,11 +3122,11 @@ class NewGame:
         # Reset player
         session.pyg.startup_toggle = True
         session.player_obj.create_player()
-        session.player_obj.envs['garden'] = session.player_obj.envs.build_garden()
-        session.player_obj.ent.last_env = session.player_obj.envs['garden']
+        session.player_obj.envs.dict['garden'] = session.player_obj.envs.build_garden()
+        session.player_obj.ent.last_env = session.player_obj.envs.dict['garden']
         place_player(
-            env = session.player_obj.envs['garden'],
-            loc = session.player_obj.envs['garden'].center)
+            env = session.player_obj.envs.dict['garden'],
+            loc = session.player_obj.envs.dict['garden'].center)
         
         # Initialize cursor
         self.cursor_img = pygame.Surface((16, 16)).convert()
@@ -3145,11 +3155,15 @@ class NewGame:
         self.fadeout = False
 
         # Construct character creation level
-        session.player_obj.envs['womb'] = session.player_obj.envs.build_womb()
+        session.player_obj.envs.dict['womb'] = session.player_obj.envs.build_womb()
 
     def run(self):
+        
+        from utilities import render_all
+        from items_entities import create_item
+
         session.mech.movement_speed(toggle=False, custom=2)
-        env = session.player_obj.envs['womb']
+        env = session.player_obj.envs.dict['womb']
         if session.player_obj.ent.env.name != env.name:
             place_player(
                 env = env,
@@ -3167,8 +3181,8 @@ class NewGame:
                     if session.player_obj.ent.last_env.name == 'garden':
                         session.pyg.game_state = 'play_garden'
                         place_player(
-                            env = session.player_obj.envs['garden'],
-                            loc = session.player_obj.envs['garden'].player_coordinates)
+                            env = session.player_obj.envs.dict['garden'],
+                            loc = session.player_obj.envs.dict['garden'].player_coordinates)
                     else:
                         session.pyg.game_state = 'play_game'
                     session.pyg.overlay = 'menu'
@@ -3259,8 +3273,8 @@ class NewGame:
                         if session.player_obj.ent.last_env.name == 'garden':
                             session.pyg.game_state = 'play_garden'
                             place_player(
-                                env = session.player_obj.envs['garden'],
-                                loc = session.player_obj.envs['garden'].player_coordinates)
+                                env = session.player_obj.envs.dict['garden'],
+                                loc = session.player_obj.envs.dict['garden'].player_coordinates)
                         else:
                             session.pyg.game_state = 'play_game'
                         session.pyg.overlay = 'menu'
@@ -3281,12 +3295,16 @@ class NewGame:
             new:  creates player as Object with Fighter stats, calls make_home(), then loads initial inventory
             else: calls load_objects_from_file() to load player, inventory, and current floor """
         
+        from utilities import sort_inventory
+        from items_entities import create_item
+        from quests import BigMenu
+
         # Clear prior data
         if not session.player_obj.temp:
-            session.player_obj.envs = {}
+            session.player_obj.envs.dict = {}
             session.player_obj.ents = {}
             session.questlog_obj = None
-            session.player_obj.envs['garden'] = session.player_obj.envs.build_garden()
+            session.player_obj.envs.dict['garden'] = session.player_obj.envs.build_garden()
         
         else:
             session.player_obj.temp = False
@@ -3301,8 +3319,8 @@ class NewGame:
         session.questlog_obj.init_questlog('overworld')
         session.questlog_obj.init_questlog('garden')
             
-        session.player_obj.envs['home'] = session.player_obj.envs.build_home()
-        env = session.player_obj.envs['home']
+        session.player_obj.envs.dict['home'] = session.player_obj.envs.build_home()
+        env = session.player_obj.envs.dict['home']
         
         # Create items
         if session.player_obj.ent.equipment['chest'].img_names[0] == 'bra': name = 'yellow dress'
@@ -3671,6 +3689,9 @@ def place_objects(env, items, entities):
         items    : list of lists; [[<biome str>, <object str>, <unlikelihood int>], ...]
         entities :  """
     
+    from utilities import is_blocked
+    from items_entities import create_item, create_entity
+
     # Sort through each tile
     for y in range(len(env.map[0])):
         for x in range(len(env.map)):
@@ -3719,8 +3740,10 @@ def place_object(obj, loc, env, names=None):
         obj   : class object in [Tile, Item, Entity]; object to be placed
         loc   : list of int; tile coordinates
         env   : Environment object; desired location
-        names : list of str; Image dictionary names """    
-    
+        names : list of str; Image dictionary names """  
+      
+    from environments import Tile
+
     # Place tile
     if type(obj) == Tile:
         env.map[loc[0]][loc[1]].img_names = names
@@ -3764,7 +3787,8 @@ def place_player(env, loc):
         ----------
         env : Environment object; new environment of player
         loc : list of integers; new location of player in tile coordinates """
-    
+    from utilities import check_tile
+
     if not session.player_obj.ent.dead:
         
         # Remove extra motions and animations
@@ -3988,6 +4012,8 @@ def create_text_room(width=5, height=5, doors=True):
 def add_doors(room):
     """ Add one or two doors to a room, and adds a entryway. """
     
+    from items_entities import create_item
+
     # Add two doors
     if not random.randint(0, 10): num_doors = 2
     else:                         num_doors = 1
