@@ -2960,15 +2960,133 @@ ent_dict = {
         'fear':        None,
         'reach':       1000}}
 
-def create_item(names, effect=None):
+def create_item(names, effect=False):
     """ Creates and returns an object.
     
         Parameters
         ----------
         names  : string or list of strings; name of object
-        effect : Effect object or None """
+        effect : bool or Effect object; True=default, False=None, effect=custom """
     
     from mechanics import Item
+
+    effect_dict = {
+        'skeleton': Effect(
+            name          = 'info',
+            img_names     = ['bubbles', 'exclamation'],
+            function      = session.mech.skeleton,
+            trigger       = 'active',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'lights': Effect(
+            name          = 'lamp',
+            img_names     = ['lights', 'dropped'],
+            function      = session.mech.lamp,
+            trigger       = 'passive',
+            sequence      = None,
+            cooldown_time = 0,
+            other         = 5),
+
+        'needle': Effect(
+            name          = 'bowl',
+            img_names     = ['drugs', 'bowl'],
+            function      = session.mech.enter_hallucination,
+            trigger       = 'active',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'skin': Effect(
+            name          = 'bowl',
+            img_names     = ['drugs', 'bowl'],
+            function      = session.mech.enter_hallucination,
+            trigger       = 'active',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'teeth': Effect(
+            name          = 'bowl',
+            img_names     = ['drugs', 'bowl'],
+            function      = session.mech.enter_bitworld,
+            trigger       = 'active',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'bowl': Effect(
+            name          = 'bowl',
+            img_names     = ['drugs', 'bowl'],
+            function      = session.mech.enter_hallucination,
+            trigger       = 'active',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'plant': Effect(
+            name          = 'food',
+            img_names     = ['drugs', 'plant'],
+            function      = session.mech.boost_stamina,
+            trigger       = 'active',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'bubbles': Effect(
+            name          = 'food',
+            img_names     = ['drugs', 'bubbles'],
+            function      = session.mech.entity_eat,
+            trigger       = 'active',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'shovel': Effect(
+            name          = 'dirtball',
+            img_names     = ['green blob', 'right'],
+            function      = session.mech.propagate,
+            trigger       = 'active',
+            sequence      = '⮞⮜⮞',
+            cooldown_time = 1,
+            other         = None),
+
+        'super shovel': Effect(
+            name          = 'the way of the spade',
+            img_names     = ['shovel', 'dropped'],
+            function      = session.mech.suicide,
+            trigger       = 'active',
+            sequence      = '⮟⮟⮟',
+            cooldown_time = 1,
+            other         = None),
+
+        'dagger': Effect(
+            name          = 'swing',
+            img_names     = ['dagger', 'dropped'],
+            function      = session.mech.swing,
+            trigger       = 'active',
+            sequence      = '⮜⮟⮞',
+            cooldown_time = 0.1,
+            other         = None),
+
+        'eye': Effect(
+            name          = 'swing',
+            img_names     = ['null', 'null'],
+            function      = session.mech.swing,
+            trigger       = 'passive',
+            sequence      = None,
+            cooldown_time = 0.1,
+            other         = None),
+
+        'lamp': Effect(
+            name          = 'lamp',
+            img_names     = ['iron shield', 'dropped'],
+            function      = session.mech.lamp,
+            trigger       = 'passive',
+            sequence      = None,
+            cooldown_time = 0,
+            other         = 5)}
 
     # Look for item
     item = None
@@ -2979,7 +3097,10 @@ def create_item(names, effect=None):
     else:       item = Item(**item_dict[names])
     
     # Add effect
-    if effect: item.effect = effect
+    if item:
+        if effect:                     item.effect = effect
+        elif item.name in effect_dict: item.effect = effect_dict[item.name]
+        else:                          item.effect = None
     
     # Return if found
     if not item: raise Exception(names)

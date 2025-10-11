@@ -193,7 +193,7 @@ class Environments:
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'])
         env.camera = Camera(session.player_obj.ent)
-        env.camera.fixed = True
+        env.camera.fixed = False
         env.camera.zoom_in(custom=1)
         center = [14, 14]
         
@@ -297,9 +297,12 @@ class Environments:
 
         ###############################################################
         # Initialize environment
-        if lvl_num: lvl_num = lvl_num
-        elif not session.player_obj.envs.dict['dungeon']: lvl_num = 1
-        else: lvl_num = 1 + session.player_obj.envs.dict['dungeon'][-1].lvl_num
+        if lvl_num == 0:
+            if 'dungeon' not in session.player_obj.envs.dict:
+                session.player_obj.envs.dict['dungeon'] = []
+                lvl_num = 1
+            else:
+                lvl_num = 1 + session.player_obj.envs.dict['dungeon'][-1].lvl_num
         
         env = Environment(
             envs       = self,
@@ -407,9 +410,9 @@ class Environments:
         stairs.name = 'dungeon'
         place_object(stairs, [x, y], session.player_obj.envs.dict['dungeon'][-1])
             
-        session.player_obj.envs.dict[env.name] = env
+        session.player_obj.envs.dict[env.name].append(env)
 
-    def build_hallucination_level(self):
+    def build_hallucination_level(self, lvl_num=0):
         """ Generates the overworld environment. """
         
         from items_entities import create_item
@@ -418,8 +421,13 @@ class Environments:
 
         ###############################################################
         ## Initialize environment
-        if not session.player_obj.envs.dict['hallucination']: lvl_num = 1
-        else: lvl_num = 1 + session.player_obj.envs.dict['hallucination'][-1].lvl_num
+        if lvl_num == 0:
+            if 'hallucination' not in session.player_obj.envs.dict:
+                session.player_obj.envs.dict['hallucination'] = []
+                lvl_num = 1
+            else:
+                lvl_num = 1 + session.player_obj.envs.dict['hallucination'][-1].lvl_num
+                
         env = Environment(
             envs       = self,
             name       = 'hallucination',
@@ -447,7 +455,6 @@ class Environments:
             ['any', ['walls', 'gold']]]
         voronoi_biomes(env, biomes)
         
-        session.player_obj.envs.dict['hallucination'].append(env)
         env.camera = Camera(session.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -578,7 +585,7 @@ class Environments:
         stairs.name = 'hallucination'
         place_object(stairs, [x, y], env)
             
-        session.player_obj.envs.dict[env.name] = env
+        session.player_obj.envs.dict[env.name].append(env)
 
     def build_overworld(self):
         """ Generates the overworld environment. """
@@ -1038,7 +1045,7 @@ class Environments:
 
         session.player_obj.envs.dict[env.name] = env
 
-    def build_cave_level(self):
+    def build_cave_level(self, lvl_num=0):
         """ Generates a cave environment. """
         
         from items_entities import create_item
@@ -1047,9 +1054,13 @@ class Environments:
 
         ###############################################################
         # Initialize environment
-        if not session.player_obj.envs.dict['cave']: lvl_num = 1
-        else:                           lvl_num = 1 + session.player_obj.envs.dict['cave'][-1].lvl_num
-        
+        if lvl_num == 0:
+            if 'cave' not in session.player_obj.envs.dict:
+                session.player_obj.envs.dict['cave'] = []
+                lvl_num = 1
+            else:
+                lvl_num = 1 + session.player_obj.envs.dict['cave'][-1].lvl_num
+                
         env = Environment(
             envs       = self,
             name       = 'cave',
@@ -1069,7 +1080,6 @@ class Environments:
             'clouds':    False}
         env.weather = Weather(env, light_set=16)
         
-        session.player_obj.envs.dict['cave'].append(env)
         env.camera = Camera(session.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -1148,7 +1158,7 @@ class Environments:
         stairs.img_names = ['floors', 'dirt2']
         place_object(stairs, [x, y], session.player_obj.envs.dict['cave'][-1])
 
-        session.player_obj.envs.dict[env.name] = env
+        session.player_obj.envs.dict[env.name].append(env)
 
 class Environment:
     """ Generates and manages each world, such as each floor of the dungeon. """
@@ -2025,7 +2035,7 @@ class Weather:
                                         X = x * session.pyg.tile_width - self.env.camera.X
                                         Y = y * session.pyg.tile_height - self.env.camera.Y
                                         
-                                        data.append(image, (X, Y))
+                                        data.append([image, (X, Y)])
 
         return data
 
@@ -2074,7 +2084,7 @@ class Weather:
         self.overlay.fill((0, 0, 0))
         
         # Check for lights
-        data = self.update_lamps()
+        data = [self.update_lamps()]
         
         # Check for clouds
         if self.cloudy: data.extend(self.update_clouds())

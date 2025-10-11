@@ -812,9 +812,9 @@ class FileMenu:
                 if event.key in session.pyg.key_UP:       self.key_UP()
                 elif event.key in session.pyg.key_DOWN:   self.key_DOWN()
                 elif event.key in session.pyg.key_LEFT:
-                    if self.name == 'session.ctrl_menu':  self.set_controls('left')
+                    if self.name == 'ctrl_menu':  self.set_controls('left')
                 elif event.key in session.pyg.key_RIGHT:
-                    if self.name == 'session.ctrl_menu':  self.set_controls('right')
+                    if self.name == 'ctrl_menu':  self.set_controls('right')
                 
                 # Process selection or return to main menu
                 elif event.key in session.pyg.key_ENTER:
@@ -891,7 +891,12 @@ class FileMenu:
             == questlog """
         
         # Update file menu
-        if session.player_obj.file_num: self.options[session.player_obj.file_num - 1] += ' *'
+        if session.player_obj.file_num:
+
+            # Move asterick to current file
+            for i in self.options:
+                if self.options[i] == '*': self.options[i] = self.options[i][:-2]
+            self.options[session.player_obj.file_num - 1] += ' *'
         
         # Save data or return to main menu
         if type(self.choice) != int:
@@ -945,7 +950,12 @@ class FileMenu:
         from items_entities import Player
 
         # Update file menu
-        if session.player_obj.file_num: self.options[session.player_obj.file_num - 1] += ' *'
+        if session.player_obj.file_num:
+        
+            # Move asterick to current file
+            for i in self.options:
+                if self.options[i] == '*': self.options[i] = self.options[i][:-2]
+            self.options[session.player_obj.file_num - 1] += ' *'
         
         # Load data or return to main menu
         if self.choice is not None:
@@ -1319,7 +1329,7 @@ class MainMenu:
                     
                     # >>CONTROLS<<
                     elif self.choice == 3:
-                        session.pyg.overlay = 'session.ctrl_menu'
+                        session.pyg.overlay = 'ctrl_menu'
                         return
                     
                     # >>QUIT<<
@@ -1652,7 +1662,7 @@ def check_tile(x, y, startup=False):
     
     # Reveal the roof if the player leaves the room
     if session.player_obj.ent.prev_tile:
-        prev_tile = session.seion.player_obj.ent.prev_tile
+        prev_tile = session.player_obj.ent.prev_tile
         if prev_tile.room and not tile.room:
             if prev_tile.room.roof:
                 for spot in prev_tile.room.tiles_list:

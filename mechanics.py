@@ -1104,11 +1104,9 @@ class Mechanics:
             
             if 'overworld' not in session.player_obj.envs.dict.keys(): session.player_obj.envs.build_overworld()
             loc = session.player_obj.envs.dict['overworld'].center
-            print(1, session.player_obj.ent.env.weather)
             place_player(
                 env = session.player_obj.envs.dict['overworld'],
                 loc = [loc[0], loc[1]])
-            print(session.player_obj.ent.env.weather)
 
     def enter_home(self, ent=None):
         
@@ -1625,14 +1623,14 @@ class PlayGame:
                         
                         # >>INVENTORY<<
                         elif event.key in session.pyg.key_INV:
-                            session.pyg.overlay = 'session.inv'
+                            session.pyg.overlay = 'inv'
                             pygame.event.clear()
                             return
                         
                         # >>CONSTRUCTION<<
                         elif event.key in session.pyg.key_DEV:
                             #session.trade_obj.ent = session.player_obj.ent
-                            session.pyg.overlay = 'session.dev'
+                            session.pyg.overlay = 'dev'
                             pygame.event.clear()
                             return
                 
@@ -1954,13 +1952,13 @@ class PlayGarden:
                         
                         # >>INVENTORY<<
                         elif event.key in session.pyg.key_INV:
-                            session.pyg.overlay = 'session.inv'
+                            session.pyg.overlay = 'inv'
                             pygame.event.clear()
                             return
                         
                         # >>CONSTRUCTION<<
                         elif event.key in session.pyg.key_DEV:
-                            session.pyg.overlay = 'session.dev'
+                            session.pyg.overlay = 'dev'
                             pygame.event.clear()
                             return
                 
@@ -2191,7 +2189,7 @@ class Inventory:
                         
                 # >>CONSTRUCTION<<
                 elif event.key in session.pyg.key_DEV:
-                    session.pyg.overlay = 'session.dev'
+                    session.pyg.overlay = 'dev'
                     pygame.event.clear()
                     return
                 
@@ -2422,14 +2420,14 @@ class Catalog:
                 
                 # >>INVENTORY<<
                 elif event.key in session.pyg.key_INV:
-                    session.pyg.overlay = 'session.inv'
+                    session.pyg.overlay = 'inv'
                     pygame.event.clear()
                     return
 
             # Save for later reference
             self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
             self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
-        session.pyg.overlay = 'session.dev'
+        session.pyg.overlay = 'dev'
         return
 
     def update_dict(self):
@@ -2467,7 +2465,7 @@ class Catalog:
                 loc = [self.img_x, self.img_y],
                 env = session.player_obj.ent.env,
                 names = self.img_names.copy())
-            session.player_obj.env.build_room(obj)
+            session.player_obj.ent.env.build_room(obj)
         
         # Place entity
         elif self.img_names[0] in session.img.ent_names:
@@ -2598,8 +2596,8 @@ class Abilities:
                 ## >>SEQUENCE<<
                 if event.key in session.pyg.key_HOLD:
                     self.sequence_toggle = True
-                
-                if self.sequence_toggle and (event.key in self.keys):                        
+
+                if self.sequence_toggle and (event.key in self.keys):
                     self.key_sequence.append(event.key)
                     
                     # Restrict to three cached values
@@ -2618,7 +2616,7 @@ class Abilities:
                     return
             
             # Trigger an event
-            elif len(self.key_sequence) == 3:
+            if len(self.key_sequence) == 3:
                 sequence_string = ''
                 for key in self.key_sequence:
                     if key in session.pyg.key_LEFT:    sequence_string += '⮜'
@@ -3556,6 +3554,8 @@ class Pygame:
     def fadeout_screen(self, screen, fade_in, env=None, loc=None, text="", font=None, duration=4):
         """ Fades screen and displays text. """
         
+        from utilities import render_all
+
         # Set functionality
         if not fade_in:
             alpha, change = 0, 10
@@ -3605,7 +3605,7 @@ class Pygame:
         
         session.pyg.gui_toggle = gui_cache
         session.pyg.msg_toggle = msg_cache
-        if env: place_player(session.player_obj, env, loc)
+        if env: place_player(env, loc)
 
     def update_gui(self, new_msg=None, color=None):
         

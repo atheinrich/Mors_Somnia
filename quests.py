@@ -582,8 +582,7 @@ class Bloodkin:
     def making_a_friend(self, ent, dialogue):
         """ Manages friend quest, including initialization and dialogue. """
 
-        from items_entities import create_item
-        from mechanics import Effect
+        from items_entities import create_item, Effect
         from mechanics import place_object
 
         # Initialization

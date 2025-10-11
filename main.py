@@ -206,7 +206,6 @@ def game_states():
             for image, (X, Y) in session.player_obj.ent.env.weather.render():
                 session.pyg.display.blit(image, (X, Y))
             
-        
         elif session.pyg.game_state == 'new_game':
             session.new_game_obj.run()
             session.new_game_obj.render()
@@ -220,7 +219,7 @@ def game_states():
             game_state = session.main_menu_obj.run()
             session.main_menu_obj.render()
         
-        elif session.pyg.overlay == 'session.ctrl_menu':
+        elif session.pyg.overlay == 'ctrl_menu':
             session.ctrl_menu.run()
             session.ctrl_menu.render()
         
@@ -232,11 +231,11 @@ def game_states():
             session.save_account_obj.run()
             session.save_account_obj.render()
         
-        elif session.pyg.overlay == 'session.inv':
+        elif session.pyg.overlay == 'inv':
             session.inv.run()
             session.inv.render()
         
-        elif session.pyg.overlay == 'session.dev':
+        elif session.pyg.overlay == 'dev':
             session.dev.run()
             session.dev.render()
         
