@@ -8,13 +8,15 @@
 ## Standard
 import random
 import time
-import pygame
-from   pygame.locals import *
 import sys
 import pickle
 import copy
 
-## Modules
+## Specific
+import pygame
+from   pygame.locals import *
+
+## Local
 import session
 
 ########################################################################################################################################################
@@ -2507,7 +2509,7 @@ class Catalog:
 
     def import_env(self):
 
-        from utilities import Camera
+        from data_management import Camera
 
         try:
             with open(f"Data/File_{session.player_obj.file_num}/env.pkl", "rb") as file:

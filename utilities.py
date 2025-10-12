@@ -7,17 +7,19 @@
 # Imports
 ## Standard
 import random
-import pygame
-from   pygame.locals import *
 import time
 import pickle
 import copy
-from PIL import Image, ImageFilter, ImageOps
-from pypresence import Presence
 import sys
 
-## Modules
+## Specific
+import pygame
+from   pygame.locals import *
+from   PIL import Image, ImageFilter, ImageOps
+
+## Local
 import session
+from data_management import Camera
 
 ########################################################################################################################################################
 # Classes
@@ -894,7 +896,7 @@ class FileMenu:
         if session.player_obj.file_num:
 
             # Move asterick to current file
-            for i in self.options:
+            for i in range(len(self.options)):
                 if self.options[i] == '*': self.options[i] = self.options[i][:-2]
             self.options[session.player_obj.file_num - 1] += ' *'
         
@@ -953,7 +955,7 @@ class FileMenu:
         if session.player_obj.file_num:
         
             # Move asterick to current file
-            for i in self.options:
+            for i in range(len(self.options)):
                 if self.options[i] == '*': self.options[i] = self.options[i][:-2]
             self.options[session.player_obj.file_num - 1] += ' *'
         
@@ -1473,162 +1475,6 @@ class SmallMenu:
             session.pyg.screen.blit(val, (X2, Y))
             Y += session.pyg.tile_height//2
 
-class Camera:
-    """ Defines a camera to follow the player. """
-    
-    def __init__(self, target):
-        """ Defines a camera and its parameters. 
-            
-            Parameters
-            ----------
-            target          : Entity object; focus of camera
-            width           : int; number of visible tiles in screen coordinates
-            height          : int; number of visible tiles in screen coordinates
-            tile_map_width  : int; number of visible tiles in tile coordinates
-            tile_map_height : int; number of visible tiles in tile coordinates
-            
-            X               : int; top left in screen coordinates
-            Y               : int; top left in screen coordinates
-            tile_map_x      : int; top left in tile coordinates
-            tile_map_y      : int; top left in tile coordinates
-            
-            right           : int; number of visible tiles + displacement in screen coordinates
-            bottom          : int; number of visible tiles + displacement in screen coordinates
-            x_range         : int; number of visible tiles + displacement in tile coordinates
-            y_range         : int; number of visible tiles + displacement in tile coordinates
-            (questionable)
-            
-            center_x        : int; middle of the camera in screen coordinates
-            center_y        : int; middle of the camera in screen coordinates
-            
-            fix_position    : bool; prevents adjustment of parameters """
-        
-        self.target          = target
-        self.width           = int(session.pyg.screen_width / session.pyg.zoom)
-        self.height          = int((session.pyg.screen_height + session.pyg.tile_height) / session.pyg.zoom)
-        self.tile_map_width  = int(self.width / session.pyg.tile_width)
-        self.tile_map_height = int(self.height / session.pyg.tile_height)
-        
-        self.X               = int((self.target.X * session.pyg.zoom) - int(self.width / 2))
-        self.Y               = int((self.target.Y * session.pyg.zoom) - int(self.height / 2))
-        self.tile_map_x      = int(self.X / session.pyg.tile_width)
-        self.tile_map_y      = int(self.Y / session.pyg.tile_height)
-        
-        self.right           = self.X + self.width
-        self.bottom          = self.Y + self.height
-        self.x_range         = self.tile_map_x + self.tile_map_width
-        self.y_range         = self.tile_map_y + self.tile_map_height
-        
-        self.center_X        = int(self.X + int(self.width / 2))
-        self.center_Y        = int(self.Y + int(self.height / 2))
-        
-        self.fixed           = False
-        self.fix_position()
-
-    def update(self):
-        """ ? """
-        
-        if not self.fixed:
-            X_move          = int(self.target.X - self.center_X)
-            self.X          = int(self.X + X_move)
-            self.center_X   = int(self.center_X + X_move)
-            self.right      = int(self.right + X_move)
-            self.tile_map_x = int(self.X / session.pyg.tile_width)
-            self.x_range    = int(self.tile_map_x + self.tile_map_width)
-
-            Y_move          = int(self.target.Y - self.center_Y)
-            self.Y          = int(self.Y + Y_move)
-            self.center_Y   = int(self.center_Y + Y_move)
-            self.bottom     = int(self.bottom + Y_move)
-            self.tile_map_y = int(self.Y / session.pyg.tile_height)
-            self.y_range    = int(self.tile_map_y + self.tile_map_height)
-            
-            self.fix_position()
-
-    def fix_position(self):
-        """ ? """
-        if self.X < 0:
-            self.X          = 0
-            self.center_X   = self.X + int(self.width / 2)
-            self.right      = self.X + self.width
-            self.tile_map_x = int(self.X / (session.pyg.tile_width / session.pyg.zoom))
-            self.x_range    = self.tile_map_x + self.tile_map_width
-        
-        elif self.right > (len(session.player_obj.ent.env.map)-1) * session.pyg.tile_width:
-            self.right      = (len(session.player_obj.ent.env.map)) * session.pyg.tile_width
-            self.X          = self.right - self.width
-            self.center_X   = self.X + int(self.width / 2)
-            self.tile_map_x = int(self.X / (session.pyg.tile_width / session.pyg.zoom))
-            self.x_range    = self.tile_map_x + self.tile_map_width
-        
-        if self.Y < 0:
-            self.Y          = 0
-            self.center_Y   = self.Y + int(self.height / 2)
-            self.bottom     = (self.Y + self.height + 320) / session.pyg.zoom
-            self.tile_map_y = int(self.Y / (session.pyg.tile_height / session.pyg.zoom))
-            self.y_range    = self.tile_map_y + self.tile_map_height
-        
-        elif self.bottom > (len(session.player_obj.ent.env.map[0])) * session.pyg.tile_height:
-            self.bottom     = (len(session.player_obj.ent.env.map[0])) * session.pyg.tile_height
-            self.Y          = self.bottom - self.height
-            self.center_Y   = self.Y + int(self.height / 2)
-            self.tile_map_y = int(self.Y / (session.pyg.tile_height / session.pyg.zoom))
-            self.y_range    = self.tile_map_y + self.tile_map_height
-
-    def zoom_in(self, factor=0.1, custom=None):
-        """ Zoom in by reducing the camera's width and height. """
-        
-        # Set to a specific value
-        if custom and (session.pyg.zoom != custom):
-            session.pyg.zoom = custom
-            session.pyg.zoom_cache = session.pyg.zoom
-            session.pyg.update_gui()
-            self.width  = int(session.pyg.screen_width / session.pyg.zoom)
-            self.height = int(session.pyg.screen_height / session.pyg.zoom)
-            session.pyg.display = pygame.Surface((self.width, self.height))
-            self._recalculate_bounds()
-        
-        elif not custom and not self.fixed:
-            session.pyg.zoom += factor
-            session.pyg.zoom_cache = session.pyg.zoom
-            session.pyg.update_gui()
-            self.width  = int(session.pyg.screen_width / session.pyg.zoom)
-            self.height = int(session.pyg.screen_height / session.pyg.zoom)
-            session.pyg.display = pygame.Surface((self.width, self.height))
-            self._recalculate_bounds()
-
-    def zoom_out(self, factor=0.1, custom=None):
-        """ Zoom out by increasing the camera's width and height. """
-        
-        if not self.fixed:
-            if round(session.pyg.zoom, 2) > factor:  # Ensure zoom level stays positive
-                if custom:
-                    session.pyg.zoom = custom
-                else:
-                    session.pyg.zoom -= factor
-                    session.pyg.zoom_cache = session.pyg.zoom
-                session.pyg.update_gui()
-                self.width = int(session.pyg.screen_width / session.pyg.zoom)
-                self.height = int(session.pyg.screen_height / session.pyg.zoom)
-                session.pyg.display = pygame.Surface((self.width, self.height))
-                self._recalculate_bounds()
-
-    def _recalculate_bounds(self):
-        """ Recalculate dependent properties after zooming. """
-        self.X               = self.target.X - int(self.width / 2)
-        self.Y               = self.target.Y - int(self.height / 2)
-        self.center_X        = self.X + int(self.width / 2)
-        self.center_Y        = self.Y + int(self.height / 2)
-        self.right           = self.X + self.width
-        self.bottom          = self.Y + self.height
-        self.tile_map_width  = int(self.width / session.pyg.tile_width)
-        self.tile_map_height = int(self.height / session.pyg.tile_height)
-        self.tile_map_x      = int(self.X / session.pyg.tile_width)
-        self.tile_map_y      = int(self.Y / session.pyg.tile_height)
-        self.x_range         = self.tile_map_x + self.tile_map_width
-        self.y_range         = self.tile_map_y + self.tile_map_height
-        self.fix_position()
-
 ########################################################################################################################################################
 # Tools
 def check_tile(x, y, startup=False):
@@ -1771,27 +1617,6 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
     
     session.pyg.gui_toggle, session.pyg.msg_toggle = gui_cache, msg_cache
     render_all()
-
-def API(state, details, init=False):
-    global RPC
-    
-    if init:
-        RPC = Presence(1384311591662780586)
-        RPC.connect()
-    
-    else:
-        RPC.update(
-            state       = state,
-            details     = details,
-            large_image = "logo",
-            start       = time.time())
-    
-def debug_call(func):
-    """ Just a print statement for debugging. Shows which function is called alongside variable details. """
-    def wrapped_function(*args, **kwargs):
-        print(f"{func.__name__:<30}{time.strftime('%M:%S', time.localtime())}")
-        return func(*args, **kwargs)
-    return wrapped_function
 
 def render_all(size='display', visible=False):
     """ Draws tiles and stuff. Constantly runs. """

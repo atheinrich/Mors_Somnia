@@ -7,10 +7,12 @@
 # Imports
 ## Standard
 import copy
+
+## Specific
 import pygame
 from   pygame.locals import *
 
-# Modules
+# Local
 import session
 
 ########################################################################################################################################################

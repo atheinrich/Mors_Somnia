@@ -80,18 +80,19 @@
 
 ########################################################################################################################################################
 # Imports
-## Game mechanics
+## Specific
 import pygame
-from   pygame.locals import *
+from pygame.locals import *
 
-## Modules
+## Local
 import session
 from items_entities import Player
-from utilities import API, Images, Audio, MainMenu, FileMenu, SmallMenu, Info, Pets
+from utilities import Images, Audio, MainMenu, FileMenu, SmallMenu, Info, Pets
 from mechanics import Pygame, Mechanics, NewGame, PlayGame, PlayGarden, Inventory, Catalog, Abilities
 from mechanics import Exchange
 from environments import Environments
 from quests import BigMenu
+from data_management import API
 
 ########################################################################################################################################################
 # Global values

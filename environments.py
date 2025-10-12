@@ -1,9 +1,6 @@
 ########################################################################################################################################################
 # Environment creation and management
 #
-# Everything about environments should occur here, and all data is saved.
-# - All environment data for a given save file
-# - Details for rendering tiles
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -12,9 +9,11 @@
 import time
 import copy
 import random
+
+## Specific
 import pygame
 
-## Modules
+## Local
 import session
 
 ########################################################################################################################################################
@@ -36,7 +35,7 @@ class Environments:
         """ Generates the overworld environment. """
         
         from mechanics import place_objects
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -108,7 +107,7 @@ class Environments:
     def build_womb(self):
         """ Generates the overworld environment. """
         
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -178,7 +177,7 @@ class Environments:
         from items_entities import create_item, create_entity
         from mechanics import place_object
         from quests import Quest, Bloodkin
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -293,7 +292,7 @@ class Environments:
         
         from items_entities import create_item
         from mechanics import place_object, place_objects
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         # Initialize environment
@@ -417,7 +416,7 @@ class Environments:
         
         from items_entities import create_item
         from mechanics import place_object, place_objects, create_text_room
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -593,7 +592,7 @@ class Environments:
         from items_entities import create_item, create_NPC
         from mechanics import place_object, place_objects, create_text_room
         from quests import FriendlyFaces
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -855,7 +854,7 @@ class Environments:
 
         from items_entities import create_item, create_NPC
         from mechanics import place_object, place_objects, create_text_room
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -1050,7 +1049,7 @@ class Environments:
         
         from items_entities import create_item
         from mechanics import place_object, place_objects
-        from utilities import Camera
+        from data_management import Camera
 
         ###############################################################
         # Initialize environment
