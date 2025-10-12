@@ -331,6 +331,12 @@ def rebuild_databases():
     save_path = os.path.join(find_path(target='.Databases'), "items.json")
     save_json(load_data, save_path)
 
+    # Item effects
+    load_path = find_path(target='item_effects.tsv', folder='Databases')
+    load_data = load_tsv(load_path)
+    save_path = os.path.join(find_path(target='.Databases'), "item_effects.json")
+    save_json(load_data, save_path)
+
     # Entities
     load_path = find_path(target='ents.tsv', folder='Databases')
     load_data = load_tsv(load_path)
@@ -340,7 +346,8 @@ def rebuild_databases():
 ########################################################################################################################################################
 # Initializations
 #rebuild_databases()
-item_dict = load_json(find_path('Data/.Databases/items.json'))
-ent_dict  = load_json(find_path('Data/.Databases/ents.json'))
+item_dict   = load_json(find_path('Data/.Databases/items.json'))
+ent_dict    = load_json(find_path('Data/.Databases/ents.json'))
+effect_dict = load_json(find_path('Data/.Databases/item_effects.json'))
 
 ########################################################################################################################################################

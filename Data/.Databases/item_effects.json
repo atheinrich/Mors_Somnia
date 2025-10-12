@@ -1,0 +1,158 @@
+{
+    "skeleton": {
+        "name": "info",
+        "img_names": [
+            "bubbles",
+            "exclamation"
+        ],
+        "function": "session.mech.skeleton",
+        "trigger": "active",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "lights": {
+        "name": "lamp",
+        "img_names": [
+            "lights",
+            "dropped"
+        ],
+        "function": "session.mech.lamp",
+        "trigger": "passive",
+        "sequence": null,
+        "cooldown_time": 0,
+        "other": 5
+    },
+    "needle": {
+        "name": "bowl",
+        "img_names": [
+            "drugs",
+            "bowl"
+        ],
+        "function": "session.mech.enter_hallucination",
+        "trigger": "active",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "skin": {
+        "name": "bowl",
+        "img_names": [
+            "drugs",
+            "bowl"
+        ],
+        "function": "session.mech.enter_hallucination",
+        "trigger": "active",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "teeth": {
+        "name": "bowl",
+        "img_names": [
+            "drugs",
+            "bowl"
+        ],
+        "function": "session.mech.enter_bitworld",
+        "trigger": "active",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "bowl": {
+        "name": "bowl",
+        "img_names": [
+            "drugs",
+            "bowl"
+        ],
+        "function": "session.mech.enter_hallucination",
+        "trigger": "active",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "plant": {
+        "name": "food",
+        "img_names": [
+            "drugs",
+            "plant"
+        ],
+        "function": "session.mech.boost_stamina",
+        "trigger": "active",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "bubbles": {
+        "name": "food",
+        "img_names": [
+            "drugs",
+            "bubbles"
+        ],
+        "function": "session.mech.entity_eat",
+        "trigger": "active",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "shovel": {
+        "name": "dirtball",
+        "img_names": [
+            "green blob",
+            "right"
+        ],
+        "function": "session.mech.propagate",
+        "trigger": "active",
+        "sequence": "⮞⮜⮞",
+        "cooldown_time": 1,
+        "other": null
+    },
+    "super shovel": {
+        "name": "the way of the spade",
+        "img_names": [
+            "shovel",
+            "dropped"
+        ],
+        "function": "session.mech.suicide",
+        "trigger": "active",
+        "sequence": "⮟⮟⮟",
+        "cooldown_time": 1,
+        "other": null
+    },
+    "dagger": {
+        "name": "swing",
+        "img_names": [
+            "dagger",
+            "dropped"
+        ],
+        "function": "session.mech.swing",
+        "trigger": "active",
+        "sequence": "⮜⮟⮞",
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "eye": {
+        "name": "swing",
+        "img_names": [
+            "null",
+            "null"
+        ],
+        "function": "session.mech.swing",
+        "trigger": "passive",
+        "sequence": null,
+        "cooldown_time": "0.1",
+        "other": null
+    },
+    "lamp": {
+        "name": "lamp",
+        "img_names": [
+            "iron shield",
+            "dropped"
+        ],
+        "function": "session.mech.lamp",
+        "trigger": "passive",
+        "sequence": null,
+        "cooldown_time": 0,
+        "other": 5
+    }
+}

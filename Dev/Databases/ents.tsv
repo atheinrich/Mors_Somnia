@@ -1,28 +1,28 @@
 category	key	name	role	img_names	habitat	exp	rank	sanity	hp	max_hp	attack	defense	stamina	follow	lethargy	miss_rate	aggression	fear	reach
-NPC	white	'white NPC'	'NPC'	"['white', 'front']"	'any'	0	1	100	50	50	15	5	100	False	5	10	0	None	1000
-NPC	black	'black NPC'	'NPC'	"['black', 'front']"	'any'	0	1	50	50	15	5	100	100	False	5	10	0	None	1000
-NPC	fat	'fat NPC'	'NPC'	"['fat', 'front']"	'any'	0	1	50	50	15	5	100	100	False	5	10	0	None	1000
-NPC	friend	'friend'	'NPC'	"['friend', 'front']"	'land'	0	100	100	100	0	100	100	100	False	5	10	0	None	640
-enemy	eye	'eye'	'enemy'	"['eye', 'front']"	'land'	35	1	100	100	20	20	100	100	True	5	20	50	None	1000
-enemy	eyes	'eyes'	'enemy'	"['eyes', 'front']"	'land'	35	1	20	20	4	0	100	100	True	5	10	10	None	1000
-enemy	troll	'troll'	'enemy'	"['troll', 'front']"	'land'	100	1	30	30	8	2	100	100	True	5	10	10	None	1000
-enemy	triangle	'triangle'	'enemy'	"['triangle', 'front']"	'land'	100	1	25	25	15	10	100	100	True	1	5	100	None	1000
-enemy	purple	'purple'	'enemy'	"['purple', 'front']"	'land'	500	1	50	50	15	5	100	100	True	5	10	10	None	1000
-enemy	tentacles	'tentacles'	'enemy'	"['tentacles', 'front']"	'any'	50	1	35	35	10	10	100	100	True	2	1	100	None	1000
-enemy	round1	'round1'	'enemy'	"['round1', 'front']"	'land'	50	1	50	50	15	5	100	100	True	0	5	100	None	1000
-enemy	round2	'round2'	'enemy'	"['round2', 'front']"	'land'	500	1	50	50	15	5	100	100	True	5	10	10	None	1000
-enemy	grass	'grass'	'enemy'	"['grass', 'front']"	'forest'	500	1	50	50	15	5	100	100	True	5	40	20	None	1000
-enemy	round3	'round3'	'enemy'	"['round3', 'front']"	'any'	500	1	1	1	0	0	100	100	False	10	10	0	None	64
-enemy	lizard	'lizard'	'enemy'	"['lizard', 'front']"	'desert'	500	1	50	50	15	5	100	100	True	5	10	10	None	1000
-enemy	red	'red'	'enemy'	"['red', 'front']"	'land'	500	1	50	50	15	5	100	100	False	100	10	1	None	0
-enemy	rock	'rock'	'enemy'	"['rock', 'front']"	'desert'	500	1	10	10	0	500	100	100	False	2	0	0	None	0
-enemy	frog	'frog'	'enemy'	"['frog', 'front']"	'any'	15	1	50	50	1	5	100	100	False	10	10	10	None	32
-enemy	red radish	'red radish'	'enemy'	"['red radish', 'front']"	'forest'	0	1	25	25	0	25	100	100	True	6	6	0	0	1000
-enemy	orange radish	'orange radish'	'enemy'	"['orange radish', 'front']"	'forest'	0	1	25	25	0	25	100	100	True	6	6	0	0	1000
-enemy	purple radish	'purple radish'	'enemy'	"['purple radish', 'front']"	'forest'	0	1	25	25	0	25	100	100	True	6	6	0	0	1000
-enemy	snake	'snake'	'enemy'	"['snake', 'front']"	'forest'	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
-enemy	buzz	'buzz'	'enemy'	"['buzz', 'front']"	'city'	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
-enemy	egg	'egg'	'enemy'	"['egg', 'front']"	'any'	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
-enemy	star	'star'	'enemy'	"['star', 'front']"	'forest'	0	1	25	25	0	25	100	100	True	20	20	10	None	1000
-enemy	plant	'plant'	'enemy'	"['plant', 'front']"	'forest'	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
-projectile	green blob	'green blob'	'projectile'	"['green blob', 'front']"	'forest'	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
+NPC	white	white NPC	NPC	[white, front]	any	0	1	100	50	50	15	5	100	False	5	10	0	None	1000
+NPC	black	black NPC	NPC	[black, front]	any	0	1	50	50	15	5	100	100	False	5	10	0	None	1000
+NPC	fat	fat NPC	NPC	[fat, front]	any	0	1	50	50	15	5	100	100	False	5	10	0	None	1000
+NPC	friend	friend	NPC	[friend, front]	land	0	100	100	100	0	100	100	100	False	5	10	0	None	640
+enemy	eye	eye	enemy	[eye, front]	land	35	1	100	100	20	20	100	100	True	5	20	50	None	1000
+enemy	eyes	eyes	enemy	[eyes, front]	land	35	1	20	20	4	0	100	100	True	5	10	10	None	1000
+enemy	troll	troll	enemy	[troll, front]	land	100	1	30	30	8	2	100	100	True	5	10	10	None	1000
+enemy	triangle	triangle	enemy	[triangle, front]	land	100	1	25	25	15	10	100	100	True	1	5	100	None	1000
+enemy	purple	purple	enemy	[purple, front]	land	500	1	50	50	15	5	100	100	True	5	10	10	None	1000
+enemy	tentacles	tentacles	enemy	[tentacles, front]	any	50	1	35	35	10	10	100	100	True	2	1	100	None	1000
+enemy	round1	round1	enemy	[round1, front]	land	50	1	50	50	15	5	100	100	True	0	5	100	None	1000
+enemy	round2	round2	enemy	[round2, front]	land	500	1	50	50	15	5	100	100	True	5	10	10	None	1000
+enemy	grass	grass	enemy	[grass, front]	forest	500	1	50	50	15	5	100	100	True	5	40	20	None	1000
+enemy	round3	round3	enemy	[round3, front]	any	500	1	1	1	0	0	100	100	False	10	10	0	None	64
+enemy	lizard	lizard	enemy	[lizard, front]	desert	500	1	50	50	15	5	100	100	True	5	10	10	None	1000
+enemy	red	red	enemy	[red, front]	land	500	1	50	50	15	5	100	100	False	100	10	1	None	0
+enemy	rock	rock	enemy	[rock, front]	desert	500	1	10	10	0	500	100	100	False	2	0	0	None	0
+enemy	frog	frog	enemy	[frog, front]	any	15	1	50	50	1	5	100	100	False	10	10	10	None	32
+enemy	red radish	red radish	enemy	[red radish, front]	forest	0	1	25	25	0	25	100	100	True	6	6	0	0	1000
+enemy	orange radish	orange radish	enemy	[orange radish, front]	forest	0	1	25	25	0	25	100	100	True	6	6	0	0	1000
+enemy	purple radish	purple radish	enemy	[purple radish, front]	forest	0	1	25	25	0	25	100	100	True	6	6	0	0	1000
+enemy	snake	snake	enemy	[snake, front]	forest	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
+enemy	buzz	buzz	enemy	[buzz, front]	city	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
+enemy	egg	egg	enemy	[egg, front]	any	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
+enemy	star	star	enemy	[star, front]	forest	0	1	25	25	0	25	100	100	True	20	20	10	None	1000
+enemy	plant	plant	enemy	[plant, front]	forest	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
+projectile	green blob	green blob	projectile	[green blob, front]	forest	0	1	25	25	0	25	100	100	True	6	6	0	None	1000
