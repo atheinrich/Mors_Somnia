@@ -325,14 +325,14 @@ class Entity:
         self.motions_log = [] # list of lists of int; prescribed motions for ai
         
         # Mechanics
-        self.dead       = False
-        self.dialogue   = None
+        self.dead        = False
+        self.dialogue    = None
         self.default_dialogue = []
-        self.quest      = None
-        self.wallet     = 100
-        self.trader     = False
-        self.inventory  = {'weapons': [], 'armor': [],  'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
-        self.equipment  = {'head': None,  'face': None, 'chest': None, 'body': None,  'dominant hand': None, 'non-dominant hand': None}
+        self.quest       = None
+        self.wallet      = 100
+        self.trade_times = None
+        self.inventory   = {'weapons': [], 'armor': [],  'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
+        self.equipment   = {'head': None,  'face': None, 'chest': None, 'body': None,  'dominant hand': None, 'non-dominant hand': None}
         
         # Effects
         self.garden_effects = [
@@ -580,8 +580,8 @@ class Entity:
                     dialogue = random.choice(ent.default_dialogue)
                     
                     # Trading
-                    if ent.trader:
-                        if session.player_obj.ent.env.env_time in ent.trader:
+                    if ent.trade_times:
+                        if session.player_obj.ent.env.env_time in ent.trade_times:
                             session.trade_obj.ent = ent
                             session.pyg.overlay = 'trade'
                 
@@ -927,8 +927,8 @@ class Entity:
         if self.dialogue: session.pyg.display.blit(session.img.dict['bubbles']['dots'], (X, Y-session.pyg.tile_height))
         
         # Blit trading bubble
-        elif self.trader:
-            if session.player_obj.ent.env.env_time in self.trader:
+        elif self.trade_times:
+            if session.player_obj.ent.env.env_time in self.trade_times:
                 session.pyg.display.blit(session.img.dict['bubbles']['cart'], (X, Y-session.pyg.tile_height))
 
 class Mechanics:

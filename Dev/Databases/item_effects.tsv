@@ -1,14 +1,14 @@
 category	key	name	img_names	function	trigger	sequence	cooldown_time	other
-other	skeleton	info	[bubbles, exclamation]	session.mech.skeleton	active	None	0.1	None
-env	lights	lamp	[lights, dropped]	session.mech.lamp	passive	None	0	5
-drugs	needle	bowl	[drugs, bowl]	session.mech.enter_hallucination	active	None	0.1	None
-drugs	skin	bowl	[drugs, bowl]	session.mech.enter_hallucination	active	None	0.1	None
-drugs	teeth	bowl	[drugs, bowl]	session.mech.enter_bitworld	active	None	0.1	None
-drugs	bowl	bowl	[drugs, bowl]	session.mech.enter_hallucination	active	None	0.1	None
-food	plant	food	[drugs, plant]	session.mech.boost_stamina	active	None	0.1	None
-food	bubbles	food	[drugs, bubbles]	session.mech.entity_eat	active	None	0.1	None
-attack	shovel	dirtball	[green blob, right]	session.mech.propagate	active	⮞⮜⮞	1	None
-attack	super shovel	the way of the spade	[shovel, dropped]	session.mech.suicide	active	⮟⮟⮟	1	None
-attack	dagger	swing	[dagger, dropped]	session.mech.swing	active	⮜⮟⮞	0.1	None
-attack	eye	swing	[null, null]	session.mech.swing	passive	None	0.1	None
-env	lamp	lamp	[iron shield, dropped]	session.mech.lamp	passive	None	0	5
+other	skeleton	info	[bubbles; exclamation]	session.mech.skeleton	active	None	0.1	None
+env	lights	lamp	[lights; dropped]	session.mech.lamp	passive	None	0	5
+drugs	needle	bowl	[drugs; bowl]	session.mech.enter_hallucination	active	None	0.1	None
+drugs	skin	bowl	[drugs; bowl]	session.mech.enter_hallucination	active	None	0.1	None
+drugs	teeth	bowl	[drugs; bowl]	session.mech.enter_bitworld	active	None	0.1	None
+drugs	bowl	bowl	[drugs; bowl]	session.mech.enter_hallucination	active	None	0.1	None
+food	plant	food	[drugs; plant]	session.mech.boost_stamina	active	None	0.1	None
+food	bubbles	food	[drugs; bubbles]	session.mech.entity_eat	active	None	0.1	None
+attack	shovel	dirtball	[green blob; right]	session.mech.propagate	active	⮞⮜⮞	1	None
+attack	super shovel	the way of the spade	[shovel; dropped]	session.mech.suicide	active	⮟⮟⮟	1	None
+attack	dagger	swing	[dagger; dropped]	session.mech.swing	active	⮜⮟⮞	0.1	None
+attack	eye	swing	[null; null]	session.mech.swing	passive	None	0.1	None
+env	lamp	lamp	[iron shield; dropped]	session.mech.lamp	passive	None	0	5

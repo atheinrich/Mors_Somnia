@@ -290,7 +290,9 @@ def load_tsv(path):
         elif val == 'True':   return True
         elif val == 'False':  return False
         elif val.startswith('[') and val.endswith(']'):
-            return [x.strip("'\" ") for x in val[1:-1].split(',') if x.strip()]
+            return [x.strip("'\" ") for x in val[1:-1].split(';') if x.strip()]
+        elif val.startswith('(') and val.endswith(')'):
+            return [int(x.strip("'\" ")) for x in val[1:-1].split(';') if x.strip()]
         else:
             try:               return int(val)
             except ValueError: return val.strip("'\"")
@@ -325,23 +327,13 @@ def rebuild_databases():
         Run this after changing the convenient files.
     """
 
-    # Items
-    load_path = find_path(target='items.tsv', folder='Databases')
-    load_data = load_tsv(load_path)
-    save_path = os.path.join(find_path(target='.Databases'), "items.json")
-    save_json(load_data, save_path)
-
-    # Item effects
-    load_path = find_path(target='item_effects.tsv', folder='Databases')
-    load_data = load_tsv(load_path)
-    save_path = os.path.join(find_path(target='.Databases'), "item_effects.json")
-    save_json(load_data, save_path)
-
-    # Entities
-    load_path = find_path(target='ents.tsv', folder='Databases')
-    load_data = load_tsv(load_path)
-    save_path = os.path.join(find_path(target='.Databases'), "ents.json")
-    save_json(load_data, save_path)
+    for file in ['items', 'item_effects', 'ents', 'NPCs']:
+        print(f"Converting {file}...")
+        load_path = find_path(target=f'{file}.tsv', folder='Databases')
+        load_data = load_tsv(load_path)
+        save_path = os.path.join(find_path(target='.Databases'), f'{file}.json')
+        save_json(load_data, save_path)
+    print("Databases rebuilt!")
 
 ########################################################################################################################################################
 # Initializations
@@ -349,5 +341,6 @@ def rebuild_databases():
 item_dict   = load_json(find_path('Data/.Databases/items.json'))
 ent_dict    = load_json(find_path('Data/.Databases/ents.json'))
 effect_dict = load_json(find_path('Data/.Databases/item_effects.json'))
+NPC_dict    = load_json(find_path('Data/.Databases/NPCs.json'))
 
 ########################################################################################################################################################

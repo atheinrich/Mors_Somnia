@@ -10,7 +10,7 @@ import random
 
 ## Local
 import session
-from data_management import item_dict, effect_dict, ent_dict
+from data_management import item_dict, effect_dict, ent_dict, NPC_dict
 
 ########################################################################################################################################################
 
@@ -195,306 +195,272 @@ def create_entity(names):
     if not ent: raise Exception(names)
     else:        return ent
 
-def create_NPC(name):
-    """ A more specific version of create_entity. """
-    
-    if name == 'Kyrio':
-        
-        # Basics
-        ent       = create_entity('black')
-        ent.name  = 'Kyrio'
-        ent.reach = 1000
-        
-        # Equipment
-        clothes = create_item('exotic clothes')
-        beard   = create_item('white beard')
-        dagger  = create_item('blood dagger')
-        
-        clothes.pick_up(ent=ent)
-        beard.pick_up(ent=ent)
-        dagger.pick_up(ent=ent)
+s = {
 
-        clothes.toggle_equip(ent)
-        beard.toggle_equip(ent)
-        dagger.toggle_equip(ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+    'Kyrio': {
+        'name': 'Kyrio',
+        'model': 'black',
+        'reach': 1000,
+        'hair': 'bald',
+        'chest': 'flat',
+        'clothes': 'exotic clothes',
+        'beard': 'white beard',
+        'weapon': 'blood dagger',
+        'armor': None,
+        'dialogue': [
             "Kyrio: *furrows his brow*",
             "Kyrio: Talk to my brother, Kapno. I know little of mercantile.",
             "Kyrio: *seems not to notice*",
-            "Kyrio: Is there something you need?"]
-    
-    elif name == 'Kapno':
-        
-        # Basics
-        ent       = create_entity('black')
-        ent.name  = 'Kapno'
-        ent.reach = 2
+            "Kyrio: Is there something you need?"],
+        'trade_times': None,
+        'inv': None
+    },
 
-        # Equipment
-        clothes = create_item('exotic clothes')
-        beard   = create_item('white beard')
-        dagger  = create_item('blood dagger')
-        
-        clothes.pick_up(ent=ent)
-        beard.pick_up(ent=ent)
-        dagger.pick_up(ent=ent)
-        
-        clothes.toggle_equip(ent)
-        beard.toggle_equip(ent)
-        dagger.toggle_equip(ent)
-        
-        # Inventory
-        ent.trader = [3, 4, 5, 6]
-        inv = ['shovel', 'sword', 'iron shield',
-               'orange clothes', 'exotic clothes',
-               'jug of blood', 'jug of grapes', 'jug of water', 'jug of cement',
-               'boxes', 'fire', 'shrooms', 'cup shroom']
-        for item in inv:
-            item = create_item(item)
-            item.pick_up(ent=ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+    'Kapno': {
+        'name': 'Kapno',
+        'model': 'black',
+        'reach': 2,
+        'hair': 'bald',
+        'chest': 'flat',
+        'clothes': 'exotic clothes',
+        'beard': 'white beard',
+        'weapon': 'blood dagger',
+        'armor': None,
+        'dialogue': [
             "Kapno: Huh?",
             "Kapno: Too many dry days, it seems. The lake is rather shallow.",
             "Kapno: Have you seen my brother? He seems distracted as of late.",
             "Kapno: My bones may be brittle, but I know good products when I see them.",
-            "Kapno: *mumbles*"]
-    
-    elif name == 'Blodo':
-        
-        # Basics
-        ent       = create_entity('black')
-        ent.name  = 'Blodo'
-        ent.reach = 2
+            "Kapno: *mumbles*"],
+        'trade_times': (
+            3,
+            4,
+            5,
+            6),
+        'inv': [
+            'shovel',
+            'sword',
+            'iron shield',
+            'orange clothes',
+            'exotic clothes',
+            'jug of blood',
+            'jug of grapes',
+            'jug of water',
+            'jug of cement',
+            'boxes',
+            'fire',
+            'shrooms',
+            'cup shroom']
+    },
 
-        # Equipment
-        clothes = create_item('exotic clothes')
-        beard   = create_item('white beard')
-        dagger  = create_item('blood dagger')
-        
-        clothes.pick_up(ent=ent)
-        beard.pick_up(ent=ent)
-        dagger.pick_up(ent=ent)
-        
-        clothes.toggle_equip(ent)
-        beard.toggle_equip(ent)
-        dagger.toggle_equip(ent)
-        
-        # Inventory
-        ent.trader = [3, 4, 5, 6]
-        inv = ['shovel', 'sword', 'iron shield',
-               'orange clothes', 'exotic clothes',
-               'jug of blood', 'jug of grapes', 'jug of water', 'jug of cement',
-               'boxes', 'fire', 'shrooms', 'cup shroom']
-        for item in inv:
-            item = create_item(item)
-            item.pick_up(ent=ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+    'Blodo': {
+        'name': 'Blodo',
+        'model': 'black',
+        'reach': 2,
+        'hair': 'bald',
+        'chest': 'flat',
+        'clothes': 'exotic clothes',
+        'beard': 'white beard',
+        'weapon': 'blood dagger',
+        'armor': None,
+        'dialogue': [
             "Blodo: Huh?",
             "Blodo: Too many dry days, it seems. The lake is rather shallow.",
             "Blodo: Have you seen my brother? He seems distracted as of late.",
             "Blodo: My bones may be brittle, but I know good products when I see them.",
-            "Blodo: *mumbles*"]
-    
-    elif name == 'Erasti':
-        
-        # Basics
-        ent       = create_entity('black')
-        ent.name  = 'Erasti'
-        ent.reach = 10
-        
-        # Equipment
-        hair    = create_item('brown hair')
-        bra     = create_item('bra')
-        clothes = create_item('yellow dress')
-        shovel  = create_item('shovel')
-        
-        hair.pick_up(ent=ent)
-        bra.pick_up(ent=ent)
-        clothes.pick_up(ent=ent)
-        shovel.pick_up(ent=ent)
-        
-        hair.toggle_equip(ent)
-        bra.toggle_equip(ent)
-        clothes.toggle_equip(ent)
-        shovel.toggle_equip(ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+            "Blodo: *mumbles*"],
+        'trade_times': (
+            3,
+            4,
+            5,
+            6),
+        'inv': [
+            'shovel',
+            'sword',
+            'iron shield',
+            'orange clothes',
+            'exotic clothes',
+            'jug of blood',
+            'jug of grapes',
+            'jug of water',
+            'jug of cement',
+            'boxes',
+            'fire',
+            'shrooms',
+            'cup shroom']
+    },
+
+    'Erasti': {
+        'name': 'Erasti',
+        'model': 'black',
+        'reach': 10,
+        'hair': 'brown hair',
+        'chest': 'bra',
+        'clothes': 'yellow dress',
+        'beard': None,
+        'weapon': 'shovel',
+        'armor': None,
+        'dialogue': [
             "Erasti: ...",
             "Erasti: Are you new to the region? Sorry, my memory is terrible!",
             "Erasti: I know... the town needs work. I guess we should all pitch in.",
             "Erasti: Sorry, I have a lot on my mind.",
             "Erasti: Good to see you!",
-            "Erasti: Rumor has it that Kapno stashes a jar of herbs under his bed."]
-    
-    elif name == 'Merci':
-        
-        # Basics
-        ent       = create_entity('white')
-        ent.name  = 'Merci'
-        ent.reach = 4
-        
-        # Equipment
-        hair    = create_item('blue hair')
-        bra     = create_item('bra')
-        clothes = create_item('chain dress')
-        shovel  = create_item('shovel')
-        
-        hair.pick_up(ent=ent)
-        bra.pick_up(ent=ent)
-        clothes.pick_up(ent=ent)
-        shovel.pick_up(ent=ent)
-        
-        hair.toggle_equip(ent)
-        bra.toggle_equip(ent)
-        clothes.toggle_equip(ent)
-        shovel.toggle_equip(ent)
-        
-        # Inventory
-        ent.trader = [3, 4, 5, 6]
-        inv = ['shovel',
-               'chain dress', 'green clothes', 'yellow dress',
-               'bubbles', 'plant']
-        for item in inv:
-            item = create_item(item)
-            item.pick_up(ent=ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+            "Erasti: Rumor has it that Kapno stashes a jar of herbs under his bed."],
+        'trade_times': None,
+        'inv': None
+    },
+
+    'Merci': {
+        'name': 'Merci',
+        'model': 'white',
+        'reach': 4,
+        'hair': 'blue hair',
+        'chest': 'bra',
+        'clothes': 'chain dress',
+        'beard': None,
+        'weapon': 'shovel',
+        'armor': None,
+        'dialogue': [
             "Merci: Are you looking to buy anything in particular? Please, take a look at my stock.",
             "Merci: We specialize in exotic goods, but the basics are available as well.",
             "Merci: I prefer coins, but I could use the sale. Are you looking to trade?",
             "Merci: Your purchase is free if you can find my keys. I can't sell my blades without them!",
             "Merci: We have many items for sale.",
-            "Merci: ... Oh, welcome in!"]
-    
-    elif name == 'Oxi':
-        
-        # Basics
-        ent       = create_entity('white')
-        ent.name  = 'Oxi'
-        ent.reach = 25
-        
-        # Equipment
-        hair    = create_item('blue hair')
-        face    = create_item('blue beard')
-        clothes = create_item('orange clothes')
-        
-        hair.pick_up(ent=ent)
-        face.pick_up(ent=ent)
-        clothes.pick_up(ent=ent)
-        
-        hair.toggle_equip(ent)
-        face.toggle_equip(ent)
-        clothes.toggle_equip(ent)
-        clothes.hidden = True
-        
-        # Inventory
-        ent.trader = [1, 2, 7, 8]
-        inv = ['needle', 'skin', 'teeth', 'bowl', 'plant', 'bubbles']
-        for item in inv:
-            item = create_item(item)
-            item.pick_up(ent=ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+            "Merci: ... Oh, welcome in!"],
+        'trade_times': (
+            3,
+            4,
+            5,
+            6),
+        'inv': [
+            'shovel',
+            'chain dress',
+            'green clothes',
+            'yellow dress',
+            'bubbles',
+            'plant']
+    },
+
+    'Oxi': {
+        'name': 'Oxi',
+        'model': 'white',
+        'reach': 25,
+        'hair': 'blue hair',
+        'chest': 'flat',
+        'clothes': 'orange clothes',
+        'beard': 'blue beard',
+        'weapon': None,
+        'armor': None,
+        'dialogue': [
             "Oxi: Yeah, I got it... talk to me later. You'd be surprised by what I can find.",
             "Oxi: Don't run your mouth about this. Just buy and leave.",
             "Oxi: Weren't you just here? Buy what you need, I guess.",
-            "Oxi: ..."]
-    
-    elif name == 'Aya':
-        
-        # Basics
-        ent       = create_entity('white')
-        ent.name  = 'Aya'
-        ent.reach = 50
-        
-        # Equipment
-        hair    = create_item('brown hair')
-        bra     = create_item('bra')
-        clothes = create_item('chain dress')
-        sword  = create_item('sword')
-        shield  = create_item('iron shield')
-        
-        hair.pick_up(ent=ent)
-        bra.pick_up(ent=ent)
-        clothes.pick_up(ent=ent)
-        sword.pick_up(ent=ent)
-        shield.pick_up(ent=ent)
-        
-        hair.toggle_equip(ent)
-        bra.toggle_equip(ent)
-        clothes.toggle_equip(ent)
-        sword.toggle_equip(ent)
-        shield.toggle_equip(ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+            "Oxi: ..."],
+        'trade_times': (
+            1,
+            2,
+            7,
+            8),
+        'inv': [
+            'needle',
+            'skin',
+            'teeth',
+            'bowl',
+            'plant',
+            'bubbles']
+    },
+
+    'Aya': {
+        'name': 'Aya',
+        'model': 'white',
+        'reach': 50,
+        'hair': 'brown hair',
+        'chest': 'bra',
+        'clothes': 'chain dress',
+        'beard': None,
+        'weapon': 'sword',
+        'armor': 'iron shield',
+        'dialogue': [
             "Aya: ...",
             "Aya: I chop trees, vines, grass -- whatever needs to be cut.",
             "Aya: Huh, haven't seen you around. Been busy clearing paths.",
             "Aya: Careful! My blades are sharp.",
             "Aya: I can only dream of what's out there, beyond the town.",
             "Aya: The trickle of the lake lulls me to sleep.",
-            "Aya: You don't talk much, huh? Just like Kyrio... what a curious old man."]
-    
-    elif name == 'Zung':
-        
-        # Basics
-        ent       = create_entity('white')
-        ent.name  = 'Zung'
-        ent.reach = 6
-        
-        # Equipment
-        hair    = create_item('bald')
-        clothes = create_item('green clothes')
-        
-        hair.pick_up(ent=ent)
-        clothes.pick_up(ent=ent)
-        
-        hair.toggle_equip(ent)
-        clothes.toggle_equip(ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
+            "Aya: You don't talk much, huh? Just like Kyrio... what a curious old man."],
+        'trade_times': None,
+        'inv': None
+    },
+
+    'Zung': {
+        'name': 'Zung',
+        'model': 'white',
+        'reach': 6,
+        'hair': 'bald',
+        'chest': 'flat',
+        'clothes': 'green clothes',
+        'beard': None,
+        'weapon': None,
+        'armor': None,
+        'dialogue': [
             "Zung: ...",
             "Zung: Have you seen my sister, Aya? She's scary, right?",
             "Zung: No, I deal in rumors. If you want goods, ask Merci or Kapno.",
             "Zung: I always thought we were the only town... until recently.",
             "Zung: The jail also houses the bank. Secure? You bet.",
             "Zung: *mumbles something about Erasti and Oxi*",
-            "Zung: Kyrio is fit for his age, but he hides it well."]
+            "Zung: Kyrio is fit for his age, but he hides it well."],
+        'trade_times': None,
+        'inv': None
+    },
+
+    'Lilao': {
+        'name': 'Lilao',
+        'model': 'black',
+        'reach': 6,
+        'hair': 'blue hair',
+        'chest': 'bra',
+        'clothes': 'yellow dress',
+        'beard': None,
+        'weapon': None,
+        'armor': None,
+        'dialogue': [
+            "Lilao: ..."],
+        'trade_times': None,
+        'inv': None
+    }
+
+}
+
+def create_NPC(name):
+    """ A more specific version of create_entity. """
     
-    elif name == 'Lilao':
-        
+    # Look for entity
+    ent = None
+    if name in NPC_dict.keys():
+        NPC = NPC_dict[name]
+
         # Basics
-        ent     = create_entity('black')
-        ent.name  = 'Lilao'
-        ent.reach = 15
+        ent                  = create_entity(NPC['model'])
+        ent.name             = NPC['name']
+        ent.reach            = NPC['reach']
+        ent.default_dialogue = NPC['dialogue']
         
         # Equipment
-        hair    = create_item('blue hair')
-        bra     = create_item('bra')
-        clothes = create_item('yellow dress')
-        
-        hair.pick_up(ent=ent)
-        bra.pick_up(ent=ent)
-        clothes.pick_up(ent=ent)
-        
-        hair.toggle_equip(ent)
-        bra.toggle_equip(ent)
-        clothes.toggle_equip(ent)
-        
-        # Dialogue
-        ent.default_dialogue = [
-            "Lilao: ..."]
+        for item_type in ['clothes', 'chest', 'hair', 'beard', 'weapon', 'armor']:
+            if NPC[item_type]: 
+                item = create_item(NPC[item_type])
+                item.pick_up(ent=ent)
+                item.toggle_equip(ent)
+                if NPC['trade_times']: item.hidden = True
+
+        # Trading
+        ent.trade_times = NPC['trade_times']
+        if NPC['trade_times']:
+            for item in NPC['inv']:
+                item = create_item(item)
+                item.pick_up(ent=ent)
     
     elif name == 'random':
         
@@ -523,16 +489,16 @@ def create_NPC(name):
         
         ent.lethargy = random.randint(1, 10)
         dialogue_options = [
-            ["NPC: ...",
-            "NPC: I had the strangest dream last night... Huh? Just talking to myself.",
-            "NPC: *seems busy*"],
-            ["NPC: Howdy!",
-            "NPC: Have you seen those cracks in the sand? My neighbor fell right through one!",
-            "NPC: Yeah, Merci is good. I always go to her for clothes and everyday items.",
-            "NPC: Grapes are great for health, but you can't build without concrete!"],
-            ["NPC: Oxi can get whatever you need, but he only sells at night.",
-            "NPC: Sometimes, I just pick weeds for fun. The ground looks nice without them.",
-            "NPC: ...Did you see that? Maybe I should spend less time with Oxi..."]]
+            [f"{ent.name}: ...",
+            f"{ent.name}: I had the strangest dream last night... Huh? Just talking to myself.",
+            f"{ent.name}: *seems busy*"],
+            [f"{ent.name}: Howdy!",
+            f"{ent.name}: Have you seen those cracks in the sand? My neighbor fell right through one!",
+            f"{ent.name}: Yeah, Merci is good. I always go to her for clothes and everyday items.",
+            f"{ent.name}: Grapes are great for health, but you can't build without concrete!"],
+            [f"{ent.name}: Oxi can get whatever you need, but he only sells at night.",
+            f"{ent.name}: Sometimes, I just pick weeds for fun. The ground looks nice without them.",
+            f"{ent.name}: ...Did you see that? Maybe I should spend less time with Oxi..."]]
 
         ent.default_dialogue = random.choice(dialogue_options)
     
