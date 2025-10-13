@@ -108,12 +108,12 @@ def API(state, details, init=False):
 class Camera:
     """ Defines a camera to follow the player. """
     
-    def __init__(self, target):
+    def __init__(self, ent):
         """ Defines a camera and its parameters. 
             
             Parameters
             ----------
-            target          : Entity object; focus of camera
+            ent             : Entity object; focus of camera
             width           : int; number of visible tiles in screen coordinates
             height          : int; number of visible tiles in screen coordinates
             tile_map_width  : int; number of visible tiles in tile coordinates
@@ -130,19 +130,17 @@ class Camera:
             y_range         : int; number of visible tiles + displacement in tile coordinates
             (questionable)
             
-            center_x        : int; middle of the camera in screen coordinates
-            center_y        : int; middle of the camera in screen coordinates
-            
-            fix_position    : bool; prevents adjustment of parameters """
+            fix_position    : bool; prevents adjustment of parameters
+        """
         
-        self.target          = target
+        self.ent             = ent
         self.width           = int(session.pyg.screen_width / session.pyg.zoom)
         self.height          = int((session.pyg.screen_height + session.pyg.tile_height) / session.pyg.zoom)
         self.tile_map_width  = int(self.width / session.pyg.tile_width)
         self.tile_map_height = int(self.height / session.pyg.tile_height)
         
-        self.X               = int((self.target.X * session.pyg.zoom) - int(self.width / 2))
-        self.Y               = int((self.target.Y * session.pyg.zoom) - int(self.height / 2))
+        self.X               = int((self.ent.X * session.pyg.zoom) - int(self.width / 2))
+        self.Y               = int((self.ent.Y * session.pyg.zoom) - int(self.height / 2))
         self.tile_map_x      = int(self.X / session.pyg.tile_width)
         self.tile_map_y      = int(self.Y / session.pyg.tile_height)
         
@@ -161,14 +159,14 @@ class Camera:
         """ ? """
         
         if not self.fixed:
-            X_move          = int(self.target.X - self.center_X)
+            X_move          = int(self.ent.X - self.center_X)
             self.X          = int(self.X + X_move)
             self.center_X   = int(self.center_X + X_move)
             self.right      = int(self.right + X_move)
             self.tile_map_x = int(self.X / session.pyg.tile_width)
             self.x_range    = int(self.tile_map_x + self.tile_map_width)
 
-            Y_move          = int(self.target.Y - self.center_Y)
+            Y_move          = int(self.ent.Y - self.center_Y)
             self.Y          = int(self.Y + Y_move)
             self.center_Y   = int(self.center_Y + Y_move)
             self.bottom     = int(self.bottom + Y_move)
@@ -186,8 +184,8 @@ class Camera:
             self.tile_map_x = int(self.X / (session.pyg.tile_width / session.pyg.zoom))
             self.x_range    = self.tile_map_x + self.tile_map_width
         
-        elif self.right > (len(session.player_obj.ent.env.map)-1) * session.pyg.tile_width:
-            self.right      = (len(session.player_obj.ent.env.map)) * session.pyg.tile_width
+        elif self.right > (len(self.ent.env.map)-1) * session.pyg.tile_width:
+            self.right      = (len(self.ent.env.map)) * session.pyg.tile_width
             self.X          = self.right - self.width
             self.center_X   = self.X + int(self.width / 2)
             self.tile_map_x = int(self.X / (session.pyg.tile_width / session.pyg.zoom))
@@ -200,8 +198,8 @@ class Camera:
             self.tile_map_y = int(self.Y / (session.pyg.tile_height / session.pyg.zoom))
             self.y_range    = self.tile_map_y + self.tile_map_height
         
-        elif self.bottom > (len(session.player_obj.ent.env.map[0])) * session.pyg.tile_height:
-            self.bottom     = (len(session.player_obj.ent.env.map[0])) * session.pyg.tile_height
+        elif self.bottom > (len(self.ent.env.map[0])) * session.pyg.tile_height:
+            self.bottom     = (len(self.ent.env.map[0])) * session.pyg.tile_height
             self.Y          = self.bottom - self.height
             self.center_Y   = self.Y + int(self.height / 2)
             self.tile_map_y = int(self.Y / (session.pyg.tile_height / session.pyg.zoom))
@@ -247,8 +245,8 @@ class Camera:
 
     def _recalculate_bounds(self):
         """ Recalculate dependent properties after zooming. """
-        self.X               = self.target.X - int(self.width / 2)
-        self.Y               = self.target.Y - int(self.height / 2)
+        self.X               = self.ent.X - int(self.width / 2)
+        self.Y               = self.ent.Y - int(self.height / 2)
         self.center_X        = self.X + int(self.width / 2)
         self.center_Y        = self.Y + int(self.height / 2)
         self.right           = self.X + self.width

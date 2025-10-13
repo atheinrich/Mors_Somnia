@@ -20,8 +20,11 @@ import session
 # Classes
 class Environments:
 
-    def __init__(self):
+    def __init__(self, player_obj):
         """ Holds environments for user. """
+
+        # Owner
+        self.player_obj = player_obj
 
         # Parameters
         self.room_max_size = 10
@@ -51,7 +54,7 @@ class Environments:
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
             hidden     = False)
-        env.camera = Camera(session.player_obj.ent)
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = True
         env.camera.zoom_in(custom=1)
         
@@ -69,7 +72,7 @@ class Environments:
         # Construct rooms
         width  = 19
         height = 14
-        x      = 0
+        x      = 1
         y      = 0
         
         ## Construct room
@@ -97,11 +100,11 @@ class Environments:
         # Place player in first room
         env.player_coordinates = [x, y]
         env.map[x][y].item     = None
-        env.entity = session.player_obj.ent
-        session.player_obj.ent.tile = env.map[x][y]
+        env.entity = self.player_obj.ent
+        self.player_obj.ent.tile = env.map[x][y]
         env.center = new_room.center()
         
-        session.player_obj.envs.dict[env.name] = env
+        self.dict[env.name] = env
         return env
 
     def build_womb(self):
@@ -123,7 +126,7 @@ class Environments:
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
             hidden     = True)
-        env.camera = Camera(session.player_obj.ent)
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = True
         env.camera.zoom_in(custom=1)
         
@@ -164,11 +167,11 @@ class Environments:
         # Place player in first room
         env.player_coordinates = [x, y]
         env.map[x][y].item     = None
-        env.entity = session.player_obj.ent
-        session.player_obj.ent.tile = env.map[x][y]
+        env.entity = self.player_obj.ent
+        self.player_obj.ent.tile = env.map[x][y]
         env.center = new_room.center()
         
-        session.player_obj.envs.dict[env.name] = env
+        self.dict[env.name] = env
         return env
 
     def build_home(self):
@@ -191,7 +194,7 @@ class Environments:
             floors     = ['floors', 'green'],
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'])
-        env.camera = Camera(session.player_obj.ent)
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
         center = [14, 14]
@@ -269,22 +272,22 @@ class Environments:
         ent = create_entity('friend')
         place_object(ent, [x, y], env)
         ent.dialogue = "Walk into something to interact with it, or press Enter (↲) if you're above it."
-        session.player_obj.ent.questlines = {}
-        session.player_obj.ent.questlines['Bloodkin'] = Bloodkin()
+        self.player_obj.ent.questlines = {}
+        self.player_obj.ent.questlines['Bloodkin'] = Bloodkin()
         ent.quest    = Quest(
             name     = "Making a friend",
             notes    = ["I wonder who this is. Maybe I should say hello."],
             tasks    = ["☐ Say hello to the creature.",
                         "☐ Get to know them."],
             category = 'Side',
-            function = session.player_obj.ent.questlines['Bloodkin'].making_a_friend)
+            function = self.player_obj.ent.questlines['Bloodkin'].making_a_friend)
         ent.quest.content = ent.quest.notes + ent.quest.tasks
-        session.player_obj.ent.questlog['Making a friend'] = ent.quest
+        self.player_obj.ent.questlog['Making a friend'] = ent.quest
         
         # Initial position
         env.player_coordinates = env.center
         
-        session.player_obj.envs.dict[env.name] = env
+        self.dict[env.name] = env
         return env
 
     def build_dungeon_level(self, lvl_num=0):
@@ -297,11 +300,11 @@ class Environments:
         ###############################################################
         # Initialize environment
         if lvl_num == 0:
-            if 'dungeon' not in session.player_obj.envs.dict:
-                session.player_obj.envs.dict['dungeon'] = []
+            if 'dungeon' not in self.dict:
+                self.dict['dungeon'] = []
                 lvl_num = 1
             else:
-                lvl_num = 1 + session.player_obj.envs.dict['dungeon'][-1].lvl_num
+                lvl_num = 1 + self.dict['dungeon'][-1].lvl_num
         
         env = Environment(
             envs       = self,
@@ -322,8 +325,8 @@ class Environments:
             'clouds':    False}
         env.weather = Weather(env, clouds=False)
         
-        session.player_obj.envs.dict['dungeon'].append(env)
-        env.camera = Camera(session.player_obj.ent)
+        self.dict['dungeon'].append(env)
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
 
@@ -399,17 +402,17 @@ class Environments:
         # Place player in first room
         (x, y) = env.rooms[0].center()
         env.player_coordinates = [x, y]
-        env.entity = session.player_obj.ent
+        env.entity = self.player_obj.ent
         env.center = new_room.center()
-        session.player_obj.ent.tile = env.map[x][y]
+        self.player_obj.ent.tile = env.map[x][y]
         
         # Generate stairs in the last room
         (x, y) = env.rooms[-2].center()
         stairs = create_item('door')
         stairs.name = 'dungeon'
-        place_object(stairs, [x, y], session.player_obj.envs.dict['dungeon'][-1])
+        place_object(stairs, [x, y], self.dict['dungeon'][-1])
             
-        session.player_obj.envs.dict[env.name].append(env)
+        self.dict[env.name].append(env)
 
     def build_hallucination_level(self, lvl_num=0):
         """ Generates the overworld environment. """
@@ -421,11 +424,11 @@ class Environments:
         ###############################################################
         ## Initialize environment
         if lvl_num == 0:
-            if 'hallucination' not in session.player_obj.envs.dict:
-                session.player_obj.envs.dict['hallucination'] = []
+            if 'hallucination' not in self.dict:
+                self.dict['hallucination'] = []
                 lvl_num = 1
             else:
-                lvl_num = 1 + session.player_obj.envs.dict['hallucination'][-1].lvl_num
+                lvl_num = 1 + self.dict['hallucination'][-1].lvl_num
                 
         env = Environment(
             envs       = self,
@@ -454,7 +457,7 @@ class Environments:
             ['any', ['walls', 'gold']]]
         voronoi_biomes(env, biomes)
         
-        env.camera = Camera(session.player_obj.ent)
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
         
@@ -568,15 +571,15 @@ class Environments:
         place_objects(env, items, entities)
         
         # Change player into tentacles
-        session.player_obj.ent.img_names_backup = session.player_obj.ent.img_names
-        session.player_obj.ent.img_names = ['tentacles', 'front']
+        self.player_obj.ent.img_names_backup = self.player_obj.ent.img_names
+        self.player_obj.ent.img_names = ['tentacles', 'front']
         
         # Place player in first room
         (x, y) = env.rooms[0].center()
         env.player_coordinates = [x, y]
-        env.entity = session.player_obj.ent
+        env.entity = self.player_obj.ent
         env.center = new_room.center()
-        session.player_obj.ent.tile = env.map[x][y]
+        self.player_obj.ent.tile = env.map[x][y]
         
         # Generate stairs in the last room
         (x, y) = env.rooms[-2].center()
@@ -584,7 +587,7 @@ class Environments:
         stairs.name = 'hallucination'
         place_object(stairs, [x, y], env)
             
-        session.player_obj.envs.dict[env.name].append(env)
+        self.dict[env.name].append(env)
 
     def build_overworld(self):
         """ Generates the overworld environment. """
@@ -612,8 +615,8 @@ class Environments:
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
             hidden     = False)
-        session.player_obj.envs.dict['overworld'] = env
-        env.camera = Camera(session.player_obj.ent)
+        self.dict['overworld'] = env
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
         
@@ -644,10 +647,10 @@ class Environments:
         num_rooms             = 20
         rooms                 = []
         room_counter, counter = 0, 0
-        center                = session.player_obj.envs.dict['overworld'].center
+        center                = self.dict['overworld'].center
         (x_1, y_1)            = center
-        x_2                   = lambda width:  len(session.player_obj.envs.dict['overworld'].map)    - width  - 1
-        y_2                   = lambda height: len(session.player_obj.envs.dict['overworld'].map[0]) - height - 1
+        x_2                   = lambda width:  len(self.dict['overworld'].map)    - width  - 1
+        y_2                   = lambda height: len(self.dict['overworld'].map[0]) - height - 1
         while room_counter < num_rooms:
             
             # Generate location
@@ -676,8 +679,8 @@ class Environments:
                     hidden = False,
                     objects = False,
                     floor  = ['floors', 'dark green'],
-                    walls  = session.player_obj.envs.dict['overworld'].walls,
-                    roof   = session.player_obj.envs.dict['overworld'].roofs,
+                    walls  = self.dict['overworld'].walls,
+                    roof   = self.dict['overworld'].roofs,
                     plan = create_text_room(width, height))
 
                 room_counter += 1
@@ -796,8 +799,8 @@ class Environments:
         
         env.center             = [door_x, door_y]
         env.player_coordinates = [door_x, door_y]
-        env.entity             = session.player_obj.ent
-        session.player_obj.ent.tile    = env.map[door_x][door_y]
+        env.entity             = self.player_obj.ent
+        self.player_obj.ent.tile    = env.map[door_x][door_y]
         
         ## Place NPCs
         bools = lambda room, i: [
@@ -808,7 +811,7 @@ class Environments:
         for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci', 'Oxi', 'Aya', 'Zung', 'Lilao']:
             
             # Create NPC if needed
-            if name not in session.player_obj.ents.keys(): session.player_obj.ents[name] = create_NPC(name)
+            if name not in self.player_obj.ents.keys(): self.player_obj.ents[name] = create_NPC(name)
             
             # Select room not occupied by player
             room = random.choice(env.rooms)
@@ -822,7 +825,7 @@ class Environments:
                     (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
             
             # Spawn entity
-            place_object(session.player_obj.ents[name], (x, y), env)
+            place_object(self.player_obj.ents[name], (x, y), env)
         
         # Set number of random characters
         for _ in range(5):
@@ -844,10 +847,10 @@ class Environments:
             # Spawn entity
             place_object(ent, (x, y), env)
         
-        session.player_obj.ent.questlines['Friendly Faces'] = FriendlyFaces()
-        session.player_obj.ent.questlines['Friendly Faces'].making_an_introduction()
+        self.player_obj.ent.questlines['Friendly Faces'] = FriendlyFaces()
+        self.player_obj.ent.questlines['Friendly Faces'].making_an_introduction()
             
-        session.player_obj.envs.dict[env.name] = env
+        self.dict[env.name] = env
 
     def build_bitworld(self):
         """ Generates the bitworld environment. """
@@ -874,8 +877,8 @@ class Environments:
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
             hidden     = False)
-        session.player_obj.envs.dict['bitworld'] = env
-        env.camera = Camera(session.player_obj.ent)
+        self.dict['bitworld'] = env
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
         
@@ -895,10 +898,10 @@ class Environments:
         num_rooms             = 20
         rooms                 = []
         room_counter, counter = 0, 0
-        center                = session.player_obj.envs.dict['bitworld'].center
+        center                = self.dict['bitworld'].center
         (x_1, y_1)            = center
-        x_2                   = lambda width:  len(session.player_obj.envs.dict['bitworld'].map)    - width  - 1
-        y_2                   = lambda height: len(session.player_obj.envs.dict['bitworld'].map[0]) - height - 1
+        x_2                   = lambda width:  len(self.dict['bitworld'].map)    - width  - 1
+        y_2                   = lambda height: len(self.envs.dict['bitworld'].map[0]) - height - 1
         while room_counter < num_rooms:
             
             # Generate location
@@ -927,8 +930,8 @@ class Environments:
                     hidden = False,
                     objects = False,
                     floor  = ['floors', 'dark green'],
-                    walls  = session.player_obj.envs.dict['bitworld'].walls,
-                    roof   = session.player_obj.envs.dict['bitworld'].roofs,
+                    walls  = self.dict['bitworld'].walls,
+                    roof   = self.dict['bitworld'].roofs,
                     plan = create_text_room(width, height))
 
                 room_counter += 1
@@ -943,17 +946,17 @@ class Environments:
         ## Create player's house
         main_room = Room(
             name    = 'home room',
-            env     = session.player_obj.envs.dict['bitworld'],
-            x1      = session.player_obj.envs.dict['bitworld'].center[0],
-            y1      = session.player_obj.envs.dict['bitworld'].center[1],
+            env     = self.dict['bitworld'],
+            x1      = self.dict['bitworld'].center[0],
+            y1      = self.dict['bitworld'].center[1],
             width   = self.room_max_size,
             height  = self.room_max_size,
             biome   = 'any',
             hidden  = False,
             objects = False,
             floor   = ['floors', 'dark green'],
-            walls   = session.player_obj.envs.dict['bitworld'].walls,
-            roof    = session.player_obj.envs.dict['bitworld'].roofs,
+            walls   = self.dict['bitworld'].walls,
+            roof    = self.dict['bitworld'].roofs,
             plan = ['  -----     ',
                     ' --...----- ',
                     ' -........--',
@@ -968,14 +971,14 @@ class Environments:
         x, y = center[0]+1, center[1]+5
         item = create_item('door')
         item.name = 'home'
-        place_object(item, [x, y], session.player_obj.envs.dict['bitworld'])
-        session.player_obj.envs.dict['bitworld'].map[x][y].blocked = False
-        session.player_obj.envs.dict['bitworld'].map[x][y].unbreakable = False
+        place_object(item, [x, y], self.dict['bitworld'])
+        self.dict['bitworld'].map[x][y].blocked = False
+        self.dict['bitworld'].map[x][y].unbreakable = False
         
         ## Create church
         main_room = Room(
             name    = 'church',
-            env     = session.player_obj.envs.dict['bitworld'],
+            env     = self.dict['bitworld'],
             x1      = 20,
             y1      = 20,
             width   = self.room_max_size,
@@ -984,8 +987,8 @@ class Environments:
             hidden  = False,
             objects = False,
             floor   = ['floors', 'red'],
-            walls   = session.player_obj.envs.dict['bitworld'].walls,
-            roof    = session.player_obj.envs.dict['bitworld'].roofs,
+            walls   = self.dict['bitworld'].walls,
+            roof    = self.dict['bitworld'].roofs,
             plan = ['  --------------           ---------- ',
                     ' --............-----      --........--',
                     ' -.................-      -..........-',
@@ -1013,9 +1016,9 @@ class Environments:
             ['forest', 'grass',      1000, [None]]]
         place_objects(env, items, entities)
         
-        env.player_coordinates = session.player_obj.envs.dict['bitworld'].center # [0, 10]
-        session.player_obj.envs.dict['bitworld'].entity = session.player_obj.ent
-        session.player_obj.ent.tile                 = session.player_obj.envs.dict['bitworld'].map[0][10]
+        env.player_coordinates = self.dict['bitworld'].center # [0, 10]
+        self.dict['bitworld'].entity = self.player_obj.ent
+        self.player_obj.ent.tile = self.dict['bitworld'].map[0][10]
         
         ## Place NPCs
         bools = lambda room, i: [
@@ -1029,9 +1032,9 @@ class Environments:
             ent = create_NPC('random')
             
             # Select room not occupied by player
-            room = random.choice(session.player_obj.envs.dict['bitworld'].rooms)
-            while room == session.player_obj.envs.dict['bitworld'].rooms[-1]:
-                room = random.choice(session.player_obj.envs.dict['bitworld'].rooms)
+            room = random.choice(self.dict['bitworld'].rooms)
+            while room == self.dict['bitworld'].rooms[-1]:
+                room = random.choice(self.dict['bitworld'].rooms)
             
             # Select spawn location
             for i in range(3):
@@ -1042,7 +1045,7 @@ class Environments:
             # Spawn entity
             place_object(ent, (x, y), env)
 
-        session.player_obj.envs.dict[env.name] = env
+        self.dict[env.name] = env
 
     def build_cave_level(self, lvl_num=0):
         """ Generates a cave environment. """
@@ -1054,11 +1057,11 @@ class Environments:
         ###############################################################
         # Initialize environment
         if lvl_num == 0:
-            if 'cave' not in session.player_obj.envs.dict:
-                session.player_obj.envs.dict['cave'] = []
+            if 'cave' not in self.dict:
+                self.dict['cave'] = []
                 lvl_num = 1
             else:
-                lvl_num = 1 + session.player_obj.envs.dict['cave'][-1].lvl_num
+                lvl_num = 1 + self.dict['cave'][-1].lvl_num
                 
         env = Environment(
             envs       = self,
@@ -1079,7 +1082,7 @@ class Environments:
             'clouds':    False}
         env.weather = Weather(env, light_set=16)
         
-        env.camera = Camera(session.player_obj.ent)
+        env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
 
@@ -1147,17 +1150,17 @@ class Environments:
         # Place player in first room
         (x, y) = env.rooms[0].center()
         env.player_coordinates = [x, y]
-        env.entity = session.player_obj.ent
+        env.entity = self.player_obj.ent
         env.center = new_room.center()
-        session.player_obj.ent.tile = env.map[x][y]
+        self.player_obj.ent.tile = env.map[x][y]
         
         # Generate stairs in the last room
         (x, y) = env.rooms[-1].center()
         stairs = create_item('cave')
         stairs.img_names = ['floors', 'dirt2']
-        place_object(stairs, [x, y], session.player_obj.envs.dict['cave'][-1])
+        place_object(stairs, [x, y], self.dict['cave'][-1])
 
-        session.player_obj.envs.dict[env.name].append(env)
+        self.dict[env.name].append(env)
 
 class Environment:
     """ Generates and manages each world, such as each floor of the dungeon. """
@@ -1277,7 +1280,7 @@ class Environment:
             self.map.append(row)
         
         # Other
-        self.entities           = []
+        self.entities = []
         self.player_coordinates = [0, 0]
         self.camera             = None
         self.center             = [int(len(self.map)/2), int(len(self.map[0])/2)]
@@ -1394,7 +1397,7 @@ class Environment:
         
             main_room = Room(
                 name     = 'placed',
-                env      = session.player_obj.ent.env,
+                env      = self,
                 x1       = min_x,
                 y1       = min_y,
                 width    = int(max_x - min_x),
@@ -1404,7 +1407,7 @@ class Environment:
                 objects  = True,
                 floor    = ['floors', 'wood'],
                 walls    = obj.img_names,
-                roof     = session.player_obj.ent.env.roofs,
+                roof     = self.roofs,
                 boundary = boundary)
 
     def combine_rooms(self):
@@ -1749,10 +1752,10 @@ class Room:
             x, y = queue.pop(0)  # pop from front of list = BFS
             if (x, y) in visited:
                 continue
-            if not (0 <= x < len(session.player_obj.ent.env.map) and 0 <= y < len(session.player_obj.ent.env.map[0])):
+            if not (0 <= x < len(self.env.map) and 0 <= y < len(self.env.map[0])):
                 continue
             
-            tile = session.player_obj.ent.env.map[x][y]
+            tile = self.env.map[x][y]
             if tile.placed:
                 continue  # Skip placed tiles — they are solid
             
@@ -1769,7 +1772,7 @@ class Room:
         for x in range(min_x + 1, max_x):
             for y in range(min_y + 1, max_y):
                 if (x, y) not in visited and (x, y) not in boundary_coords:
-                    floors.append(session.player_obj.ent.env.map[x][y])
+                    floors.append(self.env.map[x][y])
         
         # Assign tiles to room
         for wall in walls:
@@ -1783,7 +1786,7 @@ class Room:
             floor.hidden = self.hidden
             self.tiles_list.append(floor)
             floor.biome = self.biome
-            if self.roof and (session.player_obj.ent.tile not in self.tiles_list):
+            if self.roof and (self.env.envs.ent.tile not in self.tiles_list):
                 floor.img_names = self.roof
             else:
                 floor.img_names = self.floor
@@ -1914,12 +1917,12 @@ class Weather:
         # Set day
         if (time.localtime().tm_hour + 1) != self.last_hour:
             self.last_hour = time.localtime().tm_hour + 1
-            session.player_obj.ent.env.env_date = ((session.player_obj.ent.env.env_date+1) % 8) + 1
+            self.env.env_date = ((self.env.env_date+1) % 8) + 1
         
         # Set time of day
         if int(time.localtime().tm_min / 10) != self.last_min:
             self.last_min = int(time.localtime().tm_min / 10)
-            session.player_obj.ent.env.env_time = (session.player_obj.ent.env.env_time + 1) % 8
+            self.env.env_time = (self.env.env_time + 1) % 8
         
         # Change the weather
         if self.light_set is None:
@@ -1940,28 +1943,28 @@ class Weather:
         
         # Set a specific day and time
         if not increment:
-            if day is not None:  session.player_obj.ent.env.env_date = (day % 8) + 1
-            if time is not None: session.player_obj.ent.env.env_time = time % 8
+            if day is not None:  self.env.env_date = (day % 8) + 1
+            if time is not None: self.env.env_time = time % 8
         
         # Move forwards in time by one step
-        else: session.player_obj.ent.env.env_time = (session.player_obj.ent.env.env_time + 1) % 8
+        else: self.env.env_time = (self.env.env_time + 1) % 8
 
     def update_brightness(self):
-        if session.player_obj.ent.env.env_time == 0:   alpha = 170 # 🌖
-        elif session.player_obj.ent.env.env_time == 1: alpha = 85  # 🌗
-        elif session.player_obj.ent.env.env_time == 2: alpha = 34  # 🌘
-        elif session.player_obj.ent.env.env_time == 3: alpha = 0   # 🌑
-        elif session.player_obj.ent.env.env_time == 4: alpha = 34  # 🌒
-        elif session.player_obj.ent.env.env_time == 5: alpha = 85  # 🌓
-        elif session.player_obj.ent.env.env_time == 6: alpha = 170 # 🌔
-        elif session.player_obj.ent.env.env_time == 7: alpha = 255 # 🌕
+        if self.env.env_time == 0:   alpha = 170 # 🌖
+        elif self.env.env_time == 1: alpha = 85  # 🌗
+        elif self.env.env_time == 2: alpha = 34  # 🌘
+        elif self.env.env_time == 3: alpha = 0   # 🌑
+        elif self.env.env_time == 4: alpha = 34  # 🌒
+        elif self.env.env_time == 5: alpha = 85  # 🌓
+        elif self.env.env_time == 6: alpha = 170 # 🌔
+        elif self.env.env_time == 7: alpha = 255 # 🌕
         self.overlay.set_alpha(alpha)
 
     def create_cloud(self):
         from mechanics import create_text_room
 
         # Set direction of travel
-        env       = session.player_obj.ent.env
+        env       = self.env
         x_range   = [0, (env.size * session.pyg.screen_width) // session.pyg.tile_width]
         y_range   = [0, (env.size * session.pyg.screen_height) // session.pyg.tile_height]
         direction = random.choice(['up', 'down', 'left', 'right'])
@@ -2008,7 +2011,7 @@ class Weather:
         # Draw visible tiles
         for y in range(int(camera.Y/32), int(camera.bottom/session.pyg.tile_height + 1)):
             for x in range(int(camera.X/32), int(camera.right/session.pyg.tile_width + 1)):
-                try:    tile = session.player_obj.ent.env.map[x][y]
+                try:    tile = self.env.map[x][y]
                 except: continue
                 
                 if not tile.hidden:

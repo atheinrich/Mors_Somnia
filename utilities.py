@@ -1092,9 +1092,6 @@ class Pets:
 
     def __init__(self):
         
-        # General
-        self.ents = session.player_obj.envs.dict['garden'].entities
-        
         self.stats = {
             '      RADIX ATRIUM': None,
             '':         None,
@@ -1134,7 +1131,7 @@ class Pets:
         self.emoji_cooldown     = 10
         self.emoji_press        = 0
 
-    def import_pets(self):
+    def startup(self):
         self.ents = session.player_obj.envs.dict['garden'].entities
 
     def stat_check(self, dic):
@@ -1143,6 +1140,7 @@ class Pets:
             elif value < 0: dic[key] = 0
 
     def update(self):
+        """ Decreases happiness over time, sets mood to current highest stat, handles mood effects, and updates stat display. """
         
         # Lose happiness
         if self.moods['happiness']:
@@ -1237,14 +1235,15 @@ class MainMenu:
         self.background_fade.fill((0, 0, 0, 50))
 
     def startup(self):
+        """ Fades in background, changes the gamestate to new_game, then adds the menu as an overlay. """
         
         # Startup background
         background_image = pygame.image.load("Data/.Images/garden.png").convert()
         background_image = pygame.transform.scale(background_image, (session.pyg.screen_width, session.pyg.screen_height))
 
         # Fade details
-        alpha = 0
-        fade_speed = 10
+        alpha        = 0
+        fade_speed   = 10
         fade_surface = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height))
         fade_surface.fill(session.pyg.black)
         
@@ -1266,8 +1265,7 @@ class MainMenu:
             
             # Increase alpha for the next frame
             alpha += fade_speed
-        session.pyg.game_state = 'play_garden'
-        session.pyg.overlay = 'menu'
+        
         return
 
     def run(self):
@@ -1369,11 +1367,13 @@ class MainMenu:
             self.last_press_time = float(time.time())
             if session.player_obj.ent.env.name != 'garden':
                 place_player(
+                    ent = session.player_obj.ent,
                     env = session.player_obj.envs.dict['garden'],
                     loc = session.player_obj.envs.dict['garden'].player_coordinates)
                 session.pyg.game_state = 'play_garden'
             elif not session.pyg.startup_toggle:
                 place_player(
+                    ent = session.player_obj.ent,
                     env = session.player_obj.ent.last_env,
                     loc = session.player_obj.ent.last_env.player_coordinates)
                 session.pyg.game_state = 'play_game'
@@ -1477,16 +1477,19 @@ class SmallMenu:
 
 ########################################################################################################################################################
 # Tools
-def check_tile(x, y, startup=False):
+def check_tile(x, y, ent=None, startup=False):
     """ Reveals newly explored regions with respect to the player's position. """
     
+    # Select entity
+    if not ent: ent = session.player_obj.ent
+
     # Define some shorthand
-    tile = session.player_obj.ent.env.map[x][y]
+    tile = ent.env.map[x][y]
     
     # Reveal a square around the player
     for u in range(x-1, x+2):
         for v in range(y-1, y+2):
-            session.player_obj.ent.env.map[u][v].hidden = False
+            ent.env.map[u][v].hidden = False
     
     # Reveal a hidden room
     if tile.room:
@@ -1497,8 +1500,8 @@ def check_tile(x, y, startup=False):
                 room_tile.hidden = False
         
         # Check if the player enters or leaves a room
-        if session.player_obj.ent.prev_tile:
-            if (tile.room != session.player_obj.ent.prev_tile.room) or (startup == True):
+        if ent.prev_tile:
+            if (tile.room != ent.prev_tile.room) or (startup == True):
                 
                 # Hide the roof if the player enters a room
                 if tile.room and tile.room.roof:
@@ -1507,8 +1510,8 @@ def check_tile(x, y, startup=False):
                             spot.img_names = tile.room.floor
     
     # Reveal the roof if the player leaves the room
-    if session.player_obj.ent.prev_tile:
-        prev_tile = session.player_obj.ent.prev_tile
+    if ent.prev_tile:
+        prev_tile = ent.prev_tile
         if prev_tile.room and not tile.room:
             if prev_tile.room.roof:
                 for spot in prev_tile.room.tiles_list:
@@ -1565,7 +1568,7 @@ def sort_inventory(ent=None):
     other_cache     = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
 
     # Sort by category
-    for item_list in session.player_obj.ent.inventory.values():
+    for item_list in ent.inventory.values():
         for item in item_list:
             inventory_cache[item.role].append(item)
     
@@ -1576,7 +1579,7 @@ def sort_inventory(ent=None):
     sorted(inventory_cache['scrolls'], key=lambda obj: obj.name)
     sorted(inventory_cache['other'],  key=lambda obj: obj.name)
 
-    session.player_obj.ent.inventory = inventory_cache
+    ent.inventory = inventory_cache
 
 def screenshot(size='display', visible=False, folder="Data/.Cache", filename="screenshot.png", blur=False):
     """ Takes a screenshot.
@@ -1618,9 +1621,12 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
     session.pyg.gui_toggle, session.pyg.msg_toggle = gui_cache, msg_cache
     render_all()
 
-def render_all(size='display', visible=False):
+def render_all(ent=None, size='display', visible=False):
     """ Draws tiles and stuff. Constantly runs. """
     
+    # Select entity
+    if not ent: ent = session.player_obj.ent
+
     def bw_binary():
         import numpy as np
         
@@ -1644,22 +1650,22 @@ def render_all(size='display', visible=False):
     
     # Set tiles to render
     if size == 'full':
-        y_range_1, y_range_2 = 0, len(session.player_obj.ent.env.map[0])
-        x_range_1, x_range_2 = 0, len(session.player_obj.ent.env.map)
+        y_range_1, y_range_2 = 0, len(ent.env.map[0])
+        x_range_1, x_range_2 = 0, len(ent.env.map)
     
     else:        
-        camera = session.player_obj.ent.env.camera
+        camera = ent.env.camera
 
         y_range_1 = max(0, camera.tile_map_y)
-        y_range_2 = min(len(session.player_obj.ent.env.map[0])-1, camera.tile_map_y + camera.tile_map_height+2)
+        y_range_2 = min(len(ent.env.map[0])-1, camera.tile_map_y + camera.tile_map_height+2)
         
         x_range_1 = max(0, camera.tile_map_x)
-        x_range_2 = min(len(session.player_obj.ent.env.map)-1, camera.tile_map_x + camera.tile_map_width+2)
+        x_range_2 = min(len(ent.env.map)-1, camera.tile_map_x + camera.tile_map_width+2)
     
     # Draw visible tiles
     for y in range(int(camera.Y/32), int(camera.bottom/session.pyg.tile_height + 1)):
         for x in range(int(camera.X/32), int(camera.right/session.pyg.tile_width + 1)):
-            try:    tile = session.player_obj.ent.env.map[x][y]
+            try:    tile = ent.env.map[x][y]
             except: continue
             
             if visible or not tile.hidden:

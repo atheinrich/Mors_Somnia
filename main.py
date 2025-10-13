@@ -109,7 +109,6 @@ def main():
     
     # Pygame
     session.pyg              = Pygame()
-    session.pyg.game_state   = 'startup'
     session.pyg.overlay      = None
     
     # Mechanics and audio
@@ -124,14 +123,13 @@ def main():
     # Player data
     session.player_obj       = Player()
     session.player_obj.temp  = True
-    session.player_obj.envs  = Environments()
     
     # Gamestates
     session.new_game_obj     = NewGame()
     
     session.play_game_obj    = PlayGame()
     session.garden_obj       = PlayGarden()
-    session.pet_obj          = Pets()
+    session.pets_obj          = Pets()
     
     # Overlays
     session.main_menu_obj    = MainMenu()
@@ -169,13 +167,10 @@ def main():
                         "Data/File_2/screenshot.png",
                         "Data/File_3/screenshot.png"])
     
-    
     session.questlog_obj = BigMenu(
         name      = 'questlog',
         header    = "                                                        QUESTLOG", 
-        options   = ["Test"])
-    session.questlog_obj.init_questlog('overworld')
-    session.questlog_obj.init_questlog('garden')
+        options   = ["Test"])    
     session.inv              = Inventory()
     session.dev              = Catalog()
     session.hold_obj         = Abilities()
@@ -187,6 +182,7 @@ def main():
         header    = "temp", 
         options   = [""])
     
+    session.pyg.game_state   = 'startup'
     game_states()
 
 def game_states():
@@ -196,7 +192,15 @@ def game_states():
         
         # Primary
         if session.pyg.game_state == 'startup':
-            session.main_menu_obj.startup()
+            session.new_game_obj.run()
+        
+        elif session.pyg.game_state == 'new_game':
+            session.new_game_obj.run()
+            session.new_game_obj.render()
+        
+        elif session.pyg.game_state == 'play_garden':
+            session.garden_obj.run()
+            session.garden_obj.render()
         
         elif session.pyg.game_state == 'play_game':
             session.play_game_obj.run()
@@ -206,14 +210,6 @@ def game_states():
             session.player_obj.ent.env.weather.run()
             for image, (X, Y) in session.player_obj.ent.env.weather.render():
                 session.pyg.display.blit(image, (X, Y))
-            
-        elif session.pyg.game_state == 'new_game':
-            session.new_game_obj.run()
-            session.new_game_obj.render()
-        
-        elif session.pyg.game_state == 'play_garden':
-            session.garden_obj.run()
-            session.garden_obj.render()
         
         # Overlays
         if session.pyg.overlay == 'menu':

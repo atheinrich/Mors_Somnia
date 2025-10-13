@@ -15,7 +15,7 @@ class Session:
         self.play_game_obj    = None # PlayGame object
         self.new_game_obj     = None # NewGame object
         self.garden_obj       = None # PlayGarden object
-        self.pet_obj          = None # Pets object
+        self.pets_obj         = None # Pets object
 
         self.main_menu_obj    = None # MainMenu object
         self.ctrl_menu        = None # FileMenu object
