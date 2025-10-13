@@ -712,6 +712,257 @@ class Audio:
                     pygame.time.delay(self.speech_speed)
                     pygame.event.clear()
 
+class MainMenu:
+    
+    def __init__(self):
+        
+        # Initialize title
+        self.title_font     = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
+        self.game_title     = self.title_font.render("MORS SOMNIA", True, session.pyg.gray)
+        self.game_title_pos = (int((session.pyg.screen_width - self.game_title.get_width())/2), 85)
+        
+        # Initialize cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, session.pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
+        self.cursor_pos = [32, 320]
+        
+        # Initialize menu options
+        self.menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
+        self.menu_choices_surfaces = []
+        
+        session.img.average()
+        self.color = pygame.Color(session.img.menu_correct, session.img.menu_correct, session.img.menu_correct)
+        for i in range(len(self.menu_choices)):
+            self.menu_choices_surfaces.append(session.pyg.font.render(self.menu_choices[i], True, self.color))
+        self.choice, self.choices_length = 0, len(self.menu_choices) - 1
+        
+        # Allows access to garden
+        self.menu_toggle = True
+        
+        # Other
+        self.last_press_time, self.cooldown_time = 0, 0.5
+        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade.fill((0, 0, 0, 50))
+        self.fadein = True
+
+    def startup(self):
+        session.pyg.fadeout_screen(
+            text        = self.game_title,
+            duration    = 2,
+            loc         = self.game_title_pos,
+            alpha_start = 255)
+        return
+
+    def startupx(self):
+        """ Fades in background, changes the gamestate to new_game, then adds the menu as an overlay. """
+        
+        # Fade details
+        alpha        = 0
+        fade_speed   = 6
+        fade_surface = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height))
+        fade_surface.fill(session.pyg.black)
+        
+        # Apply fade
+        while alpha < 255:
+            session.pyg.clock.tick(30)
+            fade_surface.set_alpha(255 - alpha)
+        
+            val = alpha + 20
+            if val > 255: val = 255
+
+            # Draw the menu elements during the fade
+            self.game_title.set_alpha(random.randint(val-50, val))
+            session.pyg.screen.blit(self.game_title, self.game_title_pos)
+
+            # Apply the fade effect
+            session.pyg.screen.blit(fade_surface, (0, 0))
+            
+            pygame.display.flip()
+            
+            # Increase alpha for the next frame
+            alpha += fade_speed
+        
+        return
+
+    def run(self):
+        
+        # Restrict keystroke speed
+        session.mech.movement_speed(toggle=False, custom=2)
+        
+        # Prevent saving before a game is started or loaded
+        if session.pyg.startup_toggle:
+            self.menu_choices_surfaces[2] = session.pyg.font.render(self.menu_choices[2], True, session.pyg.dark_gray)
+        else:
+            self.menu_choices_surfaces[2] = session.pyg.font.render(self.menu_choices[2], True, self.color)
+
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+            
+                # Navigation
+                if event.key in session.pyg.key_UP:       self.key_UP()
+                elif event.key in session.pyg.key_DOWN:   self.key_DOWN()
+                
+                # Music
+                elif event.key in session.pyg.key_PLUS:   self.key_PLUS()
+                elif event.key in session.pyg.key_MINUS:  self.key_MINUS()
+                elif event.key in session.pyg.key_DEV:    self.key_DEV()
+                
+                # Garden
+                elif event.key in session.pyg.key_PERIOD: self.key_PERIOD()
+        
+                # Unused
+                elif event.key in session.pyg.key_HOLD:   self.key_HOLD()
+                elif event.key in session.pyg.key_INFO:   self.key_INFO()
+                
+                # >>RESUME<<
+                elif event.key in session.pyg.key_BACK:
+                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                        session.pyg.last_press_time = float(time.time())
+                        session.pyg.overlay = None
+                        return
+                
+                # Select option
+                elif event.key in session.pyg.key_ENTER:
+                    
+                    # >>NEW GAME<<
+                    if self.choice == 0:
+                        session.pyg.game_state = 'new_game'
+                        session.pyg.overlay = None
+                        return
+                    
+                    # >>LOAD<<
+                    elif self.choice == 1:
+                        session.pyg.overlay = 'load'
+                        return
+                    
+                    # >>SAVE<<
+                    elif self.choice == 2:
+                        
+                        # Prevent saving before a game is started or loaded
+                        if not session.pyg.startup_toggle:
+                            session.pyg.overlay = 'save'
+                            return
+                    
+                    # >>CONTROLS<<
+                    elif self.choice == 3:
+                        session.pyg.overlay = 'ctrl_menu'
+                        return
+                    
+                    # >>QUIT<<
+                    elif self.choice == 4:
+                        pygame.quit()
+                        sys.exit()
+        
+        session.pyg.overlay = 'menu'
+        return
+
+    def key_UP(self):
+        
+        # >>SELECT MENU ITEM<<
+        self.cursor_pos[1] -= 24
+        self.choice -= 1
+        if self.choice < 0:
+            self.choice = self.choices_length
+            self.cursor_pos[1] = 320 + (len(self.menu_choices) - 1) * 24
+
+    def key_DOWN(self):
+        
+        # >>SELECT MENU ITEM<<
+        self.cursor_pos[1] += 24
+        self.choice += 1
+        if self.choice > self.choices_length:
+            self.choice = 0
+            self.cursor_pos[1] = 320
+    
+    def key_PERIOD(self):
+
+        from mechanics import place_player
+
+        # >>GARDEN<<
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time())
+
+            if session.player_obj.ent.env.name != 'garden':
+                place_player(
+                    ent = session.player_obj.ent,
+                    env = session.player_obj.envs.dict['garden'],
+                    loc = session.player_obj.envs.dict['garden'].player_coordinates)
+                session.pyg.game_state = 'play_garden'
+            
+            elif not session.pyg.startup_toggle:
+                place_player(
+                    ent = session.player_obj.ent,
+                    env = session.player_obj.ent.last_env,
+                    loc = session.player_obj.ent.last_env.player_coordinates)
+                session.pyg.game_state = 'play_game'
+
+    def key_HOLD(self):
+        pass
+
+    def key_PLUS(self):
+        session.aud.pause(paused=False)
+
+    def key_MINUS(self):
+        session.aud.pause(paused=True)
+
+    def key_INFO(self):
+        if session.pyg.frame:
+            pygame.display.set_mode((session.pyg.screen_width, session.pyg.screen_height), pygame.NOFRAME)
+            session.pyg.frame = False
+        else:
+            pygame.display.set_mode((session.pyg.screen_width, session.pyg.screen_height))
+            session.pyg.frame = True
+
+    def key_DEV(self):
+        session.aud.play_track()
+
+    def render(self):
+
+        # Apply background fade
+        session.pyg.screen.blit(self.background_fade, (0, 0))
+        
+        # Blit menu options
+        Y = 316
+        self.menu_choices_surfaces = []
+        session.img.average()
+        self.color = pygame.Color(255-session.img.bottom_color[0], 255-session.img.bottom_color[1], 255-session.img.bottom_color[2])
+        
+        for i in range(len(self.menu_choices)):
+            if (i == 2) and session.pyg.startup_toggle:
+                color = session.pyg.dark_gray
+            else: color = self.color
+            self.menu_choices_surfaces.append(session.pyg.font.render(self.menu_choices[i], True, color))
+        
+        for menu_choice_surface in self.menu_choices_surfaces:
+            session.pyg.screen.blit(menu_choice_surface, (48, Y))
+            Y += 24
+        
+        # Blit cursor
+        pygame.draw.polygon(self.cursor_img, self.color, [(5, 3), (10, 7), (5, 11)], 0)
+        session.pyg.screen.blit(self.cursor_img, self.cursor_pos)
+
+        # Blit logo
+        if session.pyg.startup_toggle:
+            session.pyg.screen.blit(self.game_title, self.game_title_pos)
+        else:
+            for i in range(len(session.img.big)):
+                for j in range(len(session.img.big[0])):
+                    X = session.pyg.screen_width - session.pyg.tile_width * (i+2)
+                    Y = session.pyg.screen_height - session.pyg.tile_height * (j+2)
+                    session.pyg.screen.blit(session.img.big[len(session.img.big)-j-1][len(session.img.big[0])-i-1], (X, Y))
+
+        # Fade in from black
+        render_all()
+        if self.fadein:
+            self.fadein = False
+            session.pyg.fadeout_screen(
+                text      = self.game_title,
+                fade_in   = True,
+                loc       = self.game_title_pos,
+                retain    = True,
+                alpha_end = 50)
+
 class FileMenu:
 
     def __init__(self, name, header, options, options_categories=None, position='top left', backgrounds=None):
@@ -974,12 +1225,6 @@ class FileMenu:
             with open(f"Data/File_{self.choice}/session.player_obj.pkl", "rb") as file:
                 session.player_obj = pickle.load(file)
 
-            # Load cameras
-            for env in session.player_obj.envs.dict.values():
-                if type(env) == list:
-                    for sub_env in env: sub_env.camera = Camera(session.player_obj.ent)
-                else:                   env.camera     = Camera(session.player_obj.ent)
-            
             self.reset(self.name, self.header, self.options, self.options_categories, self.position, self.backgrounds)
             session.pyg.game_state = 'play_game'
             session.play_game_obj.fadein = None
@@ -1200,239 +1445,6 @@ class Pets:
         self.stats['appeal']   = '★' * self.levels['appeal']
         while len(self.stats['appeal']) < 5:
             self.stats['appeal'] += '☆'
-
-class MainMenu:
-    
-    def __init__(self):
-        
-        # Initialize title
-        self.title_font     = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
-        self.game_title     = self.title_font.render("MORS SOMNIA", True, session.pyg.gray)
-        self.game_title_pos = (int((session.pyg.screen_width - self.game_title.get_width())/2), 85)
-        
-        # Initialize cursor
-        self.cursor_img = pygame.Surface((16, 16)).convert()
-        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_img, session.pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
-        self.cursor_pos = [32, 320]
-        
-        # Initialize menu options
-        self.menu_choices = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
-        self.menu_choices_surfaces = []
-        
-        session.img.average()
-        self.color = pygame.Color(session.img.menu_correct, session.img.menu_correct, session.img.menu_correct)
-        for i in range(len(self.menu_choices)):
-            self.menu_choices_surfaces.append(session.pyg.font.render(self.menu_choices[i], True, self.color))
-        self.choice, self.choices_length = 0, len(self.menu_choices) - 1
-        
-        # Allows access to garden
-        self.menu_toggle = True
-        
-        # Other
-        self.last_press_time, self.cooldown_time = 0, 0.5
-        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
-
-    def startup(self):
-        """ Fades in background, changes the gamestate to new_game, then adds the menu as an overlay. """
-        
-        # Startup background
-        background_image = pygame.image.load("Data/.Images/garden.png").convert()
-        background_image = pygame.transform.scale(background_image, (session.pyg.screen_width, session.pyg.screen_height))
-
-        # Fade details
-        alpha        = 0
-        fade_speed   = 10
-        fade_surface = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height))
-        fade_surface.fill(session.pyg.black)
-        
-        # Apply fade
-        while alpha < 255:
-            session.pyg.clock.tick(30)
-            fade_surface.set_alpha(255 - alpha)
-            
-            # Set menu background to the custom image
-            session.pyg.screen.blit(background_image, (0, 0))
-            
-            # Draw the menu elements during the fade
-            session.pyg.screen.blit(self.game_title, self.game_title_pos)
-
-            # Apply the fade effect
-            session.pyg.screen.blit(fade_surface, (0, 0))
-            
-            pygame.display.flip()
-            
-            # Increase alpha for the next frame
-            alpha += fade_speed
-        
-        return
-
-    def run(self):
-        
-        # Restrict keystroke speed
-        session.mech.movement_speed(toggle=False, custom=2)
-        
-        # Prevent saving before a game is started or loaded
-        if session.pyg.startup_toggle:
-            self.menu_choices_surfaces[2] = session.pyg.font.render(self.menu_choices[2], True, session.pyg.dark_gray)
-        else:
-            self.menu_choices_surfaces[2] = session.pyg.font.render(self.menu_choices[2], True, self.color)
-
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-            
-                # Navigation
-                if event.key in session.pyg.key_UP:       self.key_UP()
-                elif event.key in session.pyg.key_DOWN:   self.key_DOWN()
-                
-                # Music
-                elif event.key in session.pyg.key_PLUS:   self.key_PLUS()
-                elif event.key in session.pyg.key_MINUS:  self.key_MINUS()
-                elif event.key in session.pyg.key_DEV:    self.key_DEV()
-                
-                # Garden
-                elif event.key in session.pyg.key_PERIOD: self.key_PERIOD()
-        
-                # Unused
-                elif event.key in session.pyg.key_HOLD:   self.key_HOLD()
-                elif event.key in session.pyg.key_INFO:   self.key_INFO()
-                
-                # >>RESUME<<
-                elif event.key in session.pyg.key_BACK:
-                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                        session.pyg.last_press_time = float(time.time())
-                        session.pyg.overlay = None
-                        return
-                
-                # Select option
-                elif event.key in session.pyg.key_ENTER:
-                    
-                    # >>NEW GAME<<
-                    if self.choice == 0:
-                        session.pyg.game_state = 'new_game'
-                        session.pyg.overlay = None
-                        return
-                    
-                    # >>LOAD<<
-                    elif self.choice == 1:
-                        session.pyg.overlay = 'load'
-                        return
-                    
-                    # >>SAVE<<
-                    elif self.choice == 2:
-                        
-                        # Prevent saving before a game is started or loaded
-                        if not session.pyg.startup_toggle:
-                            session.pyg.overlay = 'save'
-                            return
-                    
-                    # >>CONTROLS<<
-                    elif self.choice == 3:
-                        session.pyg.overlay = 'ctrl_menu'
-                        return
-                    
-                    # >>QUIT<<
-                    elif self.choice == 4:
-                        pygame.quit()
-                        sys.exit()
-        
-        session.pyg.overlay = 'menu'
-        return
-
-    def key_UP(self):
-        
-        # >>SELECT MENU ITEM<<
-        self.cursor_pos[1] -= 24
-        self.choice -= 1
-        if self.choice < 0:
-            self.choice = self.choices_length
-            self.cursor_pos[1] = 320 + (len(self.menu_choices) - 1) * 24
-
-    def key_DOWN(self):
-        
-        # >>SELECT MENU ITEM<<
-        self.cursor_pos[1] += 24
-        self.choice += 1
-        if self.choice > self.choices_length:
-            self.choice = 0
-            self.cursor_pos[1] = 320
-    
-    def key_PERIOD(self):
-
-        from mechanics import place_player
-
-        # >>GARDEN<<
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time())
-            if session.player_obj.ent.env.name != 'garden':
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['garden'],
-                    loc = session.player_obj.envs.dict['garden'].player_coordinates)
-                session.pyg.game_state = 'play_garden'
-            elif not session.pyg.startup_toggle:
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.ent.last_env,
-                    loc = session.player_obj.ent.last_env.player_coordinates)
-                session.pyg.game_state = 'play_game'
-
-    def key_HOLD(self):
-        pass
-
-    def key_PLUS(self):
-        session.aud.pause(paused=False)
-
-    def key_MINUS(self):
-        session.aud.pause(paused=True)
-
-    def key_INFO(self):
-        if session.pyg.frame:
-            pygame.display.set_mode((session.pyg.screen_width, session.pyg.screen_height), pygame.NOFRAME)
-            session.pyg.frame = False
-        else:
-            pygame.display.set_mode((session.pyg.screen_width, session.pyg.screen_height))
-            session.pyg.frame = True
-
-    def key_DEV(self):
-        session.aud.play_track()
-
-    def render(self):
-        
-        # Apply background fade
-        session.pyg.screen.blit(self.background_fade, (0, 0))
-        
-        # Blit menu options
-        Y = 316
-        
-        self.menu_choices_surfaces = []
-        
-        session.img.average()
-        #self.color = pygame.Color(session.img.menu_correct, session.img.menu_correct, session.img.menu_correct)
-        self.color = pygame.Color(255-session.img.bottom_color[0], 255-session.img.bottom_color[1], 255-session.img.bottom_color[2])
-        for i in range(len(self.menu_choices)):
-            if (i == 2) and session.pyg.startup_toggle:
-                color = session.pyg.dark_gray
-            else: color = self.color
-            self.menu_choices_surfaces.append(session.pyg.font.render(self.menu_choices[i], True, color))
-        for menu_choice_surface in self.menu_choices_surfaces:
-            session.pyg.screen.blit(menu_choice_surface, (48, Y))
-            Y += 24
-        
-        # Blit cursor
-        pygame.draw.polygon(self.cursor_img, self.color, [(5, 3), (10, 7), (5, 11)], 0)
-        session.pyg.screen.blit(self.cursor_img, self.cursor_pos)
-
-        # Blit logo
-        if session.pyg.startup_toggle:
-            session.pyg.screen.blit(self.game_title, self.game_title_pos)
-        else:
-            for i in range(len(session.img.big)):
-                for j in range(len(session.img.big[0])):
-                    X = session.pyg.screen_width - session.pyg.tile_width * (i+2)
-                    Y = session.pyg.screen_height - session.pyg.tile_height * (j+2)
-                    session.pyg.screen.blit(session.img.big[len(session.img.big)-j-1][len(session.img.big[0])-i-1], (X, Y))
 
 class SmallMenu:
     

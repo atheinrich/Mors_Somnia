@@ -19,7 +19,7 @@ import session
 # Classes
 class BigMenu:
 
-    def __init__(self, name, header, options, options_categories=None, position='top left'):
+    def __init__(self, name, header, options, options_categories=None, position='top left', backgrounds=None):
         """ IMPORTANT. Creates cursor, background, and menu options, then returns index of choice.
 
             header             : string; top line of text
@@ -33,6 +33,7 @@ class BigMenu:
         self.options            = options
         self.options_categories = options_categories
         self.position           = position
+        self.backgrounds        = backgrounds
         
         # Initialize temporary data containers
         self.choice                   = 0                   # holds index of option pointed at by cursor

@@ -90,7 +90,6 @@ from items_entities import Player
 from utilities import Images, Audio, MainMenu, FileMenu, SmallMenu, Info, Pets
 from mechanics import Pygame, Mechanics, NewGame, PlayGame, PlayGarden, Inventory, Catalog, Abilities
 from mechanics import Exchange
-from environments import Environments
 from quests import BigMenu
 from data_management import API
 
@@ -101,7 +100,64 @@ API_toggle = False
 
 ########################################################################################################################################################
 # Core
-def main():
+def menu_data():
+    menus = {}
+
+    menus['ctrl'] = {
+        'name': 'ctrl_menu',
+        'header': "Controls", 
+        'options': [
+            f"Move up:                                {session.pyg.key_UP[0]}                     Exit:                                         {session.pyg.key_BACK[0]}",
+            f"Move down:                           {session.pyg.key_DOWN[0]}                     Activate 1:                             {session.pyg.key_ENTER[0]}",
+            f"Move left:                               {session.pyg.key_LEFT[0]}                     Activate 2:                               {session.pyg.key_PERIOD[0]}",
+            f"Move right:                            {session.pyg.key_RIGHT[0]}",
+            "",
+            f"Toggle inventory:                  {session.pyg.key_INV[0]}                     Enter combo:                         {session.pyg.key_HOLD[0]}",
+            f"Toggle Catalog:                   {session.pyg.key_DEV[0]}                     Change speed:                      {session.pyg.key_SPEED[0]}",
+            f"Toggle GUI:                            {session.pyg.key_GUI[0]}                     Zoom in:                                {session.pyg.key_PLUS[0]}",
+            f"View stats:                             {session.pyg.key_INFO[0]}                     Zoom out:                              {session.pyg.key_MINUS[0]}",
+            f"View questlog:                      {session.pyg.key_QUEST[0]}"],
+        'backgrounds': None}
+    
+    menus['save'] = {
+        'name': 'save',
+        'header': "Save",
+        'options': [
+            "File 1",
+            "File 2",
+            "File 3"],
+        'backgrounds': [
+            "Data/File_1/screenshot.png",
+            "Data/File_2/screenshot.png",
+            "Data/File_3/screenshot.png"]}
+    
+    menus['load'] = {
+        'name': 'load',
+        'header': "Load",
+        'options': [
+            "File 1",
+            "File 2",
+            "File 3"],
+        'backgrounds': [
+            "Data/File_1/screenshot.png",
+            "Data/File_2/screenshot.png",
+            "Data/File_3/screenshot.png"]}
+    
+    menus['questlog'] = {
+        'name': 'questlog',
+        'header': "                                                        QUESTLOG", 
+        'options': ["Test"],
+        'backgrounds': None}
+
+    menus['temp'] = {
+        'name': 'temp',
+        'header': "temp", 
+        'options': [""],
+        'backgrounds': None}
+
+    return menus
+
+def init():
     """ Initializes the essentials and opens the main menu. """
 
     # API
@@ -123,71 +179,55 @@ def main():
     # Player data
     session.player_obj       = Player()
     session.player_obj.temp  = True
+    session.pets_obj         = Pets()
     
     # Gamestates
+    ## Primary
     session.new_game_obj     = NewGame()
-    
     session.play_game_obj    = PlayGame()
     session.garden_obj       = PlayGarden()
-    session.pets_obj          = Pets()
-    
-    # Overlays
+
+    ## Overlays
+    menus = menu_data()
     session.main_menu_obj    = MainMenu()
-    session.ctrl_menu        = FileMenu(
-        name         = 'ctrl_menu',
-        header       = "Controls", 
-        options = [
-            f"Move up:                                {session.pyg.key_UP[0]}                     Exit:                                         {session.pyg.key_BACK[0]}",
-            f"Move down:                           {session.pyg.key_DOWN[0]}                     Activate 1:                             {session.pyg.key_ENTER[0]}",
-            f"Move left:                               {session.pyg.key_LEFT[0]}                     Activate 2:                               {session.pyg.key_PERIOD[0]}",
-            f"Move right:                            {session.pyg.key_RIGHT[0]}",
-            "",
-            
-            f"Toggle inventory:                  {session.pyg.key_INV[0]}                     Enter combo:                         {session.pyg.key_HOLD[0]}",
-            f"Toggle Catalog:                   {session.pyg.key_DEV[0]}                     Change speed:                      {session.pyg.key_SPEED[0]}",
-            f"Toggle GUI:                            {session.pyg.key_GUI[0]}                     Zoom in:                                {session.pyg.key_PLUS[0]}",
-            f"View stats:                             {session.pyg.key_INFO[0]}                     Zoom out:                              {session.pyg.key_MINUS[0]}",
-            f"View questlog:                      {session.pyg.key_QUEST[0]}"])
-    session.save_account_obj = FileMenu(
-        name         = 'save',
-        header       = "Save",
-        options      = ["File 1",
-                        "File 2",
-                        "File 3"],
-        backgrounds  = ["Data/File_1/screenshot.png",
-                        "Data/File_2/screenshot.png",
-                        "Data/File_3/screenshot.png"])
-    session.load_account_obj = FileMenu(
-        name         = 'load',
-        header       = "Load",
-        options      = ["File 1",
-                        "File 2",
-                        "File 3"],
-        backgrounds  = ["Data/File_1/screenshot.png",
-                        "Data/File_2/screenshot.png",
-                        "Data/File_3/screenshot.png"])
-    
-    session.questlog_obj = BigMenu(
-        name      = 'questlog',
-        header    = "                                                        QUESTLOG", 
-        options   = ["Test"])    
     session.inv              = Inventory()
     session.dev              = Catalog()
     session.hold_obj         = Abilities()
     session.trade_obj        = Exchange()
     session.small_menu       = SmallMenu()
     session.info_obj         = Info()
+    session.save_account_obj = FileMenu(
+        name        = menus['save']['name'],
+        header      = menus['save']['header'], 
+        options     = menus['save']['options'],
+        backgrounds = menus['save']['backgrounds'])
+    session.load_account_obj = FileMenu(
+        name        = menus['load']['name'],
+        header      = menus['load']['header'], 
+        options     = menus['load']['options'],
+        backgrounds = menus['load']['backgrounds'])
+    session.ctrl_menu        = FileMenu(
+        name        = menus['ctrl']['name'],
+        header      = menus['ctrl']['header'], 
+        options     = menus['ctrl']['options'],
+        backgrounds = menus['ctrl']['backgrounds'])
+    session.questlog_obj     = BigMenu(
+        name        = menus['questlog']['name'],
+        header      = menus['questlog']['header'], 
+        options     = menus['questlog']['options'],
+        backgrounds = menus['questlog']['backgrounds'])
     session.big_menu         = BigMenu(
-        name      = 'temp',
-        header    = "temp", 
-        options   = [""])
+        name        = menus['temp']['name'],
+        header      = menus['temp']['header'], 
+        options     = menus['temp']['options'],
+        backgrounds = menus['temp']['backgrounds'])
     
-    session.pyg.game_state   = 'startup'
+    session.pyg.game_state = 'startup'
     game_states()
 
 def game_states():
     
-    session.pyg.running    = True
+    session.pyg.running = True
     while session.pyg.running:
         
         # Primary
@@ -205,15 +245,13 @@ def game_states():
         elif session.pyg.game_state == 'play_game':
             session.play_game_obj.run()
             session.play_game_obj.render()
-            
-            ## Extra adjustments
             session.player_obj.ent.env.weather.run()
             for image, (X, Y) in session.player_obj.ent.env.weather.render():
                 session.pyg.display.blit(image, (X, Y))
         
         # Overlays
         if session.pyg.overlay == 'menu':
-            game_state = session.main_menu_obj.run()
+            session.main_menu_obj.run()
             session.main_menu_obj.render()
         
         elif session.pyg.overlay == 'ctrl_menu':
@@ -269,6 +307,6 @@ def game_states():
 ########################################################################################################################################################
 # Global scripts
 if __name__ == "__main__":
-    main()
+    init()
 
 ########################################################################################################################################################

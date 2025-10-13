@@ -981,11 +981,7 @@ class Mechanics:
             
             # Fade in
             if text:
-                session.pyg.fadeout_screen(
-                    screen   = session.pyg.screen,
-                    fade_in  = False,
-                    text     = text,
-                    duration = 2)
+                session.pyg.fadeout_screen(text)
                 session.play_game_obj.fadein = text
             
             # Create dungeon for new game
@@ -1026,11 +1022,7 @@ class Mechanics:
             if 'hallucination' not in session.player_obj.envs.dict.keys():
                 session.player_obj.envs.dict['hallucination'] = []
                 
-                session.pyg.fadeout_screen(
-                    screen   = session.pyg.screen,
-                    fade_in  = False,
-                    text     = text,
-                    duration = 2)
+                session.pyg.fadeout_screen(text)
                 session.pyg.overlay = None
                 session.player_obj.envs.build_hallucination_level()
                 session.play_game_obj.fadein = text
@@ -1068,11 +1060,7 @@ class Mechanics:
             if 'bitworld' not in session.player_obj.envs.dict.keys():
                 session.player_obj.envs.dict['bitworld'] = []
                 
-                session.pyg.fadeout_screen(
-                    screen   = session.pyg.screen,
-                    fade_in  = False,
-                    text     = text,
-                    duration = 2)
+                session.pyg.fadeout_screen(text)
                 session.pyg.overlay = None
                 session.player_obj.envs.build_bitworld()
                 session.play_game_obj.fadein = text
@@ -1716,11 +1704,12 @@ class PlayGame:
                             
                             session.pyg.overlay = None
                             session.pyg.fadeout_screen(
-                                screen  = session.pyg.screen,
-                                fade_in = False,
-                                env     = last_env,
-                                loc     = last_env.player_coordinates,
-                                text    = self.fadein)
+                                text     = self.fadein,
+                                duration = 3)
+                            place_player(
+                                ent = session.player_obj.ent,
+                                env = last_env,
+                                loc = last_env.player_coordinates)
                             session.img.render_fx = None
                             pygame.event.clear()
                         
@@ -1911,9 +1900,9 @@ class PlayGame:
         
         if self.fadein:
             session.pyg.fadeout_screen(
-                screen  = session.pyg.screen,
-                fade_in = True,
-                text    = self.fadein)
+                text     = self.fadein,
+                fade_in  = True,
+                duration = 3)
             self.fadein = False
 
 class PlayGarden:
@@ -3625,42 +3614,61 @@ class Pygame:
 
         return lines
 
-    def fadeout_screen(self, screen, fade_in, env=None, loc=None, text="", font=None, duration=4):
-        """ Fades screen and displays text. """
+    def fadeout_screen(self, text, fade_in=False, duration=2, loc=None, retain=False, alpha_start=None, alpha_end=None):
+        """ Fades screen and displays text.
+        
+            Parameters
+            ----------
+            text        : str or pygame surface; text to be displayed
+            fade_in     : bool; fades into black if False; fades out of black if True
+            duration    : int; number of seconds for transition
+            loc         : tuple of ints; custom location
+            retain      : bool; prevents text from fading if True
+            alpha_start : None or int; initial alpha value
+            alpha_end   : None or int; final alpha value
+        """
         
         from utilities import render_all
 
-        # Set functionality
+        # End black or start black
         if not fade_in:
-            alpha, change = 0, 10
+            if alpha_start is None: alpha, change = 0, 10
+            else:                   alpha, change = alpha_start, 10
         else:
-            alpha, change = 255*2, -10
+            if alpha_start is None: alpha, change = 255*2, -10
+            else:                   alpha, change = alpha_start, -10
+
             session.player_obj.ent.env.weather.run()
             for image, (X, Y) in session.player_obj.ent.env.weather.render():
                 session.pyg.display.blit(image, (X, Y))
 
         # Set fade color and speed
+        screen = session.pyg.screen
         fade_surface = pygame.Surface(screen.get_size())
         fade_surface.fill((0, 0, 0))
         
-        # Set text color and position
-        if not font: font = self.font
-        text_surface = font.render(text, True, (255, 255, 255))
-        text_rect = text_surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-        
+        # Select text object and set color and position
+        if type(text) == str: text_surface = self.font.render(text, True, (255, 255, 255))
+        else:                 text_surface = text
+        if not loc: loc = text_surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+
         # Increase alpha channel over time
-        clock = pygame.time.Clock()
-        gui_cache = copy.copy(session.pyg.gui_toggle)
-        msg_cache = copy.copy(session.pyg.msg_toggle)
+        clock                  = pygame.time.Clock()
+        gui_cache              = copy.copy(session.pyg.gui_toggle)
+        msg_cache              = copy.copy(session.pyg.msg_toggle)
         session.pyg.gui_toggle = False
         session.pyg.msg_toggle = False
-        running = True
+        running                = True
         while running:
             
-            # Handle gamestate
-            alpha += change
-            if alpha > 255*duration: running = False
-            elif alpha < 0:          running = False
+            # Set fade level
+            if alpha_end is not None:
+                if (not fade_in) and (alpha >= alpha_end):     alpha = alpha_end
+                elif (fade_in) and (alpha <= alpha_end):       alpha = alpha_end
+                else:                                          alpha += change
+            else:                                              alpha += change
+            if (alpha > 255*duration) or (alpha == alpha_end): running = False
+            elif alpha < 0:                                    running = False
             
             fade_surface.set_alpha(alpha)
             session.pyg.screen.blit(pygame.transform.scale(session.pyg.display, (session.pyg.screen_width, session.pyg.screen_height)), (0, 0))
@@ -3668,22 +3676,24 @@ class Pygame:
             if session.img.render_fx: render_all()
             
             # Show text
-            if alpha >= 255:
-                val = alpha - 255
-                if val > 255: val = 255
+            if alpha >= int(255*duration/2):
+                if not retain: val = alpha - 255
+                else:          val = 255
+                if val > 255:  val = 255
+
+                # Apply flicker effect
                 text_surface.set_alpha(random.randint(val-50, val))
-                self.screen.blit(text_surface, text_rect)
+                self.screen.blit(text_surface, loc)
             
+            elif retain:
+                text_surface.set_alpha(random.randint(200, 255))
+                self.screen.blit(text_surface, loc)
+
             pygame.display.update()
             clock.tick(15)
         
         session.pyg.gui_toggle = gui_cache
         session.pyg.msg_toggle = msg_cache
-        if env:
-            place_player(
-                ent = session.player_obj.ent,
-                env = env,
-                loc = loc)
 
     def update_gui(self, new_msg=None, color=None, ent=None):
         
@@ -3905,8 +3915,8 @@ def place_player(ent, env, loc):
         check_tile(loc[0], loc[1], ent=ent, startup=True)
         
         # Update camera
-        env.camera.update()
         if not env.camera.fixed:
+            env.camera.update()
             ent.env.camera.zoom_in()
             ent.env.camera.zoom_out()
         
