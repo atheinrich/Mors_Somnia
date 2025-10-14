@@ -18,9 +18,8 @@ class Session:
         self.pets_obj         = None # Pets object
 
         self.main_menu_obj    = None # MainMenu object
-        self.ctrl_menu        = None # FileMenu object
-        self.save_account_obj = None # FileMenu object
-        self.load_account_obj = None # FileMenu object
+        self.ctrl_menu        = None # CtrlMenu object
+        self.file_menu        = None # FileMenu object
 
         self.questlog_obj     = None # BigMenu object
         self.inv              = None # Inventory object

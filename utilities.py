@@ -953,8 +953,8 @@ class MainMenu:
                     session.pyg.screen.blit(session.img.big[len(session.img.big)-j-1][len(session.img.big[0])-i-1], (X, Y))
 
         # Fade in from black
-        render_all()
         if self.fadein:
+            render_all()
             self.fadein = False
             session.pyg.fadeout_screen(
                 text      = self.game_title,
@@ -965,286 +965,204 @@ class MainMenu:
 
 class FileMenu:
 
-    def __init__(self, name, header, options, options_categories=None, position='top left', backgrounds=None):
-        """ IMPORTANT. Creates cursor, background, and menu options, then returns index of choice.
+    def __init__(self):
+        """ Hosts file saving and loading. Takes screenshots for background images.
+            The mode is passed from the game state, which also populates the header.
+        """
+        
+        #########################################################
+        # Menu details
+        ## Basics
+        self.mode    = None
+        self.header  = None
 
-            header             : string; top line of text
-            options            : list of strings; menu choices
-            options_categories : list of strings; categorization; same length as options
-            position           : chooses layout preset """
+        self.options = [
+            "File 1",
+            "File 2",
+            "File 3"]
+        self.backgrounds = [
+            "Data/File_1/screenshot.png",
+            "Data/File_2/screenshot.png",
+            "Data/File_3/screenshot.png"]
         
-        # Basics
-        self.name               = name
-        self.header             = header
-        self.options            = options
-        self.options_categories = options_categories
-        self.position           = position
-        self.backgrounds        = backgrounds
-        
-        # Temporary data containers
-        self.choice                   = 0                   # holds index of option pointed at by cursor
-        self.choices_length           = len(self.options)-1 # number of choices
-        self.options_categories_cache = ''                  # holds current category
-        self.options_render           = self.options.copy()
-        
-        # Cursor and text positions
-        self.set_positions()
-        self.tab_x = 0
-        self.tab_y = 0
-        
-        # Cursor
-        self.cursor_img = pygame.Surface((16, 16)).convert()
-        self.cursor_img.set_colorkey(self.cursor_img.get_at((0,0)))
-        pygame.draw.polygon(self.cursor_img, session.pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-        
-        # Menu options
-        self.header_render = session.pyg.font.render(self.header, True, session.pyg.white)
-        for i in range(len(self.options)):
-            color = session.pyg.gray
-            self.options_render[i] = session.pyg.font.render(options[i], True, color)
-        
-        # Backgrounds
-        if self.backgrounds:
-            self.backgrounds_render = copy.copy(self.backgrounds)
-            for i in range(len(self.backgrounds)):
-                self.backgrounds_render[i] = pygame.image.load(self.backgrounds[i]).convert()
+        ## Positions
+        self.choice = 0
+        self.options_dict = {
+            0: 38,
+            1: 62,
+            2: 86}
 
-    def set_positions(self):
+        #########################################################
+        # Surface initialization
+        ## Headers
+        self.header_dict = {
+            'save': session.pyg.font.render('Save', True, session.pyg.white),
+            'load': session.pyg.font.render('Load', True, session.pyg.white)}
         
-        # Alter layout if categories are present
-        if self.options_categories: 
-            self.tab_x, self.tab_y = 70, 10
-            self.options_categories_cache_2 = self.options_categories[0]
-        else:
-            self.tab_x, self.tab_y = 0, 0
+        ## Cursor
+        self.cursor_render = pygame.Surface((16, 16)).convert()
+        self.cursor_render.set_colorkey(self.cursor_render.get_at((0,0)))
+        pygame.draw.polygon(self.cursor_render, session.pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        
+        ## Backgrounds
+        self.update_backgrounds()
 
-        # Set initial position of each text type
-        self.header_position = {
-            'top left':     [5, 10],
-            'center':       [int((session.pyg.screen_width - session.main_menu_obj.game_title.get_width())/2), 85],
-            'bottom left':  [5, 10],
-            'bottom right': [60 ,70]}
-        
-        self.cursor_position = {
-            'top left':     [50+self.tab_x, 38+self.tab_y],
-            'center':       [50, 300],
-            'bottom left':  [50+self.tab_x, 65-self.tab_y],
-            'bottom right': [60 ,70]}
-        
-        self.options_positions = {
-            'top left':     [80+self.tab_x, 34],
-            'center':       [80, 300],
-            'bottom left':  [5, 10],
-            'bottom right': [60 ,70]}
-        
-        self.category_positions = {
-            'top left':     [5,  34],
-            'center':       [80, 300],
-            'bottom left':  [5,  10],
-            'bottom right': [60, 70]}
-
-        # Set mutable copies of text positions
-        self.cursor_position_mutable    = self.cursor_position[self.position].copy()
-        self.options_positions_mutable  = self.options_positions[self.position].copy()
-        self.category_positions_mutable = self.category_positions[self.position].copy()
-
-    def reset(self, name, header, options, options_categories, position, backgrounds):
-        self.__init__(self.name, self.header, self.options, self.options_categories, self.position, self.backgrounds)
+    def update_backgrounds(self):
+        self.backgrounds_render = [pygame.image.load(path).convert() for path in self.backgrounds]
 
     def run(self):
         
+        #########################################################
+        # Initialize
+        self.mode = session.pyg.overlay
         session.mech.movement_speed(toggle=False, custom=2)
         session.mech.zoom_cache = 1
         
-        # Called when the user inputs a command
         for event in pygame.event.get():
             
             if event.type == KEYDOWN:
                 
-                # Navigation
-                if event.key in session.pyg.key_UP:       self.key_UP()
-                elif event.key in session.pyg.key_DOWN:   self.key_DOWN()
-                elif event.key in session.pyg.key_LEFT:
-                    if self.name == 'ctrl_menu':  self.set_controls('left')
-                elif event.key in session.pyg.key_RIGHT:
-                    if self.name == 'ctrl_menu':  self.set_controls('right')
+                #########################################################
+                # Handle input
+                ## Select file
+                if event.key in session.pyg.key_UP:     self.key_UP()
+                elif event.key in session.pyg.key_DOWN: self.key_DOWN()
                 
-                # Process selection or return to main menu
+                ## Activate and return
                 elif event.key in session.pyg.key_ENTER:
-                    
-                    if self.name == 'save':
-                        self.save_account()
-                    elif self.name == 'load':
-                        self.load_account()
-                    
+                    if self.mode == 'save':   self.save_account()
+                    elif self.mode == 'load': self.load_account()
+
                     session.pyg.overlay = 'menu'
                     return
-
-                # >>RESUME<<
-                else:
-                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                
+                ## Return
+                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
                         session.pyg.last_press_time = float(time.time())
                         session.pyg.overlay = 'menu'
                         return None
-                
-        session.pyg.overlay = copy.copy(self.name)
+        
+        session.pyg.overlay = self.mode
         return
 
     def key_UP(self):
+        self.choice = (self.choice - 1) % len(self.options)
         
-        # Move cursor up
-        self.cursor_position_mutable[1] -= 24
-        self.choice                     -= 1
-        
-        # Move to lowest option
-        if self.choice < 0:
-            self.choice                     = self.choices_length
-            self.cursor_position_mutable[1] = self.cursor_position[self.position][1] + (len(self.options)-1) * 24
-            if self.options_categories:
-                self.cursor_position_mutable[1] += self.tab_y * (len(set(self.options_categories)) - 1)
-                self.options_categories_cache_2 = self.options_categories[self.choice]
-        
-        # Move cursor again if there are categories
-        elif self.options_categories:
-            if self.options_categories[self.choice] != self.options_categories_cache_2:
-                self.options_categories_cache_2 = self.options_categories[self.choice]
-                self.cursor_position_mutable[1] -= self.tab_y
-
     def key_DOWN(self):
-        
-        # Move cursor down
-        self.cursor_position_mutable[1] += 24
-        self.choice                     += 1
-        
-        # Move to highest option
-        if self.choice > self.choices_length:
-            self.choice                     = 0
-            self.cursor_position_mutable[1] = self.cursor_position[self.position][1]
-            if self.options_categories:
-                self.options_categories_cache_2 = self.options_categories[self.choice]
-        
-        # Move cursor again if there are categories
-        elif self.options_categories:
-            if self.options_categories[self.choice] != self.options_categories_cache_2:
-                self.options_categories_cache_2 = self.options_categories[self.choice]
-                self.cursor_position_mutable[1] += self.tab_y
+        self.choice = (self.choice + 1) % len(self.options)
 
     def save_account(self):    
-        """ Shows a menu with each item of the inventory as an option, then returns an item if it is chosen.
-            
-            Structures
-            ----------
-            = session.player_obj
-            == envs
-            === garden
-            === home
-            === dungeon
-            == ent
-            == ents 
-            == questlog """
+        """ Pickles a Player object, """
         
-        # Update file menu
-        if session.player_obj.file_num:
-
-            # Move asterick to current file
-            for i in range(len(self.options)):
-                if self.options[i] == '*': self.options[i] = self.options[i][:-2]
-            self.options[session.player_obj.file_num - 1] += ' *'
+        #########################################################
+        # Add asterisk to active option
+        for i in range(len(self.options)):
+            if self.options[i][-1] == '*': self.options[i] = self.options[i][:-2]
+        self.options[self.choice] += ' *'
         
-        # Save data or return to main menu
-        if type(self.choice) != int:
-            session.pyg.overlay = 'main_menu'
-            return
-        else:
-            self.choice += 1
-            
-            # Update Player object
-            session.player_obj.file_num = self.choice
-            
-            # Save everything
-            with open(f"Data/File_{self.choice}/session.player_obj.pkl", 'wb') as file: pickle.dump(session.player_obj, file)
-            
-            # Take a screenshot for the load menu
-            screenshot(
-                size    = 'display',
-                visible = False,
-                folder  = f"Data/File_{self.choice}", filename="screenshot.png",
-                blur    = True)
-            
-            self.reset(
-                self.name,
-                self.header,
-                self.options,
-                self.options_categories,
-                self.position,
-                self.backgrounds)
-            session.load_account_obj.reset(
-                session.load_account_obj.name,
-                session.load_account_obj.header,
-                session.load_account_obj.options,
-                session.load_account_obj.options_categories,
-                session.load_account_obj.position,
-                session.load_account_obj.backgrounds)
-            session.pyg.overlay = 'main_menu'
+        #########################################################
+        # Save data from current player
+        file_num = self.choice + 1
+        session.player_obj.file_num = file_num
+        with open(f"Data/File_{file_num}/session.player_obj.pkl", 'wb') as file:
+            pickle.dump(session.player_obj, file)
+        
+        #########################################################
+        # Take a screenshot
+        screenshot(
+            size     = 'display',
+            visible  = False,
+            folder   = f"Data/File_{file_num}",
+            filename = "screenshot.png",
+            blur     = True)
+        self.update_backgrounds()
+        
+        #########################################################
+        # Clean up and return
+        session.pyg.overlay = 'main_menu'
 
     def load_account(self):    
-        """ Shows a menu with each item of the inventory as an option, then returns an item if it is chosen.
-            Structures
-            ----------
-            = session.player_obj
-            == envs
-            === garden
-            === home
-            === dungeon
-            == ent 
-            == ents 
-            == questlog """
+        """ Loads a pickled Player object. """
         
+        #########################################################
+        # Imports
         from items_entities import Player
 
-        # Update file menu
-        if session.player_obj.file_num:
+        #########################################################
+        # Add asterisk to active option
+        for i in range(len(self.options)):
+            if self.options[i][-1] == '*':
+                self.options[i] = self.options[i][:-2]
+        self.options[self.choice] += ' *'
+
+        #########################################################
+        # Load data onto fresh player
+        session.player_obj = Player()
+        with open(f"Data/File_{self.choice+1}/session.player_obj.pkl", "rb") as file:
+            session.player_obj = pickle.load(file)
         
-            # Move asterick to current file
-            for i in range(len(self.options)):
-                if self.options[i] == '*': self.options[i] = self.options[i][:-2]
-            self.options[session.player_obj.file_num - 1] += ' *'
+        #########################################################
+        # Clean up and return
+        session.pyg.gui_toggle       = True
+        session.pyg.msg_toggle       = True
+        session.pyg.startup_toggle   = False
+        session.play_game_obj.fadein = None
+        session.pyg.game_state       = 'play_game'
+        session.pyg.overlay          = 'main_menu'
+
+    def render(self):
         
-        # Load data or return to main menu
-        if self.choice is not None:
-            
-            if type(self.choice) != int:
-                session.pyg.overlay = 'main_menu'
-                return
-            else:
-                self.choice += 1
-                session.pyg.startup_toggle = False
-            
-            # Load data onto fresh player
-            session.player_obj = Player()
-            with open(f"Data/File_{self.choice}/session.player_obj.pkl", "rb") as file:
-                session.player_obj = pickle.load(file)
+        # Render background
+        session.pyg.screen.fill(session.pyg.black)
+        session.pyg.screen.blit(self.backgrounds_render[self.choice], (0, 0))
+        
+        # Render header and cursor
+        session.pyg.screen.blit(self.header_dict[self.mode], (25, 10))
+        session.pyg.screen.blit(self.cursor_render, (25, self.options_dict[self.choice]))
+        
+        # Render categories and options
+        for i in range(len(self.options)):
+            option_render = session.pyg.font.render(self.options[i], True, session.pyg.gray)
+            session.pyg.screen.blit(option_render, (50, self.options_dict[i]))
+        
+        pygame.display.flip()
 
-            self.reset(self.name, self.header, self.options, self.options_categories, self.position, self.backgrounds)
-            session.pyg.game_state = 'play_game'
-            session.play_game_obj.fadein = None
-            session.pyg.overlay = 'main_menu'
+class CtrlMenu:
 
-        # Turn on gui
-        session.pyg.gui_toggle, session.pyg.msg_toggle = True, True
-
-    def set_controls(self, direction):
-        if session.pyg.controls_preset == 'numpad 1':
-            if direction == 'right': session.pyg.set_controls('numpad 2')
-            else:                    session.pyg.set_controls('arrows')
-        elif session.pyg.controls_preset == 'numpad 2':
-            if direction == 'right': session.pyg.set_controls('arrows')
-            else:                    session.pyg.set_controls('numpad 1')
-        elif session.pyg.controls_preset == 'arrows':
-            if direction == 'right': session.pyg.set_controls('numpad 1')
-            else:                    session.pyg.set_controls('numpad 2')
-    
+    def __init__(self):
+        """ Shows controls and allows preset selection. Menu design is set in update_controls.
+            The options are keywords set in the Pygame class.
+            Module: pygame_mechanics
+        """
+        
+        #########################################################
+        # Menu details
+        ## Basics
+        self.name   = 'ctrl_menu'
+        self.header = "Controls"
         self.options = [
+            'numpad 1',
+            'numpad 2',
+            'arrows']
+        self.choice = 0
+
+        #########################################################
+        # Surface initialization
+        self.header_render = session.pyg.font.render(self.header, True, session.pyg.white)
+        self.update_controls()
+
+    def update_controls(self, direction=None):
+        
+        #########################################################
+        # Change layout
+        if direction:
+            current_index = self.options.index(session.pyg.controls_preset)
+            new_index = (current_index + direction) % len(self.options)
+            session.pyg.set_controls(self.options[new_index])
+
+        #########################################################
+        # Reconstruct options for rendering
+        layout = [
             f"Move up:                                {session.pyg.key_UP[0]}                     Exit:                                         {session.pyg.key_BACK[0]}",
             f"Move down:                           {session.pyg.key_DOWN[0]}                     Activate 1:                             {session.pyg.key_ENTER[0]}",
             f"Move left:                               {session.pyg.key_LEFT[0]}                     Activate 2:                               {session.pyg.key_PERIOD[0]}",
@@ -1257,38 +1175,46 @@ class FileMenu:
             f"View stats:                             {session.pyg.key_INFO[0]}                     Zoom out:                              {session.pyg.key_MINUS[0]}",
             f"View questlog:                      {session.pyg.key_QUEST[0]}"]
     
-        for i in range(len(self.options)):
-            self.options_render[i] = session.pyg.font.render(self.options[i], True, session.pyg.gray)
+        self.layout_render = [session.pyg.font.render(row, True, session.pyg.gray) for row in layout]
+
+    def run(self):
+        
+        #########################################################
+        # Initialize
+        session.mech.movement_speed(toggle=False, custom=2)
+        session.mech.zoom_cache = 1
+        
+        for event in pygame.event.get():
+            
+            if event.type == KEYDOWN:
+                
+                #########################################################
+                # Handle input
+                ## Change layout
+                if event.key in session.pyg.key_LEFT:    self.update_controls(-1)
+                elif event.key in session.pyg.key_RIGHT: self.update_controls(1)
+                
+                ## Return
+                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                    session.pyg.last_press_time = float(time.time())
+                    session.pyg.overlay = 'menu'
+                    return None
+                
+        session.pyg.overlay = self.name
+        return
     
     def render(self):
         
-        # Render menu background
-        if self.backgrounds:
-            session.pyg.screen.fill(session.pyg.black)
-            session.pyg.screen.blit(self.backgrounds_render[self.choice], (0, 0))
-        else:
-            session.pyg.screen.fill(session.pyg.black)
+        # Render background
+        session.pyg.screen.fill(session.pyg.black)
         
-        # Render header and cursor
-        session.pyg.screen.blit(self.header_render, self.header_position[self.position])
-        session.pyg.screen.blit(self.cursor_img, self.cursor_position_mutable)
+        # Render header
+        session.pyg.screen.blit(self.header_render, (25, 10))
         
         # Render categories and options
-        for i in range(len(self.options_render)):
-            
-            # Render category text if it is not present 
-            if self.options_categories:
-                if self.options_categories[i] != self.options_categories_cache:
-                    self.options_categories_cache = self.options_categories[i]
-                    text = session.pyg.font.render(f'{self.options_categories_cache.upper()}:', True, session.pyg.gray)
-                    self.options_positions_mutable[1] += self.tab_y
-                    session.pyg.screen.blit(text, (self.category_positions_mutable[0], self.options_positions_mutable[1]))
-                
-            # Render option text
-            session.pyg.screen.blit(self.options_render[i], self.options_positions_mutable)
-            self.options_positions_mutable[1] += 24
-        self.options_positions_mutable = self.options_positions[self.position].copy()
-        self.category_positions_mutable = self.category_positions[self.position].copy()
+        for i in range(len(self.layout_render)):
+            session.pyg.screen.blit(self.layout_render[i], (50, 38+24*i))
+
         pygame.display.flip()
 
 class Info:

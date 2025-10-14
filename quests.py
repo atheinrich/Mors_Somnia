@@ -12,7 +12,7 @@ import copy
 import pygame
 from   pygame.locals import *
 
-# Local
+## Local
 import session
 
 ########################################################################################################################################################
@@ -97,7 +97,6 @@ class BigMenu:
 
     def reset(self, name, header, options, options_categories, position):
         choice_cache = self.choice
-        cursor_pos_cache = self.cursor_position_mutable.copy()
         
         self.__init__(name, header, options, options_categories, position)
         
