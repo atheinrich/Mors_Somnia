@@ -1186,47 +1186,6 @@ class CtrlMenu:
 
         pygame.display.flip()
 
-class Info:
-    """ Manages stats in the Garden. """
-
-    def __init__(self):
-
-        self.stats = {
-            'Character Information': None,
-            '': None,
-            'rank':       None,
-            'rigor':      None,
-            'attack':     None,
-            'defense':    None,
-            'sanity':     None}
-
-    def update(self):
-        
-        self.stats['rank']  = '★' * int(session.player_obj.ent.rank)
-        if len(self.stats['rank']) < 5:
-            while len(self.stats['rank']) < 5:
-                self.stats['rank'] += '☆'
-            
-        self.stats['rigor']   = '★' * int(session.player_obj.ent.max_hp // 10)
-        if len(self.stats['rigor']) < 5:
-            while len(self.stats['rigor']) < 5:
-                self.stats['rigor'] += '☆'
-        
-        self.stats['attack']   = '★' * int(session.player_obj.ent.attack // 10)
-        if len(self.stats['attack']) < 5:
-            while len(self.stats['attack']) < 5:
-                self.stats['attack'] += '☆'
-        
-        self.stats['defense']   = '★' * int(session.player_obj.ent.defense // 10)
-        if len(self.stats['defense']) < 5:
-            while len(self.stats['defense']) < 5:
-                self.stats['defense'] += '☆'
-
-        self.stats['sanity']   = '★' * int(session.player_obj.ent.sanity // 10)
-        if len(self.stats['sanity']) < 5:
-            while len(self.stats['sanity']) < 5:
-                self.stats['sanity'] += '☆'
-
 class Pets:
     """ Manages stats in the Garden. """
 
@@ -1341,8 +1300,47 @@ class Pets:
         while len(self.stats['appeal']) < 5:
             self.stats['appeal'] += '☆'
 
-class SmallMenu:
+class StatsMenu:
     
+    def __init__(self):
+        """ Hosts display for player stats. """
+
+        self.stats = {
+            'Character Information': None,
+            '': None,
+            'rank':       None,
+            'rigor':      None,
+            'attack':     None,
+            'defense':    None,
+            'sanity':     None}
+
+    def update(self):
+        
+        self.stats['rank']  = '★' * int(session.player_obj.ent.rank)
+        if len(self.stats['rank']) < 5:
+            while len(self.stats['rank']) < 5:
+                self.stats['rank'] += '☆'
+            
+        self.stats['rigor']   = '★' * int(session.player_obj.ent.max_hp // 10)
+        if len(self.stats['rigor']) < 5:
+            while len(self.stats['rigor']) < 5:
+                self.stats['rigor'] += '☆'
+        
+        self.stats['attack']   = '★' * int(session.player_obj.ent.attack // 10)
+        if len(self.stats['attack']) < 5:
+            while len(self.stats['attack']) < 5:
+                self.stats['attack'] += '☆'
+        
+        self.stats['defense']   = '★' * int(session.player_obj.ent.defense // 10)
+        if len(self.stats['defense']) < 5:
+            while len(self.stats['defense']) < 5:
+                self.stats['defense'] += '☆'
+
+        self.stats['sanity']   = '★' * int(session.player_obj.ent.sanity // 10)
+        if len(self.stats['sanity']) < 5:
+            while len(self.stats['sanity']) < 5:
+                self.stats['sanity'] += '☆'
+
     def render(self):
         session.pyg.msg_height = 1
         session.pyg.update_gui()

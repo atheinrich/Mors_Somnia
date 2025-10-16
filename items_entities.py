@@ -28,7 +28,7 @@ class Player:
             ents     : dict of Entity objects; NPCs, such as Kyrio
             envs     : dict of Environment objects; worlds, such as overworld
             file_num : int in [0, 1, 2, 3, 4]; index for data management
-            temp     : something to do with NewGame
+            temp     : something to do with NewGameMenu
         """
         
         # Mechanics

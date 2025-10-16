@@ -383,15 +383,12 @@ class Pygame:
                 'stamina':  self.minifont.render(stamina, True, self.green),
                 'location': self.minifont.render(env,     True, bottom_color)}
 
-class NewGame:
-    """ Creates a temporary player for customization in the Womb environment.
-        Hosts a menu that can discard the temporary player or keep it to replace the current player.
-        If kept, an introduction screen is displayed before entering the dungeon.
-    """
+class NewGameMenu:
 
     def __init__(self):
-        """ Manages the character creation menu. Handles player input. Only active when menu is open.
-            Called when starting a new game.
+        """ Creates a temporary player for customization in the Womb environment.
+            Hosts a menu that can discard the temporary player or keep it to replace the current player.
+            If kept, an introduction screen is displayed before entering the dungeon.
         
             HAIR:       sets hair by altering hair_index, which is used in new_game to add hair as an Object hidden in the inventory
             HANDEDNESS: mirrors player/equipment tiles, which are saved in session.img.dict and session.img.cache
@@ -670,11 +667,6 @@ class NewGame:
         session.player_obj = copy.deepcopy(self.temp)
         session.dev.update_dict()
 
-        # Reset the garden
-        session.questlog_obj.init_questlog('garden')
-        session.player_obj.envs.build_garden()
-        session.pets_obj.startup()
-        
         # Build the home and set it as last environment
         session.player_obj.envs.build_home()
         place_player(
@@ -746,7 +738,7 @@ class PlayGame:
         #########################################################
         # Initialize
         active_effects()
-        session.info_obj.update()
+        session.stats_obj.update()
         
         session.player_obj.ent.role = 'player'
         session.mech.movement_speed(toggle=False)
@@ -820,7 +812,7 @@ class PlayGame:
                         ## >>STATS<<
                         elif event.key in session.pyg.key_INFO:
                             if session.pyg.overlay != 'stats':
-                                session.small_menu.dic = session.info_obj.stats
+                                session.stats_obj.dic = session.stats_obj.stats
                                 session.pyg.overlay = 'stats'
                             else:
                                 session.pyg.overlay = None
@@ -917,7 +909,7 @@ class PlayGame:
                             # >>STATS<<
                             elif event.key in session.pyg.key_INFO:
                                 if session.pyg.overlay != 'stats':
-                                    session.small_menu.dic = session.info_obj.stats
+                                    session.stats_obj.dic = session.stats_obj.stats
                                     session.pyg.overlay = 'stats'
                                 else:
                                     session.pyg.overlay = None
@@ -1167,7 +1159,7 @@ class PlayGarden:
                         ## >>STATS<<
                         elif event.key in session.pyg.key_INFO:
                             if session.pyg.overlay != 'stats':
-                                session.small_menu.dic = session.pets_obj.stats
+                                session.stats_obj.dic = session.pets_obj.stats
                                 session.pyg.overlay = 'stats'
                             else:
                                 session.pyg.overlay = None
@@ -2881,7 +2873,7 @@ class Mechanics:
 
 ########################################################################################################################################################
 # Menus
-class Inventory:
+class InventoryMenu:
     
     def __init__(self):
         

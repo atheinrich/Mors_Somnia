@@ -13,7 +13,7 @@ class Session:
         self.player_obj       = None # Player object
 
         self.play_game_obj    = None # PlayGame object
-        self.new_game_obj     = None # NewGame object
+        self.new_game_obj     = None # NewGameMenu object
         self.garden_obj       = None # PlayGarden object
         self.pets_obj         = None # Pets object
 
@@ -22,12 +22,11 @@ class Session:
         self.file_menu        = None # FileMenu object
 
         self.questlog_obj     = None # QuestMenu object
-        self.inv              = None # Inventory object
+        self.inv              = None # InventoryMenu object
         self.dev              = None # Catalog object
         self.hold_obj         = None # Abilities object
         self.trade_obj        = None # Exchange object
-        self.small_menu       = None # SmallMenu object
-        self.info_obj         = None # Info object
+        self.stats_obj        = None # StatsMenu object
         self.textbox          = None # Textbox object
 
 session = Session()
