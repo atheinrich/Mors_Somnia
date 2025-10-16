@@ -134,7 +134,7 @@ class BigMenu:
                 elif event.key in (session.pyg.key_ENTER + session.pyg.key_LEFT + session.pyg.key_RIGHT):
                     
                     # >>TEXT MENU<<
-                    if self.name == 'temp':
+                    if self.name == 'textbox':
                         session.pyg.overlay = None
                         return
                     
@@ -441,6 +441,333 @@ class BigMenu:
         self.category_positions_mutable = self.category_positions[self.position].copy()
         pygame.display.flip()
 
+class QuestMenu:
+
+    def __init__(self):
+        """ Hosts a menu for the questlog, but it's also the questlog itself.
+            Toggles between quest names and details.
+        
+            Parameters
+            ----------
+            overlay    : str in ['questlog', 'gardenlog']; game state; toggles the set of quests
+            mode       : str in ['log', 'quest']; toggles individual quest view
+            options    : list of str
+            categories : list of str
+        """
+        
+        #########################################################
+        # Parameters        
+        ## Basics
+        self.overlay     = 'questlog'
+        self.mode        = 'log'
+        self.header      = 'questlog'
+        self.header_dict = {
+            'questlog': "                                                        QUESTLOG",
+            'gardenlog': "                                                      GARDENLOG"}
+
+        self.options    = None
+        self.categories = None
+
+        ## Positions
+        self.choice         = 0
+        self.header_pos     = (37, 32)
+        self.options_pos    = None
+        self.categories_pos = None
+        self.backdrop_pos   = (32, 32)
+        self.cursor_pos     = (113, 69)
+
+        ## Other
+        self.backdrop_size = (32*18, 32*13)
+        
+        #########################################################
+        # Surface initialization
+        ## Background
+        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade.fill((0, 0, 0, 50))
+        
+        ## Backdrop
+        self.backdrop = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
+        self.backdrop.fill((0, 0, 0, 128))
+
+        self.border = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
+        pygame.draw.polygon(
+            surface = self.border, 
+            color   = session.pyg.gray,
+            points = [
+                (0,                       0),
+                (self.backdrop_size[0]-1, 0),
+                (self.backdrop_size[0]-1, self.backdrop_size[1]-1),
+                (0,                       self.backdrop_size[1]-1)],
+            width = 1)
+        
+        ## Cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, session.pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
+
+    def run(self):
+        session.mech.movement_speed(toggle=False, custom=2)
+        
+        #########################################################
+        # Save GUI settings
+        self.msg_toggle = session.pyg.msg_toggle
+        self.gui_toggle = session.pyg.gui_toggle
+        
+        if self.overlay != session.pyg.overlay:
+            self.overlay = session.pyg.overlay
+            self.choice  = 0
+            self.update_questlog()
+        
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                
+                #########################################################
+                # Handle input
+                ## Move cursor
+                if self.mode == 'log':
+                    if event.key in session.pyg.key_UP:     self.key_UP()
+                    elif event.key in session.pyg.key_DOWN: self.key_DOWN()
+                
+                ## Select quest to view
+                if event.key in [*session.pyg.key_ENTER, *session.pyg.key_RIGHT]:
+                    self.mode = 'quest'
+                    self.update_questlog()
+                
+                ## Select full questlog to view
+                elif event.key in [*session.pyg.key_ENTER, *session.pyg.key_LEFT]:
+                    self.mode = 'log'
+                    self.update_questlog()
+                
+                ## Return to game
+                elif event.key not in session.pyg.key_movement:
+                    session.pyg.msg_toggle = self.msg_toggle
+                    session.pyg.gui_toggle = self.gui_toggle
+                    session.pyg.overlay    = None
+                    return
+
+        session.pyg.overlay = self.overlay
+        return
+
+    def key_UP(self):
+        self.choice = (self.choice - 1) % len(self.options)
+        
+    def key_DOWN(self):
+        self.choice = (self.choice + 1) % len(self.options)
+
+    def init_questlog(self, env_name):
+        """ Sets intro quests and updates menu. Only runs once when a new game is started.
+
+            quests          : list of Quest objects
+            quest_names     : list of strings
+            categories      : list of strings; 'main' or 'side'
+            main_quests     : list of Quest objects
+            side_quests     : list of Quest objects
+            selected_quest  : Quest object """
+
+        # GUI text and Quest objects for each quest in the current log
+        for quest in self.default_Quests(env_name):
+            quest.content = quest.notes + quest.tasks
+        
+        self.update_questlog()
+
+    def default_Quests(self, env_name):
+        
+        # Stage 0: 
+        if env_name == 'garden':
+        
+            water = Quest(
+                name='Leading a radix to water',
+                notes=['These odd beings seem thirsty.',
+                       'I should pour out some water for them.'],
+                tasks=['☐ Empty your jug of water.',
+                       '☐ Make a radix drink.'],
+                category='Main')
+
+            food = Quest(
+                name='Fruit of the earth',
+                notes=['Set out some food.'],
+                tasks=['☐ Get a radix to eat.'],
+                category='Main')
+            
+            building_shelter = Quest(
+                name='Build a house',
+                notes=['Shelter would be nice.'],
+                tasks=['☐ Contruct walls.',
+                       '☐ Set a floor.',
+                       '☐ Decorate.'],
+                category='Side')
+            
+            session.player_obj.ent.gardenlog = {
+                water.name:             water,
+                food.name:              food,
+                building_shelter.name:  building_shelter}
+            
+            return water, food, building_shelter
+        
+        # Stage one: first dream
+        elif env_name in [f'dungeon {n}' for n in range(10)]:
+            
+            surviving = Quest(
+                name='Surviving \'til Dawn',
+                notes=['/...huh? Where... am I?/',
+                       'You find youself appeared as if an apparition.',
+                       'Danger is afoot. How will you survive?'],
+                tasks=['☐ Search for aid.',
+                       '☐ Dig a tunnel.',
+                       '☐ Escape.'],
+                category='Main')
+            
+            session.player_obj.ent.envlog = {
+                surviving.name: surviving}
+            
+            return surviving
+        
+        # Stage two: meeting the town
+        elif env_name == 'overworld':
+            
+            gathering_supplies = Quest(
+                name='Gathering supplies',
+                notes=['My bag is nearly empty.',
+                       'It would be good to have some items on hand.'],
+                tasks=['☐ Collect 3 potions.',
+                       '☐ Find a spare shovel.'],
+                category='Main')
+            
+            finding_a_future = Quest(
+                name='Finding a future',
+                notes=['I should make my way into town.'],
+                tasks=['☐ Wander east.'],
+                category='Main')
+            
+            furnishing_a_home = Quest(
+                name='Furnishing a home',
+                notes=['My house is empty. Maybe I can spruce it up.'],
+                tasks=['☐ Use the shovel to build new rooms.',
+                       '☐ Drop items to be saved for later use.',
+                       '☐ Look for anything interesting.'],
+                category='Side')
+            
+            session.player_obj.ent.questlog = {
+                gathering_supplies.name: gathering_supplies,
+                finding_a_future.name:   finding_a_future,
+                furnishing_a_home.name:  furnishing_a_home}
+            
+            return gathering_supplies, finding_a_future, furnishing_a_home
+        
+        else:
+            print(env_name)
+
+    def check_tasks(self, name, log):
+        quest = log[name]
+
+        # Check off task
+        if not quest.finished:
+            for i in range(len(quest.tasks)):
+                task = quest.tasks[i]
+                if task[0] == "☐":
+                    quest.tasks[i] = task.replace("☐", "☑")
+                    session.pyg.update_gui(quest.tasks[i], session.pyg.violet)
+                    quest.content = quest.notes + quest.tasks
+                    break
+        
+        # Remove finished quests
+        else:
+            quest.tasks[-1] = quest.tasks[-1].replace("☐", "☑")
+            session.pyg.update_gui(quest.tasks[-1], session.pyg.violet)
+            session.pyg.update_gui(f"Quest complete: {quest.name}", session.pyg.violet)
+            del log[quest.name]
+        
+    def update_questlog(self):
+        """ Updates and sorts main quests and side quests. """
+
+        if self.overlay == 'questlog':    log = session.player_obj.ent.questlog
+        elif self.overlay == 'gardenlog': log = session.player_obj.ent.gardenlog
+
+        ## Look for completed tasks and quests
+        if self.mode == 'quest':
+            quest = list(log.keys())[self.choice]
+            
+            self.header = log[list(log.keys())[self.choice]].name
+            self.options = log[list(log.keys())[self.choice]].content
+            self.categories = log[list(log.keys())[self.choice]].categories
+
+        elif self.mode == 'log':
+            self.header = self.header_dict[self.overlay]
+            self.options = list(log.keys())
+            self.categories = []
+
+            ## Sort quests
+            self.main_quests = []
+            self.side_quests = []
+            
+            # Find main quests
+            for quest in log.values():
+                if not quest.finished:
+                    if quest.category == 'Main':
+                        self.main_quests.append(quest)
+                        self.categories.append(quest.category)
+            
+            # Find side quests
+            for quest in log.values():
+                if not quest.finished:
+                    if quest.category == 'Side':
+                        self.side_quests.append(quest)
+                        self.categories.append(quest.category)
+
+        self.options_pos       = [(136, 67+32*i) for i in range(len(self.options))]
+        self.categories_pos    = [(40, 67+32*i) for i in range(len(self.categories))]
+        self.options_render    = [session.pyg.font.render(option, True, session.pyg.gray) for option in self.options]
+        self.header_render     = session.pyg.font.render(self.header, True, session.pyg.white)
+        self.categories_render = [session.pyg.font.render(f'{category.lower()}', True, session.pyg.gray) for category in self.categories]
+                    
+    def render(self):
+        
+        # Clear GUI
+        session.pyg.msg_toggle = False
+        session.pyg.gui_toggle = False
+        session.pyg.update_gui()
+        
+        # Backdrop
+        session.pyg.screen.blit(self.background_fade, (0, 0))
+        session.pyg.screen.blit(self.backdrop,        self.backdrop_pos)
+        session.pyg.screen.blit(self.border,          self.backdrop_pos)
+        
+        # Header
+        session.pyg.screen.blit(self.header_render, self.header_pos)
+
+        # Options and categories
+        categories = []
+        for i in range(len(self.options_render)):
+
+            # Shift position for new category
+            options_pos    = [self.options_pos[i][0],    self.options_pos[i][1]    + 32*len(categories)]
+            categories_pos = [self.categories_pos[i][0], self.categories_pos[i][1] + 32*len(categories)]
+            if i >= 1:
+                if self.categories[i] != self.categories[i-1]:
+                    options_pos[1]    += 32
+                    categories_pos[1] += 32
+                    categories.append((i, self.categories[i]))
+
+                    # Only render each category once
+                    session.pyg.screen.blit(self.categories_render[i], categories_pos)
+            else:   session.pyg.screen.blit(self.categories_render[i], categories_pos)
+            
+            # Render option
+            session.pyg.screen.blit(self.options_render[i],    options_pos)
+        
+        # Cursor
+        if self.mode == 'log':
+
+            # Shift position for current category
+            cursor_pos = [self.cursor_pos[0], self.cursor_pos[1] + 32*self.choice]
+            for i in range(len(categories)):
+                if self.choice >= categories[i][0]:
+                    cursor_pos[1] += 32*(i+1)
+                    break
+            session.pyg.screen.blit(self.cursor_img, cursor_pos)
+        
+        pygame.display.flip()
+
 class Quest:
     """ Holds quest information. """
 
@@ -509,7 +836,7 @@ class QuestTemplate:
         # Run something upon activating an effect
         if not dialogue and not ent:
             note_text = ["line 1", "line 2", "line 3"]
-            #BigMenu(header="header", options=note_text)
+            #QuestMenu(header="header", options=note_text)
         
         # Generate the Quest object
         if "quest name" not in session.player_obj.ent.questlog.keys():
@@ -654,17 +981,17 @@ class Bloodkin:
             
             Church: Coax a lizard to the altar (by following). """
         
-        global big_menu
+        from utilities import Textbox
         
         # Read the note
         if not dialogue:
             note_text = ["ξνμλ λξ ξλι ξγθιβξ ξ θθ.", "Ηκρσ σρσ λβνξθι νθ.", "Ψπθ αβνιθ πθμ."]
-            big_menu = BigMenu(
-                name     = 'temp',
+            session.textbox = Textbox(
+                name     = 'textbox',
                 header   = "mysterious note",
                 options  = note_text,
                 position = 'top left')
-            session.pyg.overlay = 'temp'
+            session.pyg.overlay = 'textbox'
         
         # Initialize quest and characters
         if 'Learning a language' not in session.player_obj.ent.questlog.keys():

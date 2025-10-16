@@ -87,10 +87,10 @@ from pygame.locals import *
 ## Local
 import session
 from items_entities import Player
-from utilities import Images, Audio, MainMenu, FileMenu, SmallMenu, Info, Pets, CtrlMenu
+from utilities import Images, Audio, MainMenu, FileMenu, SmallMenu, Info, Pets, CtrlMenu, Textbox
 from mechanics import Pygame, Mechanics, NewGame, PlayGame, PlayGarden, Inventory, Catalog, Abilities
 from mechanics import Exchange
-from quests import BigMenu
+from quests import QuestMenu
 from data_management import API
 
 ########################################################################################################################################################
@@ -99,23 +99,6 @@ API_toggle = False
 
 ########################################################################################################################################################
 # Core
-def menu_data():
-    menus = {}
-    
-    menus['questlog'] = {
-        'name': 'questlog',
-        'header': "                                                        QUESTLOG", 
-        'options': ["Test"],
-        'backgrounds': None}
-
-    menus['temp'] = {
-        'name': 'temp',
-        'header': "temp", 
-        'options': [""],
-        'backgrounds': None}
-
-    return menus
-
 def init():
     """ Initializes the essentials and opens the main menu. """
     
@@ -155,19 +138,10 @@ def init():
     session.small_menu       = SmallMenu()
     session.info_obj         = Info()
 
-    menus = menu_data()
     session.file_menu        = FileMenu()
     session.ctrl_menu        = CtrlMenu()
-    session.questlog_obj     = BigMenu(
-        name        = menus['questlog']['name'],
-        header      = menus['questlog']['header'], 
-        options     = menus['questlog']['options'],
-        backgrounds = menus['questlog']['backgrounds'])
-    session.big_menu         = BigMenu(
-        name        = menus['temp']['name'],
-        header      = menus['temp']['header'], 
-        options     = menus['temp']['options'],
-        backgrounds = menus['temp']['backgrounds'])
+    session.questlog_obj     = QuestMenu()
+    session.textbox          = Textbox()
     
     #########################################################
     # Run game
@@ -233,13 +207,13 @@ def game_states():
         elif session.pyg.overlay == 'stats':
             session.small_menu.render()
         
-        elif session.pyg.overlay == 'questlog':
+        elif session.pyg.overlay in ['questlog', 'gardenlog']:
             session.questlog_obj.run()
             session.questlog_obj.render()
         
-        elif session.pyg.overlay == 'temp':
-            session.big_menu.run()
-            session.big_menu.render()
+        elif session.pyg.overlay == 'textbox':
+            session.textbox.run()
+            session.textbox.render()
         
         #########################################################
         # Finish up

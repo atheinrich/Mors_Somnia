@@ -754,37 +754,6 @@ class MainMenu:
             alpha_start = 255)
         return
 
-    def startupx(self):
-        """ Fades in background, changes the gamestate to new_game, then adds the menu as an overlay. """
-        
-        # Fade details
-        alpha        = 0
-        fade_speed   = 6
-        fade_surface = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height))
-        fade_surface.fill(session.pyg.black)
-        
-        # Apply fade
-        while alpha < 255:
-            session.pyg.clock.tick(30)
-            fade_surface.set_alpha(255 - alpha)
-        
-            val = alpha + 20
-            if val > 255: val = 255
-
-            # Draw the menu elements during the fade
-            self.game_title.set_alpha(random.randint(val-50, val))
-            session.pyg.screen.blit(self.game_title, self.game_title_pos)
-
-            # Apply the fade effect
-            session.pyg.screen.blit(fade_surface, (0, 0))
-            
-            pygame.display.flip()
-            
-            # Increase alpha for the next frame
-            alpha += fade_speed
-        
-        return
-
     def run(self):
         
         # Restrict keystroke speed
@@ -1412,6 +1381,88 @@ class SmallMenu:
             session.pyg.screen.blit(key, (X1, Y))
             session.pyg.screen.blit(val, (X2, Y))
             Y += session.pyg.tile_height//2
+
+class Textbox:
+
+    def __init__(self, header='', text=''):
+        """ Basic textbox inlay. No controls or anything complicated. """
+        
+        #########################################################
+        # Parameters
+        ## Basics
+        self.header = header
+        self.text   = text
+
+        ## Positions
+        self.backdrop_pos = (32, 32)
+        self.header_pos   = (37, 32)
+        self.text_pos     = [(62, 54+32*(i+1)) for i in range(len(text))]
+
+        ## Other
+        self.backdrop_size = (32*18, 32*13)
+        
+        #########################################################
+        # Surface initialization
+        ## Headers and text
+        self.header_render = session.pyg.font.render(header, True, session.pyg.white)
+        self.text_render   = [session.pyg.font.render(row, True, session.pyg.gray) for row in text]
+        
+        ## Background
+        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade.fill((0, 0, 0, 50))
+        
+        ## Backdrop
+        self.backdrop = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
+        self.backdrop.fill((0, 0, 0, 128))
+
+        self.border = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
+        pygame.draw.polygon(
+            surface = self.border, 
+            color   = session.pyg.gray,
+            points = [
+                (0,                       0),
+                (self.backdrop_size[0]-1, 0),
+                (self.backdrop_size[0]-1, self.backdrop_size[1]-1),
+                (0,                       self.backdrop_size[1]-1)],
+            width = 1)
+        
+    def run(self):
+        
+        #########################################################
+        # Save GUI settings
+        self.msg_toggle = session.pyg.msg_toggle
+        self.gui_toggle = session.pyg.gui_toggle
+        
+        #########################################################
+        # Close after any key is pressed
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                session.pyg.msg_toggle = self.msg_toggle
+                session.pyg.gui_toggle = self.gui_toggle
+                session.pyg.overlay    = None
+                return
+
+        session.pyg.overlay = 'textbox'
+        return
+
+    def render(self):
+        
+        # Clear GUI
+        session.pyg.msg_toggle = False
+        session.pyg.gui_toggle = False
+        session.pyg.update_gui()
+        
+        # Render backdrop
+        session.pyg.screen.blit(self.background_fade, (0, 0))
+        session.pyg.screen.blit(self.backdrop,        self.backdrop_pos)
+        session.pyg.screen.blit(self.border,          self.backdrop_pos)
+                
+        # Render header and text
+        session.pyg.screen.blit(self.header_render, self.header_pos)
+        for i in range(len(self.text_render)):
+            session.pyg.screen.blit(self.text_render[i], self.text_pos[i])
+        
+        pygame.display.flip()
 
 ########################################################################################################################################################
 # Tools

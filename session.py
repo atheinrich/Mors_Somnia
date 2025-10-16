@@ -21,14 +21,14 @@ class Session:
         self.ctrl_menu        = None # CtrlMenu object
         self.file_menu        = None # FileMenu object
 
-        self.questlog_obj     = None # BigMenu object
+        self.questlog_obj     = None # QuestMenu object
         self.inv              = None # Inventory object
         self.dev              = None # Catalog object
         self.hold_obj         = None # Abilities object
         self.trade_obj        = None # Exchange object
         self.small_menu       = None # SmallMenu object
         self.info_obj         = None # Info object
-        self.big_menu         = None # BigMenu object
+        self.textbox          = None # Textbox object
 
 session = Session()
 

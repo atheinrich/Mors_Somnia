@@ -22,11 +22,12 @@ import session
 ########################################################################################################################################################
 # Core
 class Pygame:
-    """ Manages pygame parameters, GUI details, and display transitions.
-        Nothing here is saved elsewhere.
-    """
+
 
     def __init__(self):
+        """ Manages pygame parameters, GUI details, and display transitions.
+            Nothing here is saved elsewhere.
+        """
 
         #########################################################
         # Set shorthand and pygame parameters
@@ -150,6 +151,9 @@ class Pygame:
             # Unused
             self.key_EQUIP    = []                           # inventory (equip)
             self.key_DROP     = []                           # inventory (drop)
+
+        # Categories
+        self.key_movement = self.key_UP + self.key_DOWN + self.key_LEFT + self.key_RIGHT
 
     def set_colors(self):
         
@@ -497,6 +501,7 @@ class NewGame:
 
         # Initialize the garden
         session.questlog_obj.init_questlog('garden')
+        session.questlog_obj.init_questlog('overworld')
         session.player_obj.envs.build_garden()
         session.player_obj.ent.last_env = session.player_obj.envs.dict['womb']
         session.pets_obj.startup()
@@ -546,30 +551,10 @@ class NewGame:
                 #########################################################
                 # Move cursor
                 elif event.key in session.pyg.key_UP:
-                    self.cursor_pos[1]     -= 24
-                    self.choice            -= 1
-                    
-                    # Go to the top menu choice
-                    if self.choice < 0:
-                        self.choice         = self.choices_length
-                        self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-1) * 24
-                    
-                    # Skip a blank line
-                    elif self.choice == (self.choices_length - 2):
-                        self.choice         = self.choices_length - 3
-                        self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-4) * 24
+                    self.key_UP()
                 
                 elif event.key in session.pyg.key_DOWN:
-                    self.cursor_pos[1]     += 24
-                    self.choice            += 1
-                    
-                    if self.choice > self.choices_length:
-                        self.choice         = 0
-                        self.cursor_pos[1]  = self.top_choice[1]
-                    
-                    elif self.choice == (self.choices_length - 2):
-                        self.choice         = self.choices_length - 1
-                        self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
+                    self.key_DOWN()
                 
                 #########################################################
                 # Apply option
@@ -641,6 +626,32 @@ class NewGame:
                         return
         
         session.pyg.game_state = 'new_game'
+
+    def key_UP(self):
+        self.cursor_pos[1]     -= 24
+        self.choice            -= 1
+        
+        # Go to the top menu choice
+        if self.choice < 0:
+            self.choice         = self.choices_length
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-1) * 24
+        
+        # Skip a blank line
+        elif self.choice == (self.choices_length - 2):
+            self.choice         = self.choices_length - 3
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-4) * 24
+
+    def key_DOWN(self):
+        self.cursor_pos[1]     += 24
+        self.choice            += 1
+        
+        if self.choice > self.choices_length:
+            self.choice         = 0
+            self.cursor_pos[1]  = self.top_choice[1]
+        
+        elif self.choice == (self.choices_length - 2):
+            self.choice         = self.choices_length - 1
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
 
     def new_game(self):
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
@@ -1165,8 +1176,7 @@ class PlayGarden:
                 
                         ## >>QUESTLOG<<
                         elif event.key in session.pyg.key_QUEST:
-                            session.questlog_obj.update_questlog(questlog = session.player_obj.ent.gardenlog)
-                            session.pyg.overlay = 'questlog'
+                            session.pyg.overlay = 'gardenlog'
                             pygame.event.clear()
                             return
 
@@ -2876,12 +2886,12 @@ class Inventory:
     def __init__(self):
         
         # Data for select_item and locked_item
-        self.cursor_pos = [0, 32]
-        self.dic_index = 0
-        self.locked = False
-        self.img_names = ['null', 'null']
-        self.img_x = 0
-        self.img_y = 0
+        self.cursor_pos  = [0, 32]
+        self.dic_index   = 0
+        self.locked      = False
+        self.img_names   = ['null', 'null']
+        self.img_x       = 0
+        self.img_y       = 0
         self.dic_indices = [[0, 0]]
         
         self.detail = True
