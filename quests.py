@@ -16,6 +16,7 @@ import session
 # Classes
 class QuestMenu:
 
+    # Core
     def __init__(self):
         """ Hosts a menu for the questlog. Toggles between quest names and details.
         
@@ -75,7 +76,6 @@ class QuestMenu:
         pygame.draw.polygon(self.cursor_img, session.pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
 
     def run(self):
-        session.mech.movement_speed(toggle=False, custom=2)
         
         #########################################################
         # Initialize
@@ -83,48 +83,136 @@ class QuestMenu:
         self.msg_toggle = session.pyg.msg_toggle
         self.gui_toggle = session.pyg.gui_toggle
         
-        ## Update change between questlog and gardenlog
+        ## Switch overlay
         if self.overlay != session.pyg.overlay:
             self.overlay = session.pyg.overlay
             self.choice  = 0
             self.update_questlog()
+
+        ## Set navigation speed
+        session.mech.movement_speed(toggle=False, custom=2)
         
+        ## Define shorthand
+        pyg = session.pyg
+        
+        ## Wait for input
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 
                 #########################################################
-                # Handle input
-                ## Move cursor
+                # Move cursor
                 if self.mode == 'log':
-                    if event.key in session.pyg.key_UP:     self.key_UP()
-                    elif event.key in session.pyg.key_DOWN: self.key_DOWN()
+
+                    if event.key in pyg.key_UP:
+                        self.key_UP()
+
+                    elif event.key in pyg.key_DOWN:
+                        self.key_DOWN()
                 
-                ## Select quest to view
-                if event.key in [*session.pyg.key_ENTER, *session.pyg.key_RIGHT]:
-                    self.mode = 'quest'
-                    self.update_questlog()
+                #########################################################
+                # Switch mode
+                ## Switch to quest mode
+                if event.key in pyg.key_RIGHT:
+                    self.key_RIGHT()
                 
-                ## Select full questlog to view
-                elif event.key in [*session.pyg.key_ENTER, *session.pyg.key_LEFT]:
-                    self.mode = 'log'
-                    self.update_questlog()
+                ## Switch to log mode
+                elif event.key in pyg.key_LEFT:
+                    self.key_LEFT()
                 
-                ## Return to game
-                elif event.key not in session.pyg.key_movement:
-                    session.pyg.msg_toggle = self.msg_toggle
-                    session.pyg.gui_toggle = self.gui_toggle
-                    session.pyg.overlay    = None
+                ## Switch mode (either direction)
+                elif event.key in pyg.key_ENTER:
+                    self.key_ENTER()
+                
+                #########################################################
+                # Return to game
+                elif event.key not in pyg.key_movement:
+                    self.key_BACK()
                     return
 
-        session.pyg.overlay = self.overlay
+        pyg.overlay = self.overlay
         return
 
+    def render(self):
+        
+        #########################################################
+        # Clear GUI
+        session.pyg.msg_toggle = False
+        session.pyg.gui_toggle = False
+        session.pyg.update_gui()
+        
+        #########################################################
+        # Renders
+        ## Backdrop
+        session.pyg.screen.blit(self.background_fade, (0, 0))
+        session.pyg.screen.blit(self.backdrop,        self.backdrop_pos)
+        session.pyg.screen.blit(self.border,          self.backdrop_pos)
+        
+        ## Header
+        session.pyg.screen.blit(self.header_render, self.header_pos)
+
+        ## Options and categories
+        categories = []
+        for i in range(len(self.options_render)):
+
+            # Set position
+            options_pos    = [self.options_pos[i][0],    self.options_pos[i][1]    + 32*len(categories)]
+            categories_pos = [self.categories_pos[i][0], self.categories_pos[i][1] + 32*len(categories)]
+            if i >= 1:
+
+                # Shift position for each category
+                if self.categories[i] != self.categories[i-1]:
+                    options_pos[1]    += 32
+                    categories_pos[1] += 32
+                    categories.append((i, self.categories[i]))
+
+                    # Only render each category once
+                    session.pyg.screen.blit(self.categories_render[i], categories_pos)
+            else:   session.pyg.screen.blit(self.categories_render[i], categories_pos)
+            
+            # Option
+            session.pyg.screen.blit(self.options_render[i],    options_pos)
+        
+        ## Cursor
+        if self.mode == 'log':
+
+            # Shift position for current category
+            cursor_pos = [self.cursor_pos[0], self.cursor_pos[1] + 32*self.choice]
+            for i in range(len(categories)):
+                if self.choice >= categories[i][0]:
+                    cursor_pos[1] += 32*(i+1)
+                    break
+            session.pyg.screen.blit(self.cursor_img, cursor_pos)
+        
+        pygame.display.flip()
+
+    # Keys
     def key_UP(self):
         self.choice = (self.choice - 1) % len(self.options)
         
     def key_DOWN(self):
         self.choice = (self.choice + 1) % len(self.options)
 
+    def key_LEFT(self):
+        if self.mode == 'quest':
+            self.mode = 'log'
+            self.update_questlog()
+
+    def key_RIGHT(self):
+        if self.mode == 'log':
+            self.mode = 'quest'
+            self.update_questlog()
+
+    def key_ENTER(self):
+        if self.mode == 'quest': self.mode = 'log'
+        elif self.mode == 'log': self.mode = 'quest'
+        self.update_questlog()
+
+    def key_BACK(self):
+        session.pyg.msg_toggle = self.msg_toggle
+        session.pyg.gui_toggle = self.gui_toggle
+        session.pyg.overlay    = None
+
+    # Tools
     def init_questlog(self, env_name):
         """ Sets intro quests and updates menu. Only runs once when a new game is started.
 
@@ -247,7 +335,7 @@ class QuestMenu:
             session.pyg.update_gui(quest.tasks[-1], session.pyg.violet)
             session.pyg.update_gui(f"Quest complete: {quest.name}", session.pyg.violet)
             del log[quest.name]
-        
+
     def update_questlog(self):
         """ Updates and sorts main quests and side quests. """
 
@@ -290,54 +378,6 @@ class QuestMenu:
         self.options_render    = [session.pyg.font.render(option, True, session.pyg.gray) for option in self.options]
         self.header_render     = session.pyg.font.render(self.header, True, session.pyg.white)
         self.categories_render = [session.pyg.font.render(f'{category.lower()}', True, session.pyg.gray) for category in self.categories]
-                    
-    def render(self):
-        
-        # Clear GUI
-        session.pyg.msg_toggle = False
-        session.pyg.gui_toggle = False
-        session.pyg.update_gui()
-        
-        # Backdrop
-        session.pyg.screen.blit(self.background_fade, (0, 0))
-        session.pyg.screen.blit(self.backdrop,        self.backdrop_pos)
-        session.pyg.screen.blit(self.border,          self.backdrop_pos)
-        
-        # Header
-        session.pyg.screen.blit(self.header_render, self.header_pos)
-
-        # Options and categories
-        categories = []
-        for i in range(len(self.options_render)):
-
-            # Shift position for new category
-            options_pos    = [self.options_pos[i][0],    self.options_pos[i][1]    + 32*len(categories)]
-            categories_pos = [self.categories_pos[i][0], self.categories_pos[i][1] + 32*len(categories)]
-            if i >= 1:
-                if self.categories[i] != self.categories[i-1]:
-                    options_pos[1]    += 32
-                    categories_pos[1] += 32
-                    categories.append((i, self.categories[i]))
-
-                    # Only render each category once
-                    session.pyg.screen.blit(self.categories_render[i], categories_pos)
-            else:   session.pyg.screen.blit(self.categories_render[i], categories_pos)
-            
-            # Render option
-            session.pyg.screen.blit(self.options_render[i],    options_pos)
-        
-        # Cursor
-        if self.mode == 'log':
-
-            # Shift position for current category
-            cursor_pos = [self.cursor_pos[0], self.cursor_pos[1] + 32*self.choice]
-            for i in range(len(categories)):
-                if self.choice >= categories[i][0]:
-                    cursor_pos[1] += 32*(i+1)
-                    break
-            session.pyg.screen.blit(self.cursor_img, cursor_pos)
-        
-        pygame.display.flip()
 
 class Quest:
     """ Holds quest information. """

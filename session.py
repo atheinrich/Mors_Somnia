@@ -23,7 +23,7 @@ class Session:
 
         self.questlog_obj     = None # QuestMenu object
         self.inv              = None # InventoryMenu object
-        self.dev              = None # Catalog object
+        self.dev              = None # CatalogMenu object
         self.hold_obj         = None # Abilities object
         self.trade_obj        = None # Exchange object
         self.stats_obj        = None # StatsMenu object

@@ -1852,7 +1852,7 @@ class Tile:
             blocked     : bool; prevents items and entities from occupying the tile 
             hidden      : bool; prevents player from seeing the tile
             unbreakable : bool; prevents player from changing the tile
-            placed      : bool; notifies custom placement via Catalog """
+            placed      : bool; notifies custom placement via CatalogMenu """
         
         # Import parameters
         for key, value in kwargs.items():

@@ -86,11 +86,18 @@ from pygame.locals import *
 
 ## Local
 import session
+
 from items_entities import Player
-from utilities import Images, Audio, MainMenu, FileMenu, StatsMenu, Pets, CtrlMenu, Textbox
-from mechanics import Pygame, Mechanics, NewGameMenu, PlayGame, PlayGarden, InventoryMenu, Catalog, Abilities
-from mechanics import Exchange
+
+from utilities import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
+from utilities import Images, Audio, Pets
+
+from mechanics import Pygame, Mechanics
+from mechanics import NewGameMenu, PlayGame, PlayGarden
+from mechanics import InventoryMenu, CatalogMenu, Abilities, Exchange
+
 from quests import QuestMenu
+
 from data_management import API
 
 ########################################################################################################################################################
@@ -138,7 +145,7 @@ def init():
 
     ## Side overlays
     session.inv              = InventoryMenu()
-    session.dev              = Catalog()
+    session.dev              = CatalogMenu()
     session.hold_obj         = Abilities()
     session.trade_obj        = Exchange()
     session.stats_obj        = StatsMenu()

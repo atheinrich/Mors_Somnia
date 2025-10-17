@@ -23,7 +23,6 @@ import session
 # Core
 class Pygame:
 
-
     def __init__(self):
         """ Manages pygame parameters, GUI details, and display transitions.
             Nothing here is saved elsewhere.
@@ -85,7 +84,7 @@ class Pygame:
             
             # Menus
             self.key_INV      = ['4', K_4, K_KP4]               # inventory
-            self.key_DEV      = ['6', K_6, K_KP6]               # Catalog
+            self.key_DEV      = ['6', K_6, K_KP6]               # catalog
             self.key_INFO     = ['7', K_7, K_KP7]               # player information
             self.key_SPEED    = ['8', K_8, K_KP8]               # movement speed
             self.key_QUEST    = ['9', K_9, K_KP9]               # questlog
@@ -114,7 +113,7 @@ class Pygame:
             
             # Menus
             self.key_INV      = ['4', K_4, K_KP4]                 # inventory
-            self.key_DEV      = ['6', K_6, K_KP6]                 # Catalog
+            self.key_DEV      = ['6', K_6, K_KP6]                 # catalog
             self.key_INFO     = ['7', K_7, K_KP7]                 # player information
             self.key_SPEED    = ['8', K_8, K_KP8]                 # movement speed
             self.key_QUEST    = ['9', K_9, K_KP9]                 # questlog
@@ -143,7 +142,7 @@ class Pygame:
             
             # Menus
             self.key_INV      = ['7', K_7, K_KP7]                 # inventory
-            self.key_DEV      = ['9', K_9, K_KP9]                 # Catalog
+            self.key_DEV      = ['9', K_9, K_KP9]                 # catalog
             self.key_INFO     = ['1', K_1, K_KP1]                 # player information
             self.key_SPEED    = ['2', K_2, K_KP2]                 # movement speed
             self.key_QUEST    = ['3', K_3, K_KP3]                 # questlog
@@ -385,6 +384,7 @@ class Pygame:
 
 class NewGameMenu:
 
+    # Core
     def __init__(self):
         """ Creates a temporary player for customization in the Womb environment.
             Hosts a menu that can discard the temporary player or keep it to replace the current player.
@@ -395,34 +395,23 @@ class NewGameMenu:
             ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
         
         #########################################################
-        # Imports
-        from items_entities import Player
-        from environments import Environments
+        # Specific settings
+        self.init_player()
+
+        self.fadeout         = False
+        self.menu_choices    = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
+        self.orientations    = ['front', 'right', 'back', 'left']
+        self.last_press_time = 0
+        self.cooldown_time   = 0.7
 
         #########################################################
-        # Initialize player object
-        ## Create object and character creation environment
-        self.temp      = Player()
-        self.temp.ent  = self.creater_player_entity()
-        self.temp.envs = Environments(self.temp)
-        self.temp.envs.build_womb()
-
-        ## Place temporary player in character creator
-        self.temp.ent.last_env = self.temp.envs.dict['womb']
-        place_player(
-            ent = self.temp.ent,
-            env = self.temp.envs.dict['womb'],
-            loc = self.temp.envs.dict['womb'].center)
-        
-        #########################################################
-        # Initialize menu
-        ## Initialize cursor
+        # Menu
+        ## Cursor
         self.cursor_img = pygame.Surface((16, 16)).convert()
         self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
         pygame.draw.polygon(self.cursor_img, session.pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
         
-        ## Initialize menu options
-        self.menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]
+        ## Options
         for i in range(len(self.menu_choices)):
             if   i == len(self.menu_choices)-2:  color = session.pyg.green
             elif i == len(self.menu_choices)-1:  color = session.pyg.red
@@ -432,25 +421,148 @@ class NewGameMenu:
         self.choices_length = len(self.menu_choices)-1
         self.cursor_pos     = [50, 424-len(self.menu_choices)*24]
         self.top_choice     = [50, 424-len(self.menu_choices)*24]
-        
-        ## Begins with default settings (ideally)
-        self.orientations    = ['front', 'right', 'back', 'left']
-        self.last_press_time = 0
-        self.cooldown_time   = 0.7
+
+    def run(self):
+        """ Creates a temporary player, then returns to garden at startup or hosts character creation otherwise. """
         
         #########################################################
-        # Other
-        self.fadeout = False
+        # Initialize
+        ## Return to garden at startup
+        if not session.player_obj.ent:
+            self.startup()
+            return
+        
+        ## Set navigation speed
+        session.mech.movement_speed(toggle=False, custom=2)
+        
+        ## Define shorthand
+        pyg = session.pyg
+        
+        ## Wait for input
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+            
+                #########################################################
+                # Return to main menu
+                if event.key in pyg.key_BACK:
+                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        self.key_BACK()
+                        return
+                
+                #########################################################
+                # Move cursor
+                elif event.key in pyg.key_UP:
+                    self.key_UP()
 
-    def creater_player_entity(self):
+                elif event.key in pyg.key_DOWN:
+                    self.key_DOWN()
+
+                elif event.key in pyg.key_ENTER:
+
+                    #########################################################
+                    # Apply option
+                    if self.choice <= 4:
+                        self.apply_option()
+                        
+                    #########################################################
+                    # Accept and start game
+                    elif self.choice == 6:
+                        self.start_game()
+                        return
+                    
+                    #########################################################
+                    # Return to main menu
+                    elif self.choice == 7:
+                        self.key_BACK()
+                        return
+        
+        pyg.game_state = 'new_game'
+        return
+
+    def render(self):
+        
+        #########################################################
+        # Imports
+        from utilities import render_all
+
+        #########################################################
+        # Renders
+        render_all(ent=self.temp.ent)
+
+        ## Rotate the character
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time()) 
+            self.temp.img_names[1] = self.orientations[self.orientations.index(self.temp.img_names[1]) - 1]
+        
+        ## Render cursor and menu choices
+        Y = self.top_choice[1] - 4
+        for self.menu_choice in self.menu_choices:
+            session.pyg.screen.blit(self.menu_choice, (80, Y))
+            Y += 24
+        session.pyg.screen.blit(self.cursor_img, self.cursor_pos)
+
+        #########################################################
+        # Show startup dialogue
+        if self.fadeout:
+            self.fadeout = False
+            text = "Your hands tremble as the ground shudders in tune... something is wrong."
+            session.mech.enter_dungeon(text=text, lvl_num=4)
+
+    # Keys
+    def key_UP(self):
+        self.cursor_pos[1]     -= 24
+        self.choice            -= 1
+        
+        # Go to the top menu choice
+        if self.choice < 0:
+            self.choice         = self.choices_length
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-1) * 24
+        
+        # Skip a blank line
+        elif self.choice == (self.choices_length - 2):
+            self.choice         = self.choices_length - 3
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-4) * 24
+
+    def key_DOWN(self):
+        self.cursor_pos[1]     += 24
+        self.choice            += 1
+        
+        if self.choice > self.choices_length:
+            self.choice         = 0
+            self.cursor_pos[1]  = self.top_choice[1]
+        
+        elif self.choice == (self.choices_length - 2):
+            self.choice         = self.choices_length - 1
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
+
+    def key_BACK(self):
+
+        # Define shorthand
+        pyg = session.pyg
+        env = session.player_obj.ent.env
+
+        # Reset press and turn off startup transition
+        pyg.last_press_time = float(time.time())
+        self.fadeout        = False
+
+        # Set return destination
+        if env.name == 'garden': pyg.game_state = 'play_garden'
+        else:                    pyg.game_state = 'play_game'
+        pyg.overlay = 'menu'
+
+    # Tools
+    def init_player(self):
 
         #########################################################
         # Imports
         from items_entities import create_item
-        
+        from items_entities import Player
+        from environments import Environments
+
         #########################################################
-        # Create default entity
-        temp_ent = Entity(
+        # Create player and entity
+        self.temp      = Player()
+        self.temp.ent  = Entity(
             name       = self.temp.name,
             role       = self.temp.role,
             img_names  = self.temp.img_names,
@@ -475,18 +587,29 @@ class NewGameMenu:
             fear       = self.temp.fear,
             reach      = self.temp.reach)
         
-        # Initialize player-specific attributes
-        temp_ent.questlog        = {}
-        temp_ent.garden_questlog = {}
-        temp_ent.discoveries     = self.temp.discoveries
+        ## Player-specific attributes
+        self.temp.ent.questlog        = {}
+        self.temp.ent.garden_questlog = {}
+        self.temp.ent.discoveries     = self.temp.discoveries
         
+        #########################################################
         # Set default items
         for item_name in ['bald', 'clean', 'flat', 'dagger']:
             item = create_item(item_name)
-            item.pick_up(temp_ent,      silent=True)
-            item.toggle_equip(temp_ent, silent=True)
-        
-        return temp_ent
+            item.pick_up(self.temp.ent,      silent=True)
+            item.toggle_equip(self.temp.ent, silent=True)
+            
+        #########################################################
+        # Initialize character creation environment
+        self.temp.envs = Environments(self.temp)
+        self.temp.envs.build_womb()
+
+        ## Place temporary player in character creator
+        self.temp.ent.last_env = self.temp.envs.dict['womb']
+        place_player(
+            ent = self.temp.ent,
+            env = self.temp.envs.dict['womb'],
+            loc = self.temp.envs.dict['womb'].center)
 
     def startup(self):
         """ Builds the garden and places the player in it. """
@@ -514,143 +637,57 @@ class NewGameMenu:
         session.pyg.game_state = 'play_garden'
         session.pyg.overlay    = 'menu'
 
-    def run(self):
-        """ Creates a temporary player, then returns to garden at startup or hosts character creation otherwise. """
+    def apply_option(self):
         
         #########################################################
         # Imports
         from items_entities import create_item
         
         #########################################################
-        # Return to garden at startup
-        if not session.player_obj.ent:
-            self.startup()
-            return
+        # Apply hair or face option
+        if self.choice in [0, 1, 2]:
+            
+            # Hair, face, or chest option
+            if self.choice == 0:
+                role     = 'head'
+                img_dict = session.img.hair_options
+
+            elif self.choice == 1:
+                role     = 'face'
+                img_dict = session.img.face_options
+
+            elif self.choice == 2:
+                role     = 'chest'
+                img_dict = session.img.chest_options
+            
+            # Find next option and dequip last option
+            index    = (img_dict.index(self.temp.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
+            img_name = img_dict[index]
+            self.temp.ent.equipment[role].toggle_equip(self.temp.ent, silent=True)
+            
+            # Equip next option if already generated
+            if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp.ent.inventory.values()]:
+                self.temp.ent.inventory[img_name][0].toggle_equip(self.temp.ent, silent=True)
+            
+            # Generate option before equip
+            else:
+                item = create_item(img_name)
+                self.temp.ent.inventory['armor'].append(item)
+                item.toggle_equip(self.temp.ent, silent=True)
         
         #########################################################
-        # Handle input
-        session.mech.movement_speed(toggle=False, custom=2)
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-            
-                #########################################################
-                # Go back to main menu
-                if (event.key in session.pyg.key_BACK) and (time.time()-session.pyg.last_press_time > session.pyg.cooldown_time):
-                    session.pyg.last_press_time = float(time.time())
-                    self.fadeout = False
-
-                    if session.player_obj.ent.env.name == 'garden': session.pyg.game_state = 'play_garden'
-                    else:                                           session.pyg.game_state = 'play_game'
-
-                    session.pyg.overlay = 'menu'
-                    return
-                
-                #########################################################
-                # Move cursor
-                elif event.key in session.pyg.key_UP:
-                    self.key_UP()
-                
-                elif event.key in session.pyg.key_DOWN:
-                    self.key_DOWN()
-                
-                #########################################################
-                # Apply option
-                elif event.key in session.pyg.key_ENTER:
-                
-                    # Apply hair or face option
-                    if self.choice in [0, 1, 2]:
-                        
-                        # Hair, face, or chest option
-                        if self.choice == 0:
-                            role     = 'head'
-                            img_dict = session.img.hair_options
-
-                        elif self.choice == 1:
-                            role     = 'face'
-                            img_dict = session.img.face_options
-
-                        elif self.choice == 2:
-                            role     = 'chest'
-                            img_dict = session.img.chest_options
-                        
-                        # Find next option and dequip last option
-                        index = (img_dict.index(self.temp.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
-                        img_name = img_dict[index]
-                        self.temp.ent.equipment[role].toggle_equip(self.temp.ent, silent=True)
-                        
-                        # Equip next option if already generated
-                        if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp.ent.inventory.values()]:
-                            self.temp.ent.inventory[img_name][0].toggle_equip(self.temp.ent, silent=True)
-                        
-                        # Generate option before equip
-                        else:
-                            item = create_item(img_name)
-                            self.temp.ent.inventory['armor'].append(item)
-                            item.toggle_equip(self.temp.ent, silent=True)
-                    
-                    # Apply skin option
-                    elif self.choice == 3:
-                        if self.temp.ent.img_names[0] == 'white':   self.temp.ent.img_names[0] = 'black'
-                        elif self.temp.ent.img_names[0] == 'black': self.temp.ent.img_names[0] = 'white'
-                    
-                    # Apply handedness option
-                    elif self.choice == 4:
-                        if self.temp.ent.handedness == 'left':      self.temp.ent.handedness = 'right'
-                        elif self.temp.ent.handedness == 'right':   self.temp.ent.handedness = 'left'
-                    
-                    #########################################################
-                    # Accept current options, then return
-                    elif self.choice == 6:
-                        session.new_game_obj.new_game()
-                        return
-                    
-                    #########################################################
-                    # Go back to the main menu
-                    elif self.choice == 7:
-                        session.pyg.last_press_time = float(time.time())
-                        self.fadeout = False
-
-                        if session.player_obj.ent.env.name == 'garden': session.pyg.game_state = 'play_garden'
-                        else:                                           session.pyg.game_state = 'play_game'
-                        
-                        session.pyg.overlay = 'menu'
-                        return
-                    
-                    else:
-                        session.pyg.game_state = 'play_game'
-                        session.pyg.overlay = None
-                        self.fadeout = False
-                        return
+        # Apply skin option
+        elif self.choice == 3:
+            if self.temp.ent.img_names[0] == 'white':   self.temp.ent.img_names[0] = 'black'
+            elif self.temp.ent.img_names[0] == 'black': self.temp.ent.img_names[0] = 'white'
         
-        session.pyg.game_state = 'new_game'
-
-    def key_UP(self):
-        self.cursor_pos[1]     -= 24
-        self.choice            -= 1
+        #########################################################
+        # Apply handedness option
+        elif self.choice == 4:
+            if self.temp.ent.handedness == 'left':      self.temp.ent.handedness = 'right'
+            elif self.temp.ent.handedness == 'right':   self.temp.ent.handedness = 'left'
         
-        # Go to the top menu choice
-        if self.choice < 0:
-            self.choice         = self.choices_length
-            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-1) * 24
-        
-        # Skip a blank line
-        elif self.choice == (self.choices_length - 2):
-            self.choice         = self.choices_length - 3
-            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-4) * 24
-
-    def key_DOWN(self):
-        self.cursor_pos[1]     += 24
-        self.choice            += 1
-        
-        if self.choice > self.choices_length:
-            self.choice         = 0
-            self.cursor_pos[1]  = self.top_choice[1]
-        
-        elif self.choice == (self.choices_length - 2):
-            self.choice         = self.choices_length - 1
-            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
-
-    def new_game(self):
+    def start_game(self):
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
             Only called after the character creation menu is accepted.
 
@@ -692,35 +729,6 @@ class NewGameMenu:
         session.pyg.msg_toggle     = True
         session.pyg.startup_toggle = False
         session.pyg.game_state     = 'play_game'
-
-    def render(self):
-        
-        #########################################################
-        # Imports
-        from utilities import render_all
-
-        #########################################################
-        # Render the environment
-        render_all(ent=self.temp.ent)
-
-        # Rotate the character
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time()) 
-            self.temp.img_names[1] = self.orientations[self.orientations.index(self.temp.img_names[1]) - 1]
-        
-        # Render cursor and menu choices
-        Y = self.top_choice[1] - 4
-        for self.menu_choice in self.menu_choices:
-            session.pyg.screen.blit(self.menu_choice, (80, Y))
-            Y += 24
-        session.pyg.screen.blit(self.cursor_img, self.cursor_pos)
-
-        #########################################################
-        # Show startup dialogue
-        if self.fadeout:
-            self.fadeout = False
-            text = "Your hands tremble as the ground shudders in tune... something is wrong."
-            session.mech.enter_dungeon(text=text, lvl_num=4)
 
 class PlayGame:
 
@@ -2872,212 +2880,122 @@ class Mechanics:
         session.img.flash_above(session.player_obj.ent, image)
 
 ########################################################################################################################################################
-# Menus
+# Side Menus
 class InventoryMenu:
     
+    # Core
     def __init__(self):
+        """ Manages inventory menu on the side of the screen. Allows item activation. """
         
-        # Data for select_item and locked_item
+        #########################################################
+        # Parameters
+        ## Positions
         self.cursor_pos  = [0, 32]
-        self.dic_index   = 0
-        self.locked      = False
-        self.img_names   = ['null', 'null']
         self.img_x       = 0
         self.img_y       = 0
+
+        ## Other
+        self.dic_index   = 0
         self.dic_indices = [[0, 0]]
+        self.img_names   = ['null', 'null']
+        self.locked      = False
+        self.detail      = True
         
-        self.detail = True
-        self.cooldown_time = 0.1
-        self.last_press_time = 0
-        
+        #########################################################
+        # Surface initialization
         self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
 
-    def update_data(self):
-        
-        # Initialize cursor
-        if bool(self.locked): size, width, alpha = 30, 2, 192
-        else:                 size, width, alpha = 31, 1, 128
-        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill.fill((255, 255, 255, alpha))
-        pygame.draw.polygon(
-            self.cursor_border, 
-            pygame.Color('white'), 
-            [(0, 0), (size, 0), (size, size), (0, size)],  width)
-        
-        # Initialize tile selection
-        self.inventory_dics = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
-        self.dic_categories = ['weapons',     'armor',     'potions',     'scrolls',     'drugs',     'other']
-        for key, value in session.player_obj.ent.inventory.items():
-            for item in value:
-                if not item.hidden:
-                    self.inventory_dics[key][item.name] = session.img.dict[item.img_names[0]][item.img_names[1]]
-        for key, value in self.inventory_dics.items():
-            if not value: self.dic_categories.remove(key)
-        
-        # Restore last selection
-        if len(self.dic_indices) != len(self.dic_categories):
-            self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
-        if self.dic_indices:
-            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
-            self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        else: session.pyg.overlay = None
-
     def run(self):
         
-        # Restrict movement speed
+        #########################################################
+        # Initialize
+        ## Update dictionaries and create cursors
+        self.update_data()
+
+        ## Set navigation speed
         session.mech.movement_speed(toggle=False, custom=2)
         
-        # Update dictionaries and create cursors
-        self.update_data()
-        
-        # Handle keystrokes
+        ## Define shorthand
+        pyg = session.pyg
+
+        ## Wait for input
         for event in pygame.event.get():
             if event.type == KEYDOWN:
             
-                # >>PLAY GAME<<
-                if (event.key in session.pyg.key_BACK) or (event.key in session.pyg.key_HOLD):
-                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                        session.pyg.last_press_time = float(time.time())
-                        session.pyg.overlay = None
-                        return
-                
-                # >>LOCK SELECTION<<
-                elif (event.key in session.pyg.key_INV) and (time.time()-self.last_press_time > self.cooldown_time):
-                    self.last_press_time = float(time.time())
+                #########################################################
+                # Move cursor
+                if event.key in pyg.key_UP:
+                    self.key_UP()
                     
-                    if not self.locked:
-                        self.cursor_border = pygame.Surface((32, 32)).convert()
-                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
-                        self.locked = True
-                        pygame.draw.polygon(self.cursor_border, session.pyg.white, [(0, 0), (30, 0), (30, 30), (0, 30)], 2)
-                    else:
-                        self.cursor_border = pygame.Surface((32, 32)).convert()
-                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
-                        self.locked = False
-                        pygame.draw.polygon(self.cursor_border, session.pyg.white, [(0, 0), (31, 0), (31, 31), (0, 31)], 1)
+                elif event.key in pyg.key_DOWN:
+                    self.key_DOWN()
                 
-                # >>NAVIGATE DICTIONARY<<
-                elif event.key in session.pyg.key_UP:
-                    
-                    # Selection
-                    if not self.locked:
-                        self.choice -= 1
-                        if self.cursor_pos[1] == 32: self.offset -= 1
-                        else: self.cursor_pos[1] -= session.pyg.tile_height
-                    else: session.player_obj.ent.move(0, -session.pyg.tile_height)
+                #########################################################
+                # Switch section
+                elif event.key in pyg.key_LEFT:
+                    self.key_LEFT()
                 
-                elif event.key in session.pyg.key_DOWN:
-                    if not self.locked:
-                        self.choice += 1
-                        if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-                        else: self.cursor_pos[1] += session.pyg.tile_height
-                    else: session.player_obj.ent.move(0, session.pyg.tile_height)
+                elif event.key in pyg.key_RIGHT:
+                    self.key_RIGHT()
                 
-                # >>DETAILS<<
-                elif event.key in session.pyg.key_QUEST:
-                    if not self.detail: self.detail = True
-                    else:               self.detail = False
+                #########################################################
+                # Activate item
+                elif event.key in session.pyg.key_ENTER:
+                    self.key_ENTER()
                 
-                # >>CHANGE DICTIONARY<<
-                elif (event.key in session.pyg.key_LEFT) or (event.key in session.pyg.key_RIGHT):
-                    if len(self.dic_categories) > 1:
-                        
-                        if event.key in session.pyg.key_LEFT:
-                            if not self.locked: self.dic_index -= 1
-                            else:               session.player_obj.ent.move(-session.pyg.tile_height, 0)
-                        
-                        elif event.key in session.pyg.key_RIGHT:
-                            if not self.locked: self.dic_index += 1
-                            else:               session.player_obj.ent.move(session.pyg.tile_width, 0)
-                        
-                        self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-                        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-                        self.choice = self.cursor_pos[1]//32 + self.offset - 1
-                        
-                        # Move cursor to the highest spot in the dictionary
-                        if self.cursor_pos[1] > 32*len(self.dic):
-                            self.cursor_pos[1] = 32*len(self.dic)
-                            self.choice = len(self.dic) - self.offset - 1
-                        
-                # >>CONSTRUCTION<<
+                elif event.key in session.pyg.key_PERIOD:
+                    self.key_PERIOD()
+                
+                #########################################################
+                # Toggle details
+                elif event.key in pyg.key_QUEST:
+                    self.key_QUEST()
+                
+                #########################################################
+                # Toggle selection lock
+                elif event.key in pyg.key_INV:
+                    self.key_INV()
+                
+                #########################################################
+                # Open catalog
                 elif event.key in session.pyg.key_DEV:
-                    session.pyg.overlay = 'dev'
-                    pygame.event.clear()
+                    self.key_DEV()
                     return
                 
-                # >>USE OR DROP<<
+                #########################################################
+                # Return to game
                 else:
-                    if event.key in session.pyg.key_ENTER:
-                        self.activate('use')
-                    elif event.key in session.pyg.key_PERIOD:
-                        self.activate('drop')
-                        self.update_data()
+                    self.key_BACK()
+                    return
 
             # Save for later reference
             if self.dic_indices:
                 self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
                 self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
-        return
-
-    def find_item(self, offset=None):
         
-        # Retrieve inventory list
-        outer_list = list(session.player_obj.ent.inventory.items())
-        length = len(outer_list)
-        filter_empty = []
-        
-        # Remove names without objects
-        for i in range(length):
-            if outer_list[i][1]: filter_empty.append(outer_list[i])
-        
-        # Name and list of objects for the selected category
-        outer_key, inner_list = filter_empty[self.dic_index%len(filter_empty)]
-        
-        # Remove hidden items
-        filtered_list = [item for item in inner_list if not item.hidden]
-        
-        # Select the item
-        if filtered_list:
-            
-            if type(offset) == int: item = filtered_list[offset%len(filtered_list)]
-            else: item = filtered_list[self.choice%len(filtered_list)]
-            return item
-
-    def activate(self, action):
-        
-        # Use item
-        item = self.find_item()
-        if action == 'use':
-            item.use()
-            return
-        elif action == 'drop':
-            item.drop()
-            if self.cursor_pos[1] >= 32*len(self.dic):
-                self.cursor_pos[1] = 32*(len(self.dic)-1)
-                self.choice = len(self.dic) - self.offset - 2
-            return
-        
-        # Return to game
-        session.pyg.overlay = None
+        pyg.overlay = 'inv'
         return
 
     def render(self):
-        if not self.locked: session.pyg.screen.blit(self.background_fade, (0, 0))
-        
-        # Basics
+
+        #########################################################
+        # Adjust GUI
         session.pyg.msg_height = 1
         session.pyg.update_gui()
+
+        #########################################################
+        # Renders
+        ## Background
+        if not self.locked: session.pyg.screen.blit(self.background_fade, (0, 0))
         
+        ## Cursor
         if self.cursor_pos[1] < 32: self.cursor_pos[1] = 32
         session.pyg.screen.blit(self.cursor_fill, self.cursor_pos)
         session.img.average()
         color = pygame.Color(session.img.left_correct, session.img.left_correct, session.img.left_correct)
         
-        # Renders menu to update cursor location
+        ## Renders menu to update cursor location
         Y = 32
         counter = 0
         for i in range(len(list(self.dic))):
@@ -3115,33 +3033,109 @@ class InventoryMenu:
                 counter += 1                
                 
             else: break
+        
         session.pyg.screen.blit(self.cursor_border, self.cursor_pos)
 
-class Catalog:
-    
-    def __init__(self):
-        """ Parameters
-            ----------
-            dic_indices    : list of tuples of ints; one tuple for each category; offset and item index
-            dic_index      : int; selects a tuple in dic_indices
-            dic_categories : list of str; name of each category in dic_indices """
-        
-        # Design
-        self.cursor_pos = [session.pyg.screen_width-session.pyg.tile_width, 32]
-        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
-        
-        # Item management
-        self.img_names = ['null', 'null']
-        self.img_x = 0
-        self.img_y = 0
-        self.locked = False
+    # Keys
+    def key_UP(self):
 
-    def run(self):  
-        """ Handles side menu for placing objects. """        
+        if not self.locked:
+            self.choice -= 1
+            if self.cursor_pos[1] == 32: self.offset -= 1
+            else: self.cursor_pos[1] -= session.pyg.tile_height
+
+        else:
+            session.player_obj.ent.move(0, -session.pyg.tile_height)
+                
+    def key_DOWN(self):
+
+        if not self.locked:
+            self.choice += 1
+            if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
+            else: self.cursor_pos[1] += session.pyg.tile_height
+
+        else:
+            session.player_obj.ent.move(0, session.pyg.tile_height)
+
+    def key_LEFT(self):
+        if len(self.dic_categories) > 1:
+            
+            if not self.locked:
+                self.dic_index -= 1
+                self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+                self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+                self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
+                self.choice = self.cursor_pos[1]//32 + self.offset - 1
+                
+                # Move cursor to the highest spot in the dictionary
+                if self.cursor_pos[1] > 32*len(self.dic):
+                    self.cursor_pos[1] = 32*len(self.dic)
+                    self.choice = len(self.dic) - self.offset - 1
+
+            else:
+                session.player_obj.ent.move(-session.pyg.tile_height, 0)
+
+    def key_RIGHT(self):
+        if len(self.dic_categories) > 1:
+            
+            if not self.locked:
+                self.dic_index += 1
+                self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+                self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+                self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
+                self.choice = self.cursor_pos[1]//32 + self.offset - 1
+                
+                # Move cursor to the highest spot in the dictionary
+                if self.cursor_pos[1] > 32*len(self.dic):
+                    self.cursor_pos[1] = 32*len(self.dic)
+                    self.choice = len(self.dic) - self.offset - 1
+            
+            else:
+                session.player_obj.ent.move(session.pyg.tile_width, 0)
+
+    def key_BACK(self):
+        session.pyg.last_press_time = float(time.time())
+        session.pyg.overlay         = None
+
+    def key_QUEST(self):
+        if not self.detail: self.detail = True
+        else:               self.detail = False
+
+    def key_INV(self):
+        self.last_press_time = float(time.time())
+        self.cursor_border = pygame.Surface((32, 32)).convert()
+        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
+
+        # Thin cursor
+        if not self.locked:
+            self.locked   = True
+            cursor_points = [(0, 0), (30, 0), (30, 30), (0, 30)]
+            cursor_width  = 2
         
-        # Restrict movement speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        # Thick cursor
+        else:
+            self.locked   = False
+            cursor_points = [(0, 0), (31, 0), (31, 31), (0, 31)]
+            cursor_width  = 1
+        
+        pygame.draw.polygon(self.cursor_border, session.pyg.white, cursor_points, cursor_width)
+
+    def key_DEV(self):
+        session.pyg.overlay = 'dev'
+        pygame.event.clear()
+
+    def key_ENTER(self):
+        self.find_item().use()
+        self.update_data()
+
+    def key_PERIOD(self):
+        self.find_item().drop()
+        if self.cursor_pos[1] >= 32*len(self.dic):
+            self.cursor_pos[1] = 32*(len(self.dic)-1)
+            self.choice = len(self.dic) - self.offset - 2
+
+    # Tools
+    def update_data(self):
         
         # Initialize cursor
         if bool(self.locked): size, width, alpha = 30, 2, 192
@@ -3155,108 +3149,218 @@ class Catalog:
             [(0, 0), (size, 0), (size, size), (0, size)],  width)
         
         # Initialize tile selection
-        self.dic    = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
+        self.inventory_dics = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
+        self.dic_categories = ['weapons',     'armor',     'potions',     'scrolls',     'drugs',     'other']
+        for key, value in session.player_obj.ent.inventory.items():
+            for item in value:
+                if not item.hidden:
+                    self.inventory_dics[key][item.name] = session.img.dict[item.img_names[0]][item.img_names[1]]
+        for key, value in self.inventory_dics.items():
+            if not value: self.dic_categories.remove(key)
         
+        # Restore last selection
+        if len(self.dic_indices) != len(self.dic_categories):
+            self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
+        if self.dic_indices:
+            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
+            self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        else: session.pyg.overlay = None
+
+    def find_item(self, offset=None):
+        
+        # Retrieve inventory list
+        outer_list = list(session.player_obj.ent.inventory.items())
+        length = len(outer_list)
+        filter_empty = []
+        
+        # Remove names without objects
+        for i in range(length):
+            if outer_list[i][1]: filter_empty.append(outer_list[i])
+        
+        # Name and list of objects for the selected category
+        outer_key, inner_list = filter_empty[self.dic_index%len(filter_empty)]
+        
+        # Remove hidden items
+        filtered_list = [item for item in inner_list if not item.hidden]
+        
+        # Select the item
+        if filtered_list:
+            
+            if type(offset) == int: item = filtered_list[offset%len(filtered_list)]
+            else: item = filtered_list[self.choice%len(filtered_list)]
+            return item
+
+class CatalogMenu:
+    
+    # Core
+    def __init__(self):
+        """ Manages catalog menu on the side of the screen. Allows item placemennt. """
+        
+        #########################################################
+        # Parameters
+        ## Positions
+        self.cursor_pos = [session.pyg.screen_width-session.pyg.tile_width, 32]
+        self.img_x      = 0
+        self.img_y      = 0
+
+        ## Other
+        self.img_names = ['null', 'null']
+        self.locked    = False
+
+        #########################################################
+        # Surface initialization
+        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade.fill((0, 0, 0, 50))
+
+    def run(self):  
+        
+        #########################################################
+        # Initialize
+        ## Update dictionaries and create cursors
+        self.update_data()
+        
+        ## Restrict movement speed
+        session.mech.movement_speed(toggle=False, custom=2)
+        
+        ## Define shorthand
+        pyg = session.pyg
+
+        ## Wait for input
         for event in pygame.event.get():
             if event.type == KEYDOWN:
             
-                # >>PLAY GAME<<
-                if (event.key in session.pyg.key_BACK) or (event.key in session.pyg.key_HOLD):
-                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                        session.pyg.last_press_time = float(time.time())
-                        session.pyg.overlay = None
-                        return
-                
-                # >>LOCK SELECTION<<
-                elif event.key in session.pyg.key_DEV:
-                    if not self.locked:
-                        self.cursor_border = pygame.Surface((32, 32)).convert()
-                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
-                        self.locked = True
-                        pygame.draw.polygon(self.cursor_border, session.pyg.white, [(0, 0), (30, 0), (30, 30), (0, 30)], 2)
-                    else:
-                        self.cursor_border = pygame.Surface((32, 32)).convert()
-                        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
-                        self.locked = False
-                        pygame.draw.polygon(self.cursor_border, session.pyg.white, [(0, 0), (31, 0), (31, 31), (0, 31)], 1)
-                
-                # >>NAVIGATE DICTIONARY<<
-                elif event.key in session.pyg.key_UP:
+                #########################################################
+                # Move cursor
+                if event.key in pyg.key_UP:
+                    self.key_UP()
                     
-                    # Selection
-                    if not self.locked:
-                        self.choice -= 1
-                        if self.cursor_pos[1] == 32: self.offset -= 1
-                        else: self.cursor_pos[1] -= session.pyg.tile_height
-                    else: session.player_obj.ent.move(0, -session.pyg.tile_height)
+                elif event.key in pyg.key_DOWN:
+                    self.key_DOWN()
                 
-                elif event.key in session.pyg.key_DOWN:
-                    if not self.locked:
-                        self.choice += 1
-                        if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-                        else: self.cursor_pos[1] += session.pyg.tile_height
-                    else: session.player_obj.ent.move(0, session.pyg.tile_height)
+                #########################################################
+                # Switch section
+                elif event.key in pyg.key_LEFT:
+                    self.key_LEFT()
                 
-                # >>CHANGE DICTIONARY<<
-                elif (event.key in session.pyg.key_LEFT) or (event.key in session.pyg.key_RIGHT):
-                        
-                    if event.key in session.pyg.key_LEFT:
-                        if not self.locked:
-                            self.dic_index -= 1
-                            self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                            while not len(self.dic):
-                                self.dic_index -= 1
-                                self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                        else: session.player_obj.ent.move(-session.pyg.tile_height, 0)
-                        
-                    elif event.key in session.pyg.key_RIGHT:
-                        if not self.locked:
-                            self.dic_index += 1
-                            self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                            while not len(self.dic):
-                                self.dic_index += 1
-                                self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                        else: session.player_obj.ent.move(session.pyg.tile_width, 0)
-                    
-                    self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-                    self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-                    self.choice = self.cursor_pos[1]//32 + self.offset - 1
-                    
-                    # Move cursor to the highest spot in the dictionary
-                    if self.cursor_pos[1] > 32*len(self.dic):
-                        self.cursor_pos[1] = 32*len(self.dic)
-                        self.choice = len(self.dic) - self.offset - 1
+                elif event.key in pyg.key_RIGHT:
+                    self.key_RIGHT()
                 
-                # >>SELECT AND PLACE<<
-                elif event.key in session.pyg.key_ENTER:
-                    self.place_item()
+                #########################################################
+                # Activate item
+                elif event.key in pyg.key_ENTER:
+                    self.key_ENTER()
                 
-                # >>INVENTORY<<
-                elif event.key in session.pyg.key_INV:
-                    session.pyg.overlay = 'inv'
-                    pygame.event.clear()
+                #########################################################
+                # Toggle selection lock
+                elif event.key in pyg.key_DEV:
+                    self.key_DEV()
+                
+                #########################################################
+                # Open inventory
+                elif event.key in pyg.key_INV:
+                    self.key_INV()
+                    return
+
+                #########################################################
+                # Return to game
+                else:
+                    self.key_BACK()
                     return
 
             # Save for later reference
             self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
             self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
-        session.pyg.overlay = 'dev'
+        
+        pyg.overlay = 'dev'
         return
 
-    def update_dict(self):
+    def render(self):
+        if not self.locked: session.pyg.screen.blit(self.background_fade, (0, 0))
         
-        # Dictionary management
-        self.dic_categories = list(session.player_obj.ent.discoveries.keys())
-        self.dic_index = 0
-        self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]] # {first name: {second name: surface}}
-        while not len(self.dic):
+        session.pyg.msg_height = 1
+        session.pyg.update_gui()
+        
+        session.pyg.screen.blit(self.cursor_fill, self.cursor_pos)
+        
+        # Renders menu to update cursor location
+        Y = 32
+        counter = 0
+        for i in range(len(list(self.dic))):
+            
+            # Stop at the 12th image, starting with respect to the offset 
+            if counter <= 12:
+                img_names = self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]]
+                session.pyg.screen.blit(session.img.dict[img_names[0]][img_names[1]], (session.pyg.screen_width-session.pyg.tile_width, Y))
+                Y += session.pyg.tile_height
+                counter += 1
+            else: break
+        session.pyg.screen.blit(self.cursor_border, self.cursor_pos)
+
+    # Keys
+    def key_UP(self):
+
+        if not self.locked:
+            self.choice -= 1
+            if self.cursor_pos[1] == 32: self.offset -= 1
+            else: self.cursor_pos[1] -= session.pyg.tile_height
+        
+        else:
+            session.player_obj.ent.move(0, -session.pyg.tile_height)
+                
+    def key_DOWN(self):
+
+        if not self.locked:
+            self.choice += 1
+            if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
+            else: self.cursor_pos[1] += session.pyg.tile_height
+            
+        else:
+            session.player_obj.ent.move(0, session.pyg.tile_height)
+
+    def key_LEFT(self):
+
+        if not self.locked:
+            self.dic_index -= 1
+            self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+            while not len(self.dic):
+                self.dic_index -= 1
+                self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        
+        else:
+            session.player_obj.ent.move(-session.pyg.tile_height, 0)
+
+        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
+        self.choice = self.cursor_pos[1]//32 + self.offset - 1
+    
+        # Move cursor to the highest spot in the dictionary
+        if self.cursor_pos[1] > 32*len(self.dic):
+            self.cursor_pos[1] = 32*len(self.dic)
+            self.choice = len(self.dic) - self.offset - 1
+
+    def key_RIGHT(self):
+
+        if not self.locked:
             self.dic_index += 1
             self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        self.dic_indices = [[0, 0] for _ in self.dic_categories]
+            while not len(self.dic):
+                self.dic_index += 1
+                self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        
+        else:
+            session.player_obj.ent.move(session.pyg.tile_width, 0)
+        
+        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
+        self.choice = self.cursor_pos[1]//32 + self.offset - 1
+    
+        # Move cursor to the highest spot in the dictionary
+        if self.cursor_pos[1] > 32*len(self.dic):
+            self.cursor_pos[1] = 32*len(self.dic)
+            self.choice = len(self.dic) - self.offset - 1
 
-    def place_item(self):
+    def key_ENTER(self):
 
         from items_entities import create_item, create_entity
 
@@ -3316,6 +3420,63 @@ class Catalog:
         self.img_x, self.img_y = None, None
         session.pyg.overlay = None
 
+    def key_DEV(self):
+        self.last_press_time = float(time.time())
+        self.cursor_border = pygame.Surface((32, 32)).convert()
+        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
+
+        # Thin cursor
+        if not self.locked:
+            self.locked   = True
+            cursor_points = [(0, 0), (30, 0), (30, 30), (0, 30)]
+            cursor_width  = 2
+        
+        # Thick cursor
+        else:
+            self.locked   = False
+            cursor_points = [(0, 0), (31, 0), (31, 31), (0, 31)]
+            cursor_width  = 1
+        
+        pygame.draw.polygon(self.cursor_border, session.pyg.white, cursor_points, cursor_width)
+
+    def key_INV(self):
+        session.pyg.overlay = 'inv'
+        pygame.event.clear()
+
+    def key_BACK(self):
+        session.pyg.last_press_time = float(time.time())
+        session.pyg.overlay         = None
+
+    # Tools
+    def update_data(self):
+
+        # Update cursor
+        if bool(self.locked): size, width, alpha = 30, 2, 192
+        else:                 size, width, alpha = 31, 1, 128
+        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill.fill((255, 255, 255, alpha))
+        pygame.draw.polygon(
+            self.cursor_border, 
+            pygame.Color('white'), 
+            [(0, 0), (size, 0), (size, size), (0, size)],  width)
+
+        # Initialize tile selection
+        self.dic    = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
+        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
+        
+    def update_dict(self):
+        
+        # Dictionary management
+        self.dic_categories = list(session.player_obj.ent.discoveries.keys())
+        self.dic_index = 0
+        self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]] # {first name: {second name: surface}}
+        while not len(self.dic):
+            self.dic_index += 1
+            self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
+        self.dic_indices = [[0, 0] for _ in self.dic_categories]
+
     def export_env(self):
         with open(f"Data/File_{session.player_obj.file_num}/env.pkl", 'wb') as file:
             pickle.dump(session.player_obj.ent.env, file)
@@ -3334,28 +3495,6 @@ class Catalog:
                 env = env,
                 loc = env.player_coordinates)
         except: print("No file found!")
-
-    def render(self):
-        if not self.locked: session.pyg.screen.blit(self.background_fade, (0, 0))
-        
-        session.pyg.msg_height = 1
-        session.pyg.update_gui()
-        
-        session.pyg.screen.blit(self.cursor_fill, self.cursor_pos)
-        
-        # Renders menu to update cursor location
-        Y = 32
-        counter = 0
-        for i in range(len(list(self.dic))):
-            
-            # Stop at the 12th image, starting with respect to the offset 
-            if counter <= 12:
-                img_names = self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]]
-                session.pyg.screen.blit(session.img.dict[img_names[0]][img_names[1]], (session.pyg.screen_width-session.pyg.tile_width, Y))
-                Y += session.pyg.tile_height
-                counter += 1
-            else: break
-        session.pyg.screen.blit(self.cursor_border, self.cursor_pos)
 
 class Abilities:
     
