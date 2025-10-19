@@ -1786,7 +1786,7 @@ class Room:
             floor.hidden = self.hidden
             self.tiles_list.append(floor)
             floor.biome = self.biome
-            if self.roof and (self.env.envs.ent.tile not in self.tiles_list):
+            if self.roof and (self.env.envs.player_obj.ent.tile not in self.tiles_list):
                 floor.img_names = self.roof
             else:
                 floor.img_names = self.floor
@@ -1888,7 +1888,7 @@ class Tile:
         self.__dict__.update(state)
 
     def __eq__(self, other):
-        return self.X == other.Y and self.Y == other.Y
+        return (self.X == other.X) and (self.Y == other.Y)
 
     def __hash__(self):
         return hash((self.X, self.Y))
@@ -2082,16 +2082,15 @@ class Weather:
                 1. The object has self.lamp as an effect and is not owned by an entity.
                 2. The object has self.lamp as an effect and is equipped by an entity. """
         
-        # Set background color
-        self.overlay.fill((0, 0, 0))
-        
-        # Check for lights
-        data = [self.update_lamps()]
-        
         # Check for clouds
+        data = []
         if self.cloudy: data.extend(self.update_clouds())
 
-        return data
+        # Check for lights
+        self.overlay.fill((0, 0, 0))
+        data.append(self.update_lamps())
+
+        for image, (X, Y) in data: session.pyg.display.blit(image, (X, Y))
 
 ########################################################################################################################################################
 # Tools

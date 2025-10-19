@@ -74,12 +74,12 @@ class Pygame:
             self.key_RIGHT    = ['→', K_RIGHT, K_d]             # right
             
             # Actions
-            self.key_BACK     = ['/', K_BACKSPACE, K_ESCAPE, K_SLASH, K_KP_DIVIDE]  # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
-            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]  # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD]              # action 2
-            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS]   # zoom
-            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]  # zoom
+            self.key_BACK     = ['/', K_BACKSPACE, K_ESCAPE,  K_SLASH, K_KP_DIVIDE]  # exit/main menu
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY]       # show/hide gui
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
+            self.key_PERIOD   = ['.', K_KP_PERIOD]                      # action 2
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
             self.key_HOLD     = ['0', K_0, K_KP0]
             
             # Menus
@@ -103,13 +103,13 @@ class Pygame:
             self.key_RIGHT    = ['3', K_3, K_KP3,  K_RIGHT]       # right
 
             # Actions
-            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]   # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
-            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]    # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD]                # action 2
-            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS]     # zoom
-            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]    # zoom
-            self.key_HOLD     = ['0', K_0, K_KP0]                 # attack sequences
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]         # exit/main menu
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY]       # show/hide gui
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
+            self.key_PERIOD   = ['.', K_KP_PERIOD]                      # action 2
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
+            self.key_HOLD     = ['0', K_0, K_KP0]                       # attack sequences
             
             # Menus
             self.key_INV      = ['4', K_4, K_KP4]                 # inventory
@@ -132,13 +132,13 @@ class Pygame:
             self.key_RIGHT    = ['6', K_6, K_KP6,  K_RIGHT]       # right
 
             # Actions
-            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]   # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY] # show/hide gui
-            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]    # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD]                # action 2
-            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS]     # zoom
-            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]    # zoom
-            self.key_HOLD     = ['0', K_0, K_KP0]                 # attack sequences
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]         # exit/main menu
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY]       # show/hide gui
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
+            self.key_PERIOD   = ['.', K_KP_PERIOD]                      # action 2
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
+            self.key_HOLD     = ['0', K_0, K_KP0]                       # attack sequences
             
             # Menus
             self.key_INV      = ['7', K_7, K_KP7]                 # inventory
@@ -248,8 +248,7 @@ class Pygame:
             else:                   alpha, change = alpha_start, -10
 
             session.player_obj.ent.env.weather.run()
-            for image, (X, Y) in session.player_obj.ent.env.weather.render():
-                session.pyg.display.blit(image, (X, Y))
+            session.player_obj.ent.env.weather.render()
 
         ## Fade color and speed
         screen = session.pyg.screen
@@ -395,12 +394,20 @@ class NewGameMenu:
             ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
         
         #########################################################
-        # Specific settings
-        self.init_player()
+        # Special
+        self.temp = self.init_player()
 
-        self.fadeout         = False
-        self.menu_choices    = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
-        self.orientations    = ['front', 'right', 'back', 'left']
+        #########################################################
+        # Menu details
+        ## Basics
+        self.menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
+        self.orientations = ['front', 'right', 'back', 'left']
+
+        ## Positions
+
+        ## Other
+        self.fadeout = False
+
         self.last_press_time = 0
         self.cooldown_time   = 0.7
 
@@ -427,6 +434,9 @@ class NewGameMenu:
         
         #########################################################
         # Initialize
+        ## Define shorthand
+        pyg = session.pyg
+        
         ## Return to garden at startup
         if not session.player_obj.ent:
             self.startup()
@@ -435,25 +445,14 @@ class NewGameMenu:
         ## Set navigation speed
         session.mech.movement_speed(toggle=False, custom=2)
         
-        ## Define shorthand
-        pyg = session.pyg
-        
         ## Wait for input
         for event in pygame.event.get():
             if event.type == KEYDOWN:
             
                 #########################################################
-                # Return to main menu
-                if event.key in pyg.key_BACK:
-                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
-                        self.key_BACK()
-                        return
-                
-                #########################################################
                 # Move cursor
-                elif event.key in pyg.key_UP:
+                if event.key in pyg.key_UP:
                     self.key_UP()
-
                 elif event.key in pyg.key_DOWN:
                     self.key_DOWN()
 
@@ -476,29 +475,37 @@ class NewGameMenu:
                         self.key_BACK()
                         return
         
+                #########################################################
+                # Return to main menu
+                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                    self.key_BACK()
+                    return
+                
         pyg.game_state = 'new_game'
         return
 
     def render(self):
         
         #########################################################
-        # Imports
+        # Render environment and character
+        ## Render over garden
         from utilities import render_all
-
-        #########################################################
-        # Renders
         render_all(ent=self.temp.ent)
 
-        ## Rotate the character
+        ## Rotate character
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time()) 
             self.temp.img_names[1] = self.orientations[self.orientations.index(self.temp.img_names[1]) - 1]
         
-        ## Render cursor and menu choices
+        #########################################################
+        # Render menu
+        ## Choices
         Y = self.top_choice[1] - 4
         for self.menu_choice in self.menu_choices:
             session.pyg.screen.blit(self.menu_choice, (80, Y))
             Y += 24
+        
+        ## Cursor
         session.pyg.screen.blit(self.cursor_img, self.cursor_pos)
 
         #########################################################
@@ -552,6 +559,7 @@ class NewGameMenu:
 
     # Tools
     def init_player(self):
+        """ Creates a temporary player and womb environment. """
 
         #########################################################
         # Imports
@@ -561,69 +569,72 @@ class NewGameMenu:
 
         #########################################################
         # Create player and entity
-        self.temp      = Player()
-        self.temp.ent  = Entity(
-            name       = self.temp.name,
-            role       = self.temp.role,
-            img_names  = self.temp.img_names,
+        player_obj      = Player()
+        player_obj.ent  = Entity(
+            name        = player_obj.name,
+            role        = player_obj.role,
+            img_names   = player_obj.img_names,
 
-            exp        = self.temp.exp,
-            rank       = self.temp.rank,
-            hp         = self.temp.hp,
-            max_hp     = self.temp.max_hp,
-            attack     = self.temp.attack,
-            defense    = self.temp.defense,
-            sanity     = self.temp.sanity,
-            stamina    = self.temp.stamina,
+            exp         = player_obj.exp,
+            rank        = player_obj.rank,
+            hp          = player_obj.hp,
+            max_hp      = player_obj.max_hp,
+            attack      = player_obj.attack,
+            defense     = player_obj.defense,
+            sanity      = player_obj.sanity,
+            stamina     = player_obj.stamina,
             
-            X          = self.temp.X,
-            Y          = self.temp.Y,
-            habitat    = self.temp.habitat,
+            X           = player_obj.X,
+            Y           = player_obj.Y,
+            habitat     = player_obj.habitat,
 
-            follow     = self.temp.follow,
-            lethargy   = self.temp.lethargy,
-            miss_rate  = self.temp.miss_rate,
-            aggression = self.temp.aggression,
-            fear       = self.temp.fear,
-            reach      = self.temp.reach)
+            follow      = player_obj.follow,
+            lethargy    = player_obj.lethargy,
+            miss_rate   = player_obj.miss_rate,
+            aggression  = player_obj.aggression,
+            fear        = player_obj.fear,
+            reach       = player_obj.reach)
         
         ## Player-specific attributes
-        self.temp.ent.questlog        = {}
-        self.temp.ent.garden_questlog = {}
-        self.temp.ent.discoveries     = self.temp.discoveries
+        player_obj.ent.questlog        = {}
+        player_obj.ent.garden_questlog = {}
+        player_obj.ent.discoveries     = player_obj.discoveries
         
         #########################################################
         # Set default items
         for item_name in ['bald', 'clean', 'flat', 'dagger']:
             item = create_item(item_name)
-            item.pick_up(self.temp.ent,      silent=True)
-            item.toggle_equip(self.temp.ent, silent=True)
+            item.pick_up(player_obj.ent,      silent=True)
+            item.toggle_equip(player_obj.ent, silent=True)
             
         #########################################################
         # Initialize character creation environment
-        self.temp.envs = Environments(self.temp)
-        self.temp.envs.build_womb()
+        player_obj.envs = Environments(player_obj)
+        player_obj.envs.build_womb()
 
         ## Place temporary player in character creator
-        self.temp.ent.last_env = self.temp.envs.dict['womb']
+        player_obj.ent.last_env = player_obj.envs.dict['womb']
         place_player(
-            ent = self.temp.ent,
-            env = self.temp.envs.dict['womb'],
-            loc = self.temp.envs.dict['womb'].center)
+            ent = player_obj.ent,
+            env = player_obj.envs.dict['womb'],
+            loc = player_obj.envs.dict['womb'].center)
+        
+        return player_obj
 
     def startup(self):
-        """ Builds the garden and places the player in it. """
+        """ Creates a second temporary player, a womb environment, a the garden environment.
+            This is meant to be a placeholder for the actual player object, separate from the temporary
+            player used only in the New Game menu.
+        """
 
         #########################################################
-        # Make object permanent
-        session.player_obj = copy.deepcopy(self.temp)
+        # Make temporary player
+        session.player_obj = self.init_player()
         session.dev.update_dict()
 
         # Initialize the garden
         session.questlog_obj.init_questlog('garden')
-        session.questlog_obj.init_questlog('overworld')
         session.player_obj.envs.build_garden()
-        session.player_obj.ent.last_env = session.player_obj.envs.dict['womb']
         session.pets_obj.startup()
 
         place_player(
@@ -701,11 +712,18 @@ class NewGameMenu:
 
         #########################################################
         # Make object permanent
+        ## Copy player and womb environment
         session.player_obj = copy.deepcopy(self.temp)
         session.dev.update_dict()
 
-        # Build the home and set it as last environment
+        ## Create garden environment
+        session.questlog_obj.init_questlog('garden')
+        session.player_obj.envs.build_garden()
+        session.pets_obj.startup()
+
+        ## Build the home environment and set it as the last environment
         session.player_obj.envs.build_home()
+
         place_player(
             ent = session.player_obj.ent,
             env = session.player_obj.envs.dict['home'],
@@ -716,10 +734,12 @@ class NewGameMenu:
         items = ['shovel', 'lamp']
         if session.player_obj.ent.equipment['chest'].img_names[0] == 'bra': items.append('yellow dress')
         else:                                                               items.append('green clothes')
+
         for name in items:
             item = create_item(name)
             item.pick_up(ent=session.player_obj.ent,      silent=True)
             item.toggle_equip(ent=session.player_obj.ent, silent=True)
+        
         sort_inventory()
         
         #########################################################
@@ -2927,7 +2947,6 @@ class InventoryMenu:
                 # Move cursor
                 if event.key in pyg.key_UP:
                     self.key_UP()
-                    
                 elif event.key in pyg.key_DOWN:
                     self.key_DOWN()
                 
@@ -2935,15 +2954,13 @@ class InventoryMenu:
                 # Switch section
                 elif event.key in pyg.key_LEFT:
                     self.key_LEFT()
-                
                 elif event.key in pyg.key_RIGHT:
                     self.key_RIGHT()
                 
                 #########################################################
-                # Activate item
+                # Activate or drop item
                 elif event.key in session.pyg.key_ENTER:
                     self.key_ENTER()
-                
                 elif event.key in session.pyg.key_PERIOD:
                     self.key_PERIOD()
                 
@@ -2971,8 +2988,9 @@ class InventoryMenu:
 
             # Save for later reference
             if self.dic_indices:
-                self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
-                self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
+                index = self.dic_index%len(self.dic_indices)
+                self.dic_indices[index][0] = self.offset
+                self.dic_indices[index][1] = self.choice
         
         pyg.overlay = 'inv'
         return
@@ -2981,27 +2999,30 @@ class InventoryMenu:
 
         #########################################################
         # Adjust GUI
-        session.pyg.msg_height = 1
-        session.pyg.update_gui()
+        pyg = session.pyg
+        pyg.msg_height = 1
+        pyg.update_gui()
 
         #########################################################
         # Renders
         ## Background
-        if not self.locked: session.pyg.screen.blit(self.background_fade, (0, 0))
+        if not self.locked: pyg.screen.blit(self.background_fade, (0, 0))
         
         ## Cursor
         if self.cursor_pos[1] < 32: self.cursor_pos[1] = 32
-        session.pyg.screen.blit(self.cursor_fill, self.cursor_pos)
+        pyg.screen.blit(self.cursor_fill, self.cursor_pos)
+
+        ## Color
         session.img.average()
         color = pygame.Color(session.img.left_correct, session.img.left_correct, session.img.left_correct)
         
-        ## Renders menu to update cursor location
+        ## Renders entries (up to 13 visible)
         Y = 32
-        counter = 0
+        visible_count = 0
         for i in range(len(list(self.dic))):
             
             # Stop at the 12th image, starting with respect to the offset 
-            if counter <= 12:
+            if visible_count <= 12:
                 
                 # Extract image details
                 items_list = list(self.dic.keys())
@@ -3021,20 +3042,20 @@ class InventoryMenu:
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
                         self.menu_choices_surfaces.append(
-                            session.pyg.minifont.render(self.menu_choices[i], True, color))
+                            pyg.minifont.render(self.menu_choices[i], True, color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
-                        session.pyg.screen.blit(menu_choice_surface, (40, Y_detail))
+                        pyg.screen.blit(menu_choice_surface, (40, Y_detail))
                         Y_detail += 12
                 
                 # Render image
-                session.pyg.screen.blit(self.dic[item_name], (0, Y))
-                Y += session.pyg.tile_height
-                counter += 1                
+                pyg.screen.blit(self.dic[item_name], (0, Y))
+                Y += pyg.tile_height
+                visible_count += 1                
                 
             else: break
         
-        session.pyg.screen.blit(self.cursor_border, self.cursor_pos)
+        pyg.screen.blit(self.cursor_border, self.cursor_pos)
 
     # Keys
     def key_UP(self):
@@ -3384,7 +3405,10 @@ class CatalogMenu:
                 loc = [self.img_x, self.img_y],
                 env = session.player_obj.ent.env,
                 names = self.img_names.copy())
-            session.player_obj.ent.env.build_room(obj)
+
+            # Check if it completes a room
+            if self.img_names[0] == 'walls':
+                session.player_obj.ent.env.build_room(obj)
         
         # Place entity
         elif self.img_names[0] in session.img.ent_names:
@@ -3496,7 +3520,7 @@ class CatalogMenu:
                 loc = env.player_coordinates)
         except: print("No file found!")
 
-class Abilities:
+class AbilitiesMenu:
     
     def __init__(self):
         """ Shows a sidebar menu when a key is held down, then processes input as a combo.
@@ -3536,6 +3560,9 @@ class Abilities:
         
         # Generate cursor and dictionaries
         self.update_data()
+
+        # Define shorthand
+        pyg = session.pyg
         
         # Handle keystrokes
         for event in pygame.event.get():
@@ -3549,7 +3576,7 @@ class Abilities:
             if event.type == pygame.KEYDOWN:
                 
                 ## >>SEQUENCE<<
-                if event.key in session.pyg.key_HOLD:
+                if event.key in pyg.key_HOLD:
                     self.sequence_toggle = True
 
                 if self.sequence_toggle and (event.key in self.keys):
@@ -3559,29 +3586,29 @@ class Abilities:
                     if len(self.key_sequence) > 3: self.key_sequence.pop(0)
                 
                 # >>DETAILS<<
-                elif event.key in session.pyg.key_QUEST:
+                elif event.key in pyg.key_QUEST:
                     if not self.detail: self.detail = True
                     else:               self.detail = False
             
             # Return to game
             elif event.type == pygame.KEYUP:
-                if event.key in session.pyg.key_HOLD:
+                if event.key in pyg.key_HOLD:
                     self.sequence_toggle = False
-                    session.pyg.overlay = None
+                    pyg.overlay = None
                     return
             
             # Trigger an event
             if len(self.key_sequence) == 3:
                 sequence_string = ''
                 for key in self.key_sequence:
-                    if key in session.pyg.key_LEFT:    sequence_string += '⮜'
-                    elif key in session.pyg.key_DOWN:  sequence_string += '⮟'
-                    elif key in session.pyg.key_RIGHT: sequence_string += '⮞'
-                    elif key in session.pyg.key_UP:    sequence_string += '⮝'
+                    if key in pyg.key_LEFT:    sequence_string += '⮜'
+                    elif key in pyg.key_DOWN:  sequence_string += '⮟'
+                    elif key in pyg.key_RIGHT: sequence_string += '⮞'
+                    elif key in pyg.key_UP:    sequence_string += '⮝'
                 self.check_sequence(sequence_string)
                 self.key_sequence = []
         
-        session.pyg.overlay = 'hold'
+        pyg.overlay = 'hold'
         return
 
     def update_data(self):
@@ -3651,7 +3678,7 @@ class Abilities:
             
             else: break
 
-class Exchange:
+class ExchangeMenu:
 
     def __init__(self):
         

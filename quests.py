@@ -24,7 +24,7 @@ class QuestMenu:
             ----------
             overlay    : str in ['questlog', 'gardenlog']; game state; toggles the set of quests
             mode       : str in ['log', 'quest']; toggles individual quest view
-            options    : list of str
+            choices    : list of str
             categories : list of str
         """
         
@@ -35,35 +35,38 @@ class QuestMenu:
         self.mode        = 'log'
         self.header      = 'questlog'
         
-        self.options    = None
-        self.categories = None
+        self.choices    = [] # set later
+        self.categories = [] # set later
 
         ## Positions
-        self.choice         = 0
-        self.header_pos     = (37, 32)
-        self.options_pos    = None
-        self.categories_pos = None
-        self.backdrop_pos   = (32, 32)
-        self.cursor_pos     = (113, 69)
+        self.spacing      = 24
+        self.header_pos   = (0,   32) # set later (centered)
+        self.choice_pos   = (136, 67) # top choice
+        self.category_pos = (40,  67) # top choice
+        self.cursor_pos   = (120, 67) # top choice
+        self.backdrop_pos = (32,  32)
 
         ## Other
-        self.backdrop_size = (32*18, 32*13)
+        self.choice          = 0
+        self.background_size = (session.pyg.screen_width, session.pyg.screen_height)
+        self.backdrop_size   = (32*18, 32*13)
         
         #########################################################
         # Surface initialization
         ## Background
-        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
+        self.background_surface = pygame.Surface(self.background_size, pygame.SRCALPHA)
+        self.background_surface.fill((0, 0, 0, 50))
         
         ## Backdrop
-        self.backdrop = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
-        self.backdrop.fill((0, 0, 0, 128))
+        self.backdrop_surface = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
+        self.backdrop_surface.fill((0, 0, 0, 128))
 
-        self.border = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
+        ## Border
+        self.border_surface = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
         pygame.draw.polygon(
-            surface = self.border, 
+            surface = self.border_surface, 
             color   = session.pyg.gray,
-            points = [
+            points  = [
                 (0,                       0),
                 (self.backdrop_size[0]-1, 0),
                 (self.backdrop_size[0]-1, self.backdrop_size[1]-1),
@@ -71,9 +74,9 @@ class QuestMenu:
             width = 1)
         
         ## Cursor
-        self.cursor_img = pygame.Surface((16, 16)).convert()
-        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_img, session.pyg.gray, [(5, 3), (10, 7), (5, 11)], 0)
+        self.cursor_surface = pygame.Surface((16, 16)).convert()
+        self.cursor_surface.set_colorkey(self.cursor_surface.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_surface, session.pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
 
     def run(self):
         
@@ -141,56 +144,51 @@ class QuestMenu:
         session.pyg.update_gui()
         
         #########################################################
-        # Renders
+        # Render surfaces
         ## Backdrop
-        session.pyg.screen.blit(self.background_fade, (0, 0))
-        session.pyg.screen.blit(self.backdrop,        self.backdrop_pos)
-        session.pyg.screen.blit(self.border,          self.backdrop_pos)
-        
+        session.pyg.screen.blit(self.background_surface, (0, 0))
+        session.pyg.screen.blit(self.backdrop_surface,   self.backdrop_pos)
+        session.pyg.screen.blit(self.border_surface,     self.backdrop_pos)
+
         ## Header
-        session.pyg.screen.blit(self.header_render, self.header_pos)
+        session.pyg.screen.blit(self.header_surface, self.header_pos)
 
-        ## Options and categories
-        categories = []
-        for i in range(len(self.options_render)):
-
-            # Set position
-            options_pos    = [self.options_pos[i][0],    self.options_pos[i][1]    + 32*len(categories)]
-            categories_pos = [self.categories_pos[i][0], self.categories_pos[i][1] + 32*len(categories)]
-            if i >= 1:
-
-                # Shift position for each category
-                if self.categories[i] != self.categories[i-1]:
-                    options_pos[1]    += 32
-                    categories_pos[1] += 32
-                    categories.append((i, self.categories[i]))
-
-                    # Only render each category once
-                    session.pyg.screen.blit(self.categories_render[i], categories_pos)
-            else:   session.pyg.screen.blit(self.categories_render[i], categories_pos)
+        ## Choices, categories, and cursor
+        categories, category_toggle = [], True
+        for i in range(len(self.choices_render)):
             
-            # Option
-            session.pyg.screen.blit(self.options_render[i],    options_pos)
-        
-        ## Cursor
-        if self.mode == 'log':
+            #########################################################
+            # Check for new category
+            ## Show first catgory
+            if i == 0: category_toggle = True
 
-            # Shift position for current category
-            cursor_pos = [self.cursor_pos[0], self.cursor_pos[1] + 32*self.choice]
-            for i in range(len(categories)):
-                if self.choice >= categories[i][0]:
-                    cursor_pos[1] += 32*(i+1)
-                    break
-            session.pyg.screen.blit(self.cursor_img, cursor_pos)
-        
-        pygame.display.flip()
+            ## Shift positions for consecutive categories
+            elif (i >= 1) and (self.categories[i] != self.categories[i-1]):
+                categories.append((i, self.categories[i]))
+                category_toggle = True
+
+            ## Make sure category is only shown once
+            else: category_toggle = False
+
+            #########################################################
+            # Set positions and render
+            offset       = self.spacing * (i + len(categories))
+            choice_pos   = (self.choice_pos[0],   self.choice_pos[1]   + offset)
+            category_pos = (self.category_pos[0], self.category_pos[1] + offset)
+            cursor_pos   = (self.cursor_pos[0],   self.cursor_pos[1]   + offset)
+
+            session.pyg.screen.blit(self.choices_render[i], choice_pos)
+            if category_toggle:
+                session.pyg.screen.blit(self.categories_render[i], category_pos)
+            if (self.choice == i) and (self.mode == 'log'):
+                session.pyg.screen.blit(self.cursor_surface, cursor_pos)
 
     # Keys
     def key_UP(self):
-        self.choice = (self.choice - 1) % len(self.options)
+        self.choice = (self.choice - 1) % len(self.choices)
         
     def key_DOWN(self):
-        self.choice = (self.choice + 1) % len(self.options)
+        self.choice = (self.choice + 1) % len(self.choices)
 
     def key_LEFT(self):
         if self.mode == 'quest':
@@ -339,6 +337,9 @@ class QuestMenu:
     def update_questlog(self):
         """ Updates and sorts main quests and side quests. """
 
+        # Shorthand
+        pyg = session.pyg
+
         if self.overlay == 'questlog':    log = session.player_obj.ent.questlog
         elif self.overlay == 'gardenlog': log = session.player_obj.ent.gardenlog
 
@@ -347,12 +348,12 @@ class QuestMenu:
             quest = list(log.keys())[self.choice]
             
             self.header = log[list(log.keys())[self.choice]].name
-            self.options = log[list(log.keys())[self.choice]].content
+            self.choices = log[list(log.keys())[self.choice]].content
             self.categories = log[list(log.keys())[self.choice]].categories
 
         elif self.mode == 'log':
             self.header = self.overlay.upper()
-            self.options = list(log.keys())
+            self.choices = list(log.keys())
             self.categories = []
 
             ## Sort quests
@@ -373,11 +374,10 @@ class QuestMenu:
                         self.side_quests.append(quest)
                         self.categories.append(quest.category)
 
-        self.options_pos       = [(136, 67+32*i) for i in range(len(self.options))]
-        self.categories_pos    = [(40, 67+32*i) for i in range(len(self.categories))]
-        self.options_render    = [session.pyg.font.render(option, True, session.pyg.gray) for option in self.options]
-        self.header_render     = session.pyg.font.render(self.header, True, session.pyg.white)
-        self.categories_render = [session.pyg.font.render(f'{category.lower()}', True, session.pyg.gray) for category in self.categories]
+        self.header_surface    = pyg.font.render(self.header, True, pyg.white)
+        self.header_pos        = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
+        self.choices_render    = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
+        self.categories_render = [pyg.font.render(f'{category.lower()}', True, pyg.gray) for category in self.categories]
 
 class Quest:
     """ Holds quest information. """

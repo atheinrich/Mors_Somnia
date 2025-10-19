@@ -68,6 +68,7 @@
     ----
     Townsfolk : Average settlers of the Overworld.
     Bloodkin  : Worshipers of the Sigil of Thanato. They rarely leave the church but can be found in dreams.
+
     Kyrio     : A powerful leader of the Bloodkin. He is a deviant that masquerades as a confused old man.
     Kapno     : The brother of Kyrio and the store manager of the Overworld. He is a pleasant old man that knows nothing of his brother's plot.
     Chameno   : A former leader of the Bloodkin that fled persecution to live in dreams.
@@ -94,7 +95,7 @@ from utilities import Images, Audio, Pets
 
 from mechanics import Pygame, Mechanics
 from mechanics import NewGameMenu, PlayGame, PlayGarden
-from mechanics import InventoryMenu, CatalogMenu, Abilities, Exchange
+from mechanics import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
 
 from quests import QuestMenu
 
@@ -146,8 +147,8 @@ def init():
     ## Side overlays
     session.inv              = InventoryMenu()
     session.dev              = CatalogMenu()
-    session.hold_obj         = Abilities()
-    session.trade_obj        = Exchange()
+    session.hold_obj         = AbilitiesMenu()
+    session.trade_obj        = ExchangeMenu()
     session.stats_obj        = StatsMenu()
     
     #########################################################
@@ -178,23 +179,32 @@ def game_states():
             session.play_game_obj.run()
             session.play_game_obj.render()
             session.player_obj.ent.env.weather.run()
-            for image, (X, Y) in session.player_obj.ent.env.weather.render():
-                session.pyg.display.blit(image, (X, Y))
+            session.player_obj.ent.env.weather.render()
         
         #########################################################
-        # Overlays
+        # Big overlays
         if session.pyg.overlay == 'menu':
             session.main_menu_obj.run()
             session.main_menu_obj.render()
-        
-        elif session.pyg.overlay == 'ctrl_menu':
-            session.ctrl_menu.run()
-            session.ctrl_menu.render()
         
         elif session.pyg.overlay in ['save', 'load']:
             session.file_menu.run()
             session.file_menu.render()
         
+        elif session.pyg.overlay == 'ctrl_menu':
+            session.ctrl_menu.run()
+            session.ctrl_menu.render()
+        
+        elif session.pyg.overlay in ['questlog', 'gardenlog']:
+            session.questlog_obj.run()
+            session.questlog_obj.render()
+        
+        elif session.pyg.overlay == 'textbox':
+            session.textbox.run()
+            session.textbox.render()
+        
+        #########################################################
+        # Side overlays
         elif session.pyg.overlay == 'inv':
             session.inv.run()
             session.inv.render()
@@ -214,26 +224,22 @@ def game_states():
         elif session.pyg.overlay == 'stats':
             session.stats_obj.render()
         
-        elif session.pyg.overlay in ['questlog', 'gardenlog']:
-            session.questlog_obj.run()
-            session.questlog_obj.render()
-        
-        elif session.pyg.overlay == 'textbox':
-            session.textbox.run()
-            session.textbox.render()
-        
         #########################################################
         # Finish up
+        ## Finish rendering
         session.img.render()
         pygame.display.flip()
-        screen = pygame.transform.scale(session.pyg.display, (session.pyg.screen_width, session.pyg.screen_height))
+        screen = pygame.transform.scale(
+            session.pyg.display, 
+            (session.pyg.screen_width, session.pyg.screen_height))
         session.pyg.screen.blit(screen, (0, 0))
         session.pyg.clock.tick(30)
         
-        # Update API
+        ## Update API
+        times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']
         if API_toggle: API(
-            details = session.player_obj.ent.env.name.capitalize(),
-            state   = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'][session.player_obj.ent.env.env_time-1])
+            state   = times[session.player_obj.ent.env.env_time-1],
+            details = session.player_obj.ent.env.name.capitalize())
 
 ########################################################################################################################################################
 # Global scripts
