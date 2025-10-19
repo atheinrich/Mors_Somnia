@@ -37,7 +37,6 @@ class Pygame:
         #########################################################
         # Utility
         self.startup_toggle  = True
-        self.cooldown_time   = 0.2
         self.last_press_time = 0
         
         #########################################################
@@ -50,7 +49,7 @@ class Pygame:
         self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.clock    = pygame.time.Clock()
-        self.display  = pygame.Surface((int(self.screen_width / self.zoom), int(self.screen_height / self.zoom)))
+        self.display  = pygame.Surface((self.screen_width, self.screen_height))
         self.gui      = {
             'health':   self.font.render('', True, self.red),
             'stamina':  self.font.render('', True, self.green),
@@ -183,8 +182,6 @@ class Pygame:
         self.map_height        = 480 * 2
         self.tile_map_width    = int(self.map_width/self.tile_width)
         self.tile_map_height   = int(self.map_height/self.tile_height)
-        self.zoom              = 1
-        self.zoom_cache        = 1
 
         #########################################################
         # Graphics overlays
@@ -308,78 +305,84 @@ class Pygame:
         session.pyg.msg_toggle = msg_cache
 
     def update_gui(self, new_msg=None, color=None, ent=None):
+        """ Constructs (but does not render) messages in the top GUI and stats in the bottom GUI.
+
+            Parameters
+            ----------
+            new_msg     : str; text added to top GUI
+            color       : pygame Color; color of new message
+            ent         : Entity object; only specified at startup
+
+            msg_history : dict; all prior messages and colors in memory
+        """
         
         #########################################################
         # Initialize
-        ## Select entity
+        ## Shorthand
         if not ent: ent = session.player_obj.ent
+        pyg             = session.pyg
+        img             = session.img
 
         ## Prepare colors
-        session.img.average()
-        if not color: color = pygame.Color(255-session.img.top_color[0], 255-session.img.top_color[1], 255-session.img.top_color[2])
-        bottom_color = pygame.Color(255-session.img.bottom_color[0], 255-session.img.bottom_color[1], 255-session.img.bottom_color[2])
+        img.average()
+        if not color:
+            color    = pygame.Color(255-img.top_color[0],    255-img.top_color[1],    255-img.top_color[2])
+        bottom_color = pygame.Color(255-img.bottom_color[0], 255-img.bottom_color[1], 255-img.bottom_color[2])
         
         #########################################################
-        # Manage upper GUI
-        ## Create and delete messages
+        # Messages (top GUI)
+        ## Add new message
         if new_msg:
-            if new_msg in self.msg_history.keys():
-                del self.msg_history[new_msg]
-            for line in session.pyg.textwrap(new_msg, session.pyg.msg_width):
+            for line in pyg.textwrap(new_msg, pyg.msg_width):
+
+                # Only show a message once
+                if line in self.msg_history.keys():
+                    del self.msg_history[line]
                 self.msg_history[line] = color
-                
-                # Delete older messages
-                if len(self.msg) == session.pyg.msg_height:
-                    del self.msg[0]
         
-        # Reconstruct message list
+        ## Find which messages to display
+        lines  = list(self.msg_history.keys())[:self.msg_height]
+        colors = list(self.msg_history.values())[:self.msg_height]
+
+        ## Construct list for display
         self.msg = []
-        index = len(self.msg_history) - self.msg_height
-        if index < 0: index = 0
-        lines = list(self.msg_history.keys())[index:]
-        colors = list(self.msg_history.values())[index:]
         for i in range(len(lines)):
-            if colors[i] in session.pyg.colors: self.msg.append(self.font.render(lines[i], True, colors[i]))
-            else:                               self.msg.append(self.font.render(lines[i], True, color))
+            if colors[i] in pyg.colors: self.msg.append(self.font.render(lines[i], True, colors[i]))
+            else:                       self.msg.append(self.font.render(lines[i], True, color))
         
         #########################################################
-        # Manage lower GUI
-        # Health
-        current_health = int(ent.hp / ent.max_hp * 10)
+        # Stats (bottom GUI)
+        ## Health text
+        current_health  = int(ent.hp / ent.max_hp * 10)
         leftover_health = 10 - current_health
-        health = '⚪' * leftover_health + '⚫' * current_health
+        health          = '⚪' * leftover_health + '⚫' * current_health
         
-        # Stamina
-        current_stamina = int((ent.stamina % 101) / 10)
+        ## Stamina text
+        current_stamina  = int((ent.stamina % 101) / 10)
         leftover_stamina = 10 - current_stamina
-        stamina = '⚫' * current_stamina + '⚪' * leftover_stamina
+        stamina          = '⚫' * current_stamina + '⚪' * leftover_stamina
         
-        # Time
+        ## Time text
         time = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'][ent.env.env_time-1]
         
-        # Update bottom gui
-        if not session.pyg.overlay:
-            self.gui = {
-                'first':   self.minifont.render('',      True, self.white),
-                'health':  self.minifont.render(health,  True, self.red),
-                'time':    self.minifont.render(time,    True, bottom_color),
-                'stamina': self.minifont.render(stamina, True, self.green),
-                'last':    self.minifont.render('',      True, self.white)}
-        
-        # Additional details
-        else:
+        ## Construct dictionary for display
+        if pyg.overlay:
             if self.msg: self.msg = [self.msg[-1]]
             
-            # Location
-            env = str(ent.env.name)
-            if ent.env.lvl_num: env = env + ' (level ' + str(ent.env.lvl_num) + ')'
-            
-            self.gui = {
-                'wallet':   self.minifont.render('⨋ '+str(ent.wallet), True, bottom_color),
-                'health':   self.minifont.render(health,  True, self.red),
-                'time':     self.minifont.render(time,    True, bottom_color),
-                'stamina':  self.minifont.render(stamina, True, self.green),
-                'location': self.minifont.render(env,     True, bottom_color)}
+            # Wallet text
+            wallet = f"⨋ {ent.wallet}"
+
+            # Location text
+            if ent.env.lvl_num: env = f"{ent.env.name} (level {ent.env.lvl_num})"
+            else:               env = f"{ent.env.name}"
+        else: wallet, env = '', ''
+        
+        self.gui = {
+            'wallet':   self.minifont.render(wallet,  True, bottom_color),
+            'health':   self.minifont.render(health,  True, self.red),
+            'time':     self.minifont.render(time,    True, bottom_color),
+            'stamina':  self.minifont.render(stamina, True, self.green),
+            'location': self.minifont.render(env,     True, bottom_color)}
 
 class NewGameMenu:
 
@@ -394,10 +397,6 @@ class NewGameMenu:
             ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
         
         #########################################################
-        # Special
-        self.temp = self.init_player()
-
-        #########################################################
         # Menu details
         ## Basics
         self.menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
@@ -408,7 +407,7 @@ class NewGameMenu:
         ## Other
         self.fadeout = False
 
-        self.last_press_time = 0
+        self.last_rotate_time = 0
         self.cooldown_time   = 0.7
 
         #########################################################
@@ -439,7 +438,8 @@ class NewGameMenu:
         
         ## Return to garden at startup
         if not session.player_obj.ent:
-            self.startup()
+            self.temp          = self.init_player()
+            session.player_obj = self.startup()
             return
         
         ## Set navigation speed
@@ -477,7 +477,7 @@ class NewGameMenu:
         
                 #########################################################
                 # Return to main menu
-                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                elif time.time()-pyg.last_press_time > self.cooldown_time:
                     self.key_BACK()
                     return
                 
@@ -493,8 +493,8 @@ class NewGameMenu:
         render_all(ent=self.temp.ent)
 
         ## Rotate character
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time()) 
+        if time.time()-self.last_rotate_time > self.cooldown_time:
+            self.last_rotate_time = float(time.time()) 
             self.temp.img_names[1] = self.orientations[self.orientations.index(self.temp.img_names[1]) - 1]
         
         #########################################################
@@ -632,7 +632,7 @@ class NewGameMenu:
         session.player_obj = self.init_player()
         session.dev.update_dict()
 
-        # Initialize the garden
+        ## Initialize the garden
         session.questlog_obj.init_questlog('garden')
         session.player_obj.envs.build_garden()
         session.pets_obj.startup()
@@ -647,6 +647,8 @@ class NewGameMenu:
         session.main_menu_obj.startup()
         session.pyg.game_state = 'play_garden'
         session.pyg.overlay    = 'menu'
+
+        return session.player_obj
 
     def apply_option(self):
         
@@ -700,10 +702,7 @@ class NewGameMenu:
         
     def start_game(self):
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
-            Only called after the character creation menu is accepted.
-
-            new:  creates player as Object with Fighter stats, calls make_home(), then loads initial inventory
-            else: calls load_objects_from_file() to load player, inventory, and current floor """
+            Only called after the character creation menu is accepted. """
         
         #########################################################
         # Imports
@@ -732,8 +731,10 @@ class NewGameMenu:
         #########################################################
         # Create and equip items
         items = ['shovel', 'lamp']
-        if session.player_obj.ent.equipment['chest'].img_names[0] == 'bra': items.append('yellow dress')
-        else:                                                               items.append('green clothes')
+
+        if session.player_obj.ent.equipment['chest'].img_names[0] == 'bra':
+            items.append('yellow dress')
+        else: items.append('green clothes')
 
         for name in items:
             item = create_item(name)
@@ -757,7 +758,6 @@ class PlayGame:
         #########################################################
         # Utility
         self.cooldown_time   = 1
-        self.last_press_time = 0
         self.gui_set         = 0
         self.death_cooldown  = 1
         
@@ -811,7 +811,7 @@ class PlayGame:
                             if session.pyg.overlay:
                                 session.pyg.overlay = None
                             
-                            elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                            elif time.time()-session.pyg.last_press_time > self.cooldown_time:
                                 session.pyg.last_press_time = float(time.time())
                                 session.pyg.overlay = 'menu'
                                 pygame.event.clear()
@@ -839,13 +839,14 @@ class PlayGame:
 
                         ## >>STATS<<
                         elif event.key in session.pyg.key_INFO:
-                            if session.pyg.overlay != 'stats':
-                                session.stats_obj.dic = session.stats_obj.stats
-                                session.pyg.overlay = 'stats'
-                            else:
-                                session.pyg.overlay = None
-                            pygame.event.clear()
-                            return
+                            if time.time()-session.pyg.last_press_time > self.cooldown_time:
+                                if session.pyg.overlay != 'stats':
+                                    session.stats_obj.dic = session.stats_obj.stats
+                                    session.pyg.overlay = 'stats'
+                                else:
+                                    session.pyg.overlay = None
+                                pygame.event.clear()
+                                return
             
                         ## >>QUESTLOG<<
                         elif event.key in session.pyg.key_QUEST:
@@ -975,8 +976,8 @@ class PlayGame:
 
         #########################################################
         # Activate items
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = time.time()
             pygame.event.clear()
             
             # >>PICKUP/STAIRS<<
@@ -1050,8 +1051,8 @@ class PlayGame:
         # Move down a level
         if session.player_obj.ent.tile.item:
             if session.player_obj.ent.tile.item.name in ['dungeon', 'cave']:
-                if time.time()-self.last_press_time > self.cooldown_time:
-                    self.last_press_time = float(time.time())
+                if time.time()-session.pyg.last_press_time > self.cooldown_time:
+                    session.pyg.last_press_time = float(time.time())
                 
                     # Go up by one floor
                     if session.player_obj.ent.env.lvl_num > 1:
@@ -1078,7 +1079,7 @@ class PlayGame:
         
         #########################################################
         # Change speed
-        if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
             session.pyg.last_press_time = float(time.time())
             session.mech.movement_speed()
 
@@ -1159,7 +1160,7 @@ class PlayGarden:
                             if session.pyg.overlay == 'stats':
                                 session.pyg.overlay = None
                             
-                            elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                            elif time.time()-session.pyg.last_press_time > self.cooldown_time:
                                 session.pyg.last_press_time = float(time.time())
                                 session.pyg.overlay = 'menu'
                                 pygame.event.clear()
@@ -1272,7 +1273,7 @@ class PlayGarden:
 
         #########################################################
         # Change speed
-        if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
             session.pyg.last_press_time = float(time.time())
             session.mech.movement_speed()
 
@@ -1324,8 +1325,8 @@ class Item:
         self.owner  = None
         
         # Seed a seed for individual adjustments
-        self.rand_X = random.randint(-self.rand_X, self.rand_X)
-        self.rand_Y = random.randint(0,            self.rand_Y)
+        self.rand_X  = random.randint(-self.rand_X, self.rand_X)
+        self.rand_Y  = random.randint(0,            self.rand_Y)
         self.flipped = random.choice([0, self.rand_Y])
         
         # Notify code of big object
@@ -1338,39 +1339,55 @@ class Item:
                 if self.role != 'weapons':
                     self.effect.function(self)
 
-    def draw(self, surface):
-        """ Draws the object at its position. """
+    def draw(self):
+        """ Constructs (but does not render) surfaces for items and their positions. """
         
+        #########################################################
+        # Shorthand
+        cam = session.player_obj.ent.env.camera
+        pyg = session.pyg
+        img = session.img
+
         #########################################################
         # Blit a tile
         if not self.big:
             
-            # Set custom placement
+            # Set position
+            X = self.X - cam.X
+            Y = self.Y - cam.Y
+
             if self.img_names[0] == 'decor':
-                X = self.X - session.player_obj.ent.env.camera.X - self.rand_X
-                Y = self.Y - session.player_obj.ent.env.camera.Y - self.rand_Y
-            
-            else:
-                X = self.X-session.player_obj.ent.env.camera.X
-                Y = self.Y-session.player_obj.ent.env.camera.Y
+                X -= self.rand_X
+                Y -= self.rand_Y
         
             # Add effects and draw
             if (self.img_names[1] in ['leafy']) and not self.rand_Y:
-                surface.blit(session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]]), (X-32, Y-32))
+                surface = img.dict[self.img_names[0]][self.img_names[1]]
+                X       -= 32
+                Y       -= 32
             else:
-                if self.flipped: surface.blit(session.img.flipped.dict[self.img_names[0]][self.img_names[1]], (X, Y))
-                else:            surface.blit(session.img.dict[self.img_names[0]][self.img_names[1]], (X, Y))
+                if self.flipped: surface = img.flipped.dict[self.img_names[0]][self.img_names[1]]
+                else:            surface = img.dict[self.img_names[0]][self.img_names[1]]
+
+            pos = (X, Y)
                 
         #########################################################
         # Blit multiple tiles
         else:
             
-            # Blot every tile in the image
-            for i in range(len(session.img.big)):
-                for j in range(len(session.img.big[0])):
-                    X = self.X - session.player_obj.ent.env.camera.X - session.pyg.tile_width * i
-                    Y = self.Y - session.player_obj.ent.env.camera.Y - session.pyg.tile_height * j
-                    surface.blit(session.img.big[len(session.img.big)-j-1][len(session.img.big[0])-i-1], (X, Y))
+            # Blit every tile in the image
+            surface, pos = [], []
+            for i in range(len(img.big)):
+                for j in range(len(img.big[0])):
+
+                    img = img.big[len(img.big)-j-1][len(img.big[0])-i-1]
+                    X   = self.X - cam.X - pyg.tile_width * i
+                    Y   = self.Y - cam.Y - pyg.tile_height * j
+
+                    surface.append(img)
+                    pos.append((X, Y))
+
+        return surface, pos
 
     def pick_up(self, ent=None, silent=False):
         """ Adds an item to the player's inventory and removes it from the map.
@@ -1606,9 +1623,9 @@ class Entity:
         self.vicinity   = []
 
         ## Movement
-        self.cooldown   = 0.25
-        self.last_press = 0
-        self.motions_log = [] # list of lists of int; prescribed motions for ai
+        self.cooldown_time = 0.25
+        self.last_ai_time  = 0
+        self.motions_log   = [] # list of lists of int; prescribed motions for ai
         
         ## Mechanics
         self.dead        = False
@@ -1690,8 +1707,8 @@ class Entity:
         # Move if alive
         moved = False
         if not self.dead:
-            if time.time()-self.last_press > self.cooldown:
-                self.last_press = float(time.time())
+            if time.time()-self.last_ai_time > self.cooldown_time:
+                self.last_ai_time = float(time.time())
                 
                 # Move or follow
                 if not self.motions_log:
@@ -2256,7 +2273,6 @@ class Mechanics:
         # Set parameters
         ## Utility
         self.cooldown_time     = 1
-        self.last_press_time   = 0
 
         ## Combat
         self.heal_amount       = 4
@@ -2285,8 +2301,8 @@ class Mechanics:
     def enter_dungeon(self, text='', lvl_num=0):
         """ Advances player to the next level. """
         
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = time.time()
             pygame.event.clear()
             
             # Fade in
@@ -2329,8 +2345,8 @@ class Mechanics:
         
         if text == None: text='. . . ! Your vision blurs as the substance seeps through your veins.'
 
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2372,8 +2388,8 @@ class Mechanics:
         
         if text == None: text = '. . . ! Your vision blurs as the substance seeps through your veins.'
 
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2398,8 +2414,8 @@ class Mechanics:
     def enter_cave(self):
         """ Advances player to the next level. """
         
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2435,8 +2451,8 @@ class Mechanics:
 
     def enter_overworld(self):
         
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2454,8 +2470,8 @@ class Mechanics:
 
     def enter_home(self):
         
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = time.time()
             pygame.event.clear()
             
             place_player(
@@ -3123,7 +3139,7 @@ class InventoryMenu:
         else:               self.detail = False
 
     def key_INV(self):
-        self.last_press_time = float(time.time())
+        session.pyg.last_press_time = float(time.time())
         self.cursor_border = pygame.Surface((32, 32)).convert()
         self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
 
@@ -3445,7 +3461,7 @@ class CatalogMenu:
         session.pyg.overlay = None
 
     def key_DEV(self):
-        self.last_press_time = float(time.time())
+        session.pyg.last_press_time = float(time.time())
         self.cursor_border = pygame.Surface((32, 32)).convert()
         self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
 
@@ -3547,7 +3563,7 @@ class AbilitiesMenu:
         self.keys            = session.pyg.key_LEFT + session.pyg.key_DOWN + session.pyg.key_RIGHT
         self.key_sequence    = []
         self.cooldown_time   = 0.5
-        self.last_press_time = 0
+        self.last_combo_time = 0
         
         # GUI
         self.detail = True
@@ -3568,8 +3584,8 @@ class AbilitiesMenu:
         for event in pygame.event.get():
             
             # Clear sequence after some time
-            if time.time()-self.last_press_time > self.cooldown_time:
-                self.last_press_time = time.time()
+            if time.time()-self.last_combo_time > self.cooldown_time:
+                self.last_combo_time = time.time()
                 self.key_sequence    = []
             
             # Wait for sequence
@@ -3633,8 +3649,8 @@ class AbilitiesMenu:
         # Look through item effects
         for effect in session.player_obj.ent.effects:
             if effect.sequence == sequence_string:
-                if time.time()-effect.last_press_time > effect.cooldown_time:
-                    effect.last_press_time = float(time.time())
+                if time.time()-effect.last_use_time > effect.cooldown_time:
+                    effect.last_use_time = float(time.time())
                     effect.function()
                     return
 
@@ -3701,7 +3717,6 @@ class ExchangeMenu:
         
         self.detail = True
         self.cooldown_time = 0.1
-        self.last_press_time = 0
         
         self.menu_toggle = 'right'
         self.ent         = None
@@ -3767,7 +3782,7 @@ class ExchangeMenu:
             
                 ## >>PLAY GAME<<
                 if (event.key in session.pyg.key_BACK) or (event.key in session.pyg.key_HOLD):
-                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                    if time.time()-session.pyg.last_press_time > self.cooldown_time:
                         session.pyg.last_press_time = float(time.time())
                         session.pyg.overlay = None
                         return

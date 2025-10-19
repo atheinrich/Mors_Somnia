@@ -5,6 +5,9 @@
 
 ########################################################################################################################################################
 # Imports
+## Standard
+import time
+
 ## Specific
 import pygame
 from   pygame.locals import *
@@ -50,6 +53,8 @@ class QuestMenu:
         self.choice          = 0
         self.background_size = (session.pyg.screen_width, session.pyg.screen_height)
         self.backdrop_size   = (32*18, 32*13)
+
+        self.cooldown_time   = 1
         
         #########################################################
         # Surface initialization
@@ -104,18 +109,16 @@ class QuestMenu:
                 
                 #########################################################
                 # Move cursor
-                if self.mode == 'log':
+                if event.key in pyg.key_UP:
+                    self.key_UP()
 
-                    if event.key in pyg.key_UP:
-                        self.key_UP()
-
-                    elif event.key in pyg.key_DOWN:
-                        self.key_DOWN()
+                elif event.key in pyg.key_DOWN:
+                    self.key_DOWN()
                 
                 #########################################################
                 # Switch mode
                 ## Switch to quest mode
-                if event.key in pyg.key_RIGHT:
+                elif event.key in pyg.key_RIGHT:
                     self.key_RIGHT()
                 
                 ## Switch to log mode
@@ -128,7 +131,7 @@ class QuestMenu:
                 
                 #########################################################
                 # Return to game
-                elif event.key not in pyg.key_movement:
+                elif time.time()-pyg.last_press_time > self.cooldown_time:
                     self.key_BACK()
                     return
 
@@ -185,10 +188,12 @@ class QuestMenu:
 
     # Keys
     def key_UP(self):
-        self.choice = (self.choice - 1) % len(self.choices)
+        if self.mode == 'log':
+            self.choice = (self.choice - 1) % len(self.choices)
         
     def key_DOWN(self):
-        self.choice = (self.choice + 1) % len(self.choices)
+        if self.mode == 'log':
+            self.choice = (self.choice + 1) % len(self.choices)
 
     def key_LEFT(self):
         if self.mode == 'quest':
@@ -311,8 +316,7 @@ class QuestMenu:
             
             return gathering_supplies, finding_a_future, furnishing_a_home
         
-        else:
-            print(env_name)
+        else: print(env_name)
 
     def check_tasks(self, name, log):
         quest = log[name]

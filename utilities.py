@@ -46,11 +46,14 @@ class FileMenu:
             "Data/File_3/screenshot.png"]
         
         ## Positions
-        self.choice = 0
         self.options_dict = {
             0: 38,
             1: 62,
             2: 86}
+
+        ## Other
+        self.choice = 0
+        self.cooldown_time = 0.5
 
         #########################################################
         # Surface initialization
@@ -76,7 +79,6 @@ class FileMenu:
         # Initialize
         self.mode = session.pyg.overlay
         session.mech.movement_speed(toggle=False, custom=2)
-        session.mech.zoom_cache = 1
         
         for event in pygame.event.get():
             
@@ -97,7 +99,7 @@ class FileMenu:
                     return
                 
                 ## Return
-                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                elif time.time()-session.pyg.last_press_time > self.cooldown_time:
                         session.pyg.last_press_time = float(time.time())
                         session.pyg.overlay = 'menu'
                         return None
@@ -130,8 +132,6 @@ class FileMenu:
         #########################################################
         # Take a screenshot
         screenshot(
-            size     = 'display',
-            visible  = False,
             folder   = f"Data/File_{file_num}",
             filename = "screenshot.png",
             blur     = True)
@@ -163,6 +163,7 @@ class FileMenu:
         
         #########################################################
         # Clean up and return
+        session.player_obj.ent.env.camera.zoom_in(factor=0)
         session.pyg.gui_toggle       = True
         session.pyg.msg_toggle       = True
         session.pyg.startup_toggle   = False
@@ -204,7 +205,10 @@ class CtrlMenu:
             'numpad 1',
             'numpad 2',
             'arrows']
+        
+        ## Other
         self.choice = 0
+        self.cooldown_time = 0.5
 
         #########################################################
         # Surface initialization
@@ -242,7 +246,6 @@ class CtrlMenu:
         #########################################################
         # Initialize
         session.mech.movement_speed(toggle=False, custom=2)
-        session.mech.zoom_cache = 1
         
         for event in pygame.event.get():
             
@@ -255,7 +258,7 @@ class CtrlMenu:
                 elif event.key in session.pyg.key_RIGHT: self.update_controls(1)
                 
                 ## Return
-                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
+                elif time.time()-session.pyg.last_press_time > self.cooldown_time:
                     session.pyg.last_press_time = float(time.time())
                     session.pyg.overlay = 'menu'
                     return None
@@ -298,11 +301,9 @@ class MainMenu:
 
         ## Other
         self.choice = 0
-        
-        self.last_press_time = 0
-        self.cooldown_time   = 0.5
-
         self.fadein = True
+        
+        self.cooldown_time   = 0.5
 
         #########################################################
         # Surface initialization
@@ -422,7 +423,7 @@ class MainMenu:
         
                 #########################################################
                 # Return to game
-                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                elif time.time()-pyg.last_press_time > self.cooldown_time:
                     self.key_BACK()
                     return
         
@@ -515,6 +516,7 @@ class MainMenu:
             self.choice_surfaces.insert(0, pyg.font.render(option_dict[self.game_state], True, pyg.gray))
             self.choice_pos = (self.choice_pos[0], 436 - len(self.choices)*self.spacing) # top choice
             self.cursor_pos = (self.cursor_pos[0], 436 - len(self.choices)*self.spacing) # top choice
+            self.choice     += 1
 
         else:
             self.choices[0]         = option_dict[self.game_state]
@@ -524,8 +526,8 @@ class MainMenu:
 
         from mechanics import place_player
 
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time())
+        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+            session.pyg.last_press_time = float(time.time())
 
             if session.player_obj.ent.env.name != 'garden':
                 place_player(
@@ -1608,24 +1610,12 @@ def sort_inventory(ent=None):
 
     ent.inventory = inventory_cache
 
-def screenshot(size='display', visible=False, folder="Data/.Cache", filename="screenshot.png", blur=False):
-    """ Takes a screenshot.
-        cache:  saves a regular screenshot under Data/.Cache/screenshot.png
-        save:   moves regular cached screenshot to Data/File_#/screenshot.png 
-        blur:   adds a blur effect """
+def screenshot(folder, filename, blur=False):
+    """ Takes a screenshot. """
     
     # Turn off gui
     gui_cache, msg_cache = copy.copy(session.pyg.gui_toggle), copy.copy(session.pyg.msg_toggle)
     session.pyg.gui_toggle, session.pyg.msg_toggle = False, False
-    
-    # Select display size
-    if size == 'full':
-        camera_cache = [session.player_obj.ent.env.camera.X, session.player_obj.ent.env.camera.Y]
-        session.pyg.screen = pygame.display.set_mode((len(session.player_obj.ent.env.map[0])*16, len(session.player_obj.ent.env.map)*16),)
-        session.player_obj.ent.env.camera.X = 0
-        session.player_obj.ent.env.camera.Y = 0
-        session.player_obj.ent.env.camera.update()
-        render_all(size=size, visible=visible)
     
     # Save image
     path = folder + '/' + filename
@@ -1638,120 +1628,115 @@ def screenshot(size='display', visible=False, folder="Data/.Cache", filename="sc
         image_after  = image_before.filter(ImageFilter.BLUR)
         image_after.save(folder + '/' + filename)
     
-    # Reset everthing to normal
-    if size == 'full':
-        session.pyg.screen = pygame.display.set_mode((session.pyg.screen_width, session.pyg.screen_height),)
-        session.player_obj.ent.env.camera.X = camera_cache[0]
-        session.player_obj.ent.env.camera.Y = camera_cache[1]
-        session.player_obj.ent.env.camera.update()
-    
-    session.pyg.gui_toggle, session.pyg.msg_toggle = gui_cache, msg_cache
+    session.pyg.gui_toggle = gui_cache
+    session.pyg.msg_toggle = msg_cache
     render_all()
 
-def render_all(ent=None, size='display', visible=False):
+def bw_binary():
+    import numpy as np
+    
+    # Extract screen as image
+    screen_surface = pygame.display.get_surface()
+    raw_str        = pygame.image.tostring(screen_surface, 'RGB')
+    image          = Image.frombytes('RGB', screen_surface.get_size(), raw_str)
+    
+    # Apply PIL effects
+    image = image.convert('L')
+    
+    # Apply numpy effects
+    image = np.array(image)
+    image = np.where(image > 50, 255, 0)
+    image = image.T
+    image = np.stack([image] * 3, axis=-1)
+    image = pygame.surfarray.make_surface(image)
+    session.pyg.screen.blit(image, (0, 0))
+
+def render_all(ent=None):
     """ Draws tiles and stuff. Constantly runs. """
     
-    # Select entity
+    #########################################################
+    # Initialize
+    ## Shorthand
     if not ent: ent = session.player_obj.ent
+    camera          = ent.env.camera
+    pyg             = session.pyg
+    img             = session.img
 
-    def bw_binary():
-        import numpy as np
-        
-        # Extract screen as image
-        screen_surface = pygame.display.get_surface()
-        raw_str = pygame.image.tostring(screen_surface, 'RGB')
-        image = Image.frombytes('RGB', screen_surface.get_size(), raw_str)
-        
-        # Apply PIL effects
-        image = image.convert('L')
-        
-        # Apply numpy effects
-        image = np.array(image)
-        image = np.where(image > 50, 255, 0)
-        image = image.T
-        image = np.stack([image] * 3, axis=-1)
-        image = pygame.surfarray.make_surface(image)
-        session.pyg.screen.blit(image, (0, 0))
-    
-    session.pyg.display.fill(session.pyg.black)
-    
-    # Set tiles to render
-    if size == 'full':
-        y_range_1, y_range_2 = 0, len(ent.env.map[0])
-        x_range_1, x_range_2 = 0, len(ent.env.map)
-    
-    else:        
-        camera = ent.env.camera
+    ## Clear previous screen
+    pyg.display.fill(pyg.black)
 
-        y_range_1 = max(0, camera.tile_map_y)
-        y_range_2 = min(len(ent.env.map[0])-1, camera.tile_map_y + camera.tile_map_height+2)
-        
-        x_range_1 = max(0, camera.tile_map_x)
-        x_range_2 = min(len(ent.env.map)-1, camera.tile_map_x + camera.tile_map_width+2)
-    
+    #########################################################
     # Draw visible tiles
-    for y in range(int(camera.Y/32), int(camera.bottom/session.pyg.tile_height + 1)):
-        for x in range(int(camera.X/32), int(camera.right/session.pyg.tile_width + 1)):
+    for y in range(int(camera.Y/32), int(camera.bottom/pyg.tile_height + 1)):
+        for x in range(int(camera.X/32), int(camera.right/pyg.tile_width + 1)):
             try:    tile = ent.env.map[x][y]
             except: continue
-            
-            if visible or not tile.hidden:
+            if not tile.hidden:
                 
-                # Lowest tier (floor and walls)
+                # Lowest tier (floor or walls)
                 image, (X, Y) = tile.draw()
-                session.pyg.display.blit(image, (X, Y))
+                pyg.display.blit(image, (X, Y))
 
-                # Second tier (decor and items)
+                # Second tier (decor or item)
                 if tile.item:
-                    tile.item.draw(session.pyg.display)
+                    surface, pos = tile.item.draw()
+
+                    # Handle single-tile images
+                    if type(surface) != list:
+                        pyg.display.blit(surface, pos)
+
+                    # Handle multi-tile images
+                    else:
+                        for i in range(len(surface)):
+                            pyg.display.blid(img, pos)
                 
                 # Third tier (entity)
-                if tile.entity:
-                    tile.entity.draw(session.pyg.display)
+                if tile.entity: tile.entity.draw(pyg.display)
                 
                 # Fourth tier (roof)
                 if tile.room:
-                    if tile.room.roof:
-                        if tile.img_names == tile.room.roof:
-                            image, (X, Y) = tile.draw()
-                            session.pyg.display.blit(image, (X, Y))
+                    if tile.room.roof == tile.img_names:
+                        image, (X, Y) = tile.draw()
+                        pyg.display.blit(image, (X, Y))
     
+    #########################################################
     # Apply effects
-    if session.img.render_fx == 'bw_binary': bw_binary()
+    if img.render_fx == 'bw_binary': bw_binary()
     
+    #########################################################
     # Render GUI
-    if (size == 'display') and (session.pyg.overlay != 'menu'):
-        if bool(session.img.impact):
-            for i in range(len(session.img.impact_images)):
-                session.pyg.screen.blit(session.img.impact_images[i], session.img.impact_image_pos[i])
+    if pyg.overlay != 'menu':
+        if bool(img.impact):
+            for i in range(len(img.impact_images)):
+                pyg.screen.blit(img.impact_images[i], img.impact_image_pos[i])
         
         # Print messages
-        if session.pyg.msg_toggle: 
+        if pyg.msg_toggle: 
             Y = 3
             
             # Find how many messages to write
-            for message in session.pyg.msg:
-                session.pyg.screen.blit(message, (5, Y))
+            for message in pyg.msg:
+                pyg.screen.blit(message, (5, Y))
                 Y += 16
         
         # Print status bars and time
-        if session.pyg.gui_toggle:
-            gui = list(session.pyg.gui.values())
-            for i in range(len(session.pyg.gui)):
+        if pyg.gui_toggle:
+            gui = list(pyg.gui.values())
+            for i in range(len(pyg.gui)):
                 
                 # Left
                 if i == 0:   x = 16
                 
                 # Central
-                elif i == 1: x = session.pyg.screen_width//2 - gui[2].get_width()//2 - gui[1].get_width()
-                elif i == 2: x = session.pyg.screen_width//2 - gui[2].get_width()//2
-                elif i == 3: x = session.pyg.screen_width//2 + gui[2].get_width()//2
+                elif i == 1: x = pyg.screen_width//2 - gui[2].get_width()//2 - gui[1].get_width()
+                elif i == 2: x = pyg.screen_width//2 - gui[2].get_width()//2
+                elif i == 3: x = pyg.screen_width//2 + gui[2].get_width()//2
                 
                 # Right
-                elif i == 4: x = session.pyg.screen_width - gui[i].get_width() - 16
+                elif i == 4: x = pyg.screen_width - gui[i].get_width() - 16
                 
-                y = session.pyg.screen_height - 27
-                session.pyg.screen.blit(gui[i], (x, y))
+                y = pyg.screen_height - 27
+                pyg.screen.blit(gui[i], (x, y))
     
     session.aud.shuffle()
 

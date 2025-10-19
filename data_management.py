@@ -134,13 +134,13 @@ class Camera:
         """
         
         self.ent             = ent
-        self.width           = int(session.pyg.screen_width / session.pyg.zoom)
-        self.height          = int((session.pyg.screen_height + session.pyg.tile_height) / session.pyg.zoom)
+        self.width           = session.pyg.screen_width
+        self.height          = session.pyg.screen_height + session.pyg.tile_height
         self.tile_map_width  = int(self.width / session.pyg.tile_width)
         self.tile_map_height = int(self.height / session.pyg.tile_height)
         
-        self.X               = int((self.ent.X * session.pyg.zoom) - int(self.width / 2))
-        self.Y               = int((self.ent.Y * session.pyg.zoom) - int(self.height / 2))
+        self.X               = int(self.ent.X - int(self.width / 2))
+        self.Y               = int(self.ent.Y - int(self.height / 2))
         self.tile_map_x      = int(self.X / session.pyg.tile_width)
         self.tile_map_y      = int(self.Y / session.pyg.tile_height)
         
@@ -152,6 +152,7 @@ class Camera:
         self.center_X        = int(self.X + int(self.width / 2))
         self.center_Y        = int(self.Y + int(self.height / 2))
         
+        self.zoom            = 1
         self.fixed           = False
         self.fix_position()
 
@@ -181,49 +182,47 @@ class Camera:
             self.X          = 0
             self.center_X   = self.X + int(self.width / 2)
             self.right      = self.X + self.width
-            self.tile_map_x = int(self.X / (session.pyg.tile_width / session.pyg.zoom))
+            self.tile_map_x = int(self.X / (session.pyg.tile_width / self.zoom))
             self.x_range    = self.tile_map_x + self.tile_map_width
         
         elif self.right > (len(self.ent.env.map)-1) * session.pyg.tile_width:
             self.right      = (len(self.ent.env.map)) * session.pyg.tile_width
             self.X          = self.right - self.width
             self.center_X   = self.X + int(self.width / 2)
-            self.tile_map_x = int(self.X / (session.pyg.tile_width / session.pyg.zoom))
+            self.tile_map_x = int(self.X / (session.pyg.tile_width / self.zoom))
             self.x_range    = self.tile_map_x + self.tile_map_width
         
         if self.Y < 0:
             self.Y          = 0
             self.center_Y   = self.Y + int(self.height / 2)
-            self.bottom     = (self.Y + self.height + 320) / session.pyg.zoom
-            self.tile_map_y = int(self.Y / (session.pyg.tile_height / session.pyg.zoom))
+            self.bottom     = (self.Y + self.height + 320) / self.zoom
+            self.tile_map_y = int(self.Y / (session.pyg.tile_height / self.zoom))
             self.y_range    = self.tile_map_y + self.tile_map_height
         
         elif self.bottom > (len(self.ent.env.map[0])) * session.pyg.tile_height:
             self.bottom     = (len(self.ent.env.map[0])) * session.pyg.tile_height
             self.Y          = self.bottom - self.height
             self.center_Y   = self.Y + int(self.height / 2)
-            self.tile_map_y = int(self.Y / (session.pyg.tile_height / session.pyg.zoom))
+            self.tile_map_y = int(self.Y / (session.pyg.tile_height / self.zoom))
             self.y_range    = self.tile_map_y + self.tile_map_height
 
     def zoom_in(self, factor=0.1, custom=None):
         """ Zoom in by reducing the camera's width and height. """
         
         # Set to a specific value
-        if custom and (session.pyg.zoom != custom):
-            session.pyg.zoom = custom
-            session.pyg.zoom_cache = session.pyg.zoom
+        if custom and (self.zoom != custom):
+            self.zoom = custom
             session.pyg.update_gui()
-            self.width  = int(session.pyg.screen_width / session.pyg.zoom)
-            self.height = int(session.pyg.screen_height / session.pyg.zoom)
+            self.width  = int(session.pyg.screen_width / self.zoom)
+            self.height = int(session.pyg.screen_height / self.zoom)
             session.pyg.display = pygame.Surface((self.width, self.height))
             self._recalculate_bounds()
         
         elif not custom and not self.fixed:
-            session.pyg.zoom += factor
-            session.pyg.zoom_cache = session.pyg.zoom
+            self.zoom += factor
             session.pyg.update_gui()
-            self.width  = int(session.pyg.screen_width / session.pyg.zoom)
-            self.height = int(session.pyg.screen_height / session.pyg.zoom)
+            self.width  = int(session.pyg.screen_width / self.zoom)
+            self.height = int(session.pyg.screen_height / self.zoom)
             session.pyg.display = pygame.Surface((self.width, self.height))
             self._recalculate_bounds()
 
@@ -231,15 +230,14 @@ class Camera:
         """ Zoom out by increasing the camera's width and height. """
         
         if not self.fixed:
-            if round(session.pyg.zoom, 2) > factor:  # Ensure zoom level stays positive
+            if round(self.zoom, 2) > factor:  # Ensure zoom level stays positive
                 if custom:
-                    session.pyg.zoom = custom
+                    self.zoom = custom
                 else:
-                    session.pyg.zoom -= factor
-                    session.pyg.zoom_cache = session.pyg.zoom
+                    self.zoom -= factor
                 session.pyg.update_gui()
-                self.width = int(session.pyg.screen_width / session.pyg.zoom)
-                self.height = int(session.pyg.screen_height / session.pyg.zoom)
+                self.width = int(session.pyg.screen_width / self.zoom)
+                self.height = int(session.pyg.screen_height / self.zoom)
                 session.pyg.display = pygame.Surface((self.width, self.height))
                 self._recalculate_bounds()
 

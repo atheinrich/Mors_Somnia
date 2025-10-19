@@ -1875,17 +1875,10 @@ class Tile:
             if self.img_names[1] != 'wood':                   image = session.img.shift(image, [abs(self.rand_X), abs(self.rand_Y)])
                 
         ## (Optional) Apply static effect
-        if self.biome in session.img.biomes['sea']:     image = session.img.static(image, offset=20, rate=100)
+        if self.biome in session.img.biomes['sea']:           image = session.img.static(image, offset=20, rate=100)
         
         # Return result for rendering
         return image, (X, Y)
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
 
     def __eq__(self, other):
         return (self.X == other.X) and (self.Y == other.Y)
