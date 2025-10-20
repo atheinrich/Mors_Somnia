@@ -31,6 +31,25 @@ class Session:
 
         self.stats_obj        = None # StatsMenu object
 
+        self.bus              = EventBus()
+
+class EventBus:
+
+    def __init__(self):
+        """ Accepts event information, holds functions tied to events, and calls the functions if events match. """
+
+        self.listeners = {}
+
+    def subscribe(event_type, function):
+        """ Adds a new function to be called when the given event type occurs. """
+
+        EventBus.listeners.setdefault(event_type, []).append(function)
+
+    def emit(event_type, **kwargs):
+        """ Accepts an event flag and calls any functions with a matching event. """
+
+        for function in EventBus.listeners.get(event_type, []): function(**kwargs)
+
 session = Session()
 
 ########################################################################################################################################################

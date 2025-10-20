@@ -20,8 +20,11 @@ import session
 # Classes
 class Environments:
 
+    # Core
     def __init__(self, player_obj):
-        """ Holds environments for user. """
+        """ Holds environments for user. All environments in a given area (ex. dungeons) are grouped
+            under an Area object.
+        """
 
         # Owner
         self.player_obj = player_obj
@@ -32,8 +35,20 @@ class Environments:
         self.max_rooms     = 3
 
         # Environment container
-        self.dict = {}
+        self.areas = {}
 
+    def add_area(self, name):
+        self.areas[name] = Area(name, self)
+
+    def build_env(self, name):
+        if name == 'womb':        return self.build_womb()
+        elif name == 'garden':    return self.build_garden()
+        elif name == 'home':      return self.build_home()
+        elif name == 'overworld': return self.build_overworld()
+        elif name == 'dungeon':   return self.build_dungeon()
+        elif name == 'cave':      return self.build_cave()
+
+    # Builders
     def build_garden(self):
         """ Generates the overworld environment. """
         
@@ -104,7 +119,6 @@ class Environments:
         self.player_obj.ent.tile = env.map[x][y]
         env.center = new_room.center()
         
-        self.dict[env.name] = env
         return env
 
     def build_womb(self):
@@ -171,7 +185,6 @@ class Environments:
         self.player_obj.ent.tile = env.map[x][y]
         env.center = new_room.center()
         
-        self.dict[env.name] = env
         return env
 
     def build_home(self):
@@ -287,307 +300,7 @@ class Environments:
         # Initial position
         env.player_coordinates = env.center
         
-        self.dict[env.name] = env
         return env
-
-    def build_dungeon_level(self, lvl_num=0):
-        """ Generates the overworld environment. """
-        
-        from items_entities import create_item
-        from mechanics import place_object, place_objects
-        from data_management import Camera
-
-        ###############################################################
-        # Initialize environment
-        if lvl_num == 0:
-            if 'dungeon' not in self.dict:
-                self.dict['dungeon'] = []
-                lvl_num = 1
-            else:
-                lvl_num = 1 + self.dict['dungeon'][-1].lvl_num
-        
-        env = Environment(
-            envs       = self,
-            name       = 'dungeon',
-            lvl_num    = lvl_num,
-            size       = 2 * (1 + lvl_num//3),
-            soundtrack = [f'dungeon {lvl_num}'],
-            img_names  = ['walls', 'gray'],
-            floors     = ['floors', 'dark green'],
-            walls      = ['walls', 'gray'],
-            roofs      = None,
-            blocked    = True,
-            hidden     = True)
-        
-        # Set weather
-        env.weather_backup = {
-            'light_set': None,
-            'clouds':    False}
-        env.weather = Weather(env, clouds=False)
-        
-        self.dict['dungeon'].append(env)
-        env.camera = Camera(self.player_obj.ent)
-        env.camera.fixed = False
-        env.camera.zoom_in(custom=1)
-
-        # Generate biomes
-        biomes = [['dungeon', ['walls', 'gray']]]
-        voronoi_biomes(env, biomes)
-        
-        ###############################################################
-        # Construct rooms
-        rooms, room_counter, counter = [], 0, 0
-        num_rooms = int(self.max_rooms * env.lvl_num) + 2
-        for i in range(num_rooms):
-            
-            # Construct room
-            width    = random.randint(self.room_min_size, self.room_max_size)
-            height   = random.randint(self.room_min_size, self.room_max_size)
-            x        = random.randint(0, len(env.map)    - width  - 1)
-            y        = random.randint(0, len(env.map[0]) - height - 1)
-            
-            floor = random.choice([
-                ['floors', 'dark green'],
-                ['floors', 'dark green'],
-                ['floors', 'green']])
-            
-            new_room = Room(
-                name    = 'dungeon room',
-                env     = env,
-                x1      = x,
-                y1      = y,
-                width   = width,
-                height  = height,
-                biome   = 'any',
-                hidden  = True,
-                objects = True,
-                floor   = floor,
-                walls   = env.walls,
-                roof    = env.roofs)
-        
-        # Combine rooms and add doors
-        env.combine_rooms()
-        
-        # Paths
-        for i in range(len(env.rooms)):
-            room_1, room_2 = env.rooms[i], env.rooms[i-1]
-            chance_1, chance_2 = 0, random.randint(0, 1)
-            if not chance_1:
-                (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
-                if not chance_2:
-                    try:
-                        env.create_h_tunnel(x_1, x_2, y_1)
-                        env.create_v_tunnel(y_1, y_2, x_2)
-                    except: raise Exception('Error')
-                else:
-                    env.create_v_tunnel(y_1, y_2, y_1)
-                    env.create_h_tunnel(x_1, x_2, y_2)
-        
-        ###############################################################
-        # Generate items and entities
-        items = [
-            ['land', 'jug of blood',   10],
-            ['land', 'bones',          50],
-            ['land', 'sword',          1000//env.lvl_num],
-            ['land', 'iron shield',    1000//env.lvl_num],
-            ['land', 'skeleton',       500],
-            ['land', 'fire',           100]]
-        entities = [
-            ['land', 'plant',          300,   [None]],
-            ['land', 'eye',            15,    ['eye']],
-            ['land', 'red radish',     1000,  [None]],
-            ['land', 'round1',         30,    [None]]]
-        place_objects(env, items, entities)
-        
-        # Place player in first room
-        (x, y) = env.rooms[0].center()
-        env.player_coordinates = [x, y]
-        env.entity = self.player_obj.ent
-        env.center = new_room.center()
-        self.player_obj.ent.tile = env.map[x][y]
-        
-        # Generate stairs in the last room
-        (x, y) = env.rooms[-2].center()
-        stairs = create_item('door')
-        stairs.name = 'dungeon'
-        place_object(stairs, [x, y], self.dict['dungeon'][-1])
-            
-        self.dict[env.name].append(env)
-
-    def build_hallucination_level(self, lvl_num=0):
-        """ Generates the overworld environment. """
-        
-        from items_entities import create_item
-        from mechanics import place_object, place_objects, create_text_room
-        from data_management import Camera
-
-        ###############################################################
-        ## Initialize environment
-        if lvl_num == 0:
-            if 'hallucination' not in self.dict:
-                self.dict['hallucination'] = []
-                lvl_num = 1
-            else:
-                lvl_num = 1 + self.dict['hallucination'][-1].lvl_num
-                
-        env = Environment(
-            envs       = self,
-            name       = 'hallucination',
-            lvl_num    = lvl_num,
-            size       = 3,
-            soundtrack = [f'hallucination {lvl_num}'],
-            img_names  = ['walls',  'gold'],
-            floors     = ['floors', 'green'],
-            walls      = ['walls',  'gold'],
-            roofs      = None,
-            blocked    = True,
-            hidden     = True)
-        
-        # Set weather
-        env.weather_backup = {
-            'light_set': 32,
-            'clouds':    False}
-        env.weather = Weather(env, light_set=32, clouds=False)
-
-        ## Generate biomes
-        biomes = [
-            ['any', ['walls', 'gold']],
-            ['any', ['walls', 'gold']],
-            ['any', ['walls', 'gold']],
-            ['any', ['walls', 'gold']]]
-        voronoi_biomes(env, biomes)
-        
-        env.camera = Camera(self.player_obj.ent)
-        env.camera.fixed = False
-        env.camera.zoom_in(custom=1)
-        
-        ###############################################################
-        # Construct rooms
-        rooms, room_counter, counter = [], 0, 0
-        num_rooms = int(self.max_rooms*2 * env.lvl_num) + 2
-        for i in range(num_rooms):
-            
-            # Construct room
-            width    = random.randint(self.room_min_size*2, self.room_max_size*2)
-            height   = random.randint(self.room_min_size*2, self.room_max_size*2)
-            x        = random.randint(0, len(env.map)    - width  - 1)
-            y        = random.randint(0, len(env.map[0]) - height - 1)
-            
-            new_room = Room(
-                name    = 'hallucination backdrop',
-                env     = env,
-                x1      = x,
-                y1      = y,
-                width   = width,
-                height  = height,
-                biome   = 'any',
-                hidden  = True,
-                objects = True,
-                floor   = env.floors,
-                walls   = env.walls,
-                roof    = env.roofs)
-        
-        # Combine rooms and add doors
-        env.combine_rooms()
-        
-        ## Construct rooms
-        num_rooms             = 5
-        rooms                 = []
-        room_counter, counter = 0, 0
-        center                = env.center
-        (x_1, y_1)            = center
-        x_2                   = lambda width:  len(env.map)    - width  - 1
-        y_2                   = lambda height: len(env.map[0]) - height - 1
-        while room_counter < num_rooms:
-            
-            # Generate location
-            width  = random.randint(self.room_min_size, self.room_max_size)
-            height = random.randint(self.room_min_size, self.room_max_size)
-            x      = random.randint(x_1, x_2(width))
-            y      = random.randint(y_1, y_2(height))
-            
-            # Check for solid ground
-            failed = False
-            for u in range(width):
-                for v in range(height):
-                    if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
-            if not failed:
-                
-                ## Construct room
-                new_room = Room(
-                    name   = 'hallucination room',
-                    env    = env,
-                    x1     = x,
-                    y1     = y,
-                    width  = width,
-                    height = height,
-                    biome   = 'city',
-                    hidden = False,
-                    objects = False,
-                    floor  = ['floors', 'dark green'],
-                    walls  = env.walls,
-                    roof   = env.roofs,
-                    plan = create_text_room(width, height, doors=False))
-
-                room_counter += 1
-                x, y = new_room.center()[0], new_room.center()[1]
-            
-            # Spawn rooms elsewhere if needed
-            else: counter += 1
-            if counter > num_rooms:
-                counter = 0
-                (x_1, y_1) = (0, 0)
-        
-        # Paths
-        for i in range(len(env.rooms)):
-            room_1, room_2 = env.rooms[i], env.rooms[i-1]
-            chance_1, chance_2 = 0, random.randint(0, 1)
-            if not chance_1:
-                (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
-                if not chance_2:
-                    try:
-                        env.create_h_tunnel(x_1, x_2, y_1)
-                        env.create_v_tunnel(y_1, y_2, x_2)
-                    except: raise Exception('Error')
-                else:
-                    env.create_v_tunnel(y_1, y_2, y_1)
-                    env.create_h_tunnel(x_1, x_2, y_2)
-        
-        ###############################################################
-        # Generate items and entities
-        items = [
-            ['any', 'jug of grapes',  100],
-            ['any', 'shrooms',        10],
-            ['any', 'shrooms',        10],
-            ['any', 'purple bulbs',   10],
-            ['any', 'cup shroom',     25],
-            ['any', 'sword',          1000//env.lvl_num],
-            ['any', 'yellow dress',   200]]
-        entities = [
-            ['any', 'triangle',       200,  [None]],
-            ['any', 'tentacles',      100,  [None]],
-            ['any', 'red radish',     1000, [None]],
-            ['any', 'star',           150,  [None]]]
-        place_objects(env, items, entities)
-        
-        # Change player into tentacles
-        self.player_obj.ent.img_names_backup = self.player_obj.ent.img_names
-        self.player_obj.ent.img_names = ['tentacles', 'front']
-        
-        # Place player in first room
-        (x, y) = env.rooms[0].center()
-        env.player_coordinates = [x, y]
-        env.entity = self.player_obj.ent
-        env.center = new_room.center()
-        self.player_obj.ent.tile = env.map[x][y]
-        
-        # Generate stairs in the last room
-        (x, y) = env.rooms[-2].center()
-        stairs = create_item('portal')
-        stairs.name = 'hallucination'
-        place_object(stairs, [x, y], env)
-            
-        self.dict[env.name].append(env)
 
     def build_overworld(self):
         """ Generates the overworld environment. """
@@ -615,7 +328,6 @@ class Environments:
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
             hidden     = False)
-        self.dict['overworld'] = env
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -645,12 +357,11 @@ class Environments:
         ###############################################################
         ## Construct rooms
         num_rooms             = 20
-        rooms                 = []
         room_counter, counter = 0, 0
-        center                = self.dict['overworld'].center
+        center                = env.center
         (x_1, y_1)            = center
-        x_2                   = lambda width:  len(self.dict['overworld'].map)    - width  - 1
-        y_2                   = lambda height: len(self.dict['overworld'].map[0]) - height - 1
+        x_2                   = lambda width:  len(env.map)    - width  - 1
+        y_2                   = lambda height: len(env.map[0]) - height - 1
         while room_counter < num_rooms:
             
             # Generate location
@@ -679,8 +390,8 @@ class Environments:
                     hidden = False,
                     objects = False,
                     floor  = ['floors', 'dark green'],
-                    walls  = self.dict['overworld'].walls,
-                    roof   = self.dict['overworld'].roofs,
+                    walls  = env.walls,
+                    roof   = env.roofs,
                     plan = create_text_room(width, height))
 
                 room_counter += 1
@@ -850,204 +561,130 @@ class Environments:
         self.player_obj.ent.questlines['Friendly Faces'] = FriendlyFaces()
         self.player_obj.ent.questlines['Friendly Faces'].making_an_introduction()
             
-        self.dict[env.name] = env
+        return env
 
-    def build_bitworld(self):
-        """ Generates the bitworld environment. """
-
-        from items_entities import create_item, create_NPC
-        from mechanics import place_object, place_objects, create_text_room
+    def build_dungeon(self, lvl_num=0):
+        """ Generates the overworld environment. """
+        
+        from items_entities import create_item
+        from mechanics import place_object, place_objects
         from data_management import Camera
 
         ###############################################################
-        ## Initialize environment
+        # Initialize environment
+        if not lvl_num:
+            if not self.areas['dungeon'].levels: lvl_num = 1
+            else:                                lvl_num = 1 + self.areas['dungeon'][-1].lvl_num
+        
         env = Environment(
             envs       = self,
-            name       = 'bitworld',
-            lvl_num    = 0,
-            size       = 7,
-            soundtrack = [
-                'overworld 1',
-                'overworld 2',
-                'overworld 3',
-                'overworld 4'],
-            img_names  = ['floors', 'grass3'],
-            floors     = ['floors', 'grass3'],
+            name       = 'dungeon',
+            lvl_num    = lvl_num,
+            size       = 2 * (1 + lvl_num//3),
+            soundtrack = [f'dungeon {lvl_num}'],
+            img_names  = ['walls', 'gray'],
+            floors     = ['floors', 'dark green'],
             walls      = ['walls', 'gray'],
-            roofs      = ['roofs', 'tiled'],
-            blocked    = False,
-            hidden     = False)
-        self.dict['bitworld'] = env
-        env.camera = Camera(self.player_obj.ent)
-        env.camera.fixed = False
-        env.camera.zoom_in(custom=1)
+            roofs      = None,
+            blocked    = True,
+            hidden     = True)
         
         # Set weather
         env.weather_backup = {
             'light_set': None,
             'clouds':    False}
         env.weather = Weather(env, clouds=False)
+        
+        env.camera = Camera(self.player_obj.ent)
+        env.camera.fixed = False
+        env.camera.zoom_in(custom=1)
 
-        ## Generate biomes
-        biomes = [
-            ['forest', ['floors', 'grass2']]]
+        # Generate biomes
+        biomes = [['dungeon', ['walls', 'gray']]]
         voronoi_biomes(env, biomes)
         
         ###############################################################
-        ## Construct rooms
-        num_rooms             = 20
-        rooms                 = []
-        room_counter, counter = 0, 0
-        center                = self.dict['bitworld'].center
-        (x_1, y_1)            = center
-        x_2                   = lambda width:  len(self.dict['bitworld'].map)    - width  - 1
-        y_2                   = lambda height: len(self.envs.dict['bitworld'].map[0]) - height - 1
-        while room_counter < num_rooms:
+        # Construct rooms
+        num_rooms = int(self.max_rooms * env.lvl_num) + 2
+        for i in range(num_rooms):
             
-            # Generate location
-            width  = random.randint(self.room_min_size, self.room_max_size)
-            height = random.randint(self.room_min_size, self.room_max_size)
-            x      = random.randint(x_1, x_2(width))
-            y      = random.randint(y_1, y_2(height))
+            # Construct room
+            width    = random.randint(self.room_min_size, self.room_max_size)
+            height   = random.randint(self.room_min_size, self.room_max_size)
+            x        = random.randint(0, len(env.map)    - width  - 1)
+            y        = random.randint(0, len(env.map[0]) - height - 1)
             
-            # Check for solid ground
-            failed = False
-            for u in range(width):
-                for v in range(height):
-                    if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
-                    elif env.map[x+u][y+v].room:                     failed = True
-            if not failed:
-                
-                ## Construct room
-                new_room = Room(
-                    name   = 'bitworld room',
-                    env    = env,
-                    x1     = x,
-                    y1     = y,
-                    width  = width,
-                    height = height,
-                    biome   = 'city',
-                    hidden = False,
-                    objects = False,
-                    floor  = ['floors', 'dark green'],
-                    walls  = self.dict['bitworld'].walls,
-                    roof   = self.dict['bitworld'].roofs,
-                    plan = create_text_room(width, height))
-
-                room_counter += 1
-                x, y = new_room.center()[0], new_room.center()[1]
+            floor = random.choice([
+                ['floors', 'dark green'],
+                ['floors', 'dark green'],
+                ['floors', 'green']])
             
-            # Spawn rooms elsewhere if needed
-            else: counter += 1
-            if counter > num_rooms:
-                counter = 0
-                (x_1, y_1) = (0, 0)
+            new_room = Room(
+                name    = 'dungeon room',
+                env     = env,
+                x1      = x,
+                y1      = y,
+                width   = width,
+                height  = height,
+                biome   = 'any',
+                hidden  = True,
+                objects = True,
+                floor   = floor,
+                walls   = env.walls,
+                roof    = env.roofs)
         
-        ## Create player's house
-        main_room = Room(
-            name    = 'home room',
-            env     = self.dict['bitworld'],
-            x1      = self.dict['bitworld'].center[0],
-            y1      = self.dict['bitworld'].center[1],
-            width   = self.room_max_size,
-            height  = self.room_max_size,
-            biome   = 'any',
-            hidden  = False,
-            objects = False,
-            floor   = ['floors', 'dark green'],
-            walls   = self.dict['bitworld'].walls,
-            roof    = self.dict['bitworld'].roofs,
-            plan = ['  -----     ',
-                    ' --...----- ',
-                    ' -........--',
-                    ' -.........-',
-                    '--.........|',
-                    '-.........--',
-                    '--.....---- ',
-                    ' --...--    ',
-                    '  -----     '])
+        # Combine rooms and add doors
+        env.combine_rooms()
         
-        # Door
-        x, y = center[0]+1, center[1]+5
-        item = create_item('door')
-        item.name = 'home'
-        place_object(item, [x, y], self.dict['bitworld'])
-        self.dict['bitworld'].map[x][y].blocked = False
-        self.dict['bitworld'].map[x][y].unbreakable = False
-        
-        ## Create church
-        main_room = Room(
-            name    = 'church',
-            env     = self.dict['bitworld'],
-            x1      = 20,
-            y1      = 20,
-            width   = self.room_max_size,
-            height  = self.room_max_size,
-            biome   = 'any',
-            hidden  = False,
-            objects = False,
-            floor   = ['floors', 'red'],
-            walls   = self.dict['bitworld'].walls,
-            roof    = self.dict['bitworld'].roofs,
-            plan = ['  --------------           ---------- ',
-                    ' --............-----      --........--',
-                    ' -.................-      -..........-',
-                    ' -.................--------..........-',
-                    ' -...................................-',
-                    '--.................---------........--',
-                    '-..................-       -----..--- ',
-                    '--...........-------           -||-   ',
-                    ' --.....------                        ',
-                    '  -.....-                             ',
-                    '  -.....-                             ',
-                    '  --...--                             ',
-                    '   --.--                              ',
-                    '    -|-                               '])
+        # Paths
+        for i in range(len(env.rooms)):
+            room_1, room_2 = env.rooms[i], env.rooms[i-1]
+            chance_1, chance_2 = 0, random.randint(0, 1)
+            if not chance_1:
+                (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
+                if not chance_2:
+                    try:
+                        env.create_h_tunnel(x_1, x_2, y_1)
+                        env.create_v_tunnel(y_1, y_2, x_2)
+                    except: raise Exception('Error')
+                else:
+                    env.create_v_tunnel(y_1, y_2, y_1)
+                    env.create_h_tunnel(x_1, x_2, y_2)
         
         ###############################################################
         # Generate items and entities
         items = [
-            ['forest', 'tree',   100],
-            ['forest', 'leafy',  10],
-            ['forest', 'blades', 1]]
+            ['land', 'jug of blood',   10],
+            ['land', 'bones',          50],
+            ['land', 'sword',          1000//env.lvl_num],
+            ['land', 'iron shield',    1000//env.lvl_num],
+            ['land', 'skeleton',       500],
+            ['land', 'fire',           100]]
+        
         entities = [
-            ['forest', 'red radish', 50,   [None]],
-            ['wet',    'frog',       500,  [None]],
-            ['forest', 'grass',      1000, [None]]]
+            ['land', 'plant',          300,   [None]],
+            ['land', 'eye',            15,    ['eye']],
+            ['land', 'red radish',     1000,  [None]],
+            ['land', 'round1',         30,    [None]]]
+        
         place_objects(env, items, entities)
         
-        env.player_coordinates = self.dict['bitworld'].center # [0, 10]
-        self.dict['bitworld'].entity = self.player_obj.ent
-        self.player_obj.ent.tile = self.dict['bitworld'].map[0][10]
+        # Place player in first room
+        (x, y) = env.rooms[0].center()
+        env.player_coordinates = [x, y]
+        env.entity = self.player_obj.ent
+        env.center = new_room.center()
+        self.player_obj.ent.tile = env.map[x][y]
         
-        ## Place NPCs
-        bools = lambda room, i: [
-            env.map[room.center()[0]+i][room.center()[1]+i].item,
-            env.map[room.center()[0]+i][room.center()[1]+i].entity]
+        # Generate stairs in the last room
+        (x, y) = env.rooms[-2].center()
+        stairs = create_item('door')
+        stairs.name = 'dungeon'
+        place_object(stairs, [x, y], env)
         
-        # Set number of random characters
-        for _ in range(15):
-            
-            # Create entity
-            ent = create_NPC('random')
-            
-            # Select room not occupied by player
-            room = random.choice(self.dict['bitworld'].rooms)
-            while room == self.dict['bitworld'].rooms[-1]:
-                room = random.choice(self.dict['bitworld'].rooms)
-            
-            # Select spawn location
-            for i in range(3):
-                occupied = bools(room, i-1)
-                if occupied[0] == occupied[1]:
-                    (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
-            
-            # Spawn entity
-            place_object(ent, (x, y), env)
+        return env
 
-        self.dict[env.name] = env
-
-    def build_cave_level(self, lvl_num=0):
+    def build_cave(self, lvl_num=0):
         """ Generates a cave environment. """
         
         from items_entities import create_item
@@ -1056,12 +693,9 @@ class Environments:
 
         ###############################################################
         # Initialize environment
-        if lvl_num == 0:
-            if 'cave' not in self.dict:
-                self.dict['cave'] = []
-                lvl_num = 1
-            else:
-                lvl_num = 1 + self.dict['cave'][-1].lvl_num
+        if not lvl_num:
+            if not self.areas['cave'].levels: lvl_num = 1
+            else:                             lvl_num = 1 + self.areas['cave'][-1].lvl_num
                 
         env = Environment(
             envs       = self,
@@ -1092,7 +726,6 @@ class Environments:
         
         ###############################################################
         # Construct rooms
-        rooms, room_counter, counter = [], 0, 0
         num_rooms = random.randint(2, 10)
         for i in range(num_rooms):
             
@@ -1141,10 +774,12 @@ class Environments:
             ['dungeon', 'shovel',         500],
             ['dungeon', 'bones',          500],
             ['dungeon', 'sword',          1000//env.lvl_num]]
+        
         entities = [
             ['dungeon', 'red radish',     1000, [None]],
             ['dungeon', 'red',            300,  [None]],
             ['dungeon', 'round3',         50,   [None]]]
+        
         place_objects(env, items, entities)
         
         # Place player in first room
@@ -1158,9 +793,391 @@ class Environments:
         (x, y) = env.rooms[-1].center()
         stairs = create_item('cave')
         stairs.img_names = ['floors', 'dirt2']
-        place_object(stairs, [x, y], self.dict['cave'][-1])
+        place_object(stairs, [x, y], env)
 
-        self.dict[env.name].append(env)
+        return env
+
+    def build_hallucination(self, lvl_num=0):
+        """ Generates the overworld environment. """
+        
+        from items_entities import create_item
+        from mechanics import place_object, place_objects, create_text_room
+        from data_management import Camera
+
+        ###############################################################
+        ## Initialize environment
+        if not lvl_num:
+            if not self.areas['hallucination'].levels: lvl_num = 1
+            else:                                      lvl_num = 1 + self.areas['hallucination'][-1].lvl_num        
+        
+        env = Environment(
+            envs       = self,
+            name       = 'hallucination',
+            lvl_num    = lvl_num,
+            size       = 3,
+            soundtrack = [f'hallucination {lvl_num}'],
+            img_names  = ['walls',  'gold'],
+            floors     = ['floors', 'green'],
+            walls      = ['walls',  'gold'],
+            roofs      = None,
+            blocked    = True,
+            hidden     = True)
+        
+        # Set weather
+        env.weather_backup = {
+            'light_set': 32,
+            'clouds':    False}
+        env.weather = Weather(env, light_set=32, clouds=False)
+
+        ## Generate biomes
+        biomes = [
+            ['any', ['walls', 'gold']],
+            ['any', ['walls', 'gold']],
+            ['any', ['walls', 'gold']],
+            ['any', ['walls', 'gold']]]
+        voronoi_biomes(env, biomes)
+        
+        env.camera = Camera(self.player_obj.ent)
+        env.camera.fixed = False
+        env.camera.zoom_in(custom=1)
+        
+        ###############################################################
+        # Construct rooms
+        num_rooms = int(self.max_rooms*2 * env.lvl_num) + 2
+        for i in range(num_rooms):
+            
+            # Construct room
+            width    = random.randint(self.room_min_size*2, self.room_max_size*2)
+            height   = random.randint(self.room_min_size*2, self.room_max_size*2)
+            x        = random.randint(0, len(env.map)    - width  - 1)
+            y        = random.randint(0, len(env.map[0]) - height - 1)
+            
+            new_room = Room(
+                name    = 'hallucination backdrop',
+                env     = env,
+                x1      = x,
+                y1      = y,
+                width   = width,
+                height  = height,
+                biome   = 'any',
+                hidden  = True,
+                objects = True,
+                floor   = env.floors,
+                walls   = env.walls,
+                roof    = env.roofs)
+        
+        # Combine rooms and add doors
+        env.combine_rooms()
+        
+        ## Construct rooms
+        num_rooms             = 5
+        room_counter, counter = 0, 0
+        center                = env.center
+        (x_1, y_1)            = center
+        x_2                   = lambda width:  len(env.map)    - width  - 1
+        y_2                   = lambda height: len(env.map[0]) - height - 1
+        while room_counter < num_rooms:
+            
+            # Generate location
+            width  = random.randint(self.room_min_size, self.room_max_size)
+            height = random.randint(self.room_min_size, self.room_max_size)
+            x      = random.randint(x_1, x_2(width))
+            y      = random.randint(y_1, y_2(height))
+            
+            # Check for solid ground
+            failed = False
+            for u in range(width):
+                for v in range(height):
+                    if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
+            if not failed:
+                
+                ## Construct room
+                new_room = Room(
+                    name   = 'hallucination room',
+                    env    = env,
+                    x1     = x,
+                    y1     = y,
+                    width  = width,
+                    height = height,
+                    biome   = 'city',
+                    hidden = False,
+                    objects = False,
+                    floor  = ['floors', 'dark green'],
+                    walls  = env.walls,
+                    roof   = env.roofs,
+                    plan = create_text_room(width, height, doors=False))
+
+                room_counter += 1
+                x, y = new_room.center()[0], new_room.center()[1]
+            
+            # Spawn rooms elsewhere if needed
+            else: counter += 1
+            if counter > num_rooms:
+                counter = 0
+                (x_1, y_1) = (0, 0)
+        
+        # Paths
+        for i in range(len(env.rooms)):
+            room_1, room_2 = env.rooms[i], env.rooms[i-1]
+            chance_1, chance_2 = 0, random.randint(0, 1)
+            if not chance_1:
+                (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
+                if not chance_2:
+                    try:
+                        env.create_h_tunnel(x_1, x_2, y_1)
+                        env.create_v_tunnel(y_1, y_2, x_2)
+                    except: raise Exception('Error')
+                else:
+                    env.create_v_tunnel(y_1, y_2, y_1)
+                    env.create_h_tunnel(x_1, x_2, y_2)
+        
+        ###############################################################
+        # Generate items and entities
+        items = [
+            ['any', 'jug of grapes',  100],
+            ['any', 'shrooms',        10],
+            ['any', 'shrooms',        10],
+            ['any', 'purple bulbs',   10],
+            ['any', 'cup shroom',     25],
+            ['any', 'sword',          1000//env.lvl_num],
+            ['any', 'yellow dress',   200]]
+        
+        entities = [
+            ['any', 'triangle',       200,  [None]],
+            ['any', 'tentacles',      100,  [None]],
+            ['any', 'red radish',     1000, [None]],
+            ['any', 'star',           150,  [None]]]
+        
+        place_objects(env, items, entities)
+        
+        # Change player into tentacles
+        self.player_obj.ent.img_names_backup = self.player_obj.ent.img_names
+        self.player_obj.ent.img_names = ['tentacles', 'front']
+        
+        # Place player in first room
+        (x, y) = env.rooms[0].center()
+        env.player_coordinates = [x, y]
+        env.entity = self.player_obj.ent
+        env.center = new_room.center()
+        self.player_obj.ent.tile = env.map[x][y]
+        
+        # Generate stairs in the last room
+        (x, y) = env.rooms[-2].center()
+        stairs = create_item('portal')
+        stairs.name = 'hallucination'
+        place_object(stairs, [x, y], env)
+
+        return env
+
+    def build_bitworld(self):
+        """ Generates the bitworld environment. """
+
+        from items_entities import create_item, create_NPC
+        from mechanics import place_object, place_objects, create_text_room
+        from data_management import Camera
+
+        ###############################################################
+        ## Initialize environment
+        env = Environment(
+            envs       = self,
+            name       = 'bitworld',
+            lvl_num    = 0,
+            size       = 7,
+            soundtrack = [
+                'overworld 1',
+                'overworld 2',
+                'overworld 3',
+                'overworld 4'],
+            img_names  = ['floors', 'grass3'],
+            floors     = ['floors', 'grass3'],
+            walls      = ['walls', 'gray'],
+            roofs      = ['roofs', 'tiled'],
+            blocked    = False,
+            hidden     = False)
+        env.camera = Camera(self.player_obj.ent)
+        env.camera.fixed = False
+        env.camera.zoom_in(custom=1)
+        
+        # Set weather
+        env.weather_backup = {
+            'light_set': None,
+            'clouds':    False}
+        env.weather = Weather(env, clouds=False)
+
+        ## Generate biomes
+        biomes = [
+            ['forest', ['floors', 'grass2']]]
+        voronoi_biomes(env, biomes)
+        
+        ###############################################################
+        ## Construct rooms
+        num_rooms             = 20
+        room_counter, counter = 0, 0
+        center                = env.center
+        (x_1, y_1)            = center
+        x_2                   = lambda width:  len(env.map)    - width  - 1
+        y_2                   = lambda height: len(env.map[0]) - height - 1
+        while room_counter < num_rooms:
+            
+            # Generate location
+            width  = random.randint(self.room_min_size, self.room_max_size)
+            height = random.randint(self.room_min_size, self.room_max_size)
+            x      = random.randint(x_1, x_2(width))
+            y      = random.randint(y_1, y_2(height))
+            
+            # Check for solid ground
+            failed = False
+            for u in range(width):
+                for v in range(height):
+                    if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
+                    elif env.map[x+u][y+v].room:                             failed = True
+            if not failed:
+                
+                ## Construct room
+                new_room = Room(
+                    name   = 'bitworld room',
+                    env    = env,
+                    x1     = x,
+                    y1     = y,
+                    width  = width,
+                    height = height,
+                    biome   = 'city',
+                    hidden = False,
+                    objects = False,
+                    floor  = ['floors', 'dark green'],
+                    walls  = env.walls,
+                    roof   = env.roofs,
+                    plan = create_text_room(width, height))
+
+                room_counter += 1
+                x, y = new_room.center()[0], new_room.center()[1]
+            
+            # Spawn rooms elsewhere if needed
+            else: counter += 1
+            if counter > num_rooms:
+                counter = 0
+                (x_1, y_1) = (0, 0)
+        
+        ## Create player's house
+        main_room = Room(
+            name    = 'home room',
+            env     = env,
+            x1      = env.center[0],
+            y1      = env.center[1],
+            width   = self.room_max_size,
+            height  = self.room_max_size,
+            biome   = 'any',
+            hidden  = False,
+            objects = False,
+            floor   = ['floors', 'dark green'],
+            walls   = env.walls,
+            roof    = env.roofs,
+            plan = ['  -----     ',
+                    ' --...----- ',
+                    ' -........--',
+                    ' -.........-',
+                    '--.........|',
+                    '-.........--',
+                    '--.....---- ',
+                    ' --...--    ',
+                    '  -----     '])
+        
+        # Door
+        x, y = center[0]+1, center[1]+5
+        item = create_item('door')
+        item.name = 'home'
+        place_object(item, [x, y], env)
+        env.map[x][y].blocked = False
+        env.map[x][y].unbreakable = False
+        
+        ## Create church
+        main_room = Room(
+            name    = 'church',
+            env     = env,
+            x1      = 20,
+            y1      = 20,
+            width   = self.room_max_size,
+            height  = self.room_max_size,
+            biome   = 'any',
+            hidden  = False,
+            objects = False,
+            floor   = ['floors', 'red'],
+            walls   = env.walls,
+            roof    = env.roofs,
+            plan = ['  --------------           ---------- ',
+                    ' --............-----      --........--',
+                    ' -.................-      -..........-',
+                    ' -.................--------..........-',
+                    ' -...................................-',
+                    '--.................---------........--',
+                    '-..................-       -----..--- ',
+                    '--...........-------           -||-   ',
+                    ' --.....------                        ',
+                    '  -.....-                             ',
+                    '  -.....-                             ',
+                    '  --...--                             ',
+                    '   --.--                              ',
+                    '    -|-                               '])
+        
+        ###############################################################
+        # Generate items and entities
+        items = [
+            ['forest', 'tree',   100],
+            ['forest', 'leafy',  10],
+            ['forest', 'blades', 1]]
+        
+        entities = [
+            ['forest', 'red radish', 50,   [None]],
+            ['wet',    'frog',       500,  [None]],
+            ['forest', 'grass',      1000, [None]]]
+        
+        place_objects(env, items, entities)
+        
+        env.player_coordinates = env.center # [0, 10]
+        env.entity = self.player_obj.ent
+        self.player_obj.ent.tile = env.map[0][10]
+        
+        ## Place NPCs
+        bools = lambda room, i: [
+            env.map[room.center()[0]+i][room.center()[1]+i].item,
+            env.map[room.center()[0]+i][room.center()[1]+i].entity]
+        
+        # Set number of random characters
+        for _ in range(15):
+            
+            # Create entity
+            ent = create_NPC('random')
+            
+            # Select room not occupied by player
+            room = random.choice(env.rooms)
+            while room == env.rooms[-1]:
+                room = random.choice(env.rooms)
+            
+            # Select spawn location
+            for i in range(3):
+                occupied = bools(room, i-1)
+                if occupied[0] == occupied[1]:
+                    (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
+            
+            # Spawn entity
+            place_object(ent, (x, y), env)
+
+        return env
+
+class Area:
+    def __init__(self, name, envs):
+        """ Holds environments associated with the same area. """
+        
+        self.name   = name
+        self.envs   = envs
+        self.levels = {}
+
+    def add_level(self, name):
+        self.levels[name] = self.envs.build_env(name)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):   return list(self.levels.values())[key]
+        elif isinstance(key, str): return self.levels[key]
 
 class Environment:
     """ Generates and manages each world, such as each floor of the dungeon. """

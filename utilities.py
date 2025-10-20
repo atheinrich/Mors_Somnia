@@ -526,8 +526,8 @@ class MainMenu:
             if session.player_obj.ent.env.name != 'garden':
                 place_player(
                     ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['garden'],
-                    loc = session.player_obj.envs.dict['garden'].player_coordinates)
+                    env = session.player_obj.envs.areas['underworld']['garden'],
+                    loc = session.player_obj.envs.areas['underworld']['garden'].player_coordinates)
                 session.pyg.game_state = 'play_garden'
             
             elif not session.pyg.startup_toggle:
@@ -739,8 +739,8 @@ class Pets:
         self.emoji_cooldown     = 10
         self.emoji_press        = 0
 
-    def startup(self):
-        self.ents = session.player_obj.envs.dict['garden'].entities
+    def startup(self, env):
+        self.ents = env.entities
 
     def stat_check(self, dic):
         for key, value in dic.items():

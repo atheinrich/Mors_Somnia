@@ -403,8 +403,6 @@ class NewGameMenu:
         self.menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
         self.orientations = ['front', 'right', 'back', 'left']
 
-        ## Positions
-
         ## Other
         self.fadeout = False
 
@@ -430,7 +428,14 @@ class NewGameMenu:
         self.top_choice     = [50, 424-len(self.menu_choices)*24]
 
     def run(self):
-        """ Creates a temporary player, then returns to garden at startup or hosts character creation otherwise. """
+        """ Creates a temporary player, then returns to garden at startup or hosts character creation otherwise.
+        
+            Player creation
+            ---------------
+            init_player : womb and garden; stays in NewGameMenu
+            startup     : womb and garden; scrapped after start_game
+            start_game  : womb, garden, home, overworld, and dungeon; persistent
+        """
         
         #########################################################
         # Initialize
@@ -439,8 +444,8 @@ class NewGameMenu:
         
         ## Return to garden at startup
         if not session.player_obj.ent:
-            self.temp          = self.init_player()
-            session.player_obj = self.startup()
+            self.temp          = self.init_player() # womb
+            session.player_obj = self.startup()     # womb and garden
             return
         
         ## Set navigation speed
@@ -609,23 +614,25 @@ class NewGameMenu:
             item.toggle_equip(player_obj.ent, silent=True)
             
         #########################################################
-        # Initialize character creation environment
+        # Initialize environments
         player_obj.envs = Environments(player_obj)
-        player_obj.envs.build_womb()
-
+        player_obj.envs.add_area('underworld')
+        player_obj.envs.areas['underworld'].add_level('womb')
+        player_obj.envs.areas['underworld'].add_level('garden')
+        session.pets_obj.startup(player_obj.envs.areas['underworld']['garden'])
+        
         ## Place temporary player in character creator
-        player_obj.ent.last_env = player_obj.envs.dict['womb']
+        player_obj.ent.last_env = player_obj.envs.areas['underworld']['womb']
         place_player(
             ent = player_obj.ent,
-            env = player_obj.envs.dict['womb'],
-            loc = player_obj.envs.dict['womb'].center)
+            env = player_obj.envs.areas['underworld']['womb'],
+            loc = player_obj.envs.areas['underworld']['womb'].center)
         
         return player_obj
 
     def startup(self):
-        """ Creates a second temporary player, a womb environment, a the garden environment.
-            This is meant to be a placeholder for the actual player object, separate from the temporary
-            player used only in the New Game menu.
+        """ Creates a second temporary player. This is meant to be a placeholder for the actual
+            player object, separate from the temporary player used only in the New Game menu.
         """
 
         #########################################################
@@ -633,15 +640,10 @@ class NewGameMenu:
         session.player_obj = self.init_player()
         session.dev.update_dict()
 
-        ## Initialize the garden
-        session.questlog_obj.init_questlog('garden')
-        session.player_obj.envs.build_garden()
-        session.pets_obj.startup()
-
         place_player(
             ent = session.player_obj.ent,
-            env = session.player_obj.envs.dict['garden'],
-            loc = session.player_obj.envs.dict['garden'].center)
+            env = session.player_obj.envs.areas['underworld']['garden'],
+            loc = session.player_obj.envs.areas['underworld']['garden'].center)
         
         #########################################################
         # Fade into the main menu
@@ -657,11 +659,10 @@ class NewGameMenu:
         # Imports
         from items_entities import create_item
         
-        #########################################################
-        # Apply hair or face option
         if self.choice in [0, 1, 2]:
-            
-            # Hair, face, or chest option
+        
+            #########################################################
+            # Select option
             if self.choice == 0:
                 role     = 'head'
                 img_dict = session.img.hair_options
@@ -674,16 +675,18 @@ class NewGameMenu:
                 role     = 'chest'
                 img_dict = session.img.chest_options
             
+            #########################################################
             # Find next option and dequip last option
             index    = (img_dict.index(self.temp.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
             img_name = img_dict[index]
             self.temp.ent.equipment[role].toggle_equip(self.temp.ent, silent=True)
             
+            #########################################################
             # Equip next option if already generated
             if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp.ent.inventory.values()]:
                 self.temp.ent.inventory[img_name][0].toggle_equip(self.temp.ent, silent=True)
             
-            # Generate option before equip
+            ## Generate option before equip
             else:
                 item = create_item(img_name)
                 self.temp.ent.inventory['armor'].append(item)
@@ -706,7 +709,7 @@ class NewGameMenu:
             Only called after the character creation menu is accepted. """
         
         #########################################################
-        # Imports
+        # Import
         from utilities import sort_inventory
         from items_entities import create_item
 
@@ -716,37 +719,41 @@ class NewGameMenu:
         session.player_obj = copy.deepcopy(self.temp)
         session.dev.update_dict()
 
-        ## Create garden environment
-        session.questlog_obj.init_questlog('garden')
-        session.player_obj.envs.build_garden()
-        session.pets_obj.startup()
+        ## Shorthand
+        envs = session.player_obj.envs
+        ent  = session.player_obj.ent
 
-        ## Build the home environment and set it as the last environment
-        session.player_obj.envs.build_home()
+        ## Add additional environments
+        envs.add_area('overworld')
+        envs.areas['overworld'].add_level('home')
+        envs.areas['overworld'].add_level('overworld')
+
+        envs.add_area('dungeon')
+        envs.areas['dungeon'].add_level('dungeon')
 
         place_player(
-            ent = session.player_obj.ent,
-            env = session.player_obj.envs.dict['home'],
-            loc = session.player_obj.envs.dict['home'].center)
+            ent = ent,
+            env = envs.areas['overworld']['home'],
+            loc = envs.areas['overworld']['home'].center)
 
         #########################################################
         # Create and equip items
         items = ['shovel', 'lamp']
 
-        if session.player_obj.ent.equipment['chest'].img_names[0] == 'bra':
-            items.append('yellow dress')
-        else: items.append('green clothes')
+        if ent.equipment['chest'].img_names[0] == 'bra': items.append('yellow dress')
+        else:                                            items.append('green clothes')
 
         for name in items:
             item = create_item(name)
-            item.pick_up(ent=session.player_obj.ent,      silent=True)
-            item.toggle_equip(ent=session.player_obj.ent, silent=True)
+            item.pick_up(ent=ent,      silent=True)
+            item.toggle_equip(ent=ent, silent=True)
         
         sort_inventory()
         
         #########################################################
         # Begin game
         self.fadeout               = True
+        self.refresh               = True
         session.pyg.gui_toggle     = True
         session.pyg.msg_toggle     = True
         session.pyg.startup_toggle = False
@@ -1057,7 +1064,7 @@ class PlayGame:
                 
                     # Go up by one floor
                     if session.player_obj.ent.env.lvl_num > 1:
-                        env = session.player_obj.envs.dict[session.player_obj.ent.env.name][session.player_obj.ent.env.lvl_num-2]
+                        env = session.player_obj.envs.areas[session.player_obj.ent.env.name][session.player_obj.ent.env.lvl_num-2]
                         place_player(
                             ent = session.player_obj.ent,
                             env = env,
@@ -1120,7 +1127,7 @@ class PlayGarden:
         else:                             session.player_obj.ent.role = 'player'
         
         ## Set camera and movement speed
-        session.player_obj.envs.dict['garden'].camera.zoom_in(custom=1)
+        session.player_obj.envs.areas['underworld']['garden'].camera.zoom_in(custom=1)
         session.mech.movement_speed(toggle=False, custom=2)
         
         #########################################################
@@ -2314,33 +2321,94 @@ class Mechanics:
             
             #########################################################
             # Create and/or enter
-            ## Create dungeon for new game
-            if 'dungeon' not in session.player_obj.envs.dict.keys():
-                session.player_obj.envs.dict['dungeon'] = []
-                session.player_obj.envs.build_dungeon_level(lvl_num)
-            
             ## Enter the first dungeon
             if session.player_obj.ent.env.name != 'dungeon':
                 place_player(
                     ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['dungeon'][0],
-                    loc = session.player_obj.envs.dict['dungeon'][0].center)
+                    env = session.player_obj.envs.areas['dungeon'][0],
+                    loc = session.player_obj.envs.areas['dungeon'][0].center)
             
             ## Enter the next saved dungeon
-            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.dict['dungeon']):
+            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.areas['dungeon'].levels):
                 lvl_num = session.player_obj.ent.env.lvl_num
                 place_player(
                     ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['dungeon'][lvl_num],
-                    loc = session.player_obj.envs.dict['dungeon'][lvl_num].center)
+                    env = session.player_obj.envs.areas['dungeon'][lvl_num],
+                    loc = session.player_obj.envs.areas['dungeon'][lvl_num].center)
             
             ## Enter a new dungeon
             else:
                 session.player_obj.envs.build_dungeon_level(lvl_num)
                 place_player(
                     ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['dungeon'][-1],
-                    loc = session.player_obj.envs.dict['dungeon'][-1].center)
+                    env = session.player_obj.envs.areas['dungeon'][-1],
+                    loc = session.player_obj.envs.areas['dungeon'][-1].center)
+
+    def enter_home(self):
+        
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
+            pygame.event.clear()
+            
+            place_player(
+                ent = session.player_obj.ent,
+                env = session.player_obj.envs.areas['overworld']['home'],
+                loc = session.player_obj.envs.areas['overworld']['home'].player_coordinates)
+
+    def enter_overworld(self):
+        
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
+            pygame.event.clear()
+
+            place_player(
+                ent = session.player_obj.ent,
+                env = session.player_obj.envs.areas['overworld']['overworld'],
+                loc = session.player_obj.envs.areas['overworld']['overworld'].center)
+
+    def enter_cave(self):
+        """ Advances player to the next level. """
+        
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
+            pygame.event.clear()
+
+            ## Shorthand
+            envs = session.player_obj.envs
+            ent  = session.player_obj.ent
+            pyg  = session.pyg
+            
+            #########################################################
+            # Create and/or enter
+            ## Create
+            if 'cave' not in envs.areas.keys():
+                envs.add_area('cave')
+                envs.areas['cave'].add_level('cave')
+            
+            ## Enter the first cave
+            if ent.env.name != 'cave':
+                pyg.update_gui("The ground breaks beneath you and reveals a cave.", pyg.dark_gray)
+                place_player(
+                    ent = ent,
+                    env = envs.areas['cave'][0],
+                    loc = envs.areas['cave'][0].center)
+            
+            ## Enter the next saved cave
+            elif ent.env.lvl_num < len(envs.areas['cave'].levels):
+                pyg.update_gui("You descend deeper into the cave.", pyg.dark_gray)
+                lvl_num = ent.env.lvl_num
+                place_player(
+                    ent = ent,
+                    env = envs.areas['cave'][lvl_num],
+                    loc = envs.areas['cave'][lvl_num].center)
+            
+            ## Enter a new cave
+            else:
+                envs.areas['cave'].add_level('cave')
+                place_player(
+                    ent = ent,
+                    env = envs.areas['cave'][-1],
+                    loc = envs.areas['cave'][-1].center)
 
     def enter_hallucination(self, text=None):
         """ Advances player to the next level. """
@@ -2351,39 +2419,45 @@ class Mechanics:
             self.last_press_time = time.time()
             pygame.event.clear()
             
+            ## Shorthand
+            envs = session.player_obj.envs
+            ent  = session.player_obj.ent
+            pyg  = session.pyg
+            
             #########################################################
             # Create and/or enter
             ## Create environment
-            if 'hallucination' not in session.player_obj.envs.dict.keys():
-                session.player_obj.envs.dict['hallucination'] = []
+            if 'hallucination' not in envs.areas.keys():
+                envs.add_area('hallucination')
+                envs.areas['hallucination'].add_level('hallucination')
                 
-                session.pyg.fadeout_screen(text)
-                session.pyg.overlay = None
-                session.player_obj.envs.build_hallucination_level()
+                pyg.fadeout_screen(text)
+                pyg.overlay = None
+                envs.build_hallucination_level()
                 session.play_game_obj.fadein = text
 
             ## Enter the first hallucination
-            if session.player_obj.ent.env.name != 'hallucination':
+            if ent.env.name != 'hallucination':
                 place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['hallucination'][0],
-                    loc = session.player_obj.envs.dict['hallucination'][0].center)
+                    ent = ent,
+                    env = envs.areas['hallucination'][0],
+                    loc = envs.areas['hallucination'][0].center)
             
             ## Enter the next saved hallucination
-            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.dict['hallucination']):
-                lvl_num = session.player_obj.ent.env.lvl_num
+            elif ent.env.lvl_num < len(envs.areas['hallucination'].levels):
+                lvl_num = ent.env.lvl_num
                 place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['hallucination'][lvl_num],
-                    loc = session.player_obj.envs.dict['hallucination'][lvl_num].center)
+                    ent = ent,
+                    env = envs.areas['hallucination'][lvl_num],
+                    loc = envs.areas['hallucination'][lvl_num].center)
             
             ## Enter a new hallucination
             else:
-                session.player_obj.envs.build_hallucination_level()
+                envs['hallucination'].add_level('hallucination')
                 place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['hallucination'][-1],
-                    loc = session.player_obj.envs.dict['hallucination'][-1].center)
+                    ent = ent,
+                    env = envs.areas['hallucination'][-1],
+                    loc = envs.areas['hallucination'][-1].center)
 
     def enter_bitworld(self, text=None):
         """ Advances player to bitworld. """
@@ -2394,92 +2468,30 @@ class Mechanics:
             self.last_press_time = time.time()
             pygame.event.clear()
             
+            ## Shorthand
+            envs = session.player_obj.envs
+            ent  = session.player_obj.ent
+            pyg  = session.pyg
+
             #########################################################
             # Create and/or enter
             ## Create
-            if 'bitworld' not in session.player_obj.envs.dict.keys():
-                session.player_obj.envs.dict['bitworld'] = []
+            if 'bitworld' not in envs.areas.keys():
+                envs.add_area('bitworld')
+                envs['bitworld'].add_level['overworld']
                 
-                session.pyg.fadeout_screen(text)
-                session.pyg.overlay = None
-                session.player_obj.envs.build_bitworld()
+                pyg.fadeout_screen(text)
+                pyg.overlay = None
+                envs.build_bitworld()
                 session.play_game_obj.fadein = text
 
             ## Enter
-            if session.player_obj.ent.env.name != 'bitworld':
+            if ent.env.name != 'bitworld':
                 session.img.render_fx = 'bw_binary'
                 place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['bitworld'],
-                    loc = session.player_obj.envs.dict['bitworld'].center)
-    
-    def enter_cave(self):
-        """ Advances player to the next level. """
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-            
-            #########################################################
-            # Create and/or enter
-            ## Create
-            if 'cave' not in session.player_obj.envs.dict.keys(): 
-                session.pyg.update_gui("The ground breaks beneath you and reveals a cave.", session.pyg.dark_gray)
-                session.player_obj.envs.dict['cave'] = []
-                session.player_obj.envs.build_cave_level()
-            
-            ## Enter the first cave
-            if session.player_obj.ent.env.name != 'cave':
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['cave'][0],
-                    loc = session.player_obj.envs.dict['cave'][0].center)
-            
-            ## Enter the next saved cave
-            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.dict['cave']):
-                lvl_num = session.player_obj.ent.env.lvl_num
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['cave'][lvl_num],
-                    loc = session.player_obj.envs.dict['cave'][lvl_num].center)
-            
-            ## Enter a new cave
-            else:
-                session.player_obj.envs.build_cave_level()
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.dict['cave'][-1],
-                    loc = session.player_obj.envs.dict['cave'][-1].center)
-
-    def enter_overworld(self):
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-            
-            #########################################################
-            # Create and/or enter
-            ## Create
-            if 'overworld' not in session.player_obj.envs.dict.keys():
-                session.player_obj.envs.build_overworld()
-
-            ## Enter
-            loc = session.player_obj.envs.dict['overworld'].center
-            place_player(
-                ent = session.player_obj.ent,
-                env = session.player_obj.envs.dict['overworld'],
-                loc = [loc[0], loc[1]])
-
-    def enter_home(self):
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-            
-            place_player(
-                ent = session.player_obj.ent,
-                env = session.player_obj.envs.dict['home'],
-                loc = session.player_obj.envs.dict['home'].player_coordinates)
+                    ent = ent,
+                    env = envs.areas['bitworld']['overworld'],
+                    loc = envs.areas['bitworld']['overworld'].center)
 
     # Item effects
     def swing(self, ent=None):
