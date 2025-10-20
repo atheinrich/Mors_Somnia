@@ -37,6 +37,7 @@ class Pygame:
         #########################################################
         # Utility
         self.startup_toggle  = True
+        self.cooldown_time   = 0.2
         self.last_press_time = 0
         
         #########################################################
@@ -74,9 +75,9 @@ class Pygame:
             
             # Actions
             self.key_BACK     = ['/', K_BACKSPACE, K_ESCAPE,  K_SLASH, K_KP_DIVIDE]  # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY]       # show/hide gui
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]       # show/hide gui
             self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD]                      # action 2
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]            # action 2
             self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
             self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
             self.key_HOLD     = ['0', K_0, K_KP0]
@@ -103,9 +104,9 @@ class Pygame:
 
             # Actions
             self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]         # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY]       # show/hide gui
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]       # show/hide gui
             self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD]                      # action 2
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]            # action 2
             self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
             self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
             self.key_HOLD     = ['0', K_0, K_KP0]                       # attack sequences
@@ -132,9 +133,9 @@ class Pygame:
 
             # Actions
             self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]         # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY]       # show/hide gui
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]       # show/hide gui
             self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD]                      # action 2
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]            # action 2
             self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
             self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
             self.key_HOLD     = ['0', K_0, K_KP0]                       # attack sequences
@@ -407,7 +408,7 @@ class NewGameMenu:
         ## Other
         self.fadeout = False
 
-        self.last_rotate_time = 0
+        self.last_press_time = 0
         self.cooldown_time   = 0.7
 
         #########################################################
@@ -477,7 +478,7 @@ class NewGameMenu:
         
                 #########################################################
                 # Return to main menu
-                elif time.time()-pyg.last_press_time > self.cooldown_time:
+                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
                     self.key_BACK()
                     return
                 
@@ -493,8 +494,8 @@ class NewGameMenu:
         render_all(ent=self.temp.ent)
 
         ## Rotate character
-        if time.time()-self.last_rotate_time > self.cooldown_time:
-            self.last_rotate_time = float(time.time()) 
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time())
             self.temp.img_names[1] = self.orientations[self.orientations.index(self.temp.img_names[1]) - 1]
         
         #########################################################
@@ -757,6 +758,7 @@ class PlayGame:
 
         #########################################################
         # Utility
+        self.last_press_time = 0
         self.cooldown_time   = 1
         self.gui_set         = 0
         self.death_cooldown  = 1
@@ -811,7 +813,7 @@ class PlayGame:
                             if session.pyg.overlay:
                                 session.pyg.overlay = None
                             
-                            elif time.time()-session.pyg.last_press_time > self.cooldown_time:
+                            elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
                                 session.pyg.last_press_time = float(time.time())
                                 session.pyg.overlay = 'menu'
                                 pygame.event.clear()
@@ -839,14 +841,13 @@ class PlayGame:
 
                         ## >>STATS<<
                         elif event.key in session.pyg.key_INFO:
-                            if time.time()-session.pyg.last_press_time > self.cooldown_time:
-                                if session.pyg.overlay != 'stats':
-                                    session.stats_obj.dic = session.stats_obj.stats
-                                    session.pyg.overlay = 'stats'
-                                else:
-                                    session.pyg.overlay = None
-                                pygame.event.clear()
-                                return
+                            if session.pyg.overlay != 'stats':
+                                session.stats_obj.dic = session.stats_obj.stats
+                                session.pyg.overlay = 'stats'
+                            else:
+                                session.pyg.overlay = None
+                            pygame.event.clear()
+                            return
             
                         ## >>QUESTLOG<<
                         elif event.key in session.pyg.key_QUEST:
@@ -976,8 +977,8 @@ class PlayGame:
 
         #########################################################
         # Activate items
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = time.time()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
             pygame.event.clear()
             
             # >>PICKUP/STAIRS<<
@@ -1051,8 +1052,8 @@ class PlayGame:
         # Move down a level
         if session.player_obj.ent.tile.item:
             if session.player_obj.ent.tile.item.name in ['dungeon', 'cave']:
-                if time.time()-session.pyg.last_press_time > self.cooldown_time:
-                    session.pyg.last_press_time = float(time.time())
+                if time.time()-self.last_press_time > self.cooldown_time:
+                    self.last_press_time = float(time.time())
                 
                     # Go up by one floor
                     if session.player_obj.ent.env.lvl_num > 1:
@@ -1079,7 +1080,7 @@ class PlayGame:
         
         #########################################################
         # Change speed
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+        if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
             session.pyg.last_press_time = float(time.time())
             session.mech.movement_speed()
 
@@ -1160,7 +1161,7 @@ class PlayGarden:
                             if session.pyg.overlay == 'stats':
                                 session.pyg.overlay = None
                             
-                            elif time.time()-session.pyg.last_press_time > self.cooldown_time:
+                            elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
                                 session.pyg.last_press_time = float(time.time())
                                 session.pyg.overlay = 'menu'
                                 pygame.event.clear()
@@ -1273,7 +1274,7 @@ class PlayGarden:
 
         #########################################################
         # Change speed
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
+        if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
             session.pyg.last_press_time = float(time.time())
             session.mech.movement_speed()
 
@@ -1623,9 +1624,9 @@ class Entity:
         self.vicinity   = []
 
         ## Movement
-        self.cooldown_time = 0.25
-        self.last_ai_time  = 0
-        self.motions_log   = [] # list of lists of int; prescribed motions for ai
+        self.cooldown   = 0.25
+        self.last_press = 0
+        self.motions_log = [] # list of lists of int; prescribed motions for ai
         
         ## Mechanics
         self.dead        = False
@@ -1707,8 +1708,8 @@ class Entity:
         # Move if alive
         moved = False
         if not self.dead:
-            if time.time()-self.last_ai_time > self.cooldown_time:
-                self.last_ai_time = float(time.time())
+            if time.time()-self.last_press > self.cooldown:
+                self.last_press = float(time.time())
                 
                 # Move or follow
                 if not self.motions_log:
@@ -2272,6 +2273,7 @@ class Mechanics:
         #########################################################
         # Set parameters
         ## Utility
+        self.last_press_time   = 0
         self.cooldown_time     = 1
 
         ## Combat
@@ -2301,8 +2303,8 @@ class Mechanics:
     def enter_dungeon(self, text='', lvl_num=0):
         """ Advances player to the next level. """
         
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = time.time()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
             pygame.event.clear()
             
             # Fade in
@@ -2345,8 +2347,8 @@ class Mechanics:
         
         if text == None: text='. . . ! Your vision blurs as the substance seeps through your veins.'
 
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = time.time()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2388,8 +2390,8 @@ class Mechanics:
         
         if text == None: text = '. . . ! Your vision blurs as the substance seeps through your veins.'
 
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = time.time()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2414,8 +2416,8 @@ class Mechanics:
     def enter_cave(self):
         """ Advances player to the next level. """
         
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = time.time()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2451,8 +2453,8 @@ class Mechanics:
 
     def enter_overworld(self):
         
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = time.time()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
             pygame.event.clear()
             
             #########################################################
@@ -2470,8 +2472,8 @@ class Mechanics:
 
     def enter_home(self):
         
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = time.time()
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = time.time()
             pygame.event.clear()
             
             place_player(
@@ -3139,7 +3141,7 @@ class InventoryMenu:
         else:               self.detail = False
 
     def key_INV(self):
-        session.pyg.last_press_time = float(time.time())
+        self.last_press_time = float(time.time())
         self.cursor_border = pygame.Surface((32, 32)).convert()
         self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
 
@@ -3461,7 +3463,7 @@ class CatalogMenu:
         session.pyg.overlay = None
 
     def key_DEV(self):
-        session.pyg.last_press_time = float(time.time())
+        self.last_press_time = float(time.time())
         self.cursor_border = pygame.Surface((32, 32)).convert()
         self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
 
@@ -3562,6 +3564,7 @@ class AbilitiesMenu:
         self.sequence_toggle = True
         self.keys            = session.pyg.key_LEFT + session.pyg.key_DOWN + session.pyg.key_RIGHT
         self.key_sequence    = []
+        self.last_press_time = 0
         self.cooldown_time   = 0.5
         self.last_combo_time = 0
         
@@ -3584,8 +3587,8 @@ class AbilitiesMenu:
         for event in pygame.event.get():
             
             # Clear sequence after some time
-            if time.time()-self.last_combo_time > self.cooldown_time:
-                self.last_combo_time = time.time()
+            if time.time()-self.last_press_time > self.cooldown_time:
+                self.last_press_time = time.time()
                 self.key_sequence    = []
             
             # Wait for sequence
@@ -3649,8 +3652,8 @@ class AbilitiesMenu:
         # Look through item effects
         for effect in session.player_obj.ent.effects:
             if effect.sequence == sequence_string:
-                if time.time()-effect.last_use_time > effect.cooldown_time:
-                    effect.last_use_time = float(time.time())
+                if time.time()-effect.last_press_time > effect.cooldown_time:
+                    effect.last_press_time = float(time.time())
                     effect.function()
                     return
 
@@ -3716,6 +3719,7 @@ class ExchangeMenu:
         self.dic_indices = [[0, 0]]
         
         self.detail = True
+        self.last_press_time = 0
         self.cooldown_time = 0.1
         
         self.menu_toggle = 'right'
@@ -3782,7 +3786,7 @@ class ExchangeMenu:
             
                 ## >>PLAY GAME<<
                 if (event.key in session.pyg.key_BACK) or (event.key in session.pyg.key_HOLD):
-                    if time.time()-session.pyg.last_press_time > self.cooldown_time:
+                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
                         session.pyg.last_press_time = float(time.time())
                         session.pyg.overlay = None
                         return

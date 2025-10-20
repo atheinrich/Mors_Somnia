@@ -53,7 +53,6 @@ class FileMenu:
 
         ## Other
         self.choice = 0
-        self.cooldown_time = 0.5
 
         #########################################################
         # Surface initialization
@@ -99,7 +98,7 @@ class FileMenu:
                     return
                 
                 ## Return
-                elif time.time()-session.pyg.last_press_time > self.cooldown_time:
+                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
                         session.pyg.last_press_time = float(time.time())
                         session.pyg.overlay = 'menu'
                         return None
@@ -208,7 +207,6 @@ class CtrlMenu:
         
         ## Other
         self.choice = 0
-        self.cooldown_time = 0.5
 
         #########################################################
         # Surface initialization
@@ -258,7 +256,7 @@ class CtrlMenu:
                 elif event.key in session.pyg.key_RIGHT: self.update_controls(1)
                 
                 ## Return
-                elif time.time()-session.pyg.last_press_time > self.cooldown_time:
+                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
                     session.pyg.last_press_time = float(time.time())
                     session.pyg.overlay = 'menu'
                     return None
@@ -303,6 +301,7 @@ class MainMenu:
         self.choice = 0
         self.fadein = True
         
+        self.last_press_time = 0
         self.cooldown_time   = 0.5
 
         #########################################################
@@ -373,11 +372,6 @@ class MainMenu:
                     self.key_DEV()
                 
                 #########################################################
-                # Garden
-                elif event.key in pyg.key_PERIOD:
-                    self.key_PERIOD()
-
-                #########################################################
                 # Adjust window
                 elif event.key in pyg.key_INFO:
                     self.key_INFO()
@@ -423,7 +417,7 @@ class MainMenu:
         
                 #########################################################
                 # Return to game
-                elif time.time()-pyg.last_press_time > self.cooldown_time:
+                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
                     self.key_BACK()
                     return
         
@@ -526,8 +520,8 @@ class MainMenu:
 
         from mechanics import place_player
 
-        if time.time()-session.pyg.last_press_time > self.cooldown_time:
-            session.pyg.last_press_time = float(time.time())
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time())
 
             if session.player_obj.ent.env.name != 'garden':
                 place_player(

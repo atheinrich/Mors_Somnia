@@ -93,7 +93,7 @@ class Effect:
         self.sequence        = sequence
         
         self.cooldown_time   = cooldown_time
-        self.last_use_time   = 0
+        self.last_press_time = 0
         
         self.other           = other
 
