@@ -9,7 +9,6 @@
 import random
 import time
 import pickle
-import copy
 import sys
 
 ## Specific
@@ -19,7 +18,6 @@ from   PIL import Image, ImageFilter, ImageOps
 
 ## Local
 import session
-from data_management import Camera
 
 ########################################################################################################################################################
 # Classes
@@ -144,10 +142,6 @@ class FileMenu:
         """ Loads a pickled Player object. """
         
         #########################################################
-        # Imports
-        from items_entities import Player
-
-        #########################################################
         # Add asterisk to active option
         for i in range(len(self.options)):
             if self.options[i][-1] == '*':
@@ -156,7 +150,7 @@ class FileMenu:
 
         #########################################################
         # Load data onto fresh player
-        session.player_obj = Player()
+        session.player_obj.__init__()
         with open(f"Data/File_{self.choice+1}/session.player_obj.pkl", "rb") as file:
             session.player_obj = pickle.load(file)
         
@@ -1607,9 +1601,10 @@ def sort_inventory(ent=None):
 def screenshot(folder, filename, blur=False):
     """ Takes a screenshot. """
     
-    # Turn off gui
-    gui_cache, msg_cache = copy.copy(session.pyg.gui_toggle), copy.copy(session.pyg.msg_toggle)
+    # Turn off GUI
+    gui_cache, msg_cache = session.pyg.gui_toggle, session.pyg.msg_toggle
     session.pyg.gui_toggle, session.pyg.msg_toggle = False, False
+    render_all()
     
     # Save image
     path = folder + '/' + filename
@@ -1622,6 +1617,7 @@ def screenshot(folder, filename, blur=False):
         image_after  = image_before.filter(ImageFilter.BLUR)
         image_after.save(folder + '/' + filename)
     
+    # Return GUI settings
     session.pyg.gui_toggle = gui_cache
     session.pyg.msg_toggle = msg_cache
     render_all()

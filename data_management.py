@@ -2,13 +2,13 @@
 # Imports
 ## Standard
 import csv
+import json
 import os
 import time
 import json
 
 ## Specific
 import pygame
-from   pypresence import Presence
 
 ## Local
 import session
@@ -88,20 +88,6 @@ def load_json(filename):
 
     with open(filename, 'r', encoding='utf-8') as f:
         return json.load(f)
-
-def API(state, details, init=False):
-    global RPC
-    
-    if init:
-        RPC = Presence(1384311591662780586)
-        RPC.connect()
-    
-    else:
-        RPC.update(
-            state       = state,
-            details     = details,
-            large_image = "logo",
-            start       = time.time())
 
 ########################################################################################################################################################
 # Gameplay tools
@@ -297,7 +283,6 @@ def load_tsv(path):
     with open(path, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
-            category = row['category']
             key = row['key']
 
             entry = {col: parse_value(val) for col, val in row.items() if col not in ('category', 'key')}

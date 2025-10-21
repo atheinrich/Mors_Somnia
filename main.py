@@ -84,22 +84,17 @@
 ## Specific
 import pygame
 from pygame.locals import *
+from pypresence import Presence
 
 ## Local
 import session
-
 from items_entities import Player
-
 from utilities import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
 from utilities import Images, Audio, Pets
-
 from mechanics import Pygame, Mechanics
 from mechanics import NewGameMenu, PlayGame, PlayGarden
-from mechanics import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
-
+from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
 from quests import QuestMenu
-
-from data_management import API
 
 ########################################################################################################################################################
 # Global values
@@ -240,6 +235,22 @@ def game_states():
         if API_toggle: API(
             state   = times[session.player_obj.ent.env.env_time-1],
             details = session.player_obj.ent.env.name.capitalize())
+
+########################################################################################################################################################
+# Other
+def API(state, details, init=False):
+    global RPC
+    
+    if init:
+        RPC = Presence(1384311591662780586)
+        RPC.connect()
+    
+    else:
+        RPC.update(
+            state       = state,
+            details     = details,
+            large_image = "logo",
+            start       = time.time())
 
 ########################################################################################################################################################
 # Global scripts
