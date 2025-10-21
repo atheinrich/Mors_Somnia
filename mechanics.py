@@ -773,194 +773,115 @@ class PlayGame:
 
         #########################################################
         # Initialize
+        pyg = session.pyg
         active_effects()
         session.stats_obj.update()
         
         session.player_obj.ent.role = 'player'
         session.mech.movement_speed(toggle=False)
         
-        if session.pyg.overlay in [None, 'stats']:
+        if pyg.overlay in [None, 'stats']:
             
             #########################################################
             # Play game if alive
-            if not session.player_obj.ent.dead:
-                for event in pygame.event.get():
+            for event in pygame.event.get():
 
-                    # Quit
-                    if event.type == QUIT:
-                        pygame.quit()
-                        sys.exit()
+                if event.type == KEYDOWN:
+
+                    if not session.player_obj.ent.dead:
+                            
+                        #########################################################
+                        # Move player and adjust speed
+                        if event.key in pyg.key_UP:
+                            self.key_UP()
+                        elif event.key in pyg.key_DOWN:
+                            self.key_DOWN()
+                        elif event.key in pyg.key_LEFT:
+                            self.key_LEFT()
+                        elif event.key in pyg.key_RIGHT:
+                            self.key_RIGHT()
+                        elif event.key in pyg.key_SPEED:
+                            self.key_SPEED()
+
+                        #########################################################
+                        # Activate objects below
+                        elif event.key in pyg.key_ENTER:
+                            self.key_ENTER()
+                        elif event.key in pyg.key_PERIOD:
+                            self.key_PERIOD()
+                        
+                        #########################################################
+                        # Enter combo sequence
+                        elif event.key in pyg.key_HOLD:
+                            pyg.overlay = 'hold'
+                            return
+            
+                    #########################################################
+                    # Zoom camera
+                    if event.key in pyg.key_PLUS:
+                        self.key_PLUS()
+                    elif event.key in pyg.key_MINUS:
+                        self.key_MINUS()
                     
-                    # Keep playing
-                    if event.type == KEYDOWN:
-                        
-                        #########################################################
-                        # Movement
-                        if event.key in session.pyg.key_UP:       self.key_UP()
-                        elif event.key in session.pyg.key_DOWN:   self.key_DOWN()
-                        elif event.key in session.pyg.key_LEFT:   self.key_LEFT()
-                        elif event.key in session.pyg.key_RIGHT:  self.key_RIGHT()
-                        
-                        #########################################################
-                        # Actions
-                        elif event.key in session.pyg.key_ENTER:  self.key_ENTER()
-                        elif event.key in session.pyg.key_GUI:    self.key_GUI()
-                        elif event.key in session.pyg.key_PERIOD: self.key_PERIOD()
-                        elif event.key in session.pyg.key_PLUS:   self.key_PLUS()
-                        elif event.key in session.pyg.key_MINUS:  self.key_MINUS()
-                        
-                        #########################################################
-                        # Menus
-                        elif event.key in session.pyg.key_SPEED:  self.key_SPEED()
-                        
-                        ## >>MAIN MENU<<
-                        elif event.key in session.pyg.key_BACK:
-                            
-                            if session.pyg.overlay:
-                                session.pyg.overlay = None
-                            
-                            elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                                session.pyg.last_press_time = float(time.time())
-                                session.pyg.overlay = 'menu'
-                                pygame.event.clear()
-                                return
+                    #########################################################
+                    # Toggle GUI
+                    elif event.key in pyg.key_GUI:
+                        self.key_GUI()
+                    
+                elif event.type == pygame.KEYUP:
 
-                        ## >>COMBOS<<
-                        elif event.key in session.pyg.key_HOLD:
-                            session.hold_obj.sequence_toggle = True
-                            session.pyg.overlay = 'hold'
-                            pygame.event.clear()
-                            return
+                    #########################################################
+                    # View stats
+                    if event.key in pyg.key_INFO:
+                        pyg.overlay = 'stats'
+                        return
+        
+                    #########################################################
+                    # Open inventory
+                    elif event.key in pyg.key_INV:
+                        pyg.overlay = 'inv'
+                        return
+                    
+                    #########################################################
+                    # Open catalog
+                    elif event.key in pyg.key_DEV:
+                        pyg.overlay = 'dev'
+                        return
+
+                    #########################################################
+                    # Open questlog
+                    elif event.key in pyg.key_QUEST:
+                        session.questlog_obj.update_questlog()
+                        pyg.overlay = 'questlog'
+                        return
+                    
+                    #########################################################
+                    # Close menu or open main menu
+                    elif event.key in pyg.key_BACK:
                         
-                        ## >>INVENTORY<<
-                        elif event.key in session.pyg.key_INV:
-                            session.pyg.overlay = 'inv'
-                            pygame.event.clear()
-                            return
+                        if pyg.overlay:
+                            pyg.overlay = None
                         
-                        ## >>CONSTRUCTION<<
-                        elif event.key in session.pyg.key_DEV:
-                            #session.trade_obj.ent = session.player_obj.ent
-                            session.pyg.overlay = 'dev'
-                            pygame.event.clear()
+                        elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                            pyg.last_press_time = float(time.time())
+                            pyg.overlay = 'menu'
                             return
 
-                        ## >>STATS<<
-                        elif event.key in session.pyg.key_INFO:
-                            if session.pyg.overlay != 'stats':
-                                session.stats_obj.dic = session.stats_obj.stats
-                                session.pyg.overlay = 'stats'
-                            else:
-                                session.pyg.overlay = None
-                            pygame.event.clear()
-                            return
-            
-                        ## >>QUESTLOG<<
-                        elif event.key in session.pyg.key_QUEST:
-                            session.questlog_obj.update_questlog()
-                            session.pyg.overlay = 'questlog'
-                            pygame.event.clear()
-                            return
-            
+                # Quit
+                elif event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                
             #########################################################
             # Handle player death
-            else:
-                env      = session.player_obj.ent.env
-                last_env = session.player_obj.ent.last_env
-                permadeath_locs = ['garden', 'home', 'overworld', 'cave', 'womb']
-                drug_locs       = ['hallucination', 'bitworld']
-                dream_locs      = ['dungeon']
+            if session.player_obj.ent.dead:
                 
                 #########################################################
                 # Survive
-                if env.name not in permadeath_locs:
-                    
-                    # Wait for animations to finish
-                    if not session.img.render_log:
-                        if not self.death_cooldown:
-                            
-                            # Restore player state
-                            session.player_obj.ent.dead = False
-                            session.pyg.gui             = {}
-                            session.pyg.msg             = []
-                            session.pyg.msg_history     = {}
-                            session.mech.movement_speed(toggle=False, custom=0)
-                            self.death_cooldown = 5
-                            
-                            # Regain consciousness
-                            if env.name in drug_locs:
-                                session.player_obj.ent.hp = session.player_obj.ent.max_hp // 2
-                                self.fadein = "Delirium passes, but nausea remains."
-                            
-                            # Wake up at home
-                            elif env.name in dream_locs:
-                                session.player_obj.ent.hp = session.player_obj.ent.max_hp
-                                self.fadein = "Your cling to life has slipped, yet you wake unscarred in bed."
-                            
-                            else:
-                                session.player_obj.ent.hp = session.player_obj.ent.max_hp
-                                self.fadein = "???"
-                            
-                            session.pyg.overlay = None
-                            session.pyg.fadeout_screen(
-                                text     = self.fadein,
-                                duration = 3)
-                            place_player(
-                                ent = session.player_obj.ent,
-                                env = last_env,
-                                loc = last_env.player_coordinates)
-                            session.img.render_fx = None
-                            pygame.event.clear()
-                        
-                        else: self.death_cooldown -= 1
-                
-                #########################################################
-                # End the game
-                else:
-                    for event in pygame.event.get():
-                        
-                        # Restrict movement speed
-                        session.mech.movement_speed(toggle=False, custom=2)
-                        
-                        # Menus
-                        if event.type == KEYDOWN:
-                            
-                            # >>MAIN MENU<<
-                            if event.key in session.pyg.key_BACK:
-                                session.pyg.overlay = 'menu'
-                                pygame.event.clear()
-                                return
-                        
-                            # >>TOGGLE MESSAGES<<
-                            elif event.key in session.pyg.key_PERIOD:
-                                if session.pyg.msg_toggle: session.pyg.msg_toggle = False
-                                else:
-                                    if session.pyg.gui_toggle:
-                                        session.pyg.gui_toggle = False
-                                        session.pyg.msg_toggle = False
-                                    else:
-                                        session.pyg.msg_toggle = True
-                                        session.pyg.gui_toggle = True
-                            
-                            # >>STATS<<
-                            elif event.key in session.pyg.key_INFO:
-                                if session.pyg.overlay != 'stats':
-                                    session.stats_obj.dic = session.stats_obj.stats
-                                    session.pyg.overlay = 'stats'
-                                else:
-                                    session.pyg.overlay = None
-                                pygame.event.clear()
-                            
-                            # >>QUESTLOG<<
-                            elif event.key in session.pyg.key_QUEST:
-                                session.questlog_obj.update_questlog()
-                                session.pyg.overlay = 'questlog'
-                                pygame.event.clear()
-                                return
-                            
-                            # Other
-                            elif event.key in session.pyg.key_SPEED:  self.key_SPEED()
-        
+                permadeath_locs = ['garden', 'home', 'overworld', 'cave', 'womb']
+                if session.player_obj.ent.env.name not in permadeath_locs:
+                    self.revive_player()
+
         #########################################################
         # Move AI controlled entities
         for entity in session.player_obj.ent.env.entities: entity.ai()
@@ -1024,6 +945,30 @@ class PlayGame:
                 # Pick up or activate
                 else: session.player_obj.ent.tile.item.pick_up()
 
+    def key_PERIOD(self):
+        
+        #########################################################
+        # Move down a level
+        if session.player_obj.ent.tile.item:
+            if session.player_obj.ent.tile.item.name in ['dungeon', 'cave']:
+                if time.time()-self.last_press_time > self.cooldown_time:
+                    self.last_press_time = float(time.time())
+                
+                    # Go up by one floor
+                    if session.player_obj.ent.env.lvl_num > 1:
+                        env = session.player_obj.envs.areas[session.player_obj.ent.env.name][session.player_obj.ent.env.lvl_num-2]
+                        place_player(
+                            ent = session.player_obj.ent,
+                            env = env,
+                            loc = env.player_coordinates)
+                    
+                    elif session.player_obj.ent.env.lvl_num == 1:
+                        env = session.player_obj.ent.last_env
+                        place_player(
+                            ent = session.player_obj.ent,
+                            env = env,
+                            loc = env.player_coordinates)
+
     def key_GUI(self):
         
         #########################################################
@@ -1051,30 +996,6 @@ class PlayGame:
         elif self.gui_set == 3:
             session.pyg.gui_toggle = True
             session.pyg.msg_toggle = False
-
-    def key_PERIOD(self):
-        
-        #########################################################
-        # Move down a level
-        if session.player_obj.ent.tile.item:
-            if session.player_obj.ent.tile.item.name in ['dungeon', 'cave']:
-                if time.time()-self.last_press_time > self.cooldown_time:
-                    self.last_press_time = float(time.time())
-                
-                    # Go up by one floor
-                    if session.player_obj.ent.env.lvl_num > 1:
-                        env = session.player_obj.envs.areas[session.player_obj.ent.env.name][session.player_obj.ent.env.lvl_num-2]
-                        place_player(
-                            ent = session.player_obj.ent,
-                            env = env,
-                            loc = env.player_coordinates)
-                    
-                    elif session.player_obj.ent.env.lvl_num == 1:
-                        env = session.player_obj.ent.last_env
-                        place_player(
-                            ent = session.player_obj.ent,
-                            env = env,
-                            loc = env.player_coordinates)
 
     def key_PLUS(self):
         session.player_obj.ent.env.camera.zoom_in()  # >>ZOOM<<
@@ -1110,6 +1031,52 @@ class PlayGame:
                 fade_in  = True,
                 duration = 3)
             self.fadein = False
+
+    def revive_player(self):
+
+        env        = session.player_obj.ent.env
+        last_env   = session.player_obj.ent.last_env
+        drug_locs  = ['hallucination', 'bitworld']
+        dream_locs = ['dungeon']
+
+        # Wait for animations to finish
+        if not session.img.render_log:
+            if not self.death_cooldown:
+                
+                # Restore player state
+                session.player_obj.ent.dead = False
+                session.pyg.gui             = {}
+                session.pyg.msg             = []
+                session.pyg.msg_history     = {}
+                session.mech.movement_speed(toggle=False, custom=0)
+                self.death_cooldown = 5
+                
+                # Regain consciousness
+                if env.name in drug_locs:
+                    session.player_obj.ent.hp = session.player_obj.ent.max_hp // 2
+                    self.fadein = "Delirium passes, but nausea remains."
+                
+                # Wake up at home
+                elif env.name in dream_locs:
+                    session.player_obj.ent.hp = session.player_obj.ent.max_hp
+                    self.fadein = "Your cling to life has slipped, yet you wake unscarred in bed."
+                
+                else:
+                    session.player_obj.ent.hp = session.player_obj.ent.max_hp
+                    self.fadein = "???"
+                
+                session.pyg.overlay = None
+                session.pyg.fadeout_screen(
+                    text     = self.fadein,
+                    duration = 3)
+                place_player(
+                    ent = session.player_obj.ent,
+                    env = last_env,
+                    loc = last_env.player_coordinates)
+                session.img.render_fx = None
+                pygame.event.clear()
+            
+            else: self.death_cooldown -= 1
 
 class PlayGarden:
 
@@ -1195,7 +1162,6 @@ class PlayGarden:
                         ## >>STATS<<
                         elif event.key in session.pyg.key_INFO:
                             if session.pyg.overlay != 'stats':
-                                session.stats_obj.dic = session.pets_obj.stats
                                 session.pyg.overlay = 'stats'
                             else:
                                 session.pyg.overlay = None

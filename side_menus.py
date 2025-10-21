@@ -75,9 +75,9 @@ class InventoryMenu:
                 
                 #########################################################
                 # Activate or drop item
-                elif event.key in session.pyg.key_ENTER:
+                elif event.key in pyg.key_ENTER:
                     self.key_ENTER()
-                elif event.key in session.pyg.key_PERIOD:
+                elif event.key in pyg.key_PERIOD:
                     self.key_PERIOD()
                 
                 #########################################################
@@ -92,7 +92,7 @@ class InventoryMenu:
                 
                 #########################################################
                 # Open catalog
-                elif event.key in session.pyg.key_DEV:
+                elif event.key in pyg.key_DEV:
                     self.key_DEV()
                     return
                 
@@ -103,10 +103,9 @@ class InventoryMenu:
                     return
 
             # Save for later reference
-            if self.dic_indices:
-                index = self.dic_index%len(self.dic_indices)
-                self.dic_indices[index][0] = self.offset
-                self.dic_indices[index][1] = self.choice
+            index = self.dic_index%len(self.dic_indices)
+            self.dic_indices[index][0] = self.offset
+            self.dic_indices[index][1] = self.choice
         
         pyg.overlay = 'inv'
         return
@@ -357,7 +356,7 @@ class CatalogMenu:
         ## Update dictionaries and create cursors
         self.update_data()
         
-        ## Restrict movement speed
+        ## Set navigation speed
         session.mech.movement_speed(toggle=False, custom=2)
         
         ## Define shorthand
@@ -371,7 +370,6 @@ class CatalogMenu:
                 # Move cursor
                 if event.key in pyg.key_UP:
                     self.key_UP()
-                    
                 elif event.key in pyg.key_DOWN:
                     self.key_DOWN()
                 
@@ -379,7 +377,6 @@ class CatalogMenu:
                 # Switch section
                 elif event.key in pyg.key_LEFT:
                     self.key_LEFT()
-                
                 elif event.key in pyg.key_RIGHT:
                     self.key_RIGHT()
                 
@@ -406,8 +403,9 @@ class CatalogMenu:
                     return
 
             # Save for later reference
-            self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
-            self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
+            index = self.dic_index%len(self.dic_indices)
+            self.dic_indices[index][0] = self.offset
+            self.dic_indices[index][1] = self.choice
         
         pyg.overlay = 'dev'
         return
@@ -654,16 +652,18 @@ class AbilitiesMenu:
     def run(self):
         """ Processes input sequences while a key is held down. """
         
-        # Restrict movement speed
-        session.mech.movement_speed(toggle=False, custom=2)
-        
-        # Generate cursor and dictionaries
+        #########################################################
+        # Initialize
+        ## Update dictionaries and create cursors
         self.update_data()
 
-        # Define shorthand
-        pyg = session.pyg
+        ## Set navigation speed
+        session.mech.movement_speed(toggle=False, custom=2)
         
-        # Handle keystrokes
+        ## Define shorthand
+        pyg = session.pyg
+
+        ## Wait for input
         for event in pygame.event.get():
             
             # Clear sequence after some time
@@ -671,31 +671,35 @@ class AbilitiesMenu:
                 self.last_press_time = time.time()
                 self.key_sequence    = []
             
-            # Wait for sequence
             if event.type == pygame.KEYDOWN:
                 
-                ## >>SEQUENCE<<
+                #########################################################
+                # Listen for sequence
                 if event.key in pyg.key_HOLD:
                     self.sequence_toggle = True
 
+                ## Add arrow keys to the current sequence
                 if self.sequence_toggle and (event.key in self.keys):
                     self.key_sequence.append(event.key)
                     
-                    # Restrict to three cached values
+                    # Keep three most recent keys
                     if len(self.key_sequence) > 3: self.key_sequence.pop(0)
                 
-                # >>DETAILS<<
+                #########################################################
+                # Toggle details
                 elif event.key in pyg.key_QUEST:
                     if not self.detail: self.detail = True
                     else:               self.detail = False
             
+            #########################################################
             # Return to game
             elif event.type == pygame.KEYUP:
                 if event.key in pyg.key_HOLD:
                     self.sequence_toggle = False
-                    pyg.overlay = None
+                    pyg.overlay          = None
                     return
             
+            #########################################################
             # Trigger an event
             if len(self.key_sequence) == 3:
                 sequence_string = ''

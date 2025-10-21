@@ -87,7 +87,7 @@ class Environments:
         # Construct rooms
         width  = 19
         height = 14
-        x      = 1
+        x      = 0
         y      = 0
         
         ## Construct room
@@ -103,7 +103,8 @@ class Environments:
             objects = False,
             floor   = env.floors,
             walls   = env.walls,
-            roof    = None)
+            roof    = None,
+            unbreakable = True)
         x, y = new_room.center()[0], new_room.center()[1]
         
         ###############################################################
@@ -1515,7 +1516,7 @@ class Environment:
 class Room:
     """ Defines rectangles on the map. Used to characterize a room. """
     
-    def __init__(self, name, env, x1, y1, width, height, hidden, floor, walls, roof, objects, biome, plan=None, boundary=None):
+    def __init__(self, name, env, x1, y1, width, height, hidden, floor, walls, roof, objects, biome, plan=None, boundary=None, unbreakable=False):
         """ Assigns tiles to a room and adjusts their properties.
 
             Parameters
@@ -1591,11 +1592,12 @@ class Room:
         self.noncorners_list = []
         
         # Properties
-        self.hidden   = hidden
-        self.delete   = False
-        self.objects  = objects
-        self.plan     = plan
-        self.boundary = boundary
+        self.hidden      = hidden
+        self.delete      = False
+        self.objects     = objects
+        self.plan        = plan
+        self.boundary    = boundary
+        self.unbreakable = unbreakable
         
         # Create square room or text-based design
         if self.plan:       self.from_plan()
@@ -1632,8 +1634,9 @@ class Room:
                 
                 # Handle walls
                 if (x == self.x1) or (x == self.x2) or (y == self.y1) or (y == self.y2):
-                    tile.img_names = self.env.walls
-                    tile.blocked   = True
+                    tile.img_names   = self.env.walls
+                    tile.blocked     = True
+                    tile.unbreakable = self.unbreakable
                     self.walls_list.append(tile)
                     
                     # Remove items and entities
@@ -1706,6 +1709,7 @@ class Room:
                         tile.blocked   = True
                         self.walls_list.append(tile)
                         if self.plan[y][x] != '|':
+                            tile.unbreakable = self.unbreakable
                             
                             # Remove items and entities
                             tile.item = None

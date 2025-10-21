@@ -129,9 +129,11 @@ class QuestMenu:
                 elif event.key in pyg.key_ENTER:
                     self.key_ENTER()
                 
+            elif event.type == pygame.KEYUP:
+
                 #########################################################
                 # Return to game
-                elif time.time()-pyg.last_press_time > self.cooldown_time:
+                if event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
 
