@@ -123,7 +123,6 @@ def init():
     ## Player data
     session.player_obj       = Player()
     session.player_obj.temp  = True
-    session.pets_obj         = Pets()
     
     #########################################################
     # Gamestates
@@ -216,7 +215,8 @@ def game_states():
             session.trade_obj.run()
             session.trade_obj.render()
         
-        elif session.pyg.overlay == 'stats':
+        elif session.pyg.overlay in ['ent_stats', 'pet_stats']:
+            session.stats_obj.run()
             session.stats_obj.render()
         
         #########################################################

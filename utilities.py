@@ -536,7 +536,10 @@ class StatsMenu:
     def __init__(self):
         """ Hosts display for player stats. """
 
-        self.stats = {
+        self.overlay = 'pet_stats'
+        self.pets_init()
+
+        self.ent_stats = {
             'Character Information': None,
             '': None,
             'rank':       None,
@@ -545,32 +548,106 @@ class StatsMenu:
             'defense':    None,
             'sanity':     None}
 
+    def pets_init(self):
+        self.pet_stats = {
+            '      RADIX ATRIUM': None,
+            '':         None,
+            'mood':     None,
+            'stamina':  None,
+            'strength': None,
+            'appeal':   None}
+        
+        # Numerical stats
+        self.pet_levels = {
+            'stamina':   1,
+            'strength':  1,
+            'appeal':    1}
+        
+        self.pet_moods = {
+            'happiness': 5,
+            'sadness':   0,
+            'anger':     0,
+            'boredom':   0,
+            'lethargy':  0,
+            'confusion': 0}
+        
+        # String conversions
+        self.pet_faces = {
+            'happiness': '( ^_^ )',
+            'sadness':   '( Q_Q )',
+            'anger':     '( >_< )',
+            'boredom':   '( . _ .  )',
+            'lethargy':  '( =_= )',
+            'confusion': '(@_@)'}
+        
+        # Time to lose happiness and gain something else
+        self.happiness_cooldown = 10
+        self.happiness_press    = 0
+        
+        # Time between mood switches if tied
+        self.emoji_cooldown     = 10
+        self.emoji_press        = 0
+
+    def run(self):
+        
+        #########################################################
+        # Initialize
+        session.mech.movement_speed(toggle=False, custom=2)
+        
+        ## Switch overlay
+        if self.overlay != session.pyg.overlay:
+            self.overlay = session.pyg.overlay
+        self.update()
+        
+        ## Wait for input
+        for event in pygame.event.get():
+            
+            if event.type == KEYUP:
+
+                self.key_BACK()
+                return
+                
+        session.pyg.overlay = self.overlay
+        return
+
+    def key_BACK(self):
+        session.pyg.last_press_time = float(time.time())
+        session.pyg.overlay = None
+
     def update(self):
         
-        self.stats['rank']  = '★' * int(session.player_obj.ent.rank)
-        if len(self.stats['rank']) < 5:
-            while len(self.stats['rank']) < 5:
-                self.stats['rank'] += '☆'
+        if self.overlay == 'ent_stats':
+                
+            self.ent_stats['rank']  = '★' * int(session.player_obj.ent.rank)
+            if len(self.ent_stats['rank']) < 5:
+                while len(self.ent_stats['rank']) < 5:
+                    self.ent_stats['rank'] += '☆'
+                
+            self.ent_stats['rigor']   = '★' * int(session.player_obj.ent.max_hp // 10)
+            if len(self.ent_stats['rigor']) < 5:
+                while len(self.ent_stats['rigor']) < 5:
+                    self.ent_stats['rigor'] += '☆'
             
-        self.stats['rigor']   = '★' * int(session.player_obj.ent.max_hp // 10)
-        if len(self.stats['rigor']) < 5:
-            while len(self.stats['rigor']) < 5:
-                self.stats['rigor'] += '☆'
-        
-        self.stats['attack']   = '★' * int(session.player_obj.ent.attack // 10)
-        if len(self.stats['attack']) < 5:
-            while len(self.stats['attack']) < 5:
-                self.stats['attack'] += '☆'
-        
-        self.stats['defense']   = '★' * int(session.player_obj.ent.defense // 10)
-        if len(self.stats['defense']) < 5:
-            while len(self.stats['defense']) < 5:
-                self.stats['defense'] += '☆'
+            self.ent_stats['attack']   = '★' * int(session.player_obj.ent.attack // 10)
+            if len(self.ent_stats['attack']) < 5:
+                while len(self.ent_stats['attack']) < 5:
+                    self.ent_stats['attack'] += '☆'
+            
+            self.ent_stats['defense']   = '★' * int(session.player_obj.ent.defense // 10)
+            if len(self.ent_stats['defense']) < 5:
+                while len(self.ent_stats['defense']) < 5:
+                    self.ent_stats['defense'] += '☆'
 
-        self.stats['sanity']   = '★' * int(session.player_obj.ent.sanity // 10)
-        if len(self.stats['sanity']) < 5:
-            while len(self.stats['sanity']) < 5:
-                self.stats['sanity'] += '☆'
+            self.ent_stats['sanity']   = '★' * int(session.player_obj.ent.sanity // 10)
+            if len(self.ent_stats['sanity']) < 5:
+                while len(self.ent_stats['sanity']) < 5:
+                    self.ent_stats['sanity'] += '☆'
+            
+            self.current_stats = self.ent_stats
+
+        else:
+            self.pet_update()
+            self.current_stats = self.pet_stats
 
     def render(self):
         session.pyg.msg_height = 1
@@ -597,15 +674,85 @@ class StatsMenu:
         
         # Render items
         Y = 32
-        for i in range(len(list(self.stats))):
+        for i in range(len(list(self.current_stats))):
             X1 = session.pyg.tile_height + session.pyg.tile_height // 4
             X2 = session.pyg.tile_height * 4
-            key, val = list(self.stats.items())[i]
+            key, val = list(self.current_stats.items())[i]
             key = session.pyg.font.render(key, True, session.pyg.gray)
             val = session.pyg.font.render(val, True, session.pyg.gray)
             session.pyg.screen.blit(key, (X1, Y))
             session.pyg.screen.blit(val, (X2, Y))
             Y += session.pyg.tile_height//2
+
+    def pet_startup(self, env):
+        self.ents = env.entities
+
+    def pet_stat_check(self, dic):
+        for key, value in dic.items():
+            if value > 10:  dic[key] = 10
+            elif value < 0: dic[key] = 0
+
+    def pet_update(self):
+        """ Decreases happiness over time, sets mood to current highest stat, handles mood effects, and updates stat display. """
+        
+        # Lose happiness
+        if self.pet_moods['happiness']:
+            if time.time() - self.happiness_press > self.happiness_cooldown:
+                self.happiness_press = time.time()
+                
+                # Random chance to lose happiness and gain something else
+                if not random.randint(0, 1):
+                    self.pet_moods['happiness'] -= 1
+                    self.pet_moods[random.choice(list(self.pet_moods.keys()))] += 1
+        
+        ## Keep stats to [0, 10]
+        self.pet_stat_check(self.pet_levels)
+        self.pet_stat_check(self.pet_moods)
+        
+        # Set mood to those with the highest value
+        max_val = max(self.pet_moods.values())
+        current_moods = [mood for mood, val in self.pet_moods.items() if val == max_val]
+        
+        ## Alternate between tied moods
+        if len(current_moods) > 1:
+            if time.time() - self.emoji_press > self.emoji_cooldown:
+                self.emoji_press = time.time()
+                self.pet_stats['mood'] = self.pet_faces[random.choice(current_moods)]        
+        
+        ## Set the current mood
+        else:
+            self.pet_stats['mood'] = self.pet_faces[current_moods[0]]
+        
+        ## Apply mood effects
+        if self.pet_moods['happiness'] <= 2:
+            if self.ents[-1].img_names[0] != 'purple radish':
+                for ent in self.ents:
+                    if ent != session.player_obj.ent:
+                        if ent.img_names[0] != 'purple radish':
+                            ent.img_names[0] = 'purple radish'
+        elif self.pet_moods['happiness'] >= 8:
+            if self.ents[-1].img_names[0] != 'orange radish':
+                for ent in self.ents:
+                    if ent != session.player_obj.ent:
+                        if ent.img_names[0] != 'orange radish':
+                            ent.img_names[0] = 'orange radish'
+        else:
+            if self.ents[-1].img_names[0] != 'red radish':
+                for ent in self.ents:
+                    if ent != session.player_obj.ent:
+                        if ent.img_names[0] != 'red radish':
+                            ent.img_names[0] = 'red radish'
+        
+        # Set levels
+        self.pet_stats['stamina']  = '★' * self.pet_levels['stamina']
+        while len(self.pet_stats['stamina']) < 5:
+            self.pet_stats['stamina'] += '☆'
+        self.pet_stats['strength'] = '★' * self.pet_levels['strength']
+        while len(self.pet_stats['strength']) < 5:
+            self.pet_stats['strength'] += '☆'
+        self.pet_stats['appeal']   = '★' * self.pet_levels['appeal']
+        while len(self.pet_stats['appeal']) < 5:
+            self.pet_stats['appeal'] += '☆'
 
 class Textbox:
 
@@ -708,7 +855,7 @@ class Pets:
             'strength':  1,
             'appeal':    1}
         
-        self.moods = {
+        self.pet_moods = {
             'happiness': 5,
             'sadness':   0,
             'anger':     0,
@@ -736,7 +883,7 @@ class Pets:
     def startup(self, env):
         self.ents = env.entities
 
-    def stat_check(self, dic):
+    def pet_stat_check(self, dic):
         for key, value in dic.items():
             if value > 10:  dic[key] = 10
             elif value < 0: dic[key] = 0
@@ -745,22 +892,22 @@ class Pets:
         """ Decreases happiness over time, sets mood to current highest stat, handles mood effects, and updates stat display. """
         
         # Lose happiness
-        if self.moods['happiness']:
+        if self.pet_moods['happiness']:
             if time.time() - self.happiness_press > self.happiness_cooldown:
                 self.happiness_press = time.time()
                 
                 # Random chance to lose happiness and gain something else
                 if not random.randint(0, 1):
-                    self.moods['happiness'] -= 1
-                    self.moods[random.choice(list(self.moods.keys()))] += 1
+                    self.pet_moods['happiness'] -= 1
+                    self.pet_moods[random.choice(list(self.pet_moods.keys()))] += 1
         
         ## Keep stats to [0, 10]
-        self.stat_check(self.levels)
-        self.stat_check(self.moods)
+        self.pet_stat_check(self.levels)
+        self.pet_stat_check(self.pet_moods)
         
         # Set mood to those with the highest value
-        max_val = max(self.moods.values())
-        current_moods = [mood for mood, val in self.moods.items() if val == max_val]
+        max_val = max(self.pet_moods.values())
+        current_moods = [mood for mood, val in self.pet_moods.items() if val == max_val]
         
         ## Alternate between tied moods
         if len(current_moods) > 1:
@@ -773,13 +920,13 @@ class Pets:
             self.stats['mood'] = self.faces[current_moods[0]]
         
         ## Apply mood effects
-        if self.moods['happiness'] <= 2:
+        if self.pet_moods['happiness'] <= 2:
             if self.ents[-1].img_names[0] != 'purple radish':
                 for ent in self.ents:
                     if ent != session.player_obj.ent:
                         if ent.img_names[0] != 'purple radish':
                             ent.img_names[0] = 'purple radish'
-        elif self.moods['happiness'] >= 8:
+        elif self.pet_moods['happiness'] >= 8:
             if self.ents[-1].img_names[0] != 'orange radish':
                 for ent in self.ents:
                     if ent != session.player_obj.ent:

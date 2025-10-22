@@ -618,7 +618,7 @@ class NewGameMenu:
         player_obj.envs.add_area('underworld')
         player_obj.envs.areas['underworld'].add_level('womb')
         player_obj.envs.areas['underworld'].add_level('garden')
-        session.pets_obj.startup(player_obj.envs.areas['underworld']['garden'])
+        session.stats_obj.pet_startup(player_obj.envs.areas['underworld']['garden'])
         
         ## Place temporary player in character creator
         player_obj.ent.last_env = player_obj.envs.areas['underworld']['womb']
@@ -716,6 +716,7 @@ class NewGameMenu:
         # Make object permanent
         ## Copy player and womb environment
         session.player_obj = copy.deepcopy(self.temp)
+        session.player_obj.ent.role = 'player'
         session.dev.update_dict()
 
         ## Shorthand
@@ -768,19 +769,21 @@ class PlayGame:
         self.cooldown_time   = 1
         self.gui_set         = 0
         self.death_cooldown  = 1
-        
+
     def run(self):
 
         #########################################################
         # Initialize
-        pyg = session.pyg
         active_effects()
-        session.stats_obj.update()
-        
-        session.player_obj.ent.role = 'player'
+
+        ## Set navigation speed
         session.mech.movement_speed(toggle=False)
         
-        if pyg.overlay in [None, 'stats']:
+        ## Define shorthand
+        pyg = session.pyg
+        
+        ## Wait for input
+        if pyg.overlay is None:
             
             #########################################################
             # Play game if alive
@@ -815,6 +818,12 @@ class PlayGame:
                         elif event.key in pyg.key_HOLD:
                             pyg.overlay = 'hold'
                             return
+                
+                        #########################################################
+                        # View stats
+                        elif event.key in pyg.key_INFO:
+                            pyg.overlay = 'ent_stats'
+                            return
             
                     #########################################################
                     # Zoom camera
@@ -831,14 +840,8 @@ class PlayGame:
                 elif event.type == pygame.KEYUP:
 
                     #########################################################
-                    # View stats
-                    if event.key in pyg.key_INFO:
-                        pyg.overlay = 'stats'
-                        return
-        
-                    #########################################################
                     # Open inventory
-                    elif event.key in pyg.key_INV:
+                    if event.key in pyg.key_INV:
                         pyg.overlay = 'inv'
                         return
                     
@@ -858,11 +861,7 @@ class PlayGame:
                     #########################################################
                     # Close menu or open main menu
                     elif event.key in pyg.key_BACK:
-                        
-                        if pyg.overlay:
-                            pyg.overlay = None
-                        
-                        elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        if time.time()-pyg.last_press_time > pyg.cooldown_time:
                             pyg.last_press_time = float(time.time())
                             pyg.overlay = 'menu'
                             return
@@ -1086,115 +1085,97 @@ class PlayGarden:
         #########################################################
         # Initialize
         ## Update pet stats, mood, and effects
-        session.pets_obj.update()
+        session.stats_obj.pet_update()
         
         ## Active AI when viewing the main menu
         if session.pyg.overlay == 'menu': session.player_obj.ent.role = 'NPC'
         else:                             session.player_obj.ent.role = 'player'
         
-        ## Set camera and movement speed
+        ## Set camera (?)
         session.player_obj.envs.areas['underworld']['garden'].camera.zoom_in(custom=1)
+        
+        ## Set navigation speed
         session.mech.movement_speed(toggle=False, custom=2)
         
-        #########################################################
-        # Handle input
-        if session.pyg.overlay in [None, 'stats']:
+        ## Define shorthand
+        pyg = session.pyg
+        
+        ## Wait for input
+        if session.pyg.overlay is None:
             for event in pygame.event.get():
                 
                 #########################################################
+                # Keep playing
+                if event.type == KEYDOWN:
+                    if not session.player_obj.ent.dead:
+                        
+                        #########################################################
+                        # Move player and adjust speed
+                        if event.key in pyg.key_UP:
+                            self.key_UP()
+                        elif event.key in pyg.key_DOWN:
+                            self.key_DOWN()
+                        elif event.key in pyg.key_LEFT:
+                            self.key_LEFT()
+                        elif event.key in pyg.key_RIGHT:
+                            self.key_RIGHT()
+                        elif event.key in pyg.key_SPEED:
+                            self.key_SPEED()
+
+                        #########################################################
+                        # Activate objects below
+                        elif event.key in pyg.key_ENTER:
+                            self.key_ENTER()
+                        elif event.key in pyg.key_PERIOD:
+                            self.key_PERIOD()
+                        
+                        #########################################################
+                        # Enter combo sequence
+                        elif event.key in pyg.key_HOLD:
+                            pyg.overlay = 'hold'
+                            return
+                
+                        #########################################################
+                        # View stats
+                        elif event.key in pyg.key_INFO:
+                            pyg.overlay = 'pet_stats'
+                            return
+            
+
+                elif event.type == pygame.KEYUP:
+
+                    #########################################################
+                    # Open inventory
+                    if event.key in pyg.key_INV:
+                        pyg.overlay = 'inv'
+                        return
+                    
+                    #########################################################
+                    # Open catalog
+                    elif event.key in pyg.key_DEV:
+                        pyg.overlay = 'dev'
+                        return
+
+                    #########################################################
+                    # Open questlog
+                    elif event.key in pyg.key_QUEST:
+                        session.questlog_obj.update_questlog()
+                        pyg.overlay = 'gardenlog'
+                        return
+                    
+
+                    #########################################################
+                    # Close menu or open main menu
+                    elif event.key in pyg.key_BACK:
+                        if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                            pyg.last_press_time = float(time.time())
+                            pyg.overlay = 'menu'
+                            return
+                        
                 # Quit
-                if event.type == QUIT:
+                elif event.type == QUIT:
                     pygame.quit()
                     sys.exit()
-                
-                #########################################################
-                # Keep playing
-                if not session.player_obj.ent.dead:
-                    if event.type == KEYDOWN:
-                        
-                        #########################################################
-                        # Movement
-                        if event.key in session.pyg.key_UP:       self.key_UP()
-                        elif event.key in session.pyg.key_DOWN:   self.key_DOWN()
-                        elif event.key in session.pyg.key_LEFT:   self.key_LEFT()
-                        elif event.key in session.pyg.key_RIGHT:  self.key_RIGHT()
-                        
-                        #########################################################
-                        # Actions
-                        elif event.key in session.pyg.key_ENTER:  self.key_ENTER()
-                        elif event.key in session.pyg.key_PERIOD: self.key_PERIOD()
-                        
-                        #########################################################
-                        # Menus
-                        elif event.key in session.pyg.key_SPEED:  self.key_SPEED()
-                        
-                        ## >>MAIN MENU<<
-                        elif event.key in session.pyg.key_BACK:
-                            
-                            if session.pyg.overlay == 'stats':
-                                session.pyg.overlay = None
-                            
-                            elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                                session.pyg.last_press_time = float(time.time())
-                                session.pyg.overlay = 'menu'
-                                pygame.event.clear()
-                                return
-                        
-                        ## >>COMBOS<<
-                        elif event.key in session.pyg.key_HOLD:
-                            session.hold_obj.sequence_toggle = True
-                            session.pyg.overlay = 'hold'
-                            pygame.event.clear()
-                            return
-                        
-                        ## >>INVENTORY<<
-                        elif event.key in session.pyg.key_INV:
-                            session.pyg.overlay = 'inv'
-                            pygame.event.clear()
-                            return
-                        
-                        ## >>CONSTRUCTION<<
-                        elif event.key in session.pyg.key_DEV:
-                            session.pyg.overlay = 'dev'
-                            pygame.event.clear()
-                            return
-                
-                        ## >>STATS<<
-                        elif event.key in session.pyg.key_INFO:
-                            if session.pyg.overlay != 'stats':
-                                session.pyg.overlay = 'stats'
-                            else:
-                                session.pyg.overlay = None
-                            pygame.event.clear()
-                            return
-                
-                        ## >>QUESTLOG<<
-                        elif event.key in session.pyg.key_QUEST:
-                            session.pyg.overlay = 'gardenlog'
-                            pygame.event.clear()
-                            return
-
-                #########################################################
-                # Return to main menu
-                else:
-
-                    # >>MAIN MENU<<
-                    if event.type == KEYDOWN:
-                        if event.key in session.pyg.key_BACK:
-                            session.pyg.overlay = 'menu'
-                            pygame.event.clear()
-                            return
-                            
-                    # >>TOGGLE MESSAGES<<
-                    elif event.key in session.pyg.key_PERIOD:
-                        if session.pyg.msg_toggle: session.pyg.msg_toggle = False
-                        else:
-                            if session.pyg.gui_toggle:
-                                session.pyg.gui_toggle = False
-                                session.pyg.msg_toggle = False
-                            else:
-                                session.pyg.msg_toggle = True
-                                session.pyg.gui_toggle = True
         
         #########################################################
         # Move AI controlled entities
@@ -2674,12 +2655,12 @@ class Mechanics:
 
         # Bathe
         else:
-            if session.pets_obj.moods['anger']:
-                session.pets_obj.moods['anger'] -= 1
+            if session.stats_obj.pet_moods['anger']:
+                session.stats_obj.pet_moods['anger'] -= 1
                 image = session.img.dict['bubbles']['water']
             
             else:
-                session.pets_obj.moods['boredom'] += 1
+                session.stats_obj.pet_moods['boredom'] += 1
                 image = session.img.dict['bubbles']['dots']
             
         session.img.flash_above(ent, image)
@@ -2744,8 +2725,8 @@ class Mechanics:
     def entity_eat(self, ent):
         """ Dropped item effect. """
         
-        session.pets_obj.moods['happiness'] += 1
-        session.pets_obj.moods['boredom']   -= 1
+        session.stats_obj.pet_moods['happiness'] += 1
+        session.stats_obj.pet_moods['boredom']   -= 1
         image = session.img.dict['bubbles']['heart']
         session.img.flash_above(ent, image)
         ent.tile.item = None
@@ -2765,8 +2746,8 @@ class Mechanics:
         if ent_list:
             
             if session.player_obj.ent.env.name == 'garden':
-                session.pets_obj.moods['lethargy'] -= 1
-                session.pets_obj.moods['boredom']  -= 1
+                session.stats_obj.pet_moods['lethargy'] -= 1
+                session.stats_obj.pet_moods['boredom']  -= 1
             
             image = session.img.dict['bubbles']['exclamation']
             for ent in ent_list:
@@ -2822,8 +2803,8 @@ class Mechanics:
         
         # Activate effect if entities are found
         if ent_list:
-            session.pets_obj.moods['sadness'] -= 1
-            if session.pets_obj.moods['sadness'] <= 0: session.pets_obj.moods['boredom'] += 1
+            session.stats_obj.pet_moods['sadness'] -= 1
+            if session.stats_obj.pet_moods['sadness'] <= 0: session.stats_obj.pet_moods['boredom'] += 1
             image = session.img.dict['bubbles']['heart']
             for ent in ent_list:
                 session.img.flash_above(ent, image)
