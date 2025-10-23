@@ -173,16 +173,16 @@ class MainMenu:
         #########################################################
         # Render surfaces
         ## Background
-        pyg.overlays.blit(self.background_fade, (0, 0))
+        pyg.overlay_queue.append([self.background_fade, (0, 0)])
 
         ## Header
         if pyg.startup_toggle:
-            pyg.overlays.blit(self.header_surface, self.header_pos)
+            pyg.overlay_queue.append([self.header_surface, self.header_pos])
         
         ## Logo
         else:
             for i in range(len(self.logo_surfaces)):
-                pyg.overlays.blit(self.logo_surfaces[i], self.logo_pos[i])
+                pyg.overlay_queue.append([self.logo_surfaces[i], self.logo_pos[i]])
         
         ## Choices
         for i in range(len(self.choices)):
@@ -194,12 +194,12 @@ class MainMenu:
 
             offset   = self.spacing * i
             position = (self.choice_pos[0], self.choice_pos[1] + offset)
-            pyg.overlays.blit(surface, position)
+            pyg.overlay_queue.append([surface, position])
         
         ## Cursor
         offset     = self.spacing * self.choice
         cursor_pos = (self.cursor_pos[0], self.cursor_pos[1] + offset)
-        session.pyg.overlays.blit(self.cursor_surface, cursor_pos)
+        pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
         #########################################################
         # Fade in from black
@@ -424,17 +424,16 @@ class FileMenu:
     def render(self):
         
         # Render background
-        session.pyg.overlays.fill(session.pyg.black)
-        session.pyg.overlays.blit(self.backgrounds_render[self.choice], (0, 0))
+        session.pyg.overlay_queue.append([self.backgrounds_render[self.choice], (0, 0)])
         
         # Render header and cursor
-        session.pyg.overlays.blit(self.header_dict[self.mode], (25, 10))
-        session.pyg.overlays.blit(self.cursor_render, (25, self.options_dict[self.choice]))
+        session.pyg.overlay_queue.append([self.header_dict[self.mode], (25, 10)])
+        session.pyg.overlay_queue.append([self.cursor_render, (25, self.options_dict[self.choice])])
         
         # Render categories and options
         for i in range(len(self.options)):
             option_render = session.pyg.font.render(self.options[i], True, session.pyg.gray)
-            session.pyg.overlays.blit(option_render, (50, self.options_dict[i]))
+            session.pyg.overlay_queue.append([option_render, (50, self.options_dict[i])])
 
 class CtrlMenu:
 
@@ -516,14 +515,14 @@ class CtrlMenu:
     def render(self):
         
         # Render background
-        session.pyg.overlays.fill(session.pyg.black)
+        session.pyg.overlay_queue.append(['fill', session.pyg.black])
         
         # Render header
-        session.pyg.overlays.blit(self.header_render, (25, 10))
+        session.pyg.overlay_queue.append([self.header_render, (25, 10)])
         
         # Render categories and options
         for i in range(len(self.layout_render)):
-            session.pyg.overlays.blit(self.layout_render[i], (50, 38+24*i))
+            session.pyg.overlay_queue.append([self.layout_render[i], (50, 38+24*i)])
 
 class StatsMenu:
     
@@ -652,7 +651,7 @@ class StatsMenu:
         fill_height = session.pyg.tile_height * 4 + session.pyg.tile_height // 2
         self.cursor_fill   = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
         self.cursor_fill.fill((0, 0, 0, 128))
-        session.pyg.overlays.blit(self.cursor_fill, (32, 32))
+        session.pyg.overlay_queue.append([self.cursor_fill, (32, 32)])
         
         # Render border
         self.cursor_border = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
@@ -664,7 +663,7 @@ class StatsMenu:
              (fill_width-1, 0),
              (fill_width-1, fill_height-1),
              (0, fill_height-1)], 1)
-        session.pyg.overlays.blit(self.cursor_border, (32, 32))
+        session.pyg.overlay_queue.append([self.cursor_border, (32, 32)])
         
         # Render items
         Y = 32
@@ -674,8 +673,8 @@ class StatsMenu:
             key, val = list(self.current_stats.items())[i]
             key = session.pyg.font.render(key, True, session.pyg.gray)
             val = session.pyg.font.render(val, True, session.pyg.gray)
-            session.pyg.overlays.blit(key, (X1, Y))
-            session.pyg.overlays.blit(val, (X2, Y))
+            session.pyg.overlay_queue.append([key, (X1, Y)])
+            session.pyg.overlay_queue.append([val, (X2, Y)])
             Y += session.pyg.tile_height//2
 
     def pet_startup(self, env):
@@ -819,128 +818,14 @@ class Textbox:
         session.pyg.update_gui()
         
         # Render backdrop
-        session.pyg.overlays.blit(self.background_fade, (0, 0))
-        session.pyg.overlays.blit(self.backdrop,        self.backdrop_pos)
-        session.pyg.overlays.blit(self.border,          self.backdrop_pos)
+        session.pyg.overlay_queue.append([self.background_fade, (0, 0)])
+        session.pyg.overlay_queue.append([self.backdrop,        self.backdrop_pos])
+        session.pyg.overlay_queue.append([self.border,          self.backdrop_pos])
                 
         # Render header and text
-        session.pyg.overlays.blit(self.header_render, self.header_pos)
+        session.pyg.overlay_queue.append([self.header_render, self.header_pos])
         for i in range(len(self.text_render)):
-            session.pyg.overlays.blit(self.text_render[i], self.text_pos[i])
-
-class Pets:
-    """ Manages stats in the Garden. """
-
-    def __init__(self):
-        
-        self.stats = {
-            '      RADIX ATRIUM': None,
-            '':         None,
-            'mood':     None,
-            'stamina':  None,
-            'strength': None,
-            'appeal':   None}
-        
-        # Numerical stats
-        self.levels = {
-            'stamina':   1,
-            'strength':  1,
-            'appeal':    1}
-        
-        self.pet_moods = {
-            'happiness': 5,
-            'sadness':   0,
-            'anger':     0,
-            'boredom':   0,
-            'lethargy':  0,
-            'confusion': 0}
-        
-        # String conversions
-        self.faces = {
-            'happiness': '( ^_^ )',
-            'sadness':   '( Q_Q )',
-            'anger':     '( >_< )',
-            'boredom':   '( . _ .  )',
-            'lethargy':  '( =_= )',
-            'confusion': '(@_@)'}
-        
-        # Time to lose happiness and gain something else
-        self.happiness_cooldown = 10
-        self.happiness_press    = 0
-        
-        # Time between mood switches if tied
-        self.emoji_cooldown     = 10
-        self.emoji_press        = 0
-
-    def startup(self, env):
-        self.ents = env.entities
-
-    def pet_stat_check(self, dic):
-        for key, value in dic.items():
-            if value > 10:  dic[key] = 10
-            elif value < 0: dic[key] = 0
-
-    def update(self):
-        """ Decreases happiness over time, sets mood to current highest stat, handles mood effects, and updates stat display. """
-        
-        # Lose happiness
-        if self.pet_moods['happiness']:
-            if time.time() - self.happiness_press > self.happiness_cooldown:
-                self.happiness_press = time.time()
-                
-                # Random chance to lose happiness and gain something else
-                if not random.randint(0, 1):
-                    self.pet_moods['happiness'] -= 1
-                    self.pet_moods[random.choice(list(self.pet_moods.keys()))] += 1
-        
-        ## Keep stats to [0, 10]
-        self.pet_stat_check(self.levels)
-        self.pet_stat_check(self.pet_moods)
-        
-        # Set mood to those with the highest value
-        max_val = max(self.pet_moods.values())
-        current_moods = [mood for mood, val in self.pet_moods.items() if val == max_val]
-        
-        ## Alternate between tied moods
-        if len(current_moods) > 1:
-            if time.time() - self.emoji_press > self.emoji_cooldown:
-                self.emoji_press = time.time()
-                self.stats['mood'] = self.faces[random.choice(current_moods)]        
-        
-        ## Set the current mood
-        else:
-            self.stats['mood'] = self.faces[current_moods[0]]
-        
-        ## Apply mood effects
-        if self.pet_moods['happiness'] <= 2:
-            if self.ents[-1].img_names[0] != 'purple radish':
-                for ent in self.ents:
-                    if ent != session.player_obj.ent:
-                        if ent.img_names[0] != 'purple radish':
-                            ent.img_names[0] = 'purple radish'
-        elif self.pet_moods['happiness'] >= 8:
-            if self.ents[-1].img_names[0] != 'orange radish':
-                for ent in self.ents:
-                    if ent != session.player_obj.ent:
-                        if ent.img_names[0] != 'orange radish':
-                            ent.img_names[0] = 'orange radish'
-        else:
-            if self.ents[-1].img_names[0] != 'red radish':
-                for ent in self.ents:
-                    if ent != session.player_obj.ent:
-                        if ent.img_names[0] != 'red radish':
-                            ent.img_names[0] = 'red radish'
-        
-        # Set levels
-        self.stats['stamina']  = '★' * self.levels['stamina']
-        while len(self.stats['stamina']) < 5:
-            self.stats['stamina'] += '☆'
-        self.stats['strength'] = '★' * self.levels['strength']
-        while len(self.stats['strength']) < 5:
-            self.stats['strength'] += '☆'
-        self.stats['appeal']   = '★' * self.levels['appeal']
-        while len(self.stats['appeal']) < 5:
-            self.stats['appeal'] += '☆'
+            session.pyg.overlay_queue.append([self.text_render[i], self.text_pos[i]])
 
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -1837,7 +1722,7 @@ def render_all(ent=None):
     if pyg.overlay != 'menu':
         if bool(img.impact):
             for i in range(len(img.impact_images)):
-                pyg.overlays.blit(img.impact_images[i], img.impact_image_pos[i])
+                session.pyg.overlay_queue.append([img.impact_images[i], img.impact_image_pos[i]])
         
         # Print messages
         if pyg.msg_toggle: 
@@ -1845,7 +1730,7 @@ def render_all(ent=None):
             
             # Find how many messages to write
             for message in pyg.msg:
-                pyg.overlays.blit(message, (5, Y))
+                session.pyg.overlay_queue.append([message, (5, Y)])
                 Y += 16
         
         # Print status bars and time
@@ -1865,7 +1750,7 @@ def render_all(ent=None):
                 elif i == 4: x = pyg.screen_width - gui[i].get_width() - 16
                 
                 y = pyg.screen_height - 27
-                pyg.overlays.blit(gui[i], (x, y))
+                session.pyg.overlay_queue.append([gui[i], (x, y)])
     
     session.aud.shuffle()
 

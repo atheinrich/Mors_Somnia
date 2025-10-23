@@ -44,13 +44,18 @@ class Pygame:
         pygame.init()
         pygame.key.set_repeat(250, 150)
         pygame.display.set_caption("Mors Somnia") # Sets game title
+
         self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
+        self.display  = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        self.fade     = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
         self.overlays = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+
+        self.overlay_queue = []
+
         self.frame    = False
         self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True) # pygame.font.Font('Data/font.ttf', 24)
         self.clock    = pygame.time.Clock()
-        self.display  = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
         self.gui      = {
             'health':   self.font.render('', True, self.red),
             'stamina':  self.font.render('', True, self.green),
@@ -494,10 +499,6 @@ class NewGameMenu:
         
         #########################################################
         # Render environment and character
-        ## Render over garden
-        from utilities import render_all
-        render_all(ent=self.temp.ent)
-
         ## Rotate character
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time())
@@ -508,11 +509,11 @@ class NewGameMenu:
         ## Choices
         Y = self.top_choice[1] - 4
         for self.menu_choice in self.menu_choices:
-            session.pyg.display.blit(self.menu_choice, (80, Y))
+            session.pyg.overlay_queue.append([self.menu_choice, (80, Y)])
             Y += 24
         
         ## Cursor
-        session.pyg.display.blit(self.cursor_img, self.cursor_pos)
+        session.pyg.overlay_queue.append([self.cursor_img, self.cursor_pos])
 
         #########################################################
         # Show startup dialogue
@@ -1014,14 +1015,9 @@ class PlayGame:
     def render(self):
         
         #########################################################
-        # Imports
-        from utilities import render_all
-
-        #########################################################
         # Render typical game display
         session.pyg.msg_height = 4
         if not session.pyg.overlay: session.pyg.update_gui()
-        render_all()
         
         #########################################################
         # Fade when entering new area
@@ -1233,12 +1229,8 @@ class PlayGarden:
             session.mech.movement_speed()
 
     def render(self):
-        
-        from utilities import render_all
-
         session.pyg.msg_toggle = False
         session.pyg.gui_toggle = False
-        render_all()
 
 ########################################################################################################################################################
 # Interactions

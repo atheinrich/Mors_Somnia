@@ -151,12 +151,12 @@ class QuestMenu:
         #########################################################
         # Render surfaces
         ## Backdrop
-        session.pyg.overlays.blit(self.background_surface, (0, 0))
-        session.pyg.overlays.blit(self.backdrop_surface,   self.backdrop_pos)
-        session.pyg.overlays.blit(self.border_surface,     self.backdrop_pos)
+        session.pyg.overlay_queue.append([self.background_surface, (0, 0)])
+        session.pyg.overlay_queue.append([self.backdrop_surface,   self.backdrop_pos])
+        session.pyg.overlay_queue.append([self.border_surface,     self.backdrop_pos])
 
         ## Header
-        session.pyg.overlays.blit(self.header_surface, self.header_pos)
+        session.pyg.overlay_queue.append([self.header_surface, self.header_pos])
 
         ## Choices, categories, and cursor
         categories, category_toggle = [], True
@@ -182,11 +182,11 @@ class QuestMenu:
             category_pos = (self.category_pos[0], self.category_pos[1] + offset)
             cursor_pos   = (self.cursor_pos[0],   self.cursor_pos[1]   + offset)
 
-            session.pyg.overlays.blit(self.choices_render[i], choice_pos)
+            session.pyg.overlay_queue.append([self.choices_render[i], choice_pos])
             if category_toggle:
-                session.pyg.overlays.blit(self.categories_render[i], category_pos)
+                session.pyg.overlay_queue.append([self.categories_render[i], category_pos])
             if (self.choice == i) and (self.mode == 'log'):
-                session.pyg.overlays.blit(self.cursor_surface, cursor_pos)
+                session.pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
     # Keys
     def key_UP(self):

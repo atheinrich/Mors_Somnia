@@ -158,17 +158,18 @@ def game_states():
     
     session.pyg.running = True
     while session.pyg.running:
-        
+
+        #########################################################
+        # Prepare render queue
+        session.pyg.overlays.fill((0, 0, 0, 0))
+        session.pyg.overlay_queue = []
+
         #########################################################
         # Primary
         session.pyg.display.fill((0, 0, 0, 0))
 
         if session.pyg.game_state == 'startup':
             session.new_game_obj.run()
-        
-        elif session.pyg.game_state == 'new_game':
-            session.new_game_obj.run()
-            session.new_game_obj.render()
         
         elif session.pyg.game_state == 'play_garden':
             session.garden_obj.run()
@@ -182,11 +183,13 @@ def game_states():
         
         #########################################################
         # Big overlays
-        session.pyg.overlays.fill((0, 0, 0, 0))
-
         if session.pyg.overlay == 'menu':
             session.main_menu_obj.run()
             session.main_menu_obj.render()
+        
+        elif session.pyg.game_state == 'new_game':
+            session.new_game_obj.run()
+            session.new_game_obj.render()
         
         elif session.pyg.overlay in ['save', 'load']:
             session.file_menu.run()
@@ -229,16 +232,27 @@ def game_states():
         #########################################################
         # Finish up
         ## Finish rendering
-        #if session.game_state == 'new_game': render_all()
-        #else:                                render_all(ent=session.new_game_obj.temp.ent)
+        if session.pyg.game_state == 'new_game': render_all(ent=session.new_game_obj.temp.ent)
+        else:                                    render_all()
         session.img.render()
+
+        ## Render overlays
+        for overlay in session.pyg.overlay_queue:
+            if overlay[0] == 'fill': session.pyg.overlays.fill(overlay[1])
+            else:                    session.pyg.overlays.blit(overlay[0], overlay[1])
+
         display = pygame.transform.scale(
             session.pyg.display, 
+            (session.pyg.screen_width, session.pyg.screen_height))
+        fade    = pygame.transform.scale(
+            session.pyg.fade, 
             (session.pyg.screen_width, session.pyg.screen_height))
         overlays = pygame.transform.scale(
             session.pyg.overlays, 
             (session.pyg.screen_width, session.pyg.screen_height))
-        session.pyg.screen.blit(display, (0, 0))
+        
+        session.pyg.screen.blit(display,  (0, 0))
+        session.pyg.screen.blit(fade,     (0, 0))
         session.pyg.screen.blit(overlays, (0, 0))
         pygame.display.flip()
         session.pyg.clock.tick(30)
