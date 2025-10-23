@@ -50,6 +50,7 @@ class Pygame:
         self.fade     = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
         self.overlays = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
 
+        self.display_queue = []
         self.overlay_queue = []
 
         self.frame    = False
@@ -236,6 +237,8 @@ class Pygame:
             alpha_end   : None or int; final alpha value
         """
         
+        pyg = session.pyg
+
         #########################################################
         # Imports
         from utilities import render_all
@@ -254,7 +257,7 @@ class Pygame:
             session.player_obj.ent.env.weather.render()
 
         ## Fade color and speed
-        screen = session.pyg.screen
+        screen = pyg.screen
         fade_surface = pygame.Surface(screen.get_size())
         fade_surface.fill((0, 0, 0))
         
@@ -266,12 +269,12 @@ class Pygame:
 
         #########################################################
         # Increase alpha channel over time
-        clock                  = pygame.time.Clock()
-        gui_cache              = session.pyg.gui_toggle
-        msg_cache              = session.pyg.msg_toggle
-        session.pyg.gui_toggle = False
-        session.pyg.msg_toggle = False
-        running                = True
+        clock          = pygame.time.Clock()
+        gui_cache      = pyg.gui_toggle
+        msg_cache      = pyg.msg_toggle
+        pyg.gui_toggle = False
+        pyg.msg_toggle = False
+        running        = True
         while running:
             
             #########################################################
@@ -285,7 +288,7 @@ class Pygame:
             elif alpha < 0:                                    running = False
             
             fade_surface.set_alpha(alpha)
-            session.pyg.screen.blit(pygame.transform.scale(session.pyg.display, (session.pyg.screen_width, session.pyg.screen_height)), (0, 0))
+            pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
             screen.blit(fade_surface, (0, 0))
             if session.img.render_fx: render_all()
             
@@ -307,8 +310,8 @@ class Pygame:
             pygame.display.update()
             clock.tick(15)
         
-        session.pyg.gui_toggle = gui_cache
-        session.pyg.msg_toggle = msg_cache
+        pyg.gui_toggle = gui_cache
+        pyg.msg_toggle = msg_cache
 
     def update_gui(self, new_msg=None, color=None, ent=None):
         """ Constructs (but does not render) messages in the top GUI and stats in the bottom GUI.
@@ -402,6 +405,8 @@ class NewGameMenu:
             HANDEDNESS: mirrors player/equipment tiles, which are saved in session.img.dict and session.img.cache
             ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
         
+        pyg = session.pyg
+
         #########################################################
         # Menu details
         ## Basics
@@ -419,14 +424,14 @@ class NewGameMenu:
         ## Cursor
         self.cursor_img = pygame.Surface((16, 16)).convert()
         self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_img, session.pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
         
         ## Options
         for i in range(len(self.menu_choices)):
-            if   i == len(self.menu_choices)-2:  color = session.pyg.green
-            elif i == len(self.menu_choices)-1:  color = session.pyg.red
-            else:                                color = session.pyg.gray
-            self.menu_choices[i] = session.pyg.font.render(self.menu_choices[i], True, color)
+            if   i == len(self.menu_choices)-2:  color = pyg.green
+            elif i == len(self.menu_choices)-1:  color = pyg.red
+            else:                                color = pyg.gray
+            self.menu_choices[i] = pyg.font.render(self.menu_choices[i], True, color)
         self.choice         = 0
         self.choices_length = len(self.menu_choices)-1
         self.cursor_pos     = [50, 424-len(self.menu_choices)*24]
@@ -497,6 +502,8 @@ class NewGameMenu:
 
     def render(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Render environment and character
         ## Rotate character
@@ -509,11 +516,11 @@ class NewGameMenu:
         ## Choices
         Y = self.top_choice[1] - 4
         for self.menu_choice in self.menu_choices:
-            session.pyg.overlay_queue.append([self.menu_choice, (80, Y)])
+            pyg.overlay_queue.append([self.menu_choice, (80, Y)])
             Y += 24
         
         ## Cursor
-        session.pyg.overlay_queue.append([self.cursor_img, self.cursor_pos])
+        pyg.overlay_queue.append([self.cursor_img, self.cursor_pos])
 
         #########################################################
         # Show startup dialogue
@@ -636,6 +643,8 @@ class NewGameMenu:
             player object, separate from the temporary player used only in the New Game menu.
         """
 
+        pyg = session.pyg
+
         #########################################################
         # Make temporary player
         session.player_obj = self.init_player()
@@ -649,8 +658,8 @@ class NewGameMenu:
         #########################################################
         # Fade into the main menu
         session.main_menu_obj.startup()
-        session.pyg.game_state = 'play_garden'
-        session.pyg.overlay    = 'menu'
+        pyg.game_state = 'play_garden'
+        pyg.overlay    = 'menu'
 
         return session.player_obj
 
@@ -709,6 +718,8 @@ class NewGameMenu:
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
             Only called after the character creation menu is accepted. """
         
+        pyg = session.pyg
+
         #########################################################
         # Import
         from utilities import sort_inventory
@@ -754,12 +765,12 @@ class NewGameMenu:
         
         #########################################################
         # Begin game
-        self.fadeout               = True
-        self.refresh               = True
-        session.pyg.gui_toggle     = True
-        session.pyg.msg_toggle     = True
-        session.pyg.startup_toggle = False
-        session.pyg.game_state     = 'play_game'
+        self.fadeout       = True
+        self.refresh       = True
+        pyg.gui_toggle     = True
+        pyg.msg_toggle     = True
+        pyg.startup_toggle = False
+        pyg.game_state     = 'play_game'
 
 class PlayGame:
 
@@ -903,6 +914,8 @@ class PlayGame:
 
     def key_ENTER(self):
 
+        pyg = session.pyg
+
         #########################################################
         # Activate items
         if time.time()-self.last_press_time > self.cooldown_time:
@@ -931,17 +944,17 @@ class PlayGame:
                             if session.player_obj.ent.env.env_time in [1, 2, 7, 8]:
                                 session.player_obj.ent.env.env_time = (session.player_obj.ent.env.env_time + 3) % 8
                                 session.mech.enter_dungeon(text="The evening dims to night... sleep trustly follows.")
-                            else: session.pyg.update_gui("Time to face the day.", session.pyg.dark_gray)
+                            else: pyg.update_gui("Time to face the day.", pyg.dark_gray)
                         
                         # No sleeping in owned beds
-                        else: session.pyg.update_gui("This is not your bed.", session.pyg.dark_gray)
+                        else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
                     
-                    else: session.pyg.update_gui("This is not your bed.", session.pyg.dark_gray)
+                    else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
                 
                 # Activate chair
                 elif tile.item.name in ['red chair left', 'red chair right']:
                     session.player_obj.ent.env.weather.set_day_and_time(increment=True)
-                    session.pyg.update_gui("You sit down to rest for a while.", session.pyg.dark_gray)
+                    pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 
                 # Pick up or activate
                 else: session.player_obj.ent.tile.item.pick_up()
@@ -972,6 +985,8 @@ class PlayGame:
 
     def key_GUI(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Change GUI setting
         self.gui_set = (self.gui_set + 1) % 4
@@ -980,23 +995,23 @@ class PlayGame:
         # Apply setting
         ## Show all
         if self.gui_set == 0:
-            session.pyg.gui_toggle = True
-            session.pyg.msg_toggle = True
+            pyg.gui_toggle = True
+            pyg.msg_toggle = True
         
         ## Hide GUI
         elif self.gui_set == 1:
-            session.pyg.gui_toggle = False
-            session.pyg.msg_toggle = True
+            pyg.gui_toggle = False
+            pyg.msg_toggle = True
         
         ## Hide both
         elif self.gui_set == 2:
-            session.pyg.gui_toggle = False
-            session.pyg.msg_toggle = False
+            pyg.gui_toggle = False
+            pyg.msg_toggle = False
 
         ## Hide messages
         elif self.gui_set == 3:
-            session.pyg.gui_toggle = True
-            session.pyg.msg_toggle = False
+            pyg.gui_toggle = True
+            pyg.msg_toggle = False
 
     def key_PLUS(self):
         session.player_obj.ent.env.camera.zoom_in()  # >>ZOOM<<
@@ -1006,29 +1021,35 @@ class PlayGame:
 
     def key_SPEED(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Change speed
-        if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-            session.pyg.last_press_time = float(time.time())
+        if time.time()-pyg.last_press_time > pyg.cooldown_time:
+            pyg.last_press_time = float(time.time())
             session.mech.movement_speed()
 
     def render(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Render typical game display
-        session.pyg.msg_height = 4
-        if not session.pyg.overlay: session.pyg.update_gui()
+        pyg.msg_height = 4
+        if not pyg.overlay: pyg.update_gui()
         
         #########################################################
         # Fade when entering new area
         if self.fadein:
-            session.pyg.fadeout_screen(
+            pyg.fadeout_screen(
                 text     = self.fadein,
                 fade_in  = True,
                 duration = 3)
             self.fadein = False
 
     def revive_player(self):
+
+        pyg = session.pyg
 
         env        = session.player_obj.ent.env
         last_env   = session.player_obj.ent.last_env
@@ -1041,9 +1062,9 @@ class PlayGame:
                 
                 # Restore player state
                 session.player_obj.ent.dead = False
-                session.pyg.gui             = {}
-                session.pyg.msg             = []
-                session.pyg.msg_history     = {}
+                pyg.gui                     = {}
+                pyg.msg                     = []
+                pyg.msg_history             = {}
                 session.mech.movement_speed(toggle=False, custom=0)
                 self.death_cooldown = 5
                 
@@ -1061,8 +1082,8 @@ class PlayGame:
                     session.player_obj.ent.hp = session.player_obj.ent.max_hp
                     self.fadein = "???"
                 
-                session.pyg.overlay = None
-                session.pyg.fadeout_screen(
+                pyg.overlay = None
+                pyg.fadeout_screen(
                     text     = self.fadein,
                     duration = 3)
                 place_player(
@@ -1079,13 +1100,15 @@ class PlayGarden:
     def run(self):
         """ Hosts garden gamestate as a lightweight variant of PlayGame. """
         
+        pyg = session.pyg
+
         #########################################################
         # Initialize
         ## Update pet stats, mood, and effects
         session.stats_obj.pet_update()
         
         ## Active AI when viewing the main menu
-        if session.pyg.overlay == 'menu': session.player_obj.ent.role = 'NPC'
+        if pyg.overlay == 'menu': session.player_obj.ent.role = 'NPC'
         else:                             session.player_obj.ent.role = 'player'
         
         ## Set camera (?)
@@ -1094,11 +1117,8 @@ class PlayGarden:
         ## Set navigation speed
         session.mech.movement_speed(toggle=False, custom=2)
         
-        ## Define shorthand
-        pyg = session.pyg
-        
         ## Wait for input
-        if session.pyg.overlay is None:
+        if pyg.overlay is None:
             for event in pygame.event.get():
                 
                 #########################################################
@@ -1179,7 +1199,7 @@ class PlayGarden:
         for entity in session.player_obj.ent.env.entities: entity.ai()
         session.player_obj.ent.ai()
         
-        session.pyg.game_state = 'play_garden'
+        pyg.game_state = 'play_garden'
 
     def key_UP(self):
         session.player_obj.ent.move(0, -session.pyg.tile_height) # >>MOVE<<
@@ -1202,35 +1222,40 @@ class PlayGarden:
 
     def key_PERIOD(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Toggle messages
         ## Hide messages
-        if session.pyg.msg_toggle:
-            session.pyg.msg_toggle = False
+        if pyg.msg_toggle:
+            pyg.msg_toggle = False
         
         else:
 
             ## Hide messages and GUI
-            if session.pyg.gui_toggle:
-                session.pyg.gui_toggle = False
-                session.pyg.msg_toggle = False
+            if pyg.gui_toggle:
+                pyg.gui_toggle = False
+                pyg.msg_toggle = False
             
             ## View messages and GUI
             else:
-                session.pyg.gui_toggle = True
-                session.pyg.msg_toggle = True
+                pyg.gui_toggle = True
+                pyg.msg_toggle = True
 
     def key_SPEED(self):
+        pyg = session.pyg
 
         #########################################################
         # Change speed
-        if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-            session.pyg.last_press_time = float(time.time())
+        if time.time()-pyg.last_press_time > pyg.cooldown_time:
+            pyg.last_press_time = float(time.time())
             session.mech.movement_speed()
 
     def render(self):
-        session.pyg.msg_toggle = False
-        session.pyg.gui_toggle = False
+        pyg = session.pyg
+
+        pyg.msg_toggle = False
+        pyg.gui_toggle = False
 
 ########################################################################################################################################################
 # Interactions
@@ -1345,6 +1370,8 @@ class Item:
             silent : bool; updates GUI if False
         """
 
+        pyg = session.pyg
+
         #########################################################
         # Imports
         from utilities import sort_inventory
@@ -1354,7 +1381,7 @@ class Item:
         # Pick up if possible
         ## Do not pick up item if inventory is full
         if (len(ent.inventory) >= 26) and not silent:
-            session.pyg.update_gui("Your inventory is full, cannot pick up " + self.name + ".", session.pyg.dark_gray)
+            pyg.update_gui("Your inventory is full, cannot pick up " + self.name + ".", pyg.dark_gray)
         
         ## Check if movable
         else:
@@ -1375,7 +1402,7 @@ class Item:
                         self.tile     = ent.tile
                 
                 if (ent.role == 'player') and not silent:
-                    session.pyg.update_gui("Picked up " + self.name + ".", session.pyg.dark_gray)
+                    pyg.update_gui("Picked up " + self.name + ".", pyg.dark_gray)
 
     def drop(self, ent=None):
         """ Unequips item before dropping if the object has the Equipment component, then adds it to the map at
@@ -1402,6 +1429,8 @@ class Item:
 
     def trade(self, owner, recipient):
         
+        pyg = session.pyg
+
         # Dequip before trading
         if self in owner.equipment.values():
             self.toggle_equip(owner)
@@ -1418,11 +1447,13 @@ class Item:
             recipient.wallet -= self.cost
         
         else:
-            session.pyg.update_gui("Not enough cash!", color=session.pyg.red)
+            pyg.update_gui("Not enough cash!", color=pyg.red)
 
     def use(self, ent=None):
         """ Equips of unequips an item if the object has the Equipment component. """
         
+        pyg = session.pyg
+
         # Allow for NPC actions
         if not ent: ent = session.player_obj.ent
         
@@ -1439,7 +1470,7 @@ class Item:
             # Activate the item
             else: self.effect.function(ent)
         
-        elif self.role == 'player': session.pyg.update_gui("The " + self.name + " cannot be used.", session.pyg.dark_gray)
+        elif self.role == 'player': pyg.update_gui("The " + self.name + " cannot be used.", pyg.dark_gray)
 
     def toggle_equip(self, ent, silent=False):
         """ Toggles the equip/unequip status. """
@@ -1455,6 +1486,8 @@ class Item:
     def equip(self, ent, silent=False):
         """ Unequips object if the slot is already being used. """
         
+        pyg = session.pyg
+
         # Check if anything is already equipped
         if ent.equipment[self.slot] is not None:
             ent.equipment[self.slot].dequip(ent)
@@ -1470,11 +1503,13 @@ class Item:
 
         if ent.role == 'player':
             if not self.hidden and not silent:
-                session.pyg.update_gui("Equipped " + self.name + " on " + self.slot + ".", session.pyg.dark_gray)
+                pyg.update_gui("Equipped " + self.name + " on " + self.slot + ".", pyg.dark_gray)
 
     def dequip(self, ent, silent=False):
         """ Unequips an object and shows a message about it. """
         
+        pyg = session.pyg
+
         #########################################################
         # Update stats
         ent.equipment[self.slot] = None
@@ -1493,7 +1528,7 @@ class Item:
         self.equipped = False
         if self.role == 'player':
             if not self.hidden and not silent:
-                session.pyg.update_gui("Dequipped " + self.name + " from " + self.slot + ".", session.pyg.dark_gray)
+                pyg.update_gui("Dequipped " + self.name + " from " + self.slot + ".", pyg.dark_gray)
 
     def move(self, direction):
         
@@ -1543,6 +1578,8 @@ class Entity:
             aggression     : int; toggles attack functions
             dialogue       : list or tuple of strings; quest or general dialogue """
         
+        pyg = session.pyg
+
         #########################################################
         # Imports
         from items_entities import Effect
@@ -1585,8 +1622,8 @@ class Entity:
         self.equipment   = {'head': None,  'face': None, 'chest': None, 'body': None,  'dominant hand': None, 'non-dominant hand': None}
         
         ## Randomizer
-        self.rand_X = random.randint(-session.pyg.tile_width,  session.pyg.tile_width)
-        self.rand_Y = random.randint(-session.pyg.tile_height, session.pyg.tile_height)
+        self.rand_X = random.randint(-pyg.tile_width,  pyg.tile_width)
+        self.rand_Y = random.randint(-pyg.tile_height, pyg.tile_height)
 
         #########################################################
         # Initialize reactions and abilities
@@ -1707,13 +1744,15 @@ class Entity:
     def idle(self):
         """ Randomly walks around """
         
+        pyg = session.pyg
+
         # Choose direction
         if random.randint(0, 1):
-            dX = random.randint(-1, 1) * session.pyg.tile_width
+            dX = random.randint(-1, 1) * pyg.tile_width
             dY = 0
         else:
             dX = 0
-            dY = random.randint(-1, 1) * session.pyg.tile_width
+            dY = random.randint(-1, 1) * pyg.tile_width
         
         # Move
         if self.distance_new([self.X+dX, self.Y+dY], [self.X0, self.Y0]) <= self.reach:
@@ -1734,6 +1773,8 @@ class Entity:
             - combat
             - digging """
         
+        pyg = session.pyg
+
         #########################################################
         # Imports
         from utilities import is_blocked
@@ -1755,8 +1796,8 @@ class Entity:
         #########################################################
         # Move to new position
         else:
-            x = int((self.X + dX)/session.pyg.tile_width)
-            y = int((self.Y + dY)/session.pyg.tile_height)
+            x = int((self.X + dX)/pyg.tile_width)
+            y = int((self.Y + dY)/pyg.tile_height)
             
             #########################################################
             # Move player
@@ -1804,6 +1845,8 @@ class Entity:
     def move_player(self, x, y, dX, dY):
         """ Annex of move() for player actions. """
 
+        pyg = session.pyg
+
         #########################################################
         # Imports
         from utilities import check_tile, is_blocked
@@ -1813,7 +1856,7 @@ class Entity:
         if not is_blocked(self.env, [x, y]):
             
             # Move player and update map
-            self.prev_tile              = self.env.map[int(self.X/session.pyg.tile_width)][int(self.Y/session.pyg.tile_height)]
+            self.prev_tile              = self.env.map[int(self.X/pyg.tile_width)][int(self.Y/pyg.tile_height)]
             self.X                      += dX
             self.Y                      += dY
             self.tile.entity            = None
@@ -1830,7 +1873,7 @@ class Entity:
             # Check stamina
             if (session.mech.movement_speed_toggle == 1) and (self.stamina > 0):
                 self.stamina -= 1/2
-                session.pyg.update_gui()
+                pyg.update_gui()
         
         #########################################################
         # Interact with an entity
@@ -1853,11 +1896,11 @@ class Entity:
                     if ent.trade_times:
                         if session.player_obj.ent.env.env_time in ent.trade_times:
                             session.trade_obj.ent = ent
-                            session.pyg.overlay = 'trade'
+                            pyg.overlay = 'trade'
                 
                 # Play speech and update quests
                 if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
-                    session.pyg.update_gui(dialogue)
+                    pyg.update_gui(dialogue)
                     session.aud.play_speech(dialogue)
                     if ent.dialogue:
                         ent.dialogue = ent.quest.dialogue(ent)
@@ -1878,7 +1921,7 @@ class Entity:
                 if self.X >= 64 and self.Y >= 64:
                     if self.super_dig or not self.env.map[x][y].unbreakable:
                         self.env.create_tunnel(x, y)
-                        self.prev_tile                 = self.env.map[int(self.X/session.pyg.tile_width)][int(self.Y/session.pyg.tile_height)]
+                        self.prev_tile                 = self.env.map[int(self.X/pyg.tile_width)][int(self.Y/pyg.tile_height)]
                         self.X                         += dX
                         self.Y                         += dY
                         self.tile.entity               = None
@@ -1890,13 +1933,13 @@ class Entity:
                         self.env.player_coordinates    = [x, y]
                         check_tile(x, y)
                     else:
-                        session.pyg.update_gui("The shovel strikes the barrier but does not break it.", session.pyg.dark_gray)
+                        pyg.update_gui("The shovel strikes the barrier but does not break it.", pyg.dark_gray)
                     
                     # Update durability
                     if self.equipment['dominant hand'].durability <= 100:
                         self.equipment['dominant hand'].durability -= 1
                     if self.equipment['dominant hand'].durability <= 0:
-                        session.pyg.update_gui(f"Broken {self.equipment['dominant hand'].name}!", color=session.pyg.dark_gray)
+                        pyg.update_gui(f"Broken {self.equipment['dominant hand'].name}!", color=pyg.dark_gray)
                         self.equipment['dominant hand'].drop()
                         self.tile.item = None # removes item from world
         
@@ -1925,26 +1968,28 @@ class Entity:
     def move_towards(self, target_X, target_Y):
         """ Moves object towards target. """
         
+        pyg = session.pyg
+
         dX       = target_X - self.X
         dY       = target_Y - self.Y
         distance = (dX ** 2 + dY ** 2)**(1/2)
         if distance:
             
             if dX and not dY:
-                dX = round(dX/distance) * session.pyg.tile_width
+                dX = round(dX/distance) * pyg.tile_width
                 dY = 0
             
             elif dY and not dX:
                 dX = 0
-                dY = round(dX/distance) * session.pyg.tile_width
+                dY = round(dX/distance) * pyg.tile_width
             
             elif dX and dY:
                 if random.randint(0, 1):
-                    dX = round(dX/distance) * session.pyg.tile_width
+                    dX = round(dX/distance) * pyg.tile_width
                     dY = 0
                 else:
                     dX = 0
-                    dY = round(dY/distance) * session.pyg.tile_width
+                    dY = round(dY/distance) * pyg.tile_width
             
             self.move(dX, dY)
 
@@ -1970,6 +2015,8 @@ class Entity:
     def attack_target(self, target, effect_check=True):
         """ Calculates and applies attack damage. """
         
+        pyg = session.pyg
+
         # Only attack living targets
         if not target.dead:
             
@@ -1991,15 +2038,15 @@ class Entity:
                         
                         # Regular attack
                         else:
-                            session.pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", session.pyg.red)
+                            pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", pyg.red)
                             target.take_damage(damage)
                     
                     # Regular attack
                     else:
-                        session.pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", session.pyg.red)
+                        pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", pyg.red)
                         target.take_damage(damage)
                 else:
-                    session.pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " but it has no effect!", session.pyg.red)
+                    pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " but it has no effect!", pyg.red)
         return
 
     def take_damage(self, damage):
@@ -2027,6 +2074,8 @@ class Entity:
 
     def death(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Imports
         from items_entities import create_item
@@ -2034,14 +2083,14 @@ class Entity:
         #########################################################
         # Player death
         if self.role == 'player':
-            session.pyg.update_gui("You died!", session.pyg.red)
+            pyg.update_gui("You died!", pyg.red)
             session.player_obj.ent.dead        = True
             session.player_obj.ent.tile.entity = None
             session.player_obj.ent.img_names   = session.player_obj.ent.img_names_backup
             
             item = create_item('skeleton')
             item.name = f"the corpse of {self.name}"
-            place_object(item, [self.X//session.pyg.tile_width, self.Y//session.pyg.tile_height], self.env)
+            place_object(item, [self.X//pyg.tile_width, self.Y//pyg.tile_height], self.env)
             pygame.event.clear()
         
         #########################################################
@@ -2053,12 +2102,12 @@ class Entity:
             if self in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(self)
             
             if self.role != 'projectile':
-                session.pyg.update_gui("The " + self.name + " is dead! You gain " + str(self.exp) + " experience points.", session.pyg.red)
+                pyg.update_gui("The " + self.name + " is dead! You gain " + str(self.exp) + " experience points.", pyg.red)
                 
                 if not self.tile.item:
                     item = create_item('bones')
                     item.name = f"the corpse of {self.name}"
-                    place_object(item, [self.X//session.pyg.tile_width, self.Y//session.pyg.tile_height], self.env)
+                    place_object(item, [self.X//pyg.tile_width, self.Y//pyg.tile_height], self.env)
                     self.role = 'corpse'
 
             del self
@@ -2090,7 +2139,9 @@ class Entity:
         else:                         self.effects = self.item_effects
 
     def capture(self):
-        session.pyg.update_gui("The " + self.name + " has been captured!", session.pyg.red)
+        pyg = session.pyg
+
+        pyg.update_gui("The " + self.name + " has been captured!", pyg.red)
 
         # Update entity
         self.dead        = True
@@ -2100,7 +2151,7 @@ class Entity:
         
         session.player_obj.ent.discoveries['entities'][self.name] = self.img_names
 
-    def draw(self, surface, loc=None):
+    def draw(self, loc=None):
         """ Draws the object at its position.
 
             Parameters
@@ -2108,6 +2159,10 @@ class Entity:
             surface : pygame image
             loc     : list of int; screen coordinates """
         
+        pyg = session.pyg
+        
+        surface = pygame.Surface(pyg.display.get_size(), pygame.SRCALPHA)
+
         #########################################################
         # Set location
         if loc:
@@ -2203,19 +2258,23 @@ class Entity:
                                     else:                 surface.blit(session.img.flipped.dict[item.img_names[0]][self.img_names[1]],           (X, Y))
                             else: pass
         
+        pyg.display_queue.append([surface, (0, 0)])
+
         # Blit dialogue bubble
-        if self.dialogue: session.pyg.display.blit(session.img.dict['bubbles']['dots'], (X, Y-session.pyg.tile_height))
+        if self.dialogue: pyg.display_queue.append([session.img.dict['bubbles']['dots'], (X, Y-pyg.tile_height)])
         
         # Blit trading bubble
         elif self.trade_times:
             if session.player_obj.ent.env.env_time in self.trade_times:
-                session.pyg.display.blit(session.img.dict['bubbles']['cart'], (X, Y-session.pyg.tile_height))
+                pyg.display_queue.append([session.img.dict['bubbles']['cart'], (X, Y-pyg.tile_height)])
 
 class Mechanics:
     """ Game parameters. Does not need to be saved. """
     
     def __init__(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Set parameters
         ## Utility
@@ -2225,10 +2284,10 @@ class Mechanics:
         ## Combat
         self.heal_amount       = 4
         self.lightning_damage  = 20
-        self.lightning_range   = 5 * session.pyg.tile_width
-        self.confuse_range     = 8 * session.pyg.tile_width
+        self.lightning_range   = 5 * pyg.tile_width
+        self.confuse_range     = 8 * pyg.tile_width
         self.confuse_num_turns = 10
-        self.fireball_radius   = 3 * session.pyg.tile_width
+        self.fireball_radius   = 3 * pyg.tile_width
         self.fireball_damage   = 12
 
         self.level_up_base     = 200
@@ -2485,13 +2544,15 @@ class Mechanics:
 
     def propagate(self, ent=None):
         
+        pyg = session.pyg
+
         from items_entities import create_entity
 
         # Set entity
         if not ent: ent = session.player_obj.ent
         
         # Note location and image names
-        img_x, img_y = int(ent.X/session.pyg.tile_width), int(ent.Y/session.pyg.tile_height)
+        img_x, img_y = int(ent.X/pyg.tile_width), int(ent.Y/pyg.tile_height)
         
         # Set location for drop
         if ent.direction == 'front':   img_y += 1
@@ -2513,10 +2574,10 @@ class Mechanics:
         # Prepare movements
         motions_log = []
         directions = {
-            'front': [0, session.pyg.tile_height],
-            'back':  [0, -session.pyg.tile_height],
-            'left':  [-session.pyg.tile_width, 0],
-            'right': [session.pyg.tile_width, 0]}
+            'front': [0, pyg.tile_height],
+            'back':  [0, -pyg.tile_height],
+            'left':  [-pyg.tile_width, 0],
+            'right': [pyg.tile_width, 0]}
         
         for _ in range(100):
             motions_log.append(directions[ent.direction])
@@ -2528,6 +2589,8 @@ class Mechanics:
     def movement_speed(self, toggle=True, custom=None):
         """ Toggles and sets movement speed. """
         
+        pyg = session.pyg
+
         # Check stamina
         if session.player_obj.ent.stamina > 0:
         
@@ -2537,7 +2600,7 @@ class Mechanics:
                     self.movement_speed_toggle = 0
                 else:
                     self.movement_speed_toggle += 1
-                session.pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", session.pyg.dark_gray)
+                pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
                 (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
             
@@ -2559,7 +2622,7 @@ class Mechanics:
                     self.movement_speed_toggle = 0
                 else:
                     self.movement_speed_toggle += 1
-                session.pyg.update_gui(f"Movement speed: {self.slow_list[self.movement_speed_toggle][0]}", session.pyg.dark_gray)
+                pyg.update_gui(f"Movement speed: {self.slow_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
                 (hold_time, repeat_time) = self.slow_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
             
@@ -2586,18 +2649,20 @@ class Mechanics:
 
     def spin(self, ent):
         
+        pyg = session.pyg
+
         # Prepare movements
         motions_log = []
         
         # Look forward first
         if ent.img_names[0] != 'front':
-            motions_log.append([0, session.pyg.tile_height])
-        motions_log.append([-session.pyg.tile_width, 0])
+            motions_log.append([0, pyg.tile_height])
+        motions_log.append([-pyg.tile_width, 0])
         
         # Spin around
-        motions_log.append([0, -session.pyg.tile_height])
-        motions_log.append([session.pyg.tile_width, 0])
-        motions_log.append([0, session.pyg.tile_height])
+        motions_log.append([0, -pyg.tile_height])
+        motions_log.append([pyg.tile_width, 0])
+        motions_log.append([0, pyg.tile_height])
         
         # Send directions to entity
         ent.motions_log = motions_log
@@ -2605,6 +2670,8 @@ class Mechanics:
     def find_water(self, ent):
         """ Moves entity towards water. """
         
+        pyg = session.pyg
+
         # Look for water
         if ent.tile.img_names[1] != 'water':
             
@@ -2623,20 +2690,20 @@ class Mechanics:
                         while distance > 0:
                             
                             if dX and not dY:
-                                dX = round(dX/distance) * session.pyg.tile_width
+                                dX = round(dX/distance) * pyg.tile_width
                                 dY = 0
                             
                             elif dY and not dX:
                                 dX = 0
-                                dY = round(dX/distance) * session.pyg.tile_width
+                                dY = round(dX/distance) * pyg.tile_width
                             
                             elif dX and dY:
                                 if random.randint(0, 1):
-                                    dX = round(dX/distance) * session.pyg.tile_width
+                                    dX = round(dX/distance) * pyg.tile_width
                                     dY = 0
                                 else:
                                     dX = 0
-                                    dY = round(dY/distance) * session.pyg.tile_width
+                                    dY = round(dY/distance) * pyg.tile_width
                             
                             motions_log.append([dX, dY])
                             motions_log.append([dX, dY])
@@ -2661,6 +2728,8 @@ class Mechanics:
     def find_bed(self, ent):
         """ Moves entity towards water. """
         
+        pyg = session.pyg
+
         # Look for a bed
         item = bool(ent.tile.item)
         if item: bed = bool(ent.tile.item.name == 'bed')
@@ -2685,20 +2754,20 @@ class Mechanics:
                                 while distance > 0:
                                     
                                     if dX and not dY:
-                                        dX = round(dX/distance) * session.pyg.tile_width
+                                        dX = round(dX/distance) * pyg.tile_width
                                         dY = 0
                                     
                                     elif dY and not dX:
                                         dX = 0
-                                        dY = round(dX/distance) * session.pyg.tile_width
+                                        dY = round(dX/distance) * pyg.tile_width
                                     
                                     elif dX and dY:
                                         if random.randint(0, 1):
-                                            dX = round(dX/distance) * session.pyg.tile_width
+                                            dX = round(dX/distance) * pyg.tile_width
                                             dY = 0
                                         else:
                                             dX = 0
-                                            dY = round(dY/distance) * session.pyg.tile_width
+                                            dY = round(dY/distance) * pyg.tile_width
                                     
                                     motions_log.append([dX, dY])
                                     motions_log.append([dX, dY])
@@ -2727,6 +2796,8 @@ class Mechanics:
     def entity_scare(self):
         """ Combo effect. """
 
+        pyg = session.pyg
+
         from utilities import get_vicinity
 
         # Find entities in vicinity
@@ -2750,10 +2821,12 @@ class Mechanics:
                 session.img.flash_above(ent, image)
         
         else:
-            session.pyg.update_gui("There are no entities in your vicinity.", session.pyg.dark_gray)
+            pyg.update_gui("There are no entities in your vicinity.", pyg.dark_gray)
 
     def entity_capture(self):
         """ Combo effect. """
+
+        pyg = session.pyg
 
         from utilities import get_vicinity
 
@@ -2777,11 +2850,11 @@ class Mechanics:
                         ent.capture()
                         break
                     else:
-                        session.pyg.update_gui("The " + ent.name + " has already been logged.", session.pyg.dark_gray)
+                        pyg.update_gui("The " + ent.name + " has already been logged.", pyg.dark_gray)
             else:
                 ent.capture()
         else:
-            session.pyg.update_gui("There are no entities in your vicinity.", session.pyg.dark_gray)
+            pyg.update_gui("There are no entities in your vicinity.", pyg.dark_gray)
 
     def entity_comfort(self):
         """ Combo effect. """
@@ -2932,6 +3005,8 @@ def place_object(obj, loc, env, names=None):
         env   : Environment object; desired location
         names : list of str; Image dictionary names """  
       
+    pyg = session.pyg
+
     from environments import Tile
 
     # Place tile
@@ -2949,10 +3024,10 @@ def place_object(obj, loc, env, names=None):
     
     # Place item
     elif type(obj) == Item:
-        obj.X    = loc[0] * session.pyg.tile_width
-        obj.X0   = loc[0] * session.pyg.tile_width
-        obj.Y    = loc[1] * session.pyg.tile_height
-        obj.Y0   = loc[1] * session.pyg.tile_height
+        obj.X    = loc[0] * pyg.tile_width
+        obj.X0   = loc[0] * pyg.tile_width
+        obj.Y    = loc[1] * pyg.tile_height
+        obj.Y0   = loc[1] * pyg.tile_height
         obj.env  = env
         obj.tile = env.map[loc[0]][loc[1]]
         env.map[loc[0]][loc[1]].item = obj
@@ -2961,10 +3036,10 @@ def place_object(obj, loc, env, names=None):
     
     # Place entity
     elif type(obj) == Entity:
-        obj.X    = loc[0] * session.pyg.tile_width
-        obj.X0   = loc[0] * session.pyg.tile_width
-        obj.Y    = loc[1] * session.pyg.tile_height
-        obj.Y0   = loc[1] * session.pyg.tile_height
+        obj.X    = loc[0] * pyg.tile_width
+        obj.X0   = loc[0] * pyg.tile_width
+        obj.Y    = loc[1] * pyg.tile_height
+        obj.Y0   = loc[1] * pyg.tile_height
         obj.env  = env
         obj.tile = env.map[loc[0]][loc[1]]
         env.map[loc[0]][loc[1]].entity = obj
@@ -2978,6 +3053,8 @@ def place_player(ent, env, loc):
         env : Environment object; new environment of player
         loc : list of integers; new location of player in tile coordinates """
     
+    pyg = session.pyg
+
     from utilities import check_tile
 
     if not ent.dead:
@@ -2998,10 +3075,10 @@ def place_player(ent, env, loc):
         # Set current environment and tile
         ent.env  = env
         ent.tile = ent.env.map[loc[0]][loc[1]]
-        ent.X    = loc[0] * session.pyg.tile_width
-        ent.X0   = loc[0] * session.pyg.tile_width
-        ent.Y    = loc[1] * session.pyg.tile_height
-        ent.Y0   = loc[1] * session.pyg.tile_height
+        ent.X    = loc[0] * pyg.tile_width
+        ent.X0   = loc[0] * pyg.tile_width
+        ent.Y    = loc[1] * pyg.tile_height
+        ent.Y0   = loc[1] * pyg.tile_height
         ent.toggle_effects()
         
         # Set time and date
@@ -3023,7 +3100,7 @@ def place_player(ent, env, loc):
         
         # Render
         time.sleep(0.5)
-        session.pyg.update_gui(ent=ent)
+        pyg.update_gui(ent=ent)
         
         # Change song
         if ent.env.name != ent.last_env.name:
@@ -3307,6 +3384,8 @@ def active_effects():
 def check_level_up():
     """ Checks if the player's experience is enough to level-up. """
     
+    pyg = session.pyg
+
     level_up_exp = session.mech.level_up_base + session.player_obj.ent.rank * session.mech.level_up_factor
     if session.player_obj.ent.exp >= level_up_exp:
         session.player_obj.ent.rank += 1
@@ -3316,13 +3395,13 @@ def check_level_up():
             "You feel stronger.",
             "Flow state!",
             "Resilience flows through you."]
-        session.pyg.update_gui(random.choice(dialogue), session.pyg.gray)
+        pyg.update_gui(random.choice(dialogue), pyg.gray)
 
         session.player_obj.ent.rank += 1
         session.player_obj.ent.max_hp += 20
         session.player_obj.ent.hp += 20
         session.player_obj.ent.attack += 1
         session.player_obj.ent.defense += 1
-        session.pyg.update_gui()
+        pyg.update_gui()
 
 ########################################################################################################################################################

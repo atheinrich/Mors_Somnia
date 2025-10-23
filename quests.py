@@ -31,6 +31,8 @@ class QuestMenu:
             categories : list of str
         """
         
+        pyg = session.pyg
+
         #########################################################
         # Parameters        
         ## Basics
@@ -51,7 +53,7 @@ class QuestMenu:
 
         ## Other
         self.choice          = 0
-        self.background_size = (session.pyg.screen_width, session.pyg.screen_height)
+        self.background_size = (pyg.screen_width, pyg.screen_height)
         self.backdrop_size   = (32*18, 32*13)
 
         self.cooldown_time   = 1
@@ -70,7 +72,7 @@ class QuestMenu:
         self.border_surface = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
         pygame.draw.polygon(
             surface = self.border_surface, 
-            color   = session.pyg.gray,
+            color   = pyg.gray,
             points  = [
                 (0,                       0),
                 (self.backdrop_size[0]-1, 0),
@@ -81,27 +83,26 @@ class QuestMenu:
         ## Cursor
         self.cursor_surface = pygame.Surface((16, 16)).convert()
         self.cursor_surface.set_colorkey(self.cursor_surface.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_surface, session.pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
+        pygame.draw.polygon(self.cursor_surface, pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
 
     def run(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Initialize
         ## Save GUI settings
-        self.msg_toggle = session.pyg.msg_toggle
-        self.gui_toggle = session.pyg.gui_toggle
+        self.msg_toggle = pyg.msg_toggle
+        self.gui_toggle = pyg.gui_toggle
         
         ## Switch overlay
-        if self.overlay != session.pyg.overlay:
-            self.overlay = session.pyg.overlay
+        if self.overlay != pyg.overlay:
+            self.overlay = pyg.overlay
             self.choice  = 0
             self.update_questlog()
 
         ## Set navigation speed
         session.mech.movement_speed(toggle=False, custom=2)
-        
-        ## Define shorthand
-        pyg = session.pyg
         
         ## Wait for input
         for event in pygame.event.get():
@@ -142,21 +143,23 @@ class QuestMenu:
 
     def render(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Clear GUI
-        session.pyg.msg_toggle = False
-        session.pyg.gui_toggle = False
-        session.pyg.update_gui()
+        pyg.msg_toggle = False
+        pyg.gui_toggle = False
+        pyg.update_gui()
         
         #########################################################
         # Render surfaces
         ## Backdrop
-        session.pyg.overlay_queue.append([self.background_surface, (0, 0)])
-        session.pyg.overlay_queue.append([self.backdrop_surface,   self.backdrop_pos])
-        session.pyg.overlay_queue.append([self.border_surface,     self.backdrop_pos])
+        pyg.overlay_queue.append([self.background_surface, (0, 0)])
+        pyg.overlay_queue.append([self.backdrop_surface,   self.backdrop_pos])
+        pyg.overlay_queue.append([self.border_surface,     self.backdrop_pos])
 
         ## Header
-        session.pyg.overlay_queue.append([self.header_surface, self.header_pos])
+        pyg.overlay_queue.append([self.header_surface, self.header_pos])
 
         ## Choices, categories, and cursor
         categories, category_toggle = [], True
@@ -182,11 +185,11 @@ class QuestMenu:
             category_pos = (self.category_pos[0], self.category_pos[1] + offset)
             cursor_pos   = (self.cursor_pos[0],   self.cursor_pos[1]   + offset)
 
-            session.pyg.overlay_queue.append([self.choices_render[i], choice_pos])
+            pyg.overlay_queue.append([self.choices_render[i], choice_pos])
             if category_toggle:
-                session.pyg.overlay_queue.append([self.categories_render[i], category_pos])
+                pyg.overlay_queue.append([self.categories_render[i], category_pos])
             if (self.choice == i) and (self.mode == 'log'):
-                session.pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
+                pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
     # Keys
     def key_UP(self):
@@ -213,9 +216,11 @@ class QuestMenu:
         self.update_questlog()
 
     def key_BACK(self):
-        session.pyg.msg_toggle = self.msg_toggle
-        session.pyg.gui_toggle = self.gui_toggle
-        session.pyg.overlay    = None
+        pyg = session.pyg
+
+        pyg.msg_toggle = self.msg_toggle
+        pyg.gui_toggle = self.gui_toggle
+        pyg.overlay    = None
 
     # Tools
     def init_questlog(self, env_name):
@@ -321,6 +326,8 @@ class QuestMenu:
         else: print(env_name)
 
     def check_tasks(self, name, log):
+        pyg = session.pyg
+
         quest = log[name]
 
         # Check off task
@@ -329,15 +336,15 @@ class QuestMenu:
                 task = quest.tasks[i]
                 if task[0] == "☐":
                     quest.tasks[i] = task.replace("☐", "☑")
-                    session.pyg.update_gui(quest.tasks[i], session.pyg.violet)
+                    pyg.update_gui(quest.tasks[i], pyg.violet)
                     quest.content = quest.notes + quest.tasks
                     break
         
         # Remove finished quests
         else:
             quest.tasks[-1] = quest.tasks[-1].replace("☐", "☑")
-            session.pyg.update_gui(quest.tasks[-1], session.pyg.violet)
-            session.pyg.update_gui(f"Quest complete: {quest.name}", session.pyg.violet)
+            pyg.update_gui(quest.tasks[-1], pyg.violet)
+            pyg.update_gui(f"Quest complete: {quest.name}", pyg.violet)
             del log[quest.name]
 
     def update_questlog(self):
@@ -448,6 +455,8 @@ class Bloodkin:
     def making_a_friend(self, ent, dialogue):
         """ Manages friend quest, including initialization and dialogue. """
 
+        pyg = session.pyg
+
         from items_entities import create_item, Effect
         from mechanics import place_object
 
@@ -474,18 +483,18 @@ class Bloodkin:
             
             session.player_obj.ent.questlog['Making a friend'].finished = True
             session.questlog_obj.check_tasks("Making a friend", session.player_obj.ent.questlog)
-            session.pyg.update_gui("Woah! What's that?", session.pyg.violet)
+            pyg.update_gui("Woah! What's that?", pyg.violet)
             
-            x = lambda dX : int((session.player_obj.ent.X + dX)/session.pyg.tile_width)
-            y = lambda dY : int((session.player_obj.ent.Y + dY)/session.pyg.tile_height)
+            x = lambda dX : int((session.player_obj.ent.X + dX)/pyg.tile_width)
+            y = lambda dY : int((session.player_obj.ent.Y + dY)/pyg.tile_height)
             
             # Find a nearby space to place the mysterious note
             found = False
             for i in range(3):
                 if found: break
-                x_test = x(session.pyg.tile_width*(i-1))
+                x_test = x(pyg.tile_width*(i-1))
                 for j in range(3):
-                    y_test = y(session.pyg.tile_height*(j-1))
+                    y_test = y(pyg.tile_height*(j-1))
                     if not session.player_obj.ent.env.map[x_test][y_test].entity:
                         session.player_obj.cache = False
                         
@@ -518,6 +527,8 @@ class Bloodkin:
             
             Church: Coax a lizard to the altar (by following). """
         
+        pyg = session.pyg
+
         from utilities import Textbox
         
         # Read the note
@@ -528,7 +539,7 @@ class Bloodkin:
                 header   = "mysterious note",
                 options  = note_text,
                 position = 'top left')
-            session.pyg.overlay = 'textbox'
+            pyg.overlay = 'textbox'
         
         # Initialize quest and characters
         if 'Learning a language' not in session.player_obj.ent.questlog.keys():
@@ -546,7 +557,7 @@ class Bloodkin:
             quest.content = quest.notes + quest.tasks
             session.player_obj.ent.questlog[quest.name] = quest
             session.questlog_obj.update_questlog()
-            session.pyg.update_gui(f"Quest added: {quest.name}", session.pyg.violet)
+            pyg.update_gui(f"Quest added: {quest.name}", pyg.violet)
             
             self.names_list, self.dialogue_list, self.progress_list = self.set_entities(quest)
         

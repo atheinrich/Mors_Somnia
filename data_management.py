@@ -119,16 +119,18 @@ class Camera:
             fix_position    : bool; prevents adjustment of parameters
         """
         
+        pyg = session.pyg
+
         self.ent             = ent
-        self.width           = session.pyg.screen_width
-        self.height          = session.pyg.screen_height + session.pyg.tile_height
-        self.tile_map_width  = int(self.width / session.pyg.tile_width)
-        self.tile_map_height = int(self.height / session.pyg.tile_height)
+        self.width           = pyg.screen_width
+        self.height          = pyg.screen_height + pyg.tile_height
+        self.tile_map_width  = int(self.width / pyg.tile_width)
+        self.tile_map_height = int(self.height / pyg.tile_height)
         
         self.X               = int(self.ent.X - int(self.width / 2))
         self.Y               = int(self.ent.Y - int(self.height / 2))
-        self.tile_map_x      = int(self.X / session.pyg.tile_width)
-        self.tile_map_y      = int(self.Y / session.pyg.tile_height)
+        self.tile_map_x      = int(self.X / pyg.tile_width)
+        self.tile_map_y      = int(self.Y / pyg.tile_height)
         
         self.right           = self.X + self.width
         self.bottom          = self.Y + self.height
@@ -145,100 +147,112 @@ class Camera:
     def update(self):
         """ ? """
         
+        pyg = session.pyg
+
         if not self.fixed:
             X_move          = int(self.ent.X - self.center_X)
             self.X          = int(self.X + X_move)
             self.center_X   = int(self.center_X + X_move)
             self.right      = int(self.right + X_move)
-            self.tile_map_x = int(self.X / session.pyg.tile_width)
+            self.tile_map_x = int(self.X / pyg.tile_width)
             self.x_range    = int(self.tile_map_x + self.tile_map_width)
 
             Y_move          = int(self.ent.Y - self.center_Y)
             self.Y          = int(self.Y + Y_move)
             self.center_Y   = int(self.center_Y + Y_move)
             self.bottom     = int(self.bottom + Y_move)
-            self.tile_map_y = int(self.Y / session.pyg.tile_height)
+            self.tile_map_y = int(self.Y / pyg.tile_height)
             self.y_range    = int(self.tile_map_y + self.tile_map_height)
             
             self.fix_position()
 
     def fix_position(self):
         """ ? """
+
+        pyg = session.pyg
+
         if self.X < 0:
             self.X          = 0
             self.center_X   = self.X + int(self.width / 2)
             self.right      = self.X + self.width
-            self.tile_map_x = int(self.X / (session.pyg.tile_width / self.zoom))
+            self.tile_map_x = int(self.X / (pyg.tile_width / self.zoom))
             self.x_range    = self.tile_map_x + self.tile_map_width
         
-        elif self.right > (len(self.ent.env.map)-1) * session.pyg.tile_width:
-            self.right      = (len(self.ent.env.map)) * session.pyg.tile_width
+        elif self.right > (len(self.ent.env.map)-1) * pyg.tile_width:
+            self.right      = (len(self.ent.env.map)) * pyg.tile_width
             self.X          = self.right - self.width
             self.center_X   = self.X + int(self.width / 2)
-            self.tile_map_x = int(self.X / (session.pyg.tile_width / self.zoom))
+            self.tile_map_x = int(self.X / (pyg.tile_width / self.zoom))
             self.x_range    = self.tile_map_x + self.tile_map_width
         
         if self.Y < 0:
             self.Y          = 0
             self.center_Y   = self.Y + int(self.height / 2)
             self.bottom     = (self.Y + self.height + 320) / self.zoom
-            self.tile_map_y = int(self.Y / (session.pyg.tile_height / self.zoom))
+            self.tile_map_y = int(self.Y / (pyg.tile_height / self.zoom))
             self.y_range    = self.tile_map_y + self.tile_map_height
         
-        elif self.bottom > (len(self.ent.env.map[0])) * session.pyg.tile_height:
-            self.bottom     = (len(self.ent.env.map[0])) * session.pyg.tile_height
+        elif self.bottom > (len(self.ent.env.map[0])) * pyg.tile_height:
+            self.bottom     = (len(self.ent.env.map[0])) * pyg.tile_height
             self.Y          = self.bottom - self.height
             self.center_Y   = self.Y + int(self.height / 2)
-            self.tile_map_y = int(self.Y / (session.pyg.tile_height / self.zoom))
+            self.tile_map_y = int(self.Y / (pyg.tile_height / self.zoom))
             self.y_range    = self.tile_map_y + self.tile_map_height
 
     def zoom_in(self, factor=0.1, custom=None):
         """ Zoom in by reducing the camera's width and height. """
         
+        pyg = session.pyg
+
         # Set to a specific value
         if custom and (self.zoom != custom):
             self.zoom = custom
-            session.pyg.update_gui()
-            self.width  = int(session.pyg.screen_width / self.zoom)
-            self.height = int(session.pyg.screen_height / self.zoom)
-            session.pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            pyg.update_gui()
+            self.width  = int(pyg.screen_width / self.zoom)
+            self.height = int(pyg.screen_height / self.zoom)
+            pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self._recalculate_bounds()
         
         elif not custom and not self.fixed:
             self.zoom += factor
-            session.pyg.update_gui()
-            self.width  = int(session.pyg.screen_width / self.zoom)
-            self.height = int(session.pyg.screen_height / self.zoom)
-            session.pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            pyg.update_gui()
+            self.width  = int(pyg.screen_width / self.zoom)
+            self.height = int(pyg.screen_height / self.zoom)
+            pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self._recalculate_bounds()
 
     def zoom_out(self, factor=0.1, custom=None):
         """ Zoom out by increasing the camera's width and height. """
         
+        pyg = session.pyg
+
         if not self.fixed:
             if round(self.zoom, 2) > factor:  # Ensure zoom level stays positive
                 if custom:
                     self.zoom = custom
                 else:
                     self.zoom -= factor
-                session.pyg.update_gui()
-                self.width = int(session.pyg.screen_width / self.zoom)
-                self.height = int(session.pyg.screen_height / self.zoom)
-                session.pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+                pyg.update_gui()
+                self.width = int(pyg.screen_width / self.zoom)
+                self.height = int(pyg.screen_height / self.zoom)
+                pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
                 self._recalculate_bounds()
 
     def _recalculate_bounds(self):
         """ Recalculate dependent properties after zooming. """
+
+        pyg = session.pyg
+
         self.X               = self.ent.X - int(self.width / 2)
         self.Y               = self.ent.Y - int(self.height / 2)
         self.center_X        = self.X + int(self.width / 2)
         self.center_Y        = self.Y + int(self.height / 2)
         self.right           = self.X + self.width
         self.bottom          = self.Y + self.height
-        self.tile_map_width  = int(self.width / session.pyg.tile_width)
-        self.tile_map_height = int(self.height / session.pyg.tile_height)
-        self.tile_map_x      = int(self.X / session.pyg.tile_width)
-        self.tile_map_y      = int(self.Y / session.pyg.tile_height)
+        self.tile_map_width  = int(self.width / pyg.tile_width)
+        self.tile_map_height = int(self.height / pyg.tile_height)
+        self.tile_map_x      = int(self.X / pyg.tile_width)
+        self.tile_map_y      = int(self.Y / pyg.tile_height)
         self.x_range         = self.tile_map_x + self.tile_map_width
         self.y_range         = self.tile_map_y + self.tile_map_height
         self.fix_position()

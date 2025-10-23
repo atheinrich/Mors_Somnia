@@ -155,27 +155,29 @@ def init():
     game_states()
 
 def game_states():
-    
-    session.pyg.running = True
-    while session.pyg.running:
+    pyg = session.pyg
+
+    pyg.running = True
+    while pyg.running:
 
         #########################################################
         # Prepare render queue
-        session.pyg.overlays.fill((0, 0, 0, 0))
-        session.pyg.overlay_queue = []
+        pyg.display.fill((0, 0, 0, 0))
+        pyg.fade.fill((0, 0, 0, 0))
+        pyg.overlays.fill((0, 0, 0, 0))
+        pyg.display_queue = []
+        pyg.overlay_queue = []
 
         #########################################################
-        # Primary
-        session.pyg.display.fill((0, 0, 0, 0))
-
-        if session.pyg.game_state == 'startup':
+        # Play game
+        if pyg.game_state == 'startup':
             session.new_game_obj.run()
         
-        elif session.pyg.game_state == 'play_garden':
+        elif pyg.game_state == 'play_garden':
             session.garden_obj.run()
             session.garden_obj.render()
         
-        elif session.pyg.game_state == 'play_game':
+        elif pyg.game_state == 'play_game':
             session.play_game_obj.run()
             session.play_game_obj.render()
             session.player_obj.ent.env.weather.run()
@@ -183,79 +185,81 @@ def game_states():
         
         #########################################################
         # Big overlays
-        if session.pyg.overlay == 'menu':
+        if pyg.overlay == 'menu':
             session.main_menu_obj.run()
             session.main_menu_obj.render()
         
-        elif session.pyg.game_state == 'new_game':
+        elif pyg.game_state == 'new_game':
             session.new_game_obj.run()
             session.new_game_obj.render()
         
-        elif session.pyg.overlay in ['save', 'load']:
+        elif pyg.overlay in ['save', 'load']:
             session.file_menu.run()
             session.file_menu.render()
         
-        elif session.pyg.overlay == 'ctrl_menu':
+        elif pyg.overlay == 'ctrl_menu':
             session.ctrl_menu.run()
             session.ctrl_menu.render()
         
-        elif session.pyg.overlay in ['questlog', 'gardenlog']:
+        elif pyg.overlay in ['questlog', 'gardenlog']:
             session.questlog_obj.run()
             session.questlog_obj.render()
         
-        elif session.pyg.overlay == 'textbox':
+        elif pyg.overlay == 'textbox':
             session.textbox.run()
             session.textbox.render()
         
         #########################################################
         # Side overlays
-        elif session.pyg.overlay == 'inv':
+        elif pyg.overlay == 'inv':
             session.inv.run()
             session.inv.render()
         
-        elif session.pyg.overlay == 'dev':
+        elif pyg.overlay == 'dev':
             session.dev.run()
             session.dev.render()
         
-        elif session.pyg.overlay == 'hold':
+        elif pyg.overlay == 'hold':
             session.hold_obj.run()
             session.hold_obj.render()
         
-        elif session.pyg.overlay == 'trade':
+        elif pyg.overlay == 'trade':
             session.trade_obj.run()
             session.trade_obj.render()
         
-        elif session.pyg.overlay in ['ent_stats', 'pet_stats']:
+        elif pyg.overlay in ['ent_stats', 'pet_stats']:
             session.stats_obj.run()
             session.stats_obj.render()
         
         #########################################################
         # Finish up
         ## Finish rendering
-        if session.pyg.game_state == 'new_game': render_all(ent=session.new_game_obj.temp.ent)
-        else:                                    render_all()
+        render_all()
         session.img.render()
 
+        ## Render display
+        for (surface, pos) in pyg.display_queue:
+            pyg.display.blit(surface, pos)
+
         ## Render overlays
-        for overlay in session.pyg.overlay_queue:
-            if overlay[0] == 'fill': session.pyg.overlays.fill(overlay[1])
-            else:                    session.pyg.overlays.blit(overlay[0], overlay[1])
+        for (surface, pos) in pyg.overlay_queue:
+            pyg.overlays.blit(surface, pos)
 
         display = pygame.transform.scale(
-            session.pyg.display, 
-            (session.pyg.screen_width, session.pyg.screen_height))
-        fade    = pygame.transform.scale(
-            session.pyg.fade, 
-            (session.pyg.screen_width, session.pyg.screen_height))
+            pyg.display, 
+            (pyg.screen_width, pyg.screen_height))
+        fade = pygame.transform.scale(
+            pyg.fade, 
+            (pyg.screen_width, pyg.screen_height))
         overlays = pygame.transform.scale(
-            session.pyg.overlays, 
-            (session.pyg.screen_width, session.pyg.screen_height))
+            pyg.overlays, 
+            (pyg.screen_width, pyg.screen_height))
         
-        session.pyg.screen.blit(display,  (0, 0))
-        session.pyg.screen.blit(fade,     (0, 0))
-        session.pyg.screen.blit(overlays, (0, 0))
+        pyg.screen.blit(display,  (0, 0))
+        pyg.screen.blit(fade,     (0, 0))
+        pyg.screen.blit(overlays, (0, 0))
         pygame.display.flip()
-        session.pyg.clock.tick(30)
+        pyg.clock.tick(30)
         
         ## Update API
         times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']

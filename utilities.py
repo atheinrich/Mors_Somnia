@@ -87,8 +87,8 @@ class MainMenu:
         pyg = session.pyg
 
         ## Switch overlay
-        if self.game_state != session.pyg.game_state:
-            self.game_state = session.pyg.game_state
+        if self.game_state != pyg.game_state:
+            self.game_state = pyg.game_state
             self.update_choices()
 
         ## Restrict keystroke speed
@@ -162,7 +162,7 @@ class MainMenu:
                     self.key_BACK()
                     return
         
-        session.pyg.overlay = 'menu'
+        pyg.overlay = 'menu'
         return
 
     def render(self):
@@ -221,16 +221,20 @@ class MainMenu:
         self.choice = (self.choice + 1) % len(self.choices)
     
     def key_INFO(self):
-        if session.pyg.frame:
-            pygame.display.set_mode((session.pyg.screen_width, session.pyg.screen_height), pygame.NOFRAME)
-            session.pyg.frame = False
+        pyg = session.pyg
+
+        if pyg.frame:
+            pygame.display.set_mode((pyg.screen_width, pyg.screen_height), pygame.NOFRAME)
+            pyg.frame = False
         else:
-            pygame.display.set_mode((session.pyg.screen_width, session.pyg.screen_height))
-            session.pyg.frame = True
+            pygame.display.set_mode((pyg.screen_width, pyg.screen_height))
+            pyg.frame = True
 
     def key_BACK(self):
-        session.pyg.last_press_time = float(time.time())
-        session.pyg.overlay = None
+        pyg = session.pyg
+
+        pyg.last_press_time = float(time.time())
+        pyg.overlay = None
 
     # Tools
     def startup(self):
@@ -259,6 +263,8 @@ class MainMenu:
         
     def switch_states(self):
 
+        pyg = session.pyg
+
         from mechanics import place_player
 
         if time.time()-self.last_press_time > self.cooldown_time:
@@ -269,14 +275,14 @@ class MainMenu:
                     ent = session.player_obj.ent,
                     env = session.player_obj.envs.areas['underworld']['garden'],
                     loc = session.player_obj.envs.areas['underworld']['garden'].player_coordinates)
-                session.pyg.game_state = 'play_garden'
+                pyg.game_state = 'play_garden'
             
-            elif not session.pyg.startup_toggle:
+            elif not pyg.startup_toggle:
                 place_player(
                     ent = session.player_obj.ent,
                     env = session.player_obj.ent.last_env,
                     loc = session.player_obj.ent.last_env.player_coordinates)
-                session.pyg.game_state = 'play_game'
+                pyg.game_state = 'play_game'
 
 class FileMenu:
 
@@ -285,6 +291,8 @@ class FileMenu:
             The mode is passed from the game state, which also populates the header.
         """
         
+        pyg = session.pyg
+
         #########################################################
         # Menu details
         ## Basics
@@ -313,13 +321,13 @@ class FileMenu:
         # Surface initialization
         ## Headers
         self.header_dict = {
-            'save': session.pyg.font.render('Save', True, session.pyg.white),
-            'load': session.pyg.font.render('Load', True, session.pyg.white)}
+            'save': pyg.font.render('Save', True, pyg.white),
+            'load': pyg.font.render('Load', True, pyg.white)}
         
         ## Cursor
         self.cursor_render = pygame.Surface((16, 16)).convert()
         self.cursor_render.set_colorkey(self.cursor_render.get_at((0,0)))
-        pygame.draw.polygon(self.cursor_render, session.pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        pygame.draw.polygon(self.cursor_render, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
         
         ## Backgrounds
         self.update_backgrounds()
@@ -329,9 +337,11 @@ class FileMenu:
 
     def run(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Initialize
-        self.mode = session.pyg.overlay
+        self.mode = pyg.overlay
         session.mech.movement_speed(toggle=False, custom=2)
         
         for event in pygame.event.get():
@@ -341,24 +351,24 @@ class FileMenu:
                 #########################################################
                 # Handle input
                 ## Select file
-                if event.key in session.pyg.key_UP:     self.key_UP()
-                elif event.key in session.pyg.key_DOWN: self.key_DOWN()
+                if event.key in pyg.key_UP:     self.key_UP()
+                elif event.key in pyg.key_DOWN: self.key_DOWN()
                 
                 ## Activate and return
-                elif event.key in session.pyg.key_ENTER:
+                elif event.key in pyg.key_ENTER:
                     if self.mode == 'save':   self.save_account()
                     elif self.mode == 'load': self.load_account()
 
-                    session.pyg.overlay = 'menu'
+                    pyg.overlay = 'menu'
                     return
                 
                 ## Return
-                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                        session.pyg.last_press_time = float(time.time())
-                        session.pyg.overlay = 'menu'
+                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        pyg.last_press_time = float(time.time())
+                        pyg.overlay = 'menu'
                         return None
         
-        session.pyg.overlay = self.mode
+        pyg.overlay = self.mode
         return
 
     def key_UP(self):
@@ -398,6 +408,8 @@ class FileMenu:
     def load_account(self):    
         """ Loads a pickled Player object. """
         
+        pyg = session.pyg
+
         #########################################################
         # Add asterisk to active option
         for i in range(len(self.options)):
@@ -414,26 +426,28 @@ class FileMenu:
         #########################################################
         # Clean up and return
         session.player_obj.ent.env.camera.zoom_in(factor=0)
-        session.pyg.gui_toggle       = True
-        session.pyg.msg_toggle       = True
-        session.pyg.startup_toggle   = False
+        pyg.gui_toggle               = True
+        pyg.msg_toggle               = True
+        pyg.startup_toggle           = False
         session.play_game_obj.fadein = None
-        session.pyg.game_state       = 'play_game'
-        session.pyg.overlay          = 'main_menu'
+        pyg.game_state               = 'play_game'
+        pyg.overlay                  = 'main_menu'
 
     def render(self):
         
+        pyg = session.pyg
+
         # Render background
-        session.pyg.overlay_queue.append([self.backgrounds_render[self.choice], (0, 0)])
+        pyg.overlay_queue.append([self.backgrounds_render[self.choice], (0, 0)])
         
         # Render header and cursor
-        session.pyg.overlay_queue.append([self.header_dict[self.mode], (25, 10)])
-        session.pyg.overlay_queue.append([self.cursor_render, (25, self.options_dict[self.choice])])
+        pyg.overlay_queue.append([self.header_dict[self.mode], (25, 10)])
+        pyg.overlay_queue.append([self.cursor_render, (25, self.options_dict[self.choice])])
         
         # Render categories and options
         for i in range(len(self.options)):
-            option_render = session.pyg.font.render(self.options[i], True, session.pyg.gray)
-            session.pyg.overlay_queue.append([option_render, (50, self.options_dict[i])])
+            option_render = pyg.font.render(self.options[i], True, pyg.gray)
+            pyg.overlay_queue.append([option_render, (50, self.options_dict[i])])
 
 class CtrlMenu:
 
@@ -443,6 +457,8 @@ class CtrlMenu:
             Module: pygame_mechanics
         """
         
+        pyg = session.pyg
+
         #########################################################
         # Menu details
         ## Basics
@@ -458,37 +474,41 @@ class CtrlMenu:
 
         #########################################################
         # Surface initialization
-        self.header_render = session.pyg.font.render(self.header, True, session.pyg.white)
+        self.header_render = pyg.font.render(self.header, True, pyg.white)
         self.update_controls()
 
     def update_controls(self, direction=None):
         
+        pyg = session.pyg
+
         #########################################################
         # Change layout
         if direction:
-            current_index = self.options.index(session.pyg.controls_preset)
+            current_index = self.options.index(pyg.controls_preset)
             new_index = (current_index + direction) % len(self.options)
-            session.pyg.set_controls(self.options[new_index])
+            pyg.set_controls(self.options[new_index])
 
         #########################################################
         # Reconstruct options for rendering
         layout = [
-            f"Move up:                                {session.pyg.key_UP[0]}                     Exit:                                         {session.pyg.key_BACK[0]}",
-            f"Move down:                           {session.pyg.key_DOWN[0]}                     Activate 1:                             {session.pyg.key_ENTER[0]}",
-            f"Move left:                               {session.pyg.key_LEFT[0]}                     Activate 2:                               {session.pyg.key_PERIOD[0]}",
-            f"Move right:                            {session.pyg.key_RIGHT[0]}",
+            f"Move up:                                {pyg.key_UP[0]}                     Exit:                                         {pyg.key_BACK[0]}",
+            f"Move down:                           {pyg.key_DOWN[0]}                     Activate 1:                             {pyg.key_ENTER[0]}",
+            f"Move left:                               {pyg.key_LEFT[0]}                     Activate 2:                               {pyg.key_PERIOD[0]}",
+            f"Move right:                            {pyg.key_RIGHT[0]}",
             "",
             
-            f"Toggle inventory:                  {session.pyg.key_INV[0]}                     Enter combo:                         {session.pyg.key_HOLD[0]}",
-            f"Toggle Catalog:                   {session.pyg.key_DEV[0]}                     Change speed:                      {session.pyg.key_SPEED[0]}",
-            f"Toggle GUI:                            {session.pyg.key_GUI[0]}                     Zoom in:                                {session.pyg.key_PLUS[0]}",
-            f"View stats:                             {session.pyg.key_INFO[0]}                     Zoom out:                              {session.pyg.key_MINUS[0]}",
-            f"View questlog:                      {session.pyg.key_QUEST[0]}"]
+            f"Toggle inventory:                  {pyg.key_INV[0]}                     Enter combo:                         {pyg.key_HOLD[0]}",
+            f"Toggle Catalog:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
+            f"Toggle GUI:                            {pyg.key_GUI[0]}                     Zoom in:                                {pyg.key_PLUS[0]}",
+            f"View stats:                             {pyg.key_INFO[0]}                     Zoom out:                              {pyg.key_MINUS[0]}",
+            f"View questlog:                      {pyg.key_QUEST[0]}"]
     
-        self.layout_render = [session.pyg.font.render(row, True, session.pyg.gray) for row in layout]
+        self.layout_render = [pyg.font.render(row, True, pyg.gray) for row in layout]
 
     def run(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Initialize
         session.mech.movement_speed(toggle=False, custom=2)
@@ -500,29 +520,32 @@ class CtrlMenu:
                 #########################################################
                 # Handle input
                 ## Change layout
-                if event.key in session.pyg.key_LEFT:    self.update_controls(-1)
-                elif event.key in session.pyg.key_RIGHT: self.update_controls(1)
+                if event.key in pyg.key_LEFT:    self.update_controls(-1)
+                elif event.key in pyg.key_RIGHT: self.update_controls(1)
                 
                 ## Return
-                elif time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                    session.pyg.last_press_time = float(time.time())
-                    session.pyg.overlay = 'menu'
+                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                    pyg.last_press_time = float(time.time())
+                    pyg.overlay = 'menu'
                     return None
                 
-        session.pyg.overlay = self.name
+        pyg.overlay = self.name
         return
     
     def render(self):
-        
+        pyg = session.pyg
+
         # Render background
-        session.pyg.overlay_queue.append(['fill', session.pyg.black])
+        black = pygame.Surface(pyg.overlays.get_size())
+        black.fill(pyg.black)
+        pyg.overlay_queue.append([black, (0, 0)])
         
         # Render header
-        session.pyg.overlay_queue.append([self.header_render, (25, 10)])
+        pyg.overlay_queue.append([self.header_render, (25, 10)])
         
         # Render categories and options
         for i in range(len(self.layout_render)):
-            session.pyg.overlay_queue.append([self.layout_render[i], (50, 38+24*i)])
+            pyg.overlay_queue.append([self.layout_render[i], (50, 38+24*i)])
 
 class StatsMenu:
     
@@ -583,13 +606,15 @@ class StatsMenu:
 
     def run(self):
         
+        pyg = session.pyg
+
         #########################################################
         # Initialize
         session.mech.movement_speed(toggle=False, custom=2)
         
         ## Switch overlay
-        if self.overlay != session.pyg.overlay:
-            self.overlay = session.pyg.overlay
+        if self.overlay != pyg.overlay:
+            self.overlay = pyg.overlay
         self.update()
         
         ## Wait for input
@@ -600,12 +625,14 @@ class StatsMenu:
                 self.key_BACK()
                 return
                 
-        session.pyg.overlay = self.overlay
+        pyg.overlay = self.overlay
         return
 
     def key_BACK(self):
-        session.pyg.last_press_time = float(time.time())
-        session.pyg.overlay = None
+        pyg = session.pyg
+
+        pyg.last_press_time = float(time.time())
+        pyg.overlay = None
 
     def update(self):
         
@@ -643,39 +670,41 @@ class StatsMenu:
             self.current_stats = self.pet_stats
 
     def render(self):
-        session.pyg.msg_height = 1
-        session.pyg.update_gui()
+        pyg = session.pyg
+
+        pyg.msg_height = 1
+        pyg.update_gui()
         
         # Render background
-        fill_width  = session.pyg.tile_width  * 5 + session.pyg.tile_width // 2
-        fill_height = session.pyg.tile_height * 4 + session.pyg.tile_height // 2
+        fill_width  = pyg.tile_width  * 5 + pyg.tile_width // 2
+        fill_height = pyg.tile_height * 4 + pyg.tile_height // 2
         self.cursor_fill   = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
         self.cursor_fill.fill((0, 0, 0, 128))
-        session.pyg.overlay_queue.append([self.cursor_fill, (32, 32)])
+        pyg.overlay_queue.append([self.cursor_fill, (32, 32)])
         
         # Render border
         self.cursor_border = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
         self.cursor_fill.fill((0, 0, 0, 128))
         pygame.draw.polygon(
             self.cursor_border, 
-            session.pyg.gray, 
+            pyg.gray, 
             [(0, 0),
              (fill_width-1, 0),
              (fill_width-1, fill_height-1),
              (0, fill_height-1)], 1)
-        session.pyg.overlay_queue.append([self.cursor_border, (32, 32)])
+        pyg.overlay_queue.append([self.cursor_border, (32, 32)])
         
         # Render items
         Y = 32
         for i in range(len(list(self.current_stats))):
-            X1 = session.pyg.tile_height + session.pyg.tile_height // 4
-            X2 = session.pyg.tile_height * 4
+            X1 = pyg.tile_height + pyg.tile_height // 4
+            X2 = pyg.tile_height * 4
             key, val = list(self.current_stats.items())[i]
-            key = session.pyg.font.render(key, True, session.pyg.gray)
-            val = session.pyg.font.render(val, True, session.pyg.gray)
-            session.pyg.overlay_queue.append([key, (X1, Y)])
-            session.pyg.overlay_queue.append([val, (X2, Y)])
-            Y += session.pyg.tile_height//2
+            key = pyg.font.render(key, True, pyg.gray)
+            val = pyg.font.render(val, True, pyg.gray)
+            pyg.overlay_queue.append([key, (X1, Y)])
+            pyg.overlay_queue.append([val, (X2, Y)])
+            Y += pyg.tile_height//2
 
     def pet_startup(self, env):
         self.ents = env.entities
@@ -752,6 +781,8 @@ class Textbox:
     def __init__(self, header='', text=''):
         """ Basic textbox inlay. No controls or anything complicated. """
         
+        pyg = session.pyg
+
         #########################################################
         # Parameters
         ## Basics
@@ -769,11 +800,11 @@ class Textbox:
         #########################################################
         # Surface initialization
         ## Headers and text
-        self.header_render = session.pyg.font.render(header, True, session.pyg.white)
-        self.text_render   = [session.pyg.font.render(row, True, session.pyg.gray) for row in text]
+        self.header_render = pyg.font.render(header, True, pyg.white)
+        self.text_render   = [pyg.font.render(row, True, pyg.gray) for row in text]
         
         ## Background
-        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
         
         ## Backdrop
@@ -783,7 +814,7 @@ class Textbox:
         self.border = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)
         pygame.draw.polygon(
             surface = self.border, 
-            color   = session.pyg.gray,
+            color   = pyg.gray,
             points = [
                 (0,                       0),
                 (self.backdrop_size[0]-1, 0),
@@ -792,40 +823,42 @@ class Textbox:
             width = 1)
         
     def run(self):
-        
+        pyg = session.pyg
+
         #########################################################
         # Save GUI settings
-        self.msg_toggle = session.pyg.msg_toggle
-        self.gui_toggle = session.pyg.gui_toggle
+        self.msg_toggle = pyg.msg_toggle
+        self.gui_toggle = pyg.gui_toggle
         
         #########################################################
         # Close after any key is pressed
         for event in pygame.event.get():
             if event.type == KEYDOWN:
-                session.pyg.msg_toggle = self.msg_toggle
-                session.pyg.gui_toggle = self.gui_toggle
-                session.pyg.overlay    = None
+                pyg.msg_toggle = self.msg_toggle
+                pyg.gui_toggle = self.gui_toggle
+                pyg.overlay    = None
                 return
 
-        session.pyg.overlay = 'textbox'
+        pyg.overlay = 'textbox'
         return
 
     def render(self):
+        pyg = session.pyg
         
         # Clear GUI
-        session.pyg.msg_toggle = False
-        session.pyg.gui_toggle = False
-        session.pyg.update_gui()
+        pyg.msg_toggle = False
+        pyg.gui_toggle = False
+        pyg.update_gui()
         
         # Render backdrop
-        session.pyg.overlay_queue.append([self.background_fade, (0, 0)])
-        session.pyg.overlay_queue.append([self.backdrop,        self.backdrop_pos])
-        session.pyg.overlay_queue.append([self.border,          self.backdrop_pos])
+        pyg.overlay_queue.append([self.background_fade, (0, 0)])
+        pyg.overlay_queue.append([self.backdrop,        self.backdrop_pos])
+        pyg.overlay_queue.append([self.border,          self.backdrop_pos])
                 
         # Render header and text
-        session.pyg.overlay_queue.append([self.header_render, self.header_pos])
+        pyg.overlay_queue.append([self.header_render, self.header_pos])
         for i in range(len(self.text_render)):
-            session.pyg.overlay_queue.append([self.text_render[i], self.text_pos[i]])
+            pyg.overlay_queue.append([self.text_render[i], self.text_pos[i]])
 
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -861,6 +894,8 @@ class Images:
             ----------
             flipped.<>   : flipped version of the parameters """
 
+        pyg = session.pyg
+
         # Create entity dictionary
         self.load_entities(flipped)
         
@@ -889,7 +924,7 @@ class Images:
         self.impact_images     = []
         self.impact_image_pos  = []
         self.impact            = False        
-        self.blank_surface     = pygame.Surface((session.pyg.tile_width, session.pyg.tile_height)).convert()
+        self.blank_surface     = pygame.Surface((pyg.tile_width, pyg.tile_height)).convert()
         self.blank_surface.set_colorkey(self.blank_surface.get_at((0,0)))
         self.render_log = []
         
@@ -898,6 +933,8 @@ class Images:
     def import_tiles(self, filename, flipped=False, effects=None):
         """ Converts an image to a pygame image, cuts it into tiles, then returns a matrix of tiles. """
         
+        pyg = session.pyg
+
         # Set effects and/or load image
         if not effects:
             tileset = pygame.image.load(filename).convert_alpha()
@@ -924,19 +961,19 @@ class Images:
             tileset = pygame.image.fromstring(data, size, mode)
         
         # Break tileset into rows and columns
-        num_rows     = tileset.get_height() // session.pyg.tile_height
-        num_columns  = tileset.get_width() // session.pyg.tile_width
+        num_rows     = tileset.get_height() // pyg.tile_height
+        num_columns  = tileset.get_width() // pyg.tile_width
         tile_matrix  = [[0 for _ in range(num_columns)] for _ in range(num_rows)]
         for row in range(num_rows):
             for col in range(num_columns):
                 
                 # Find location of image in tileset
-                X = col * session.pyg.tile_width
-                Y = row * session.pyg.tile_height
+                X = col * pyg.tile_width
+                Y = row * pyg.tile_height
                 if flipped:
-                    image = pygame.transform.flip(tileset.subsurface(X, Y, session.pyg.tile_width, session.pyg.tile_height).convert_alpha() , True, False)
+                    image = pygame.transform.flip(tileset.subsurface(X, Y, pyg.tile_width, pyg.tile_height).convert_alpha() , True, False)
                 else:
-                    image = tileset.subsurface(X, Y, session.pyg.tile_width, session.pyg.tile_height).convert_alpha()
+                    image = tileset.subsurface(X, Y, pyg.tile_width, pyg.tile_height).convert_alpha()
                 
                 # Update tile matrices
                 tile_matrix[row][col] = image
@@ -1098,19 +1135,20 @@ class Images:
 
     # Utility
     def average(self):
-        
+        pyg = session.pyg
+
         # Identify regions of interest
-        top_rect     = pygame.Rect(0, 0, session.pyg.screen_width, 50)
-        bottom_rect  = pygame.Rect(0, session.pyg.screen_height-50, session.pyg.screen_width, 50)
+        top_rect     = pygame.Rect(0, 0, pyg.screen_width, 50)
+        bottom_rect  = pygame.Rect(0, pyg.screen_height-50, pyg.screen_width, 50)
         left_rect    = pygame.Rect(50, 50, 50, 50)
-        right_rect   = pygame.Rect(session.pyg.screen_width-100, 50, 50, 50)
-        menu_rect    = pygame.Rect(100, session.pyg.screen_height-100, 50, 50)
+        right_rect   = pygame.Rect(pyg.screen_width-100, 50, 50, 50)
+        menu_rect    = pygame.Rect(100, pyg.screen_height-100, 50, 50)
         
-        self.top_color    = pygame.transform.average_color(session.pyg.screen, rect=top_rect,    consider_alpha=False)
-        self.bottom_color = pygame.transform.average_color(session.pyg.screen, rect=bottom_rect, consider_alpha=False)
-        self.left_color   = pygame.transform.average_color(session.pyg.screen, rect=left_rect,   consider_alpha=False)
-        self.right_color  = pygame.transform.average_color(session.pyg.screen, rect=right_rect,  consider_alpha=False)
-        self.menu_color   = pygame.transform.average_color(session.pyg.screen, rect=menu_rect,   consider_alpha=False)
+        self.top_color    = pygame.transform.average_color(pyg.screen, rect=top_rect,    consider_alpha=False)
+        self.bottom_color = pygame.transform.average_color(pyg.screen, rect=bottom_rect, consider_alpha=False)
+        self.left_color   = pygame.transform.average_color(pyg.screen, rect=left_rect,   consider_alpha=False)
+        self.right_color  = pygame.transform.average_color(pyg.screen, rect=right_rect,  consider_alpha=False)
+        self.menu_color   = pygame.transform.average_color(pyg.screen, rect=menu_rect,   consider_alpha=False)
         
         # Relative luminance formula
         top_brightness    = 0.2126 * self.top_color[0]    + 0.7152 * self.top_color[1]    + 0.0722 * self.top_color[2]
@@ -1206,11 +1244,12 @@ class Images:
 
     # Animations
     def get_impact_image(self):
-        
+        pyg = session.pyg
+
         color = (230, 230, 230)
-        self.impact_image = pygame.Surface((session.pyg.tile_width, session.pyg.tile_width)).convert()
+        self.impact_image = pygame.Surface((pyg.tile_width, pyg.tile_width)).convert()
         self.impact_image.set_colorkey(self.impact_image.get_at((0,0)))
-        image = pygame.Surface((int(session.pyg.tile_width/2), int(session.pyg.tile_height/3))).convert()
+        image = pygame.Surface((int(pyg.tile_width/2), int(pyg.tile_height/3))).convert()
         top = 0
         left = 0
         bottom = image.get_width()-1
@@ -1268,6 +1307,8 @@ class Images:
     def flash_above(self, ent, image):
         """ Death animation. """
         
+        pyg = session.pyg
+
         short_list = ['red radish', 'orange radish', 'purple radish']
         if ent.name in short_list: shift = 12
         else:                      shift = 0
@@ -1276,7 +1317,7 @@ class Images:
         
         image     = image
         x         = lambda: ent.X - session.player_obj.ent.env.camera.X
-        y         = lambda: ent.Y - session.pyg.tile_height - session.player_obj.ent.env.camera.Y + shift
+        y         = lambda: ent.Y - pyg.tile_height - session.player_obj.ent.env.camera.Y + shift
         image_pos = (x, y)
         duration  = 0.8
         delay     = 0
@@ -1284,7 +1325,7 @@ class Images:
         self.render_log.append([image, image_pos, duration, last_time, delay])
 
         x         = lambda: ent.X - session.player_obj.ent.env.camera.X
-        y         = lambda: ent.Y - session.pyg.tile_height - session.player_obj.ent.env.camera.Y + shift
+        y         = lambda: ent.Y - pyg.tile_height - session.player_obj.ent.env.camera.Y + shift
         image_pos = (x, y)
         duration  = 0.2
         delay     = 1.0
@@ -1353,7 +1394,7 @@ class Images:
                     elif duration > 0:
                         self.render_log[j][2] -= (time.time() - last_time)
                         self.render_log[j][3] = time.time()
-                        session.pyg.display.blit(image, position)
+                        session.pyg.display_queue.append([image, position])
                         
                     else:
                         self.render_log.pop(j)
@@ -1587,8 +1628,10 @@ def get_vicinity(obj):
         -------
         obj.vicinity : dict of Tile objects
     """
-    
-    (x, y) = obj.X//session.pyg.tile_width, obj.Y//session.pyg.tile_width
+
+    pyg = session.pyg
+
+    (x, y) = obj.X//pyg.tile_width, obj.Y//pyg.tile_width
     obj.vicinity = {
         'top middle'    : session.player_obj.ent.env.map[x][y-1],
         'top right'     : session.player_obj.ent.env.map[x+1][y-1],
@@ -1625,15 +1668,17 @@ def sort_inventory(ent=None):
 def screenshot(folder, filename, blur=False):
     """ Takes a screenshot. """
     
+    pyg = session.pyg
+
     # Turn off GUI
-    gui_cache, msg_cache = session.pyg.gui_toggle, session.pyg.msg_toggle
-    session.pyg.gui_toggle, session.pyg.msg_toggle = False, False
+    gui_cache, msg_cache = pyg.gui_toggle, pyg.msg_toggle
+    pyg.gui_toggle, pyg.msg_toggle = False, False
     render_all()
     
     # Save image
     path = folder + '/' + filename
-    session.pyg.gui_toggle, session.pyg.msg_toggle = False, False
-    pygame.image.save(session.pyg.screen, path)
+    pyg.gui_toggle, pyg.msg_toggle = False, False
+    pygame.image.save(pyg.screen, path)
     
     # Add effects
     if blur:
@@ -1642,8 +1687,8 @@ def screenshot(folder, filename, blur=False):
         image_after.save(folder + '/' + filename)
     
     # Return GUI settings
-    session.pyg.gui_toggle = gui_cache
-    session.pyg.msg_toggle = msg_cache
+    pyg.gui_toggle = gui_cache
+    pyg.msg_toggle = msg_cache
     render_all()
 
 def bw_binary():
@@ -1665,16 +1710,20 @@ def bw_binary():
     image = pygame.surfarray.make_surface(image)
     session.pyg.screen.blit(image, (0, 0))
 
-def render_all(ent=None):
+def render_all():
     """ Draws tiles and stuff. Constantly runs. """
     
+    pyg = session.pyg
+
     #########################################################
     # Initialize
+    ## Select entity to focus on
+    if pyg.game_state == 'new_game': ent = session.new_game_obj.temp.ent
+    else:                            ent = session.player_obj.ent
+
     ## Shorthand
-    if not ent: ent = session.player_obj.ent
-    camera          = ent.env.camera
-    pyg             = session.pyg
-    img             = session.img
+    camera = ent.env.camera
+    img    = session.img
 
     ## Clear previous screen
     pyg.display.fill(pyg.black)
@@ -1689,7 +1738,7 @@ def render_all(ent=None):
                 
                 # Lowest tier (floor or walls)
                 image, (X, Y) = tile.draw()
-                pyg.display.blit(image, (X, Y))
+                pyg.display_queue.append([image, (X, Y)])
 
                 # Second tier (decor or item)
                 if tile.item:
@@ -1697,21 +1746,22 @@ def render_all(ent=None):
 
                     # Handle single-tile images
                     if type(surface) != list:
-                        pyg.display.blit(surface, pos)
+                        pyg.display_queue.append([surface, pos])
 
                     # Handle multi-tile images
                     else:
                         for i in range(len(surface)):
-                            pyg.display.blit(img, pos)
+                            pyg.display_queue.append([surface[i], pos])
                 
                 # Third tier (entity)
-                if tile.entity: tile.entity.draw(pyg.display)
+                if tile.entity:
+                    tile.entity.draw()
                 
                 # Fourth tier (roof)
                 if tile.room:
                     if tile.room.roof == tile.img_names:
                         image, (X, Y) = tile.draw()
-                        pyg.display.blit(image, (X, Y))
+                        pyg.display_queue.append([image, (X, Y)])
     
     #########################################################
     # Apply effects
@@ -1722,7 +1772,7 @@ def render_all(ent=None):
     if pyg.overlay != 'menu':
         if bool(img.impact):
             for i in range(len(img.impact_images)):
-                session.pyg.overlay_queue.append([img.impact_images[i], img.impact_image_pos[i]])
+                pyg.overlay_queue.append([img.impact_images[i], img.impact_image_pos[i]])
         
         # Print messages
         if pyg.msg_toggle: 
@@ -1730,7 +1780,7 @@ def render_all(ent=None):
             
             # Find how many messages to write
             for message in pyg.msg:
-                session.pyg.overlay_queue.append([message, (5, Y)])
+                pyg.overlay_queue.append([message, (5, Y)])
                 Y += 16
         
         # Print status bars and time
@@ -1750,7 +1800,7 @@ def render_all(ent=None):
                 elif i == 4: x = pyg.screen_width - gui[i].get_width() - 16
                 
                 y = pyg.screen_height - 27
-                session.pyg.overlay_queue.append([gui[i], (x, y)])
+                pyg.overlay_queue.append([gui[i], (x, y)])
     
     session.aud.shuffle()
 

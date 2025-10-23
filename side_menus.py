@@ -23,6 +23,8 @@ class InventoryMenu:
     def __init__(self):
         """ Manages inventory menu on the side of the screen. Allows item activation. """
         
+        pyg = session.pyg
+
         #########################################################
         # Parameters
         ## Positions
@@ -39,7 +41,7 @@ class InventoryMenu:
         
         #########################################################
         # Surface initialization
-        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
 
     def run(self):
@@ -121,11 +123,11 @@ class InventoryMenu:
         #########################################################
         # Renders
         ## Background
-        if not self.locked: session.pyg.overlay_queue.append([self.background_fade, (0, 0)])
+        if not self.locked: pyg.overlay_queue.append([self.background_fade, (0, 0)])
         
         ## Cursor
         if self.cursor_pos[1] < 32: self.cursor_pos[1] = 32
-        session.pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
+        pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
 
         ## Color
         session.img.average()
@@ -160,38 +162,42 @@ class InventoryMenu:
                             pyg.minifont.render(self.menu_choices[i], True, color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
-                        session.pyg.overlay_queue.append([menu_choice_surface, (40, Y_detail)])
+                        pyg.overlay_queue.append([menu_choice_surface, (40, Y_detail)])
                         Y_detail += 12
                 
                 # Render image
-                session.pyg.overlay_queue.append([self.dic[item_name], (0, Y)])
+                pyg.overlay_queue.append([self.dic[item_name], (0, Y)])
                 Y += pyg.tile_height
                 visible_count += 1                
                 
             else: break
         
-        session.pyg.overlay_queue.append([self.cursor_border, self.cursor_pos])
+        pyg.overlay_queue.append([self.cursor_border, self.cursor_pos])
 
     # Keys
     def key_UP(self):
 
+        pyg = session.pyg
+
         if not self.locked:
             self.choice -= 1
             if self.cursor_pos[1] == 32: self.offset -= 1
-            else: self.cursor_pos[1] -= session.pyg.tile_height
+            else: self.cursor_pos[1] -= pyg.tile_height
 
         else:
-            session.player_obj.ent.move(0, -session.pyg.tile_height)
+            session.player_obj.ent.move(0, -pyg.tile_height)
                 
     def key_DOWN(self):
+
+        pyg = session.pyg
 
         if not self.locked:
             self.choice += 1
             if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-            else: self.cursor_pos[1] += session.pyg.tile_height
+            else: self.cursor_pos[1] += pyg.tile_height
 
         else:
-            session.player_obj.ent.move(0, session.pyg.tile_height)
+            session.player_obj.ent.move(0, pyg.tile_height)
 
     def key_LEFT(self):
         if len(self.dic_categories) > 1:
@@ -230,8 +236,10 @@ class InventoryMenu:
                 session.player_obj.ent.move(session.pyg.tile_width, 0)
 
     def key_BACK(self):
-        session.pyg.last_press_time = float(time.time())
-        session.pyg.overlay         = None
+        pyg = session.pyg
+
+        pyg.last_press_time = float(time.time())
+        pyg.overlay         = None
 
     def key_QUEST(self):
         if not self.detail: self.detail = True
@@ -333,10 +341,12 @@ class CatalogMenu:
     def __init__(self):
         """ Manages catalog menu on the side of the screen. Allows item placemennt. """
         
+        pyg = session.pyg
+
         #########################################################
         # Parameters
         ## Positions
-        self.cursor_pos = [session.pyg.screen_width-session.pyg.tile_width, 32]
+        self.cursor_pos = [pyg.screen_width-pyg.tile_width, 32]
         self.img_x      = 0
         self.img_y      = 0
 
@@ -346,7 +356,7 @@ class CatalogMenu:
 
         #########################################################
         # Surface initialization
-        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
 
     def run(self):  
@@ -411,12 +421,14 @@ class CatalogMenu:
         return
 
     def render(self):
-        if not self.locked: session.pyg.overlay_queue.append([self.background_fade, (0, 0)])
+        pyg = session.pyg
+
+        if not self.locked: pyg.overlay_queue.append([self.background_fade, (0, 0)])
         
-        session.pyg.msg_height = 1
-        session.pyg.update_gui()
+        pyg.msg_height = 1
+        pyg.update_gui()
         
-        session.pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
+        pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
         
         # Renders menu to update cursor location
         Y = 32
@@ -426,32 +438,34 @@ class CatalogMenu:
             # Stop at the 12th image, starting with respect to the offset 
             if counter <= 12:
                 img_names = self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]]
-                session.pyg.overlay_queue.append([session.img.dict[img_names[0]][img_names[1]], (session.pyg.screen_width-session.pyg.tile_width, Y)])
-                Y += session.pyg.tile_height
+                pyg.overlay_queue.append([session.img.dict[img_names[0]][img_names[1]], (pyg.screen_width-pyg.tile_width, Y)])
+                Y += pyg.tile_height
                 counter += 1
             else: break
-        session.pyg.overlay_queue.append([self.cursor_border, self.cursor_pos])
+        pyg.overlay_queue.append([self.cursor_border, self.cursor_pos])
 
     # Keys
     def key_UP(self):
+        pyg = session.pyg
 
         if not self.locked:
             self.choice -= 1
             if self.cursor_pos[1] == 32: self.offset -= 1
-            else: self.cursor_pos[1] -= session.pyg.tile_height
+            else: self.cursor_pos[1] -= pyg.tile_height
         
         else:
-            session.player_obj.ent.move(0, -session.pyg.tile_height)
+            session.player_obj.ent.move(0, -pyg.tile_height)
                 
     def key_DOWN(self):
+        pyg = session.pyg
 
         if not self.locked:
             self.choice += 1
             if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-            else: self.cursor_pos[1] += session.pyg.tile_height
+            else: self.cursor_pos[1] += pyg.tile_height
             
         else:
-            session.player_obj.ent.move(0, session.pyg.tile_height)
+            session.player_obj.ent.move(0, pyg.tile_height)
 
     def key_LEFT(self):
 
@@ -497,11 +511,13 @@ class CatalogMenu:
 
     def key_ENTER(self):
         
+        pyg = session.pyg
+
         from mechanics import place_object
         from items_entities import create_item, create_entity
 
         # Note location and image names
-        self.img_x, self.img_y = int(session.player_obj.ent.X/session.pyg.tile_width), int(session.player_obj.ent.Y/session.pyg.tile_height)
+        self.img_x, self.img_y = int(session.player_obj.ent.X/pyg.tile_width), int(session.player_obj.ent.Y/pyg.tile_height)
         self.img_names[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
         self.img_names[1] = list(self.dic.keys())[(self.choice)%len(self.dic)]
         
@@ -557,7 +573,7 @@ class CatalogMenu:
                 names = self.img_names.copy())
         
         self.img_x, self.img_y = None, None
-        session.pyg.overlay = None
+        pyg.overlay = None
 
     def key_DEV(self):
         self.last_press_time = float(time.time())
@@ -583,8 +599,10 @@ class CatalogMenu:
         pygame.event.clear()
 
     def key_BACK(self):
-        session.pyg.last_press_time = float(time.time())
-        session.pyg.overlay         = None
+        pyg = session.pyg
+
+        pyg.last_press_time = float(time.time())
+        pyg.overlay         = None
 
     # Tools
     def update_data(self):
@@ -635,12 +653,14 @@ class AbilitiesMenu:
             
             detail          : bool; toggles descriptions; altered in self.run() """
         
+        pyg = session.pyg
+
         # Cursor and position saving
         self.dic_indices = [[0, 0]]
         
         # Combo sequences
         self.sequence_toggle = True
-        self.keys            = session.pyg.key_LEFT + session.pyg.key_DOWN + session.pyg.key_RIGHT
+        self.keys            = pyg.key_LEFT + pyg.key_DOWN + pyg.key_RIGHT
         self.key_sequence    = []
         self.last_press_time = 0
         self.cooldown_time   = 0.5
@@ -742,8 +762,10 @@ class AbilitiesMenu:
                     return
 
     def render(self):
-        session.pyg.msg_height = 1
-        session.pyg.update_gui()
+        pyg = session.pyg
+
+        pyg.msg_height = 1
+        pyg.update_gui()
         
         session.img.average()
         color = pygame.Color(session.img.left_correct, session.img.left_correct, session.img.left_correct)
@@ -768,15 +790,15 @@ class AbilitiesMenu:
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
                         self.menu_choices_surfaces.append(
-                            session.pyg.minifont.render(self.menu_choices[i], True, color))
+                            pyg.minifont.render(self.menu_choices[i], True, color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
-                        session.pyg.overlay_queue.append([menu_choice_surface, (40, Y_cache)])
+                        pyg.overlay_queue.append([menu_choice_surface, (40, Y_cache)])
                         Y_cache += 12
                 
                 # Render image
-                session.pyg.overlay_queue.append([self.dic[effect_name], (0, Y)])
-                Y += session.pyg.tile_height
+                pyg.overlay_queue.append([self.dic[effect_name], (0, Y)])
+                Y += pyg.tile_height
                 counter += 1
             
             else: break
@@ -784,9 +806,10 @@ class AbilitiesMenu:
 class ExchangeMenu:
 
     def __init__(self):
+        pyg = session.pyg
         
         # Data for select_item and locked_item
-        self.cursor_pos_bnm = [session.pyg.screen_width-session.pyg.tile_width, 32]
+        self.cursor_pos_bnm = [pyg.screen_width-pyg.tile_width, 32]
         self.dic_index_bnm = 0
         self.dic_categories_bnm = session.img.other_names[:-1]
         self.dic_indices_bnm = [[0, 0] for _ in self.dic_categories_bnm] # offset, choice
@@ -829,11 +852,13 @@ class ExchangeMenu:
             pygame.Color('white'), 
             [(0, 0), (size, 0), (size, size), (0, size)],  width)
 
-        self.background_fade = pygame.Surface((session.pyg.screen_width, session.pyg.screen_height), pygame.SRCALPHA)
+        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
 
     def run(self):
         
+        pyg = session.pyg
+
         # Restrict movement speed
         session.mech.movement_speed(toggle=False, custom=2)
         
@@ -869,53 +894,53 @@ class ExchangeMenu:
             if event.type == KEYDOWN:
             
                 ## >>PLAY GAME<<
-                if (event.key in session.pyg.key_BACK) or (event.key in session.pyg.key_HOLD):
-                    if time.time()-session.pyg.last_press_time > session.pyg.cooldown_time:
-                        session.pyg.last_press_time = float(time.time())
-                        session.pyg.overlay = None
+                if (event.key in pyg.key_BACK) or (event.key in pyg.key_HOLD):
+                    if time.time()-pyg.last_press_time > pyg.cooldown_time:
+                        pyg.last_press_time = float(time.time())
+                        pyg.overlay = None
                         return
                 
                 ## >>SWITCH<<
-                elif event.key in session.pyg.key_INV: self.menu_toggle = 'left'
-                elif event.key in session.pyg.key_DEV: self.menu_toggle = 'right'    
+                elif event.key in pyg.key_INV: self.menu_toggle = 'left'
+                elif event.key in pyg.key_DEV: self.menu_toggle = 'right'    
                 
                 ## >>NAVIGATE DICTIONARY<<
-                elif event.key in session.pyg.key_UP:
+                elif event.key in pyg.key_UP:
                     
                     # Navigate trader's inventory
                     if self.menu_toggle == 'right':
                         self.choice_bnm = (self.choice_bnm - 1)%len(self.dic_bnm)
                         if self.cursor_pos_bnm[1] == 32: self.offset_bnm -= 1
-                        else: self.cursor_pos_bnm[1] -= session.pyg.tile_height
+                        else: self.cursor_pos_bnm[1] -= pyg.tile_height
                     
                     # Navigate player's inventory
                     else:
                         self.choice = (self.choice - 1)%len(self.dic)
                         if self.cursor_pos[1] == 32: self.offset -= 1
-                        else: self.cursor_pos[1] -= session.pyg.tile_height
+                        else: self.cursor_pos[1] -= pyg.tile_height
                 
-                elif event.key in session.pyg.key_DOWN:
+                elif event.key in pyg.key_DOWN:
                     
                     # Navigate trader's inventory
                     if self.menu_toggle == 'right':
                         self.choice_bnm = (self.choice_bnm + 1)%len(self.dic_bnm)
                         if self.cursor_pos_bnm[1] >= (min(len(self.dic_bnm), 12) * 32): self.offset_bnm += 1
-                        else: self.cursor_pos_bnm[1] += session.pyg.tile_height
+                        else: self.cursor_pos_bnm[1] += pyg.tile_height
                     
                     # Navigate player's inventory
                     else:
                         self.choice = (self.choice + 1)%len(self.dic)
                         if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-                        else: self.cursor_pos[1] += session.pyg.tile_height
+                        else: self.cursor_pos[1] += pyg.tile_height
                 
                 ## >>CHANGE DICTIONARY<<
-                elif (event.key in session.pyg.key_LEFT) or (event.key in session.pyg.key_RIGHT):
+                elif (event.key in pyg.key_LEFT) or (event.key in pyg.key_RIGHT):
                 
-                    if event.key in session.pyg.key_LEFT:
+                    if event.key in pyg.key_LEFT:
                         if self.menu_toggle == 'right': self.dic_index_bnm = (self.dic_index_bnm - 1)%len(self.dic_indices_bnm)
                         else:                           self.dic_index     = (self.dic_index - 1)%len(self.dic_indices)
                     
-                    elif event.key in session.pyg.key_RIGHT:
+                    elif event.key in pyg.key_RIGHT:
                         if self.menu_toggle == 'right': self.dic_index_bnm = (self.dic_index_bnm + 1)%len(self.dic_indices_bnm)
                         else:                           self.dic_index     = (self.dic_index + 1)%len(self.dic_indices)
                     
@@ -932,7 +957,7 @@ class ExchangeMenu:
                                 self.cursor_pos_bnm[1] = 32*len(self.dic_bnm)
                                 self.choice_bnm = (len(self.dic_bnm) - self.offset_bnm - 1)%len(self.dic_bnm)
                         else:
-                            session.pyg.overlay = None
+                            pyg.overlay = None
                             return
                     
                     # Navigate player's inventory
@@ -948,16 +973,16 @@ class ExchangeMenu:
                                 self.cursor_pos[1] = 32*len(self.dic)
                                 self.choice = (len(self.dic) - self.offset - 1)%len(self.dic)
                         else:
-                            session.pyg.overlay = None
+                            pyg.overlay = None
                             return
                 
                 ## >>DETAILS<<
-                elif event.key in session.pyg.key_QUEST:
+                elif event.key in pyg.key_QUEST:
                     if not self.detail: self.detail = True
                     else:               self.detail = False
                 
                 ## >>SELECT<<
-                elif event.key in session.pyg.key_ENTER:
+                elif event.key in pyg.key_ENTER:
                     self.select()
             
             # Save for later reference
@@ -966,21 +991,23 @@ class ExchangeMenu:
                     self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][0] = self.offset_bnm
                     self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1] = self.choice_bnm
                 else:
-                    session.pyg.overlay = None
+                    pyg.overlay = None
                     return
             else:
                 if self.dic_indices:
                     self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
                     self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
                 else:
-                    session.pyg.overlay = None
+                    pyg.overlay = None
                     return
         
-        session.pyg.overlay = 'trade'
+        pyg.overlay = 'trade'
         return
 
     def update_data(self):
         
+        pyg = session.pyg
+
         # Restrict movement speed
         session.mech.movement_speed(toggle=False, custom=2)
         
@@ -1016,7 +1043,7 @@ class ExchangeMenu:
             self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]%len(self.inv_dics)
             self.dic    = self.inv_dics[list(self.inv_dics.keys())[self.dic_index%len(self.inv_dics)]]
         else:
-            session.pyg.overlay = None
+            pyg.overlay = None
             return
         
         # Right selection restoration
@@ -1029,7 +1056,7 @@ class ExchangeMenu:
             self.choice_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1]%len(self.inv_dics_bnm)
             self.dic_bnm    = self.inv_dics_bnm[list(self.inv_dics_bnm.keys())[self.dic_index_bnm%len(self.inv_dics_bnm)]]
         else:
-            session.pyg.overlay = None
+            pyg.overlay = None
             return
 
     def select(self):
@@ -1106,23 +1133,25 @@ class ExchangeMenu:
 
     def render(self):
         
+        pyg = session.pyg
+
         # Apply background fade
-        session.pyg.overlay_queue.append([self.background_fade, (0, 0)])
+        pyg.overlay_queue.append([self.background_fade, (0, 0)])
         
         # Basics
-        session.pyg.msg_height = 1
-        session.pyg.update_gui()
+        pyg.msg_height = 1
+        pyg.update_gui()
         
         # Cursor background and font colors
         session.img.average()
         if self.menu_toggle == 'right':
             left_color  = pygame.Color(session.img.left_correct - 20, session.img.left_correct - 20, session.img.left_correct - 20)
             right_color = pygame.Color(session.img.right_correct, session.img.right_correct, session.img.right_correct)
-            session.pyg.overlay_queue.append([self.cursor_fill_bnm, self.cursor_pos_bnm])
+            pyg.overlay_queue.append([self.cursor_fill_bnm, self.cursor_pos_bnm])
         else:
             left_color  = pygame.Color(session.img.left_correct, session.img.left_correct, session.img.left_correct)
             right_color = pygame.Color(session.img.right_correct - 20, session.img.right_correct - 20, session.img.right_correct - 20)
-            session.pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
+            pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
         
         ## Player's inventory
         Y = 32
@@ -1144,15 +1173,15 @@ class ExchangeMenu:
                     self.menu_choices = [item_name, cost]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(session.pyg.minifont.render(self.menu_choices[i], True, left_color))
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, left_color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
-                        session.pyg.overlay_queue.append([menu_choice_surface, (40, Y_detail)])
+                        pyg.overlay_queue.append([menu_choice_surface, (40, Y_detail)])
                         Y_detail += 12
                 
                 # Render image
-                session.pyg.overlay_queue.append([self.dic[item_name][0], (0, Y)])
-                Y += session.pyg.tile_height
+                pyg.overlay_queue.append([self.dic[item_name][0], (0, Y)])
+                Y += pyg.tile_height
                 counter += 1                
             else: break
         
@@ -1176,20 +1205,20 @@ class ExchangeMenu:
                     self.menu_choices = [item_name, cost]
                     self.menu_choices_surfaces = []
                     for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(session.pyg.minifont.render(self.menu_choices[i], True, right_color))
+                        self.menu_choices_surfaces.append(pyg.minifont.render(self.menu_choices[i], True, right_color))
                     
                     for menu_choice_surface in self.menu_choices_surfaces:
-                        X = session.pyg.screen_width - session.pyg.tile_width - menu_choice_surface.get_width() - 8
-                        session.pyg.overlay_queue.append([menu_choice_surface,  (X, Y_detail)])
+                        X = pyg.screen_width - pyg.tile_width - menu_choice_surface.get_width() - 8
+                        pyg.overlay_queue.append([menu_choice_surface,  (X, Y_detail)])
                         Y_detail += 12
                 
                 # Render image
-                session.pyg.overlay_queue.append([self.dic_bnm[item_name][0],  (session.pyg.screen_width-session.pyg.tile_width, Y)])
-                Y += session.pyg.tile_height
+                pyg.overlay_queue.append([self.dic_bnm[item_name][0],  (pyg.screen_width-pyg.tile_width, Y)])
+                Y += pyg.tile_height
                 counter += 1                
             else: break
         
-        if self.menu_toggle == 'right': session.pyg.overlay_queue.append([self.cursor_border_bnm, self.cursor_pos_bnm])
-        else:                           session.pyg.overlay_queue.append([self.cursor_border,     self.cursor_pos])
+        if self.menu_toggle == 'right': pyg.overlay_queue.append([self.cursor_border_bnm, self.cursor_pos_bnm])
+        else:                           pyg.overlay_queue.append([self.cursor_border,     self.cursor_pos])
 
 ########################################################################################################################################################

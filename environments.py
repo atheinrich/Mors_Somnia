@@ -1211,6 +1211,8 @@ class Environment:
             unbreakable : bool; prevents player from changing the tile 
             """
         
+        pyg = session.pyg
+
         # Global mechanisms
         self.envs = envs
 
@@ -1232,12 +1234,12 @@ class Environment:
         
         # Generate map tiles
         self.map = []
-        X_range  = [0, self.size * session.pyg.screen_width]
-        Y_range  = [0, self.size * session.pyg.screen_height]
+        X_range  = [0, self.size * pyg.screen_width]
+        Y_range  = [0, self.size * pyg.screen_height]
         number    = 0
-        for X in range(X_range[0], X_range[1]+1, session.pyg.tile_width):
+        for X in range(X_range[0], X_range[1]+1, pyg.tile_width):
             row = [] 
-            for Y in range(Y_range[0], Y_range[1]+1, session.pyg.tile_height):
+            for Y in range(Y_range[0], Y_range[1]+1, pyg.tile_height):
                 number += 1
                 
                 # Handle edges
@@ -1258,8 +1260,8 @@ class Environment:
 
                         X           = X,
                         Y           = Y,
-                        rand_X      = random.randint(-session.pyg.tile_width, session.pyg.tile_width),
-                        rand_Y      = random.randint(-session.pyg.tile_height, session.pyg.tile_height),
+                        rand_X      = random.randint(-pyg.tile_width, pyg.tile_width),
+                        rand_Y      = random.randint(-pyg.tile_height, pyg.tile_height),
                         
                         biome       = None,
                         blocked     = True,
@@ -1285,8 +1287,8 @@ class Environment:
 
                         X           = X,
                         Y           = Y,
-                        rand_X      = random.randint(-session.pyg.tile_width, session.pyg.tile_width),
-                        rand_Y      = random.randint(-session.pyg.tile_height, session.pyg.tile_height),
+                        rand_X      = random.randint(-pyg.tile_width, pyg.tile_width),
+                        rand_Y      = random.randint(-pyg.tile_height, pyg.tile_height),
                         
                         biome       = None,
                         blocked     = blocked,
@@ -1911,11 +1913,13 @@ class Weather:
 
     def __init__(self, env, light_set=None, clouds=True):
         
+        pyg = session.pyg
+
         # Global mechanisms
         self.env = env
 
         # Dark blue background
-        self.overlay = pygame.Surface((session.pyg.screen_width * 10, session.pyg.screen_height * 10), pygame.SRCALPHA)
+        self.overlay = pygame.Surface((pyg.screen_width * 10, pyg.screen_height * 10), pygame.SRCALPHA)
         
         self.last_hour = time.localtime().tm_hour + 1
         self.last_min  = time.localtime().tm_min + 1
@@ -1977,10 +1981,12 @@ class Weather:
     def create_cloud(self):
         from mechanics import create_text_room
 
+        pyg = session.pyg
+
         # Set direction of travel
         env       = self.env
-        x_range   = [0, (env.size * session.pyg.screen_width) // session.pyg.tile_width]
-        y_range   = [0, (env.size * session.pyg.screen_height) // session.pyg.tile_height]
+        x_range   = [0, (env.size * pyg.screen_width) // pyg.tile_width]
+        y_range   = [0, (env.size * pyg.screen_height) // pyg.tile_height]
         direction = random.choice(['up', 'down', 'left', 'right'])
         position = [random.randint(x_range[0], x_range[1]), random.randint(y_range[0], y_range[1])]
         
@@ -2019,12 +2025,13 @@ class Weather:
                 self.clouds.remove(cloud)
 
     def update_clouds(self):
+        pyg    = session.pyg
         camera = self.env.camera
-        data = []
+        data   = []
         
         # Draw visible tiles
-        for y in range(int(camera.Y/32), int(camera.bottom/session.pyg.tile_height + 1)):
-            for x in range(int(camera.X/32), int(camera.right/session.pyg.tile_width + 1)):
+        for y in range(int(camera.Y/32), int(camera.bottom/pyg.tile_height + 1)):
+            for x in range(int(camera.X/32), int(camera.right/pyg.tile_width + 1)):
                 try:    tile = self.env.map[x][y]
                 except: continue
                 
@@ -2048,14 +2055,16 @@ class Weather:
                                         else:             image.set_alpha(96)
                                         
                                         # Set the corresponding map tile
-                                        X = x * session.pyg.tile_width - self.env.camera.X
-                                        Y = y * session.pyg.tile_height - self.env.camera.Y
+                                        X = x * pyg.tile_width - self.env.camera.X
+                                        Y = y * pyg.tile_height - self.env.camera.Y
                                         
                                         data.append([image, (X, Y)])
 
         return data
 
     def update_lamps(self):
+        pyg = session.pyg
+
         for lamp in self.lamp_list:
             
             # Center light on entity
@@ -2075,11 +2084,11 @@ class Weather:
                 
                 # Render
                 size   = lamp.effect.other
-                width  = session.pyg.tile_width * size
-                height = session.pyg.tile_height * size
+                width  = pyg.tile_width * size
+                height = pyg.tile_height * size
                 alpha  = 255//size
-                left   = X - size*session.pyg.tile_width//2
-                top    = Y - size*session.pyg.tile_height//2
+                left   = X - size*pyg.tile_width//2
+                top    = Y - size*pyg.tile_height//2
                 for i in range(size+1):
                     transparent_rect = pygame.Rect(
                         left   + (i+1) * 16,
@@ -2104,7 +2113,7 @@ class Weather:
         self.overlay.fill((0, 0, 0))
         data.append(self.update_lamps())
 
-        for image, (X, Y) in data: session.pyg.display.blit(image, (X, Y))
+        for image, (X, Y) in data: session.pyg.display_queue.append([image, (X, Y)])
 
 ########################################################################################################################################################
 # Tools
@@ -2116,6 +2125,8 @@ def voronoi_biomes(env, biomes):
         biomes : list of dictionaries of objects
                  [<wall/floor name>, [<item name 1>, ...]], {...}] """
     
+    pyg = session.pyg
+
     # Generate region centers and sizes
     num_regions    = len(biomes)
     region_centers = [[random.randint(0, len(env.map[0])), random.randint(0, len(env.map))] for _ in range(num_regions)]
@@ -2131,7 +2142,7 @@ def voronoi_biomes(env, biomes):
             
             # Look for the shortest path to a region center
             for i in range(len(seeds_with_ids)):
-                region_center = [seeds_with_ids[i][1][0] * session.pyg.tile_width, seeds_with_ids[i][1][1] * session.pyg.tile_height]
+                region_center = [seeds_with_ids[i][1][0] * pyg.tile_width, seeds_with_ids[i][1][1] * pyg.tile_height]
                 weight        = seeds_with_ids[i][2]
                 distance      = (abs(region_center[0] - tile.X) + abs(region_center[1] - tile.Y)) / weight
                 if distance < min_distance:
