@@ -111,8 +111,6 @@ class MainMenu:
                     session.aud.pause(paused=False)
                 elif event.key in pyg.key_MINUS:
                     session.aud.pause(paused=True)
-                elif event.key in pyg.key_DEV:
-                    self.key_DEV()
                 
                 #########################################################
                 # Adjust window
@@ -175,16 +173,16 @@ class MainMenu:
         #########################################################
         # Render surfaces
         ## Background
-        pyg.screen.blit(self.background_fade, (0, 0))
+        pyg.overlays.blit(self.background_fade, (0, 0))
 
         ## Header
         if pyg.startup_toggle:
-            pyg.screen.blit(self.header_surface, self.header_pos)
+            pyg.overlays.blit(self.header_surface, self.header_pos)
         
         ## Logo
         else:
             for i in range(len(self.logo_surfaces)):
-                pyg.screen.blit(self.logo_surfaces[i], self.logo_pos[i])
+                pyg.overlays.blit(self.logo_surfaces[i], self.logo_pos[i])
         
         ## Choices
         for i in range(len(self.choices)):
@@ -196,12 +194,12 @@ class MainMenu:
 
             offset   = self.spacing * i
             position = (self.choice_pos[0], self.choice_pos[1] + offset)
-            pyg.screen.blit(surface, position)
+            pyg.overlays.blit(surface, position)
         
         ## Cursor
         offset     = self.spacing * self.choice
         cursor_pos = (self.cursor_pos[0], self.cursor_pos[1] + offset)
-        session.pyg.screen.blit(self.cursor_surface, cursor_pos)
+        session.pyg.overlays.blit(self.cursor_surface, cursor_pos)
 
         #########################################################
         # Fade in from black
@@ -426,19 +424,17 @@ class FileMenu:
     def render(self):
         
         # Render background
-        session.pyg.screen.fill(session.pyg.black)
-        session.pyg.screen.blit(self.backgrounds_render[self.choice], (0, 0))
+        session.pyg.overlays.fill(session.pyg.black)
+        session.pyg.overlays.blit(self.backgrounds_render[self.choice], (0, 0))
         
         # Render header and cursor
-        session.pyg.screen.blit(self.header_dict[self.mode], (25, 10))
-        session.pyg.screen.blit(self.cursor_render, (25, self.options_dict[self.choice]))
+        session.pyg.overlays.blit(self.header_dict[self.mode], (25, 10))
+        session.pyg.overlays.blit(self.cursor_render, (25, self.options_dict[self.choice]))
         
         # Render categories and options
         for i in range(len(self.options)):
             option_render = session.pyg.font.render(self.options[i], True, session.pyg.gray)
-            session.pyg.screen.blit(option_render, (50, self.options_dict[i]))
-        
-        pygame.display.flip()
+            session.pyg.overlays.blit(option_render, (50, self.options_dict[i]))
 
 class CtrlMenu:
 
@@ -520,16 +516,14 @@ class CtrlMenu:
     def render(self):
         
         # Render background
-        session.pyg.screen.fill(session.pyg.black)
+        session.pyg.overlays.fill(session.pyg.black)
         
         # Render header
-        session.pyg.screen.blit(self.header_render, (25, 10))
+        session.pyg.overlays.blit(self.header_render, (25, 10))
         
         # Render categories and options
         for i in range(len(self.layout_render)):
-            session.pyg.screen.blit(self.layout_render[i], (50, 38+24*i))
-
-        pygame.display.flip()
+            session.pyg.overlays.blit(self.layout_render[i], (50, 38+24*i))
 
 class StatsMenu:
     
@@ -658,7 +652,7 @@ class StatsMenu:
         fill_height = session.pyg.tile_height * 4 + session.pyg.tile_height // 2
         self.cursor_fill   = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
         self.cursor_fill.fill((0, 0, 0, 128))
-        session.pyg.screen.blit(self.cursor_fill, (32, 32))
+        session.pyg.overlays.blit(self.cursor_fill, (32, 32))
         
         # Render border
         self.cursor_border = pygame.Surface((fill_width, fill_height), pygame.SRCALPHA)
@@ -670,7 +664,7 @@ class StatsMenu:
              (fill_width-1, 0),
              (fill_width-1, fill_height-1),
              (0, fill_height-1)], 1)
-        session.pyg.screen.blit(self.cursor_border, (32, 32))
+        session.pyg.overlays.blit(self.cursor_border, (32, 32))
         
         # Render items
         Y = 32
@@ -680,8 +674,8 @@ class StatsMenu:
             key, val = list(self.current_stats.items())[i]
             key = session.pyg.font.render(key, True, session.pyg.gray)
             val = session.pyg.font.render(val, True, session.pyg.gray)
-            session.pyg.screen.blit(key, (X1, Y))
-            session.pyg.screen.blit(val, (X2, Y))
+            session.pyg.overlays.blit(key, (X1, Y))
+            session.pyg.overlays.blit(val, (X2, Y))
             Y += session.pyg.tile_height//2
 
     def pet_startup(self, env):
@@ -825,16 +819,14 @@ class Textbox:
         session.pyg.update_gui()
         
         # Render backdrop
-        session.pyg.screen.blit(self.background_fade, (0, 0))
-        session.pyg.screen.blit(self.backdrop,        self.backdrop_pos)
-        session.pyg.screen.blit(self.border,          self.backdrop_pos)
+        session.pyg.overlays.blit(self.background_fade, (0, 0))
+        session.pyg.overlays.blit(self.backdrop,        self.backdrop_pos)
+        session.pyg.overlays.blit(self.border,          self.backdrop_pos)
                 
         # Render header and text
-        session.pyg.screen.blit(self.header_render, self.header_pos)
+        session.pyg.overlays.blit(self.header_render, self.header_pos)
         for i in range(len(self.text_render)):
-            session.pyg.screen.blit(self.text_render[i], self.text_pos[i])
-        
-        pygame.display.flip()
+            session.pyg.overlays.blit(self.text_render[i], self.text_pos[i])
 
 class Pets:
     """ Manages stats in the Garden. """
@@ -1825,7 +1817,7 @@ def render_all(ent=None):
                     # Handle multi-tile images
                     else:
                         for i in range(len(surface)):
-                            pyg.display.blid(img, pos)
+                            pyg.display.blit(img, pos)
                 
                 # Third tier (entity)
                 if tile.entity: tile.entity.draw(pyg.display)
@@ -1845,7 +1837,7 @@ def render_all(ent=None):
     if pyg.overlay != 'menu':
         if bool(img.impact):
             for i in range(len(img.impact_images)):
-                pyg.screen.blit(img.impact_images[i], img.impact_image_pos[i])
+                pyg.overlays.blit(img.impact_images[i], img.impact_image_pos[i])
         
         # Print messages
         if pyg.msg_toggle: 
@@ -1853,7 +1845,7 @@ def render_all(ent=None):
             
             # Find how many messages to write
             for message in pyg.msg:
-                pyg.screen.blit(message, (5, Y))
+                pyg.overlays.blit(message, (5, Y))
                 Y += 16
         
         # Print status bars and time
@@ -1873,7 +1865,7 @@ def render_all(ent=None):
                 elif i == 4: x = pyg.screen_width - gui[i].get_width() - 16
                 
                 y = pyg.screen_height - 27
-                pyg.screen.blit(gui[i], (x, y))
+                pyg.overlays.blit(gui[i], (x, y))
     
     session.aud.shuffle()
 

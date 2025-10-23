@@ -81,6 +81,9 @@
 
 ########################################################################################################################################################
 # Imports
+## Standard
+import time
+
 ## Specific
 import pygame
 from pygame.locals import *
@@ -90,7 +93,7 @@ from pypresence import Presence
 import session
 from items_entities import Player
 from utilities import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
-from utilities import Images, Audio, Pets
+from utilities import Images, Audio, render_all
 from mechanics import Pygame, Mechanics
 from mechanics import NewGameMenu, PlayGame, PlayGarden
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
@@ -158,6 +161,8 @@ def game_states():
         
         #########################################################
         # Primary
+        session.pyg.display.fill((0, 0, 0, 0))
+
         if session.pyg.game_state == 'startup':
             session.new_game_obj.run()
         
@@ -177,6 +182,8 @@ def game_states():
         
         #########################################################
         # Big overlays
+        session.pyg.overlays.fill((0, 0, 0, 0))
+
         if session.pyg.overlay == 'menu':
             session.main_menu_obj.run()
             session.main_menu_obj.render()
@@ -222,12 +229,18 @@ def game_states():
         #########################################################
         # Finish up
         ## Finish rendering
+        #if session.game_state == 'new_game': render_all()
+        #else:                                render_all(ent=session.new_game_obj.temp.ent)
         session.img.render()
-        pygame.display.flip()
-        screen = pygame.transform.scale(
+        display = pygame.transform.scale(
             session.pyg.display, 
             (session.pyg.screen_width, session.pyg.screen_height))
-        session.pyg.screen.blit(screen, (0, 0))
+        overlays = pygame.transform.scale(
+            session.pyg.overlays, 
+            (session.pyg.screen_width, session.pyg.screen_height))
+        session.pyg.screen.blit(display, (0, 0))
+        session.pyg.screen.blit(overlays, (0, 0))
+        pygame.display.flip()
         session.pyg.clock.tick(30)
         
         ## Update API

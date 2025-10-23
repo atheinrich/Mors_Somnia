@@ -201,7 +201,7 @@ class Camera:
             session.pyg.update_gui()
             self.width  = int(session.pyg.screen_width / self.zoom)
             self.height = int(session.pyg.screen_height / self.zoom)
-            session.pyg.display = pygame.Surface((self.width, self.height))
+            session.pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self._recalculate_bounds()
         
         elif not custom and not self.fixed:
@@ -209,7 +209,7 @@ class Camera:
             session.pyg.update_gui()
             self.width  = int(session.pyg.screen_width / self.zoom)
             self.height = int(session.pyg.screen_height / self.zoom)
-            session.pyg.display = pygame.Surface((self.width, self.height))
+            session.pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self._recalculate_bounds()
 
     def zoom_out(self, factor=0.1, custom=None):
@@ -224,7 +224,7 @@ class Camera:
                 session.pyg.update_gui()
                 self.width = int(session.pyg.screen_width / self.zoom)
                 self.height = int(session.pyg.screen_height / self.zoom)
-                session.pyg.display = pygame.Surface((self.width, self.height))
+                session.pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
                 self._recalculate_bounds()
 
     def _recalculate_bounds(self):
