@@ -24,6 +24,12 @@ class Environments:
     def __init__(self, player_obj):
         """ Holds environments for user. All environments in a given area (ex. dungeons) are grouped
             under an Area object.
+
+            Example
+            -------
+            player_obj.envs = Environments(player_obj)
+            player_obj.envs.add_area('area name')
+            player_obj.envs.areas['area name'].add_level('environment name')
         """
 
         # Owner
@@ -37,19 +43,19 @@ class Environments:
         # Environment container
         self.areas = {}
 
-    def add_area(self, name):
-        self.areas[name] = Area(name, self)
+    def add_area(self, name, permadeath=False):
+        self.areas[name] = Area(name, self, permadeath)
 
-    def build_env(self, name):
-        if name == 'womb':        return self.build_womb()
-        elif name == 'garden':    return self.build_garden()
-        elif name == 'home':      return self.build_home()
-        elif name == 'overworld': return self.build_overworld()
-        elif name == 'dungeon':   return self.build_dungeon()
-        elif name == 'cave':      return self.build_cave()
+    def build_env(self, name, area):
+        if name == 'womb':        return self.build_womb(area)
+        elif name == 'garden':    return self.build_garden(area)
+        elif name == 'home':      return self.build_home(area)
+        elif name == 'overworld': return self.build_overworld(area)
+        elif name == 'dungeon':   return self.build_dungeon(area)
+        elif name == 'cave':      return self.build_cave(area)
 
-    # Builders
-    def build_garden(self):
+    # Underworld
+    def build_garden(self, area):
         """ Generates the overworld environment. """
         
         from mechanics import place_objects
@@ -68,7 +74,8 @@ class Environments:
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
-            hidden     = False)
+            hidden     = False,
+            area       = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = True
         env.camera.zoom_in(custom=1)
@@ -122,7 +129,7 @@ class Environments:
         
         return env
 
-    def build_womb(self):
+    def build_womb(self, area):
         """ Generates the overworld environment. """
         
         from data_management import Camera
@@ -140,7 +147,8 @@ class Environments:
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
-            hidden     = True)
+            hidden     = True,
+            area       = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = True
         env.camera.zoom_in(custom=1)
@@ -188,7 +196,8 @@ class Environments:
         
         return env
 
-    def build_home(self):
+    # Overworld
+    def build_home(self, area):
         """ Generates player's home. """
 
         from items_entities import create_item, create_entity
@@ -207,7 +216,8 @@ class Environments:
             img_names  = ['walls', 'gray'],
             floors     = ['floors', 'green'],
             walls      = ['walls', 'gray'],
-            roofs      = ['roofs', 'tiled'])
+            roofs      = ['roofs', 'tiled'],
+            area       = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -303,7 +313,7 @@ class Environments:
         
         return env
 
-    def build_overworld(self):
+    def build_overworld(self, area):
         """ Generates the overworld environment. """
 
         from items_entities import create_item, create_NPC
@@ -328,7 +338,8 @@ class Environments:
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
-            hidden     = False)
+            hidden     = False,
+            area       = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -564,7 +575,122 @@ class Environments:
             
         return env
 
-    def build_dungeon(self, lvl_num=0):
+    def build_cave(self, area, lvl_num=0):
+        """ Generates a cave environment. """
+        
+        from items_entities import create_item
+        from mechanics import place_object, place_objects
+        from data_management import Camera
+
+        ###############################################################
+        # Initialize environment
+        if not lvl_num:
+            if not self.areas['cave'].levels: lvl_num = 1
+            else:                             lvl_num = 1 + self.areas['cave'][-1].lvl_num
+                
+        env = Environment(
+            envs       = self,
+            name       = 'cave',
+            lvl_num    = lvl_num,
+            size       = 1,
+            soundtrack = [f'dungeon {lvl_num}'],
+            img_names  = ['walls',  'dark red'],
+            floors     = ['floors', 'dirt1'],
+            walls      = ['walls',  'dark red'],
+            roofs      = None,
+            blocked    = True,
+            hidden     = True,
+            area       = area)
+        
+        # Set weather
+        env.weather_backup = {
+            'light_set': 16,
+            'clouds':    False}
+        env.weather = Weather(env, light_set=16)
+        
+        env.camera = Camera(self.player_obj.ent)
+        env.camera.fixed = False
+        env.camera.zoom_in(custom=1)
+
+        # Generate biomes
+        biomes = [['dungeon', ['walls', 'dark red']]]
+        voronoi_biomes(env, biomes)
+        
+        ###############################################################
+        # Construct rooms
+        num_rooms = random.randint(2, 10)
+        for i in range(num_rooms):
+            
+            # Construct room
+            width    = random.randint(self.room_min_size, self.room_max_size)
+            height   = random.randint(self.room_min_size, self.room_max_size)
+            x        = random.randint(0, len(env.map)    - width  - 1)
+            y        = random.randint(0, len(env.map[0]) - height - 1)
+            
+            new_room = Room(
+                name    = 'cave room',
+                env     = env,
+                x1      = x,
+                y1      = y,
+                width   = width,
+                height  = height,
+                biome   = 'cave',
+                hidden  = True,
+                objects = True,
+                floor   = env.floors,
+                walls   = env.walls,
+                roof    = env.roofs)
+        
+        # Combine rooms and add doors
+        env.combine_rooms()
+        
+        # Paths
+        for i in range(len(env.rooms)):
+            room_1, room_2 = env.rooms[i], env.rooms[i-1]
+            chance_1, chance_2 = 0, random.randint(0, 1)
+            if not chance_1:
+                (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
+                if not chance_2:
+                    try:
+                        env.create_h_tunnel(x_1, x_2, y_1)
+                        env.create_v_tunnel(y_1, y_2, x_2)
+                    except: raise Exception('Error')
+                else:
+                    env.create_v_tunnel(y_1, y_2, y_1, img_set=new_room.floor)
+                    env.create_h_tunnel(x_1, x_2, y_2, img_set=new_room.floor)
+        
+        ###############################################################
+        # Generate items and entities
+        items = [
+            ['dungeon', 'jug of cement',  100],
+            ['dungeon', 'shovel',         500],
+            ['dungeon', 'bones',          500],
+            ['dungeon', 'sword',          1000//env.lvl_num]]
+        
+        entities = [
+            ['dungeon', 'red radish',     1000, [None]],
+            ['dungeon', 'red',            300,  [None]],
+            ['dungeon', 'round3',         50,   [None]]]
+        
+        place_objects(env, items, entities)
+        
+        # Place player in first room
+        (x, y) = env.rooms[0].center()
+        env.player_coordinates = [x, y]
+        env.entity = self.player_obj.ent
+        env.center = new_room.center()
+        self.player_obj.ent.tile = env.map[x][y]
+        
+        # Generate stairs in the last room
+        (x, y) = env.rooms[-1].center()
+        stairs = create_item('cave')
+        stairs.img_names = ['floors', 'dirt2']
+        place_object(stairs, [x, y], env)
+
+        return env
+
+    # Dungeon
+    def build_dungeon(self, area, lvl_num=0):
         """ Generates the overworld environment. """
         
         from items_entities import create_item
@@ -588,7 +714,8 @@ class Environments:
             walls      = ['walls', 'gray'],
             roofs      = None,
             blocked    = True,
-            hidden     = True)
+            hidden     = True,
+            area       = area)
         
         # Set weather
         env.weather_backup = {
@@ -685,120 +812,8 @@ class Environments:
         
         return env
 
-    def build_cave(self, lvl_num=0):
-        """ Generates a cave environment. """
-        
-        from items_entities import create_item
-        from mechanics import place_object, place_objects
-        from data_management import Camera
-
-        ###############################################################
-        # Initialize environment
-        if not lvl_num:
-            if not self.areas['cave'].levels: lvl_num = 1
-            else:                             lvl_num = 1 + self.areas['cave'][-1].lvl_num
-                
-        env = Environment(
-            envs       = self,
-            name       = 'cave',
-            lvl_num    = lvl_num,
-            size       = 1,
-            soundtrack = [f'dungeon {lvl_num}'],
-            img_names  = ['walls',  'dark red'],
-            floors     = ['floors', 'dirt1'],
-            walls      = ['walls',  'dark red'],
-            roofs      = None,
-            blocked    = True,
-            hidden     = True)
-        
-        # Set weather
-        env.weather_backup = {
-            'light_set': 16,
-            'clouds':    False}
-        env.weather = Weather(env, light_set=16)
-        
-        env.camera = Camera(self.player_obj.ent)
-        env.camera.fixed = False
-        env.camera.zoom_in(custom=1)
-
-        # Generate biomes
-        biomes = [['dungeon', ['walls', 'dark red']]]
-        voronoi_biomes(env, biomes)
-        
-        ###############################################################
-        # Construct rooms
-        num_rooms = random.randint(2, 10)
-        for i in range(num_rooms):
-            
-            # Construct room
-            width    = random.randint(self.room_min_size, self.room_max_size)
-            height   = random.randint(self.room_min_size, self.room_max_size)
-            x        = random.randint(0, len(env.map)    - width  - 1)
-            y        = random.randint(0, len(env.map[0]) - height - 1)
-            
-            new_room = Room(
-                name    = 'cave room',
-                env     = env,
-                x1      = x,
-                y1      = y,
-                width   = width,
-                height  = height,
-                biome   = 'cave',
-                hidden  = True,
-                objects = True,
-                floor   = env.floors,
-                walls   = env.walls,
-                roof    = env.roofs)
-        
-        # Combine rooms and add doors
-        env.combine_rooms()
-        
-        # Paths
-        for i in range(len(env.rooms)):
-            room_1, room_2 = env.rooms[i], env.rooms[i-1]
-            chance_1, chance_2 = 0, random.randint(0, 1)
-            if not chance_1:
-                (x_1, y_1), (x_2, y_2) = room_1.center(), room_2.center()
-                if not chance_2:
-                    try:
-                        env.create_h_tunnel(x_1, x_2, y_1)
-                        env.create_v_tunnel(y_1, y_2, x_2)
-                    except: raise Exception('Error')
-                else:
-                    env.create_v_tunnel(y_1, y_2, y_1, img_set=new_room.floor)
-                    env.create_h_tunnel(x_1, x_2, y_2, img_set=new_room.floor)
-        
-        ###############################################################
-        # Generate items and entities
-        items = [
-            ['dungeon', 'jug of cement',  100],
-            ['dungeon', 'shovel',         500],
-            ['dungeon', 'bones',          500],
-            ['dungeon', 'sword',          1000//env.lvl_num]]
-        
-        entities = [
-            ['dungeon', 'red radish',     1000, [None]],
-            ['dungeon', 'red',            300,  [None]],
-            ['dungeon', 'round3',         50,   [None]]]
-        
-        place_objects(env, items, entities)
-        
-        # Place player in first room
-        (x, y) = env.rooms[0].center()
-        env.player_coordinates = [x, y]
-        env.entity = self.player_obj.ent
-        env.center = new_room.center()
-        self.player_obj.ent.tile = env.map[x][y]
-        
-        # Generate stairs in the last room
-        (x, y) = env.rooms[-1].center()
-        stairs = create_item('cave')
-        stairs.img_names = ['floors', 'dirt2']
-        place_object(stairs, [x, y], env)
-
-        return env
-
-    def build_hallucination(self, lvl_num=0):
+    # Hallucination
+    def build_hallucination(self, area, lvl_num=0):
         """ Generates the overworld environment. """
         
         from items_entities import create_item
@@ -822,7 +837,8 @@ class Environments:
             walls      = ['walls',  'gold'],
             roofs      = None,
             blocked    = True,
-            hidden     = True)
+            hidden     = True,
+            area       = area)
         
         # Set weather
         env.weather_backup = {
@@ -970,7 +986,8 @@ class Environments:
 
         return env
 
-    def build_bitworld(self):
+    # Bitworld
+    def build_bitworld(self, area):
         """ Generates the bitworld environment. """
 
         from items_entities import create_item, create_NPC
@@ -994,7 +1011,8 @@ class Environments:
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
-            hidden     = False)
+            hidden     = False,
+            area       = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -1166,15 +1184,36 @@ class Environments:
         return env
 
 class Area:
-    def __init__(self, name, envs):
-        """ Holds environments associated with the same area. """
+
+    # Core
+    def __init__(self, name, envs, permadeath):
+        """ Holds environments associated with the same area.
         
-        self.name   = name
-        self.envs   = envs
-        self.levels = {}
+            Parameters
+            ----------
+            name       : str; identifier for the set of environments
+            envs       : Environments object; parent
+            permadeath : bool; triggers awakening if False
+
+            levels     : dict; keys are names of Environment objects, which are the values
+            last_env   : Environment object; last occupied by player before switching areas
+
+            Example
+            -------
+            player_obj.envs.add_area('area name')
+            player_obj.envs.areas['area name'].add_level('environment name')
+            env = player_obj.envs.areas['area name']['environment name']
+        """
+        
+        self.name       = name
+        self.envs       = envs
+        self.permadeath = permadeath
+
+        self.levels     = {}
+        self.last_env   = None
 
     def add_level(self, name):
-        self.levels[name] = self.envs.build_env(name)
+        self.levels[name] = self.envs.build_env(name, self)
 
     def __getitem__(self, key):
         if isinstance(key, int):   return list(self.levels.values())[key]
@@ -1183,7 +1222,7 @@ class Area:
 class Environment:
     """ Generates and manages each world, such as each floor of the dungeon. """
     
-    def __init__(self, envs, name, size, soundtrack, lvl_num, walls, floors, roofs, blocked=True, hidden=True, img_names=['', '']):
+    def __init__(self, envs, name, size, soundtrack, lvl_num, walls, floors, roofs, blocked=True, hidden=True, img_names=['', ''], area=None):
         """ Environment parameters
             ----------------------
             envs        : Environments object; owner
@@ -1215,6 +1254,7 @@ class Environment:
 
         # Global mechanisms
         self.envs = envs
+        self.area = area
 
         # Identity
         self.name       = name

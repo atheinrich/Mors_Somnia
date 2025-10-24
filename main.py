@@ -159,15 +159,6 @@ def game_states():
     while pyg.running:
 
         #########################################################
-        # Prepare render queue
-        pyg.display.fill((0, 0, 0, 0))
-        pyg.fade.fill((0, 0, 0, 0))
-        pyg.overlays.fill((0, 0, 0, 0))
-        pyg.display_queue = []
-        pyg.overlay_queue = []
-        pyg.fade_queue    = []
-
-        #########################################################
         # Play game
         if pyg.game_state == 'startup':
             session.new_game_obj.run()
@@ -243,29 +234,35 @@ def game_states():
         for (surface, pos) in pyg.display_queue:
             pyg.display.blit(surface, pos)
         display = pygame.transform.scale(
-            pyg.display, 
-            (pyg.screen_width, pyg.screen_height))
+            pyg.display, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(display, (0, 0))
         
         ## Render overlays
         for (surface, pos) in pyg.overlay_queue:
             pyg.overlays.blit(surface, pos)
         overlays = pygame.transform.scale(
-            pyg.overlays, 
-            (pyg.screen_width, pyg.screen_height))
+            pyg.overlays, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(overlays, (0, 0))
 
         ## Render fade
         for (surface, pos) in pyg.fade_queue:
             pyg.fade.blit(surface, pos)
         fade = pygame.transform.scale(
-            pyg.fade, 
-            (pyg.screen_width, pyg.screen_height))
+            pyg.fade, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(fade, (0, 0))
 
+        ## Prepare for next frame
         pygame.display.flip()
         pyg.clock.tick(30)
         
+        pyg.display.fill((0, 0, 0, 0))
+        pyg.fade.fill((0, 0, 0, 0))
+        pyg.overlays.fill((0, 0, 0, 0))
+
+        pyg.display_queue = []
+        pyg.overlay_queue = []
+        pyg.fade_queue    = []
+
         #########################################################
         # Update API
         times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']

@@ -42,7 +42,6 @@ class MainMenu:
 
         ## Other
         self.choice = 0
-        self.fadein = True
         
         self.last_press_time = 0
         self.cooldown_time   = 0.5
@@ -61,7 +60,6 @@ class MainMenu:
         self.header_font    = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
         self.header_surface = self.header_font.render(self.header, True, pyg.gray)
         self.header_pos     = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
-        pyg.add_intertitle(surface=self.header_surface, loc=self.header_pos)
 
         ## Logo (2x2)
         self.logo_surfaces = []
@@ -157,9 +155,11 @@ class MainMenu:
                         pygame.quit()
                         sys.exit()
         
+            elif event.type == KEYUP:
+            
                 #########################################################
                 # Return to game
-                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                if event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
         
@@ -327,27 +327,30 @@ class FileMenu:
         
         for event in pygame.event.get():
             
+            #########################################################
+            # Choose a file
             if event.type == KEYDOWN:
                 
-                #########################################################
-                # Handle input
-                ## Select file
+                # Select file
                 if event.key in pyg.key_UP:     self.key_UP()
                 elif event.key in pyg.key_DOWN: self.key_DOWN()
                 
-                ## Activate and return
+                # Activate and return
                 elif event.key in pyg.key_ENTER:
                     if self.mode == 'save':   self.save_account()
                     elif self.mode == 'load': self.load_account()
 
                     pyg.overlay_state = 'menu'
                     return
-                
-                ## Return
-                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
-                        pyg.last_press_time = float(time.time())
-                        pyg.overlay_state = 'menu'
-                        return None
+            
+            #########################################################
+            # Return to main menu
+            elif event.type == KEYUP:
+
+                if event.key in pyg.key_BACK:
+                    pyg.last_press_time = float(time.time())
+                    pyg.overlay_state = 'menu'
+                    return
         
         pyg.overlay_state = self.mode
         return
@@ -406,13 +409,24 @@ class FileMenu:
         
         #########################################################
         # Clean up and return
+        if session.player_obj.ent.dead:
+            session.play_game_obj.death_checked = True
         session.player_obj.ent.env.camera.zoom_in(factor=0)
         pyg.gui_toggle               = True
         pyg.msg_toggle               = True
         pyg.startup_toggle           = False
-        session.play_game_obj.fadein = None
         pyg.game_state               = 'play_game'
-        pyg.overlay_state                  = 'main_menu'
+        pyg.overlay_state            = 'main_menu'
+
+    def check_player_id(self, id):
+        """ Overwrites a save if it matches the provided ID of a living save file. """
+
+        for choice in range(3):
+            with open(f"Data/File_{choice+1}/session.player_obj.pkl", "rb") as file:
+                player_obj = pickle.load(file)
+                if (player_obj.ent.player_id == id) and (not player_obj.ent.dead):
+                    self.choice = choice
+                    self.save_account()
 
     def render(self):
         
@@ -1654,12 +1668,21 @@ def screenshot(folder, filename, blur=False):
     # Turn off GUI
     gui_cache, msg_cache = pyg.gui_toggle, pyg.msg_toggle
     pyg.gui_toggle, pyg.msg_toggle = False, False
+
+    # Render display
     render_all()
+    session.img.render()
+    for (surface, pos) in pyg.display_queue:
+        pyg.display.blit(surface, pos)
+    display = pygame.transform.scale(
+        pyg.display, (pyg.screen_width, pyg.screen_height))
+    pyg.screen.blit(display, (0, 0))
+    pygame.display.flip()
     
     # Save image
     path = folder + '/' + filename
     pyg.gui_toggle, pyg.msg_toggle = False, False
-    pygame.image.save(pyg.screen, path)
+    pygame.image.save(pyg.display, path)
     
     # Add effects
     if blur:

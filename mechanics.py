@@ -71,16 +71,18 @@ class Pygame:
 
         #########################################################
         # Fade screen
-        self.fade       = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
-        self.fade_state = 'in'
-        self.fade_queue = []
-        self.fade_cache = []
-        self.fn_queue   = []
+        self.fade         = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.fade_surface = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.fade_state   = 'in'
+        self.fade_queue   = []
+        self.fade_cache   = []
+        self.fn_queue     = []
 
-        self.fade_speed = 5
-        self.max_alpha  = 255
-        self.min_alpha  = 0
-        self.fade_alpha = 255
+        self.fade_speed   = 5
+        self.fade_delay   = 0
+        self.max_alpha    = 255
+        self.min_alpha    = 0
+        self.fade_alpha   = 255
 
         #########################################################
         # Utility
@@ -339,23 +341,27 @@ class Pygame:
             sent to fade_queue until the fadeout is complete. Functions to be delayed are held in fn_queue
             and run in main after the fadein is complete.
 
-            Examples
-            --------
+            Example
+            -------
             pyg.add_intertitle("This is shown over a black screen.")
             pyg.fn_queue.append([function_in_background,  {}])
             pyg.fn_queue.append([function_with_arguments, {'parameter_name': value}])
+            pyg.fade_delay = 400
             pyg.fade_state = 'out'
         """
 
         # Update alpha
         if self.fade_state != 'off':
             self.pause = True
-            self.fade.fill((0, 0, 0))
+            self.fade_surface.fill((0, 0, 0))
             
             #########################################################
             # Fade in from black
             if self.fade_state == 'in':
-                self.fade_alpha -= self.fade_speed
+
+                # Change alpha
+                if self.fade_delay >= 0: self.fade_delay -= self.fade_speed
+                else:                    self.fade_alpha -= self.fade_speed
 
                 # End fade
                 if self.fade_alpha <= self.min_alpha:
@@ -368,7 +374,10 @@ class Pygame:
             #########################################################
             # Fade out to black
             elif self.fade_state == 'out':
-                self.fade_alpha += self.fade_speed
+
+                # Change alpha
+                if self.fade_delay >= 0: self.fade_delay -= self.fade_speed
+                else:                    self.fade_alpha += self.fade_speed
 
                 # End fade
                 if self.fade_alpha >= self.max_alpha:
@@ -389,18 +398,21 @@ class Pygame:
                     function(**kwargs)
                 self.fade_state = 'in'
 
-                # Hold text for at least 2 seconds, including run time
-                remaining_time = 2 - (time.time() - start_time)
+                # Hold text for at least 3 seconds, including run time
+                remaining_time = 4 - (time.time() - start_time)
                 if remaining_time > 0: time.sleep(remaining_time)
 
             #########################################################
             # Update surfaces
-            self.fade.set_alpha(self.fade_alpha)
+            self.fade_surface.set_alpha(self.fade_alpha)
+            self.fade_queue.append([self.fade_surface, (0, 0)])
+
+            #if self.fade_alpha >= self.max_alpha * 0.8:
             for (surface, loc) in self.fade_cache:
 
                 # Set flicker effect
-                flicker_low  = max(self.fade_alpha-50, self.min_alpha)
-                flicker_high = min(self.fade_alpha,    self.max_alpha-50)
+                flicker_low  = max(self.fade_alpha-100, self.min_alpha)
+                flicker_high = min(self.fade_alpha,     self.max_alpha-100)
 
                 surface.set_alpha(random.randint(flicker_low, flicker_high))
                 self.fade_queue.append([surface, loc])
@@ -476,10 +488,10 @@ class NewGameMenu:
         
         ## Return to garden at startup
         if not session.player_obj.ent:
-            self.temp          = self.init_player() # womb
-            session.player_obj = self.startup()     # womb and garden
+            self.temp          = self.init_player()
+            session.player_obj = self.startup()
             return
-        
+
         ## Set navigation speed
         session.mech.movement_speed(toggle=False, custom=2)
         
@@ -627,6 +639,7 @@ class NewGameMenu:
         player_obj.ent.questlog        = {}
         player_obj.ent.garden_questlog = {}
         player_obj.ent.discoveries     = player_obj.discoveries
+        player_obj.ent.player_id       = random.randint(100_000_000, 999_999_999)
         
         #########################################################
         # Set default items
@@ -638,7 +651,7 @@ class NewGameMenu:
         #########################################################
         # Initialize environments
         player_obj.envs = Environments(player_obj)
-        player_obj.envs.add_area('underworld')
+        player_obj.envs.add_area('underworld', permadeath=True)
         player_obj.envs.areas['underworld'].add_level('womb')
         player_obj.envs.areas['underworld'].add_level('garden')
         session.stats_obj.pet_startup(player_obj.envs.areas['underworld']['garden'])
@@ -730,21 +743,16 @@ class NewGameMenu:
         # Prepare fade screen
         text = "Your hands tremble as the ground shudders in tune... something is wrong."
         pyg.add_intertitle(text)
-        pyg.fn_queue.append([self.finalize_player, {}])
+        pyg.fn_queue.append([self.finalize_player,             {}])
         pyg.fn_queue.append([session.mech.enter_dungeon_queue, {'lvl_num': 4}])
         pyg.fade_state = 'out'
 
-        # Switch game state
-        self.refresh       = True
-        pyg.gui_toggle     = True
-        pyg.msg_toggle     = True
-        pyg.startup_toggle = False
-        pyg.game_state     = 'play_game'
-
     def finalize_player(self):
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
-            Only called after the character creation menu is accepted. """
+            Called in fade queue after the character creation menu is accepted. """
         
+        pyg = session.pyg
+
         #########################################################
         # Import
         from utilities import sort_inventory
@@ -762,7 +770,7 @@ class NewGameMenu:
         ent  = session.player_obj.ent
 
         ## Add additional environments
-        envs.add_area('overworld')
+        envs.add_area('overworld', permadeath=True)
         envs.areas['overworld'].add_level('home')
         envs.areas['overworld'].add_level('overworld')
 
@@ -788,31 +796,42 @@ class NewGameMenu:
         
         sort_inventory()
 
+        #########################################################
+        # Switch game state
+        self.temp          = self.init_player()
+        pyg.gui_toggle     = True
+        pyg.msg_toggle     = True
+        pyg.startup_toggle = False
+        pyg.game_state     = 'play_game'
+
 class PlayGame:
 
     def __init__(self):
 
-        #########################################################
-        # Utility
         self.last_press_time = 0
         self.cooldown_time   = 1
         self.gui_set         = 0
         self.death_cooldown  = 1
 
+        self.death_checked = False
+
     def run(self):
+        pyg = session.pyg
+        ent = session.player_obj.ent
 
         #########################################################
         # Initialize
         active_effects()
 
+        ## Reset from last death
+        if (not ent.dead) and self.death_checked:
+            self.death_checked = False
+
         ## Set navigation speed
         session.mech.movement_speed(toggle=False)
         
-        ## Define shorthand
-        pyg = session.pyg
-        
         ## Wait for input
-        if pyg.overlay_state is None:
+        if (not pyg.pause) and (pyg.overlay_state is None):
             
             #########################################################
             # Play game if alive
@@ -820,7 +839,7 @@ class PlayGame:
 
                 if event.type == KEYDOWN:
 
-                    if not session.player_obj.ent.dead:
+                    if not ent.dead:
                             
                         #########################################################
                         # Move player and adjust speed
@@ -868,21 +887,23 @@ class PlayGame:
                     
                 elif event.type == pygame.KEYUP:
 
-                    #########################################################
-                    # Open inventory
-                    if event.key in pyg.key_INV:
-                        pyg.overlay_state = 'inv'
-                        return
-                    
-                    #########################################################
-                    # Open catalog
-                    elif event.key in pyg.key_DEV:
-                        pyg.overlay_state = 'dev'
-                        return
+                    if not ent.dead:
+
+                        #########################################################
+                        # Open inventory
+                        if event.key in pyg.key_INV:
+                            pyg.overlay_state = 'inv'
+                            return
+                        
+                        #########################################################
+                        # Open catalog
+                        elif event.key in pyg.key_DEV:
+                            pyg.overlay_state = 'dev'
+                            return
 
                     #########################################################
                     # Open questlog
-                    elif event.key in pyg.key_QUEST:
+                    if event.key in pyg.key_QUEST:
                         session.questlog_obj.update_questlog()
                         pyg.overlay_state = 'questlog'
                         return
@@ -902,31 +923,28 @@ class PlayGame:
                 
             #########################################################
             # Handle player death
-            if session.player_obj.ent.dead:
-                
-                #########################################################
-                # Survive
-                permadeath_locs = ['garden', 'home', 'overworld', 'cave', 'womb']
-                if session.player_obj.ent.env.name not in permadeath_locs:
-                    self.revive_player()
+            if ent.dead:
+                self.handle_death()
 
         #########################################################
         # Move AI controlled entities
-        for entity in session.player_obj.ent.env.entities: entity.ai()
+        if not pyg.pause:
+            for entity in ent.env.entities: entity.ai()
         
-        session.pyg.game_state = 'play_game'
+        pyg.game_state = 'play_game'
+        return
 
     def key_UP(self):
-        session.player_obj.ent.move(0, -session.pyg.tile_height) # >>MOVE<<
+        session.player_obj.ent.move(0, -session.pyg.tile_height)
 
     def key_DOWN(self):
-        session.player_obj.ent.move(0, session.pyg.tile_height)  # >>MOVE<<
+        session.player_obj.ent.move(0, session.pyg.tile_height)
 
     def key_LEFT(self):
-        session.player_obj.ent.move(-session.pyg.tile_width, 0)  # >>MOVE<<
+        session.player_obj.ent.move(-session.pyg.tile_width, 0)
 
     def key_RIGHT(self):
-        session.player_obj.ent.move(session.pyg.tile_width, 0)   # >>MOVE<<
+        session.player_obj.ent.move(session.pyg.tile_width, 0)
 
     def key_ENTER(self):
 
@@ -1030,10 +1048,10 @@ class PlayGame:
             pyg.msg_toggle = False
 
     def key_PLUS(self):
-        session.player_obj.ent.env.camera.zoom_in()  # >>ZOOM<<
+        session.player_obj.ent.env.camera.zoom_in()
 
     def key_MINUS(self):
-        session.player_obj.ent.env.camera.zoom_out() # >>ZOOM<<
+        session.player_obj.ent.env.camera.zoom_out()
 
     def key_SPEED(self):
         
@@ -1051,50 +1069,61 @@ class PlayGame:
         pyg.msg_height = 4
         if not pyg.overlay_state: pyg.update_gui()
 
-    def revive_player(self):
+    def handle_death(self):
+        """ Overwrite save files for permadeath or revive the player. """
 
         pyg = session.pyg
+        ent = session.player_obj.ent
 
-        env        = session.player_obj.ent.env
-        last_env   = session.player_obj.ent.last_env
-        drug_locs  = ['hallucination', 'bitworld']
-        dream_locs = ['dungeon']
+        # End the game
+        if ent.env.area.permadeath:
+            if (not session.img.render_log) and (not self.death_checked):
+                session.file_menu.check_player_id(ent.player_id)
+                self.death_checked = True
+        
+        # Revive player
+        else:
+            drug_locs  = ['hallucination', 'bitworld']
+            dream_locs = ['dungeon']
 
-        # Wait for animations to finish
-        if not session.img.render_log:
-            if not self.death_cooldown:
-                
-                # Restore player state
-                session.player_obj.ent.dead = False
-                pyg.gui                     = {}
-                pyg.msg                     = []
-                pyg.msg_history             = {}
-                session.mech.movement_speed(toggle=False, custom=0)
-                self.death_cooldown = 5
-                
-                # Regain consciousness
-                if env.name in drug_locs:
-                    session.player_obj.ent.hp = session.player_obj.ent.max_hp // 2
-                    self.fadein = "Delirium passes, but nausea remains."
-                
-                # Wake up at home
-                elif env.name in dream_locs:
-                    session.player_obj.ent.hp = session.player_obj.ent.max_hp
-                    self.fadein = "Your cling to life has slipped, yet you wake unscarred in bed."
-                
-                else:
-                    session.player_obj.ent.hp = session.player_obj.ent.max_hp
-                    self.fadein = "???"
-                
-                pyg.overlay_state = None
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = last_env,
-                    loc = last_env.player_coordinates)
-                session.img.render_fx = None
-                pygame.event.clear()
+            # Regain consciousness
+            if ent.env.name in drug_locs:
+                text = "Delirium passes, but nausea remains."
             
-            else: self.death_cooldown -= 1
+            # Wake up at home
+            elif ent.env.name in dream_locs:
+                text = "Your cling to life has slipped, yet you wake unscarred in bed."
+            
+            else:
+                text = "???"
+
+            pyg.add_intertitle(text)
+            pyg.fn_queue.append([self.revive_player,  {}])
+            pyg.fade_delay = 500
+            pyg.fade_state = 'out'
+
+            ent.dead = False
+
+    def revive_player(self):
+        pyg = session.pyg
+        ent = session.player_obj.ent
+
+        last_env = session.player_obj.envs.areas['overworld'].last_env
+
+        # Restore player state
+        ent.hp          = ent.max_hp
+        pyg.gui         = {}
+        pyg.msg         = []
+        pyg.msg_history = {}
+        session.mech.movement_speed(toggle=False, custom=0)
+        
+        pyg.overlay_state = None
+        place_player(
+            ent = ent,
+            env = last_env,
+            loc = last_env.player_coordinates)
+        session.img.render_fx = None
+        pygame.event.clear()
 
 class PlayGarden:
 
@@ -2311,7 +2340,6 @@ class Mechanics:
 
         pyg.add_intertitle(text)
         pyg.fn_queue.append([session.mech.enter_dungeon_queue, {'lvl_num': lvl_num}])
-             
         pyg.fade_state = 'out'
 
     def enter_dungeon_queue(self, lvl_num):
@@ -2493,7 +2521,6 @@ class Mechanics:
                 
                 pyg.overlay_state = None
                 envs.build_bitworld()
-                session.play_game_obj.fadein = text
 
             ## Enter
             if ent.env.name != 'bitworld':
@@ -3067,6 +3094,7 @@ def place_player(ent, env, loc):
     
     pyg = session.pyg
 
+    # Imports
     from utilities import check_tile
 
     if not ent.dead:
@@ -3077,12 +3105,13 @@ def place_player(ent, env, loc):
         
         # Remove from current location
         if ent.env:
-            if ent.env.name != env.name:
-                ent.last_env = ent.env
             ent.env.player_coordinates = [ent.X//32, ent.Y//32]
             ent.env.entities.remove(ent)
             ent.tile.entity = None
-            ent.tile = None
+            ent.tile        = None
+            
+            ent.last_env          = ent.env
+            ent.env.area.last_env = ent.env
 
         # Set current environment and tile
         ent.env  = env
