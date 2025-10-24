@@ -1919,7 +1919,7 @@ class Weather:
         self.env = env
 
         # Dark blue background
-        self.overlay = pygame.Surface((pyg.screen_width * 10, pyg.screen_height * 10), pygame.SRCALPHA)
+        self.sky = pygame.Surface((pyg.screen_width * 10, pyg.screen_height * 10), pygame.SRCALPHA)
         
         self.last_hour = time.localtime().tm_hour + 1
         self.last_min  = time.localtime().tm_min + 1
@@ -1955,7 +1955,7 @@ class Weather:
         
         # Set a constant brightness
         else:
-            self.overlay.set_alpha(self.light_set)
+            self.sky.set_alpha(self.light_set)
 
     def set_day_and_time(self, day=None, time=None, increment=False):
         
@@ -1976,7 +1976,7 @@ class Weather:
         elif self.env.env_time == 5: alpha = 85  # 🌓
         elif self.env.env_time == 6: alpha = 170 # 🌔
         elif self.env.env_time == 7: alpha = 255 # 🌕
-        self.overlay.set_alpha(alpha)
+        self.sky.set_alpha(alpha)
 
     def create_cloud(self):
         from mechanics import create_text_room
@@ -2095,9 +2095,9 @@ class Weather:
                         top    + (i+1) * 16,
                         width  - i * 32,
                         height - i * 32)
-                    self.overlay.fill((0, 0, 0, 255-alpha*i), transparent_rect)
+                    self.sky.fill((0, 0, 0, 255-alpha*i), transparent_rect)
             
-        return [self.overlay, (0, 0)]
+        return [self.sky, (0, 0)]
 
     def render(self):
         """ Creates a black overlay and cuts out regions for lighting.
@@ -2110,7 +2110,7 @@ class Weather:
         if self.cloudy: data.extend(self.update_clouds())
 
         # Check for lights
-        self.overlay.fill((0, 0, 0))
+        self.sky.fill((0, 0, 0))
         data.append(self.update_lamps())
 
         for image, (X, Y) in data: session.pyg.display_queue.append([image, (X, Y)])

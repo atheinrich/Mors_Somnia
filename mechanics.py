@@ -23,8 +23,13 @@ import session
 class Pygame:
 
     def __init__(self):
-        """ Manages pygame parameters, GUI details, and display transitions.
-            Nothing here is saved elsewhere.
+        """ Manages pygame parameters, GUI details, and display transitions. Nothing here is saved elsewhere.
+            
+            There are four main surfaces that render in order.
+                1) Display: Tiles, entities, items, etc.
+                2) Overlay: Menus, inventories, questlogs, etc.
+                3) Fade:    Black screen, narrative, logos, etc.
+                5) Screen:  Final output of all prior surfaces.
         """
 
         #########################################################
@@ -34,34 +39,56 @@ class Pygame:
         self.set_graphics()
         
         #########################################################
-        # Utility
-        self.startup_toggle  = True
-        self.cooldown_time   = 0.2
-        self.last_press_time = 0
-        
-        #########################################################
         # Start pygame
         pygame.init()
         pygame.key.set_repeat(250, 150)
-        pygame.display.set_caption("Mors Somnia") # Sets game title
+        pygame.display.set_caption("Mors Somnia")
 
+        #########################################################
+        # Pygame screen
         self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
-        self.display  = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
-        self.fade     = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
-        self.overlays = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        self.windowed = False
+        self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True)
+        self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True)
+        self.clock    = pygame.time.Clock()
 
+        #########################################################
+        # Display screen
+        self.display       = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        self.game_state    = 'startup'
         self.display_queue = []
+
+        #########################################################
+        # Overlay screen
+        self.overlays      = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.overlay_state = 'menu'
         self.overlay_queue = []
 
-        self.frame    = False
-        self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True) # pygame.font.Font('Data/font.ttf', 24)
-        self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True) # pygame.font.Font('Data/font.ttf', 24)
-        self.clock    = pygame.time.Clock()
-        self.gui      = {
+        self.gui           = {
             'health':   self.font.render('', True, self.red),
             'stamina':  self.font.render('', True, self.green),
             'location': self.font.render('', True, self.gray)}
 
+        #########################################################
+        # Fade screen
+        self.fade       = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.fade_state = 'in'
+        self.fade_queue = []
+        self.fade_cache = []
+        self.fn_queue   = []
+
+        self.fade_speed = 5
+        self.max_alpha  = 255
+        self.min_alpha  = 0
+        self.fade_alpha = 255
+
+        #########################################################
+        # Utility
+        self.pause = False
+        self.startup_toggle  = True
+        self.cooldown_time   = 0.2
+        self.last_press_time = 0
+        
     def set_controls(self, controls='numpad 1'):
         
         #########################################################
@@ -223,96 +250,6 @@ class Pygame:
 
         return lines
 
-    def fadeout_screen(self, text, fade_in=False, duration=2, loc=None, retain=False, alpha_start=None, alpha_end=None):
-        """ Fades screen and displays text.
-        
-            Parameters
-            ----------
-            text        : str or pygame surface; text to be displayed
-            fade_in     : bool; fades into black if False; fades out of black if True
-            duration    : int; number of seconds for transition
-            loc         : tuple of ints; custom location
-            retain      : bool; prevents text from fading if True
-            alpha_start : None or int; initial alpha value
-            alpha_end   : None or int; final alpha value
-        """
-        
-        pyg = session.pyg
-
-        #########################################################
-        # Imports
-        from utilities import render_all
-
-        #########################################################
-        # Set fade details
-        ## End black or start black
-        if not fade_in:
-            if alpha_start is None: alpha, change = 0, 10
-            else:                   alpha, change = alpha_start, 10
-        else:
-            if alpha_start is None: alpha, change = 255*2, -10
-            else:                   alpha, change = alpha_start, -10
-
-            session.player_obj.ent.env.weather.run()
-            session.player_obj.ent.env.weather.render()
-
-        ## Fade color and speed
-        screen = pyg.screen
-        fade_surface = pygame.Surface(screen.get_size())
-        fade_surface.fill((0, 0, 0))
-        
-        #########################################################
-        # Select text object and set color and position
-        if type(text) == str: text_surface = self.font.render(text, True, (255, 255, 255))
-        else:                 text_surface = text
-        if not loc: loc = text_surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-
-        #########################################################
-        # Increase alpha channel over time
-        clock          = pygame.time.Clock()
-        gui_cache      = pyg.gui_toggle
-        msg_cache      = pyg.msg_toggle
-        pyg.gui_toggle = False
-        pyg.msg_toggle = False
-        running        = True
-        while running:
-            
-            #########################################################
-            # Set fade level
-            if alpha_end is not None:
-                if (not fade_in) and (alpha >= alpha_end):     alpha = alpha_end
-                elif (fade_in) and (alpha <= alpha_end):       alpha = alpha_end
-                else:                                          alpha += change
-            else:                                              alpha += change
-            if (alpha > 255*duration) or (alpha == alpha_end): running = False
-            elif alpha < 0:                                    running = False
-            
-            fade_surface.set_alpha(alpha)
-            pyg.screen.blit(pygame.transform.scale(pyg.display, (pyg.screen_width, pyg.screen_height)), (0, 0))
-            screen.blit(fade_surface, (0, 0))
-            if session.img.render_fx: render_all()
-            
-            #########################################################
-            # Show text
-            if alpha >= int(255*duration/2):
-                if not retain: val = alpha - 255
-                else:          val = 255
-                if val > 255:  val = 255
-
-                # Apply flicker effect
-                text_surface.set_alpha(random.randint(val-50, val))
-                self.screen.blit(text_surface, loc)
-            
-            elif retain:
-                text_surface.set_alpha(random.randint(200, 255))
-                self.screen.blit(text_surface, loc)
-
-            pygame.display.update()
-            clock.tick(15)
-        
-        pyg.gui_toggle = gui_cache
-        pyg.msg_toggle = msg_cache
-
     def update_gui(self, new_msg=None, color=None, ent=None):
         """ Constructs (but does not render) messages in the top GUI and stats in the bottom GUI.
 
@@ -375,7 +312,7 @@ class Pygame:
         time = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'][ent.env.env_time-1]
         
         ## Construct dictionary for display
-        if pyg.overlay:
+        if pyg.overlay_state:
             if self.msg: self.msg = [self.msg[-1]]
             
             # Wallet text
@@ -392,6 +329,93 @@ class Pygame:
             'time':     self.minifont.render(time,    True, bottom_color),
             'stamina':  self.minifont.render(stamina, True, self.green),
             'location': self.minifont.render(env,     True, bottom_color)}
+
+    # Fade screen
+    def update_fade(self):
+        """ Update the fade's alpha each frame and queues the intertitle with effects.
+            Pauses the game while the fade is ongoing.
+            
+            A fadein/fadeout is triggered by setting fade_state. Intertitles are held in fade_cache and
+            sent to fade_queue until the fadeout is complete. Functions to be delayed are held in fn_queue
+            and run in main after the fadein is complete.
+
+            Examples
+            --------
+            pyg.add_intertitle("This is shown over a black screen.")
+            pyg.fn_queue.append([function_in_background,  {}])
+            pyg.fn_queue.append([function_with_arguments, {'parameter_name': value}])
+            pyg.fade_state = 'out'
+        """
+
+        # Update alpha
+        if self.fade_state != 'off':
+            self.pause = True
+            self.fade.fill((0, 0, 0))
+            
+            #########################################################
+            # Fade in from black
+            if self.fade_state == 'in':
+                self.fade_alpha -= self.fade_speed
+
+                # End fade
+                if self.fade_alpha <= self.min_alpha:
+                    self.fade_alpha = self.min_alpha
+
+                    self.fade_cache = []
+                    self.pause      = False
+                    self.fade_state = 'off'
+            
+            #########################################################
+            # Fade out to black
+            elif self.fade_state == 'out':
+                self.fade_alpha += self.fade_speed
+
+                # End fade
+                if self.fade_alpha >= self.max_alpha:
+                    self.fade_alpha = self.max_alpha
+
+                    self.fade_state = 'on'
+
+            #########################################################
+            # Run functions while holding a black screen
+            elif self.fade_state == 'on':
+                
+                # Check current time
+                start_time = time.time()
+
+                # Process functions in queue
+                while self.fn_queue:
+                    function, kwargs = self.fn_queue.pop(0)
+                    function(**kwargs)
+                self.fade_state = 'in'
+
+                # Hold text for at least 2 seconds, including run time
+                remaining_time = 2 - (time.time() - start_time)
+                if remaining_time > 0: time.sleep(remaining_time)
+
+            #########################################################
+            # Update surfaces
+            self.fade.set_alpha(self.fade_alpha)
+            for (surface, loc) in self.fade_cache:
+
+                # Set flicker effect
+                flicker_low  = max(self.fade_alpha-50, self.min_alpha)
+                flicker_high = min(self.fade_alpha,    self.max_alpha-50)
+
+                surface.set_alpha(random.randint(flicker_low, flicker_high))
+                self.fade_queue.append([surface, loc])
+
+    def add_intertitle(self, text=None, surface=None, loc='centered'):
+        
+        if text: surface = self.font.render(text, True, self.white)
+        else:    surface = copy.copy(surface)
+
+        if loc == 'centered':
+            X = int((self.screen_width - surface.get_width())/2)
+            Y = int((self.screen_height - surface.get_height())/2)
+            loc = (X, Y)
+        
+        self.fade_cache.append([surface, loc])
 
 class NewGameMenu:
 
@@ -414,8 +438,6 @@ class NewGameMenu:
         self.orientations = ['front', 'right', 'back', 'left']
 
         ## Other
-        self.fadeout = False
-
         self.last_press_time = 0
         self.cooldown_time   = 0.7
 
@@ -442,9 +464,9 @@ class NewGameMenu:
         
             Player creation
             ---------------
-            init_player : womb and garden; stays in NewGameMenu
-            startup     : womb and garden; scrapped after start_game
-            start_game  : womb, garden, home, overworld, and dungeon; persistent
+            init_player     : womb and garden; stays in NewGameMenu
+            startup         : womb and garden; scrapped after finalize_player
+            finalize_player : womb, garden, home, overworld, and dungeon; persistent
         """
         
         #########################################################
@@ -482,7 +504,7 @@ class NewGameMenu:
                     #########################################################
                     # Accept and start game
                     elif self.choice == 6:
-                        self.start_game()
+                        self.fade_to_game()
                         return
                     
                     #########################################################
@@ -522,13 +544,6 @@ class NewGameMenu:
         ## Cursor
         pyg.overlay_queue.append([self.cursor_img, self.cursor_pos])
 
-        #########################################################
-        # Show startup dialogue
-        if self.fadeout:
-            self.fadeout = False
-            text = "Your hands tremble as the ground shudders in tune... something is wrong."
-            session.mech.enter_dungeon(text=text, lvl_num=4)
-
     # Keys
     def key_UP(self):
         self.cursor_pos[1]     -= 24
@@ -564,12 +579,11 @@ class NewGameMenu:
 
         # Reset press and turn off startup transition
         pyg.last_press_time = float(time.time())
-        self.fadeout        = False
 
         # Set return destination
         if env.name == 'garden': pyg.game_state = 'play_garden'
         else:                    pyg.game_state = 'play_game'
-        pyg.overlay = 'menu'
+        pyg.overlay_state = 'menu'
 
     # Tools
     def init_player(self):
@@ -643,8 +657,6 @@ class NewGameMenu:
             player object, separate from the temporary player used only in the New Game menu.
         """
 
-        pyg = session.pyg
-
         #########################################################
         # Make temporary player
         session.player_obj = self.init_player()
@@ -656,10 +668,8 @@ class NewGameMenu:
             loc = session.player_obj.envs.areas['underworld']['garden'].center)
         
         #########################################################
-        # Fade into the main menu
-        session.main_menu_obj.startup()
-        pyg.game_state = 'play_garden'
-        pyg.overlay    = 'menu'
+        # Fade into the main menu and garden
+        session.pyg.game_state = 'play_garden'
 
         return session.player_obj
 
@@ -713,13 +723,28 @@ class NewGameMenu:
         elif self.choice == 4:
             if self.temp.ent.handedness == 'left':      self.temp.ent.handedness = 'right'
             elif self.temp.ent.handedness == 'right':   self.temp.ent.handedness = 'left'
-        
-    def start_game(self):
+
+    def fade_to_game(self):
+        pyg = session.pyg
+
+        # Prepare fade screen
+        text = "Your hands tremble as the ground shudders in tune... something is wrong."
+        pyg.add_intertitle(text)
+        pyg.fn_queue.append([self.finalize_player, {}])
+        pyg.fn_queue.append([session.mech.enter_dungeon_queue, {'lvl_num': 4}])
+        pyg.fade_state = 'out'
+
+        # Switch game state
+        self.refresh       = True
+        pyg.gui_toggle     = True
+        pyg.msg_toggle     = True
+        pyg.startup_toggle = False
+        pyg.game_state     = 'play_game'
+
+    def finalize_player(self):
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
             Only called after the character creation menu is accepted. """
         
-        pyg = session.pyg
-
         #########################################################
         # Import
         from utilities import sort_inventory
@@ -762,15 +787,6 @@ class NewGameMenu:
             item.toggle_equip(ent=ent, silent=True)
         
         sort_inventory()
-        
-        #########################################################
-        # Begin game
-        self.fadeout       = True
-        self.refresh       = True
-        pyg.gui_toggle     = True
-        pyg.msg_toggle     = True
-        pyg.startup_toggle = False
-        pyg.game_state     = 'play_game'
 
 class PlayGame:
 
@@ -796,7 +812,7 @@ class PlayGame:
         pyg = session.pyg
         
         ## Wait for input
-        if pyg.overlay is None:
+        if pyg.overlay_state is None:
             
             #########################################################
             # Play game if alive
@@ -829,13 +845,13 @@ class PlayGame:
                         #########################################################
                         # Enter combo sequence
                         elif event.key in pyg.key_HOLD:
-                            pyg.overlay = 'hold'
+                            pyg.overlay_state = 'hold'
                             return
                 
                         #########################################################
                         # View stats
                         elif event.key in pyg.key_INFO:
-                            pyg.overlay = 'ent_stats'
+                            pyg.overlay_state = 'ent_stats'
                             return
             
                     #########################################################
@@ -855,20 +871,20 @@ class PlayGame:
                     #########################################################
                     # Open inventory
                     if event.key in pyg.key_INV:
-                        pyg.overlay = 'inv'
+                        pyg.overlay_state = 'inv'
                         return
                     
                     #########################################################
                     # Open catalog
                     elif event.key in pyg.key_DEV:
-                        pyg.overlay = 'dev'
+                        pyg.overlay_state = 'dev'
                         return
 
                     #########################################################
                     # Open questlog
                     elif event.key in pyg.key_QUEST:
                         session.questlog_obj.update_questlog()
-                        pyg.overlay = 'questlog'
+                        pyg.overlay_state = 'questlog'
                         return
                     
                     #########################################################
@@ -876,7 +892,7 @@ class PlayGame:
                     elif event.key in pyg.key_BACK:
                         if time.time()-pyg.last_press_time > pyg.cooldown_time:
                             pyg.last_press_time = float(time.time())
-                            pyg.overlay = 'menu'
+                            pyg.overlay_state = 'menu'
                             return
 
                 # Quit
@@ -1030,22 +1046,10 @@ class PlayGame:
             session.mech.movement_speed()
 
     def render(self):
-        
         pyg = session.pyg
 
-        #########################################################
-        # Render typical game display
         pyg.msg_height = 4
-        if not pyg.overlay: pyg.update_gui()
-        
-        #########################################################
-        # Fade when entering new area
-        if self.fadein:
-            pyg.fadeout_screen(
-                text     = self.fadein,
-                fade_in  = True,
-                duration = 3)
-            self.fadein = False
+        if not pyg.overlay_state: pyg.update_gui()
 
     def revive_player(self):
 
@@ -1082,10 +1086,7 @@ class PlayGame:
                     session.player_obj.ent.hp = session.player_obj.ent.max_hp
                     self.fadein = "???"
                 
-                pyg.overlay = None
-                pyg.fadeout_screen(
-                    text     = self.fadein,
-                    duration = 3)
+                pyg.overlay_state = None
                 place_player(
                     ent = session.player_obj.ent,
                     env = last_env,
@@ -1108,8 +1109,8 @@ class PlayGarden:
         session.stats_obj.pet_update()
         
         ## Active AI when viewing the main menu
-        if pyg.overlay == 'menu': session.player_obj.ent.role = 'NPC'
-        else:                             session.player_obj.ent.role = 'player'
+        if pyg.overlay_state == 'menu': session.player_obj.ent.role = 'NPC'
+        else:                           session.player_obj.ent.role = 'player'
         
         ## Set camera (?)
         session.player_obj.envs.areas['underworld']['garden'].camera.zoom_in(custom=1)
@@ -1118,7 +1119,7 @@ class PlayGarden:
         session.mech.movement_speed(toggle=False, custom=2)
         
         ## Wait for input
-        if pyg.overlay is None:
+        if pyg.overlay_state is None:
             for event in pygame.event.get():
                 
                 #########################################################
@@ -1149,13 +1150,13 @@ class PlayGarden:
                         #########################################################
                         # Enter combo sequence
                         elif event.key in pyg.key_HOLD:
-                            pyg.overlay = 'hold'
+                            pyg.overlay_state = 'hold'
                             return
                 
                         #########################################################
                         # View stats
                         elif event.key in pyg.key_INFO:
-                            pyg.overlay = 'pet_stats'
+                            pyg.overlay_state = 'pet_stats'
                             return
             
 
@@ -1164,20 +1165,20 @@ class PlayGarden:
                     #########################################################
                     # Open inventory
                     if event.key in pyg.key_INV:
-                        pyg.overlay = 'inv'
+                        pyg.overlay_state = 'inv'
                         return
                     
                     #########################################################
                     # Open catalog
                     elif event.key in pyg.key_DEV:
-                        pyg.overlay = 'dev'
+                        pyg.overlay_state = 'dev'
                         return
 
                     #########################################################
                     # Open questlog
                     elif event.key in pyg.key_QUEST:
                         session.questlog_obj.update_questlog()
-                        pyg.overlay = 'gardenlog'
+                        pyg.overlay_state = 'gardenlog'
                         return
                     
 
@@ -1186,7 +1187,7 @@ class PlayGarden:
                     elif event.key in pyg.key_BACK:
                         if time.time()-pyg.last_press_time > pyg.cooldown_time:
                             pyg.last_press_time = float(time.time())
-                            pyg.overlay = 'menu'
+                            pyg.overlay_state = 'menu'
                             return
                         
                 # Quit
@@ -1896,7 +1897,7 @@ class Entity:
                     if ent.trade_times:
                         if session.player_obj.ent.env.env_time in ent.trade_times:
                             session.trade_obj.ent = ent
-                            pyg.overlay = 'trade'
+                            pyg.overlay_state = 'trade'
                 
                 # Play speech and update quests
                 if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
@@ -2305,17 +2306,20 @@ class Mechanics:
             ['Default', (250, 200)]]
 
     # Environments
-    def enter_dungeon(self, text='', lvl_num=0):
+    def enter_dungeon(self, text, lvl_num=0):
+        pyg = session.pyg
+
+        pyg.add_intertitle(text)
+        pyg.fn_queue.append([session.mech.enter_dungeon_queue, {'lvl_num': lvl_num}])
+             
+        pyg.fade_state = 'out'
+
+    def enter_dungeon_queue(self, lvl_num):
         """ Advances player to the next level. """
         
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
             pygame.event.clear()
-            
-            # Fade in
-            if text:
-                session.pyg.fadeout_screen(text)
-                session.play_game_obj.fadein = text
             
             #########################################################
             # Create and/or enter
@@ -2365,6 +2369,13 @@ class Mechanics:
                 loc = session.player_obj.envs.areas['overworld']['overworld'].center)
 
     def enter_cave(self):
+        pyg = session.pyg
+
+        pyg.add_intertitle("The ground breaks beneath you and reveals a cave.")
+        pyg.fn_queue.append([self.enter_cave_queue,  {}])
+        pyg.fade_state = 'out'
+
+    def enter_cave_queue(self):
         """ Advances player to the next level. """
         
         if time.time()-self.last_press_time > self.cooldown_time:
@@ -2408,11 +2419,16 @@ class Mechanics:
                     env = envs.areas['cave'][-1],
                     loc = envs.areas['cave'][-1].center)
 
-    def enter_hallucination(self, text=None):
+    def enter_hallucination(self):
+        pyg = session.pyg
+
+        pyg.add_intertitle(". . . ! Your vision blurs as the substance seeps through your veins.")
+        pyg.fn_queue.append([self.enter_hallucination_queue,  {}])
+        pyg.fade_state = 'out'
+
+    def enter_hallucination_queue(self):
         """ Advances player to the next level. """
         
-        if text == None: text='. . . ! Your vision blurs as the substance seeps through your veins.'
-
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
             pygame.event.clear()
@@ -2428,11 +2444,8 @@ class Mechanics:
             if 'hallucination' not in envs.areas.keys():
                 envs.add_area('hallucination')
                 envs.areas['hallucination'].add_level('hallucination')
-                
-                pyg.fadeout_screen(text)
-                pyg.overlay = None
+                pyg.overlay_state = None
                 envs.build_hallucination_level()
-                session.play_game_obj.fadein = text
 
             ## Enter the first hallucination
             if ent.env.name != 'hallucination':
@@ -2478,8 +2491,7 @@ class Mechanics:
                 envs.add_area('bitworld')
                 envs['bitworld'].add_level['overworld']
                 
-                pyg.fadeout_screen(text)
-                pyg.overlay = None
+                pyg.overlay_state = None
                 envs.build_bitworld()
                 session.play_game_obj.fadein = text
 

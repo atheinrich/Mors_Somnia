@@ -61,7 +61,8 @@ class MainMenu:
         self.header_font    = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
         self.header_surface = self.header_font.render(self.header, True, pyg.gray)
         self.header_pos     = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
-        
+        pyg.add_intertitle(surface=self.header_surface, loc=self.header_pos)
+
         ## Logo (2x2)
         self.logo_surfaces = []
         for i in range(len(img.big)):
@@ -128,26 +129,26 @@ class MainMenu:
                     # Enter new game menu
                     if self.choices[self.choice] == "NEW GAME":
                         pyg.game_state = 'new_game'
-                        pyg.overlay = None
+                        pyg.overlay_state = None
                         return
                     
                     #########################################################
                     # Enter load game menu
                     elif self.choices[self.choice] == "LOAD":
-                        pyg.overlay = 'load'
+                        pyg.overlay_state = 'load'
                         return
                     
                     #########################################################
                     # Enter save game menu
                     elif self.choices[self.choice] == "SAVE":
                         if not pyg.startup_toggle:
-                            pyg.overlay = 'save'
+                            pyg.overlay_state = 'save'
                             return
                     
                     #########################################################
                     # Enter controls menu
                     elif self.choices[self.choice] == "CONTROLS":
-                        pyg.overlay = 'ctrl_menu'
+                        pyg.overlay_state = 'ctrl_menu'
                         return
                     
                     #########################################################
@@ -162,7 +163,7 @@ class MainMenu:
                     self.key_BACK()
                     return
         
-        pyg.overlay = 'menu'
+        pyg.overlay_state = 'menu'
         return
 
     def render(self):
@@ -201,18 +202,6 @@ class MainMenu:
         cursor_pos = (self.cursor_pos[0], self.cursor_pos[1] + offset)
         pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
-        #########################################################
-        # Fade in from black
-        if self.fadein:
-            render_all()
-            self.fadein = False
-            pyg.fadeout_screen(
-                text      = self.header_surface,
-                fade_in   = True,
-                loc       = self.header_pos,
-                retain    = True,
-                alpha_end = 50)
-
     # Keys
     def key_UP(self):
         self.choice = (self.choice - 1) % len(self.choices)
@@ -223,26 +212,18 @@ class MainMenu:
     def key_INFO(self):
         pyg = session.pyg
 
-        if pyg.frame:
+        if pyg.windowed:
             pygame.display.set_mode((pyg.screen_width, pyg.screen_height), pygame.NOFRAME)
-            pyg.frame = False
+            pyg.windowed = False
         else:
             pygame.display.set_mode((pyg.screen_width, pyg.screen_height))
-            pyg.frame = True
+            pyg.windowed = True
 
     def key_BACK(self):
         pyg = session.pyg
 
         pyg.last_press_time = float(time.time())
-        pyg.overlay = None
-
-    # Tools
-    def startup(self):
-        session.pyg.fadeout_screen(
-            text        = self.header_surface,
-            duration    = 2,
-            loc         = self.header_pos,
-            alpha_start = 255)
+        pyg.overlay_state = None
 
     def update_choices(self):
         pyg = session.pyg
@@ -341,7 +322,7 @@ class FileMenu:
 
         #########################################################
         # Initialize
-        self.mode = pyg.overlay
+        self.mode = pyg.overlay_state
         session.mech.movement_speed(toggle=False, custom=2)
         
         for event in pygame.event.get():
@@ -359,16 +340,16 @@ class FileMenu:
                     if self.mode == 'save':   self.save_account()
                     elif self.mode == 'load': self.load_account()
 
-                    pyg.overlay = 'menu'
+                    pyg.overlay_state = 'menu'
                     return
                 
                 ## Return
                 elif time.time()-pyg.last_press_time > pyg.cooldown_time:
                         pyg.last_press_time = float(time.time())
-                        pyg.overlay = 'menu'
+                        pyg.overlay_state = 'menu'
                         return None
         
-        pyg.overlay = self.mode
+        pyg.overlay_state = self.mode
         return
 
     def key_UP(self):
@@ -403,7 +384,7 @@ class FileMenu:
         
         #########################################################
         # Clean up and return
-        session.pyg.overlay = 'main_menu'
+        session.pyg.overlay_state = 'main_menu'
 
     def load_account(self):    
         """ Loads a pickled Player object. """
@@ -431,7 +412,7 @@ class FileMenu:
         pyg.startup_toggle           = False
         session.play_game_obj.fadein = None
         pyg.game_state               = 'play_game'
-        pyg.overlay                  = 'main_menu'
+        pyg.overlay_state                  = 'main_menu'
 
     def render(self):
         
@@ -526,10 +507,10 @@ class CtrlMenu:
                 ## Return
                 elif time.time()-pyg.last_press_time > pyg.cooldown_time:
                     pyg.last_press_time = float(time.time())
-                    pyg.overlay = 'menu'
+                    pyg.overlay_state = 'menu'
                     return None
                 
-        pyg.overlay = self.name
+        pyg.overlay_state = self.name
         return
     
     def render(self):
@@ -613,8 +594,8 @@ class StatsMenu:
         session.mech.movement_speed(toggle=False, custom=2)
         
         ## Switch overlay
-        if self.overlay != pyg.overlay:
-            self.overlay = pyg.overlay
+        if self.overlay != pyg.overlay_state:
+            self.overlay = pyg.overlay_state
         self.update()
         
         ## Wait for input
@@ -625,14 +606,14 @@ class StatsMenu:
                 self.key_BACK()
                 return
                 
-        pyg.overlay = self.overlay
+        pyg.overlay_state = self.overlay
         return
 
     def key_BACK(self):
         pyg = session.pyg
 
         pyg.last_press_time = float(time.time())
-        pyg.overlay = None
+        pyg.overlay_state = None
 
     def update(self):
         
@@ -836,10 +817,10 @@ class Textbox:
             if event.type == KEYDOWN:
                 pyg.msg_toggle = self.msg_toggle
                 pyg.gui_toggle = self.gui_toggle
-                pyg.overlay    = None
+                pyg.overlay_state    = None
                 return
 
-        pyg.overlay = 'textbox'
+        pyg.overlay_state = 'textbox'
         return
 
     def render(self):
@@ -1769,7 +1750,7 @@ def render_all():
     
     #########################################################
     # Render GUI
-    if pyg.overlay != 'menu':
+    if pyg.overlay_state != 'menu':
         if bool(img.impact):
             for i in range(len(img.impact_images)):
                 pyg.overlay_queue.append([img.impact_images[i], img.impact_image_pos[i]])

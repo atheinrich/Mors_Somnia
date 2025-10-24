@@ -96,8 +96,8 @@ class QuestMenu:
         self.gui_toggle = pyg.gui_toggle
         
         ## Switch overlay
-        if self.overlay != pyg.overlay:
-            self.overlay = pyg.overlay
+        if self.overlay != pyg.overlay_state:
+            self.overlay = pyg.overlay_state
             self.choice  = 0
             self.update_questlog()
 
@@ -138,7 +138,7 @@ class QuestMenu:
                     self.key_BACK()
                     return
 
-        pyg.overlay = self.overlay
+        pyg.overlay_state = self.overlay
         return
 
     def render(self):
@@ -220,7 +220,7 @@ class QuestMenu:
 
         pyg.msg_toggle = self.msg_toggle
         pyg.gui_toggle = self.gui_toggle
-        pyg.overlay    = None
+        pyg.overlay_state    = None
 
     # Tools
     def init_questlog(self, env_name):
@@ -539,7 +539,7 @@ class Bloodkin:
                 header   = "mysterious note",
                 options  = note_text,
                 position = 'top left')
-            pyg.overlay = 'textbox'
+            pyg.overlay_state = 'textbox'
         
         # Initialize quest and characters
         if 'Learning a language' not in session.player_obj.ent.questlog.keys():

@@ -112,7 +112,6 @@ def init():
     # Core
     ## Pygame
     session.pyg              = Pygame()
-    session.pyg.overlay      = None
     
     ## Mechanics and audio
     session.mech             = Mechanics()
@@ -151,7 +150,6 @@ def init():
     #########################################################
     # Run game
     if API_toggle: API(state=None, details=None, init=True)
-    session.pyg.game_state = 'startup'
     game_states()
 
 def game_states():
@@ -167,6 +165,7 @@ def game_states():
         pyg.overlays.fill((0, 0, 0, 0))
         pyg.display_queue = []
         pyg.overlay_queue = []
+        pyg.fade_queue    = []
 
         #########################################################
         # Play game
@@ -184,8 +183,8 @@ def game_states():
             session.player_obj.ent.env.weather.render()
         
         #########################################################
-        # Big overlays
-        if pyg.overlay == 'menu':
+        # Add big overlay
+        if pyg.overlay_state == 'menu':
             session.main_menu_obj.run()
             session.main_menu_obj.render()
         
@@ -193,75 +192,82 @@ def game_states():
             session.new_game_obj.run()
             session.new_game_obj.render()
         
-        elif pyg.overlay in ['save', 'load']:
+        elif pyg.overlay_state in ['save', 'load']:
             session.file_menu.run()
             session.file_menu.render()
         
-        elif pyg.overlay == 'ctrl_menu':
+        elif pyg.overlay_state == 'ctrl_menu':
             session.ctrl_menu.run()
             session.ctrl_menu.render()
         
-        elif pyg.overlay in ['questlog', 'gardenlog']:
+        elif pyg.overlay_state in ['questlog', 'gardenlog']:
             session.questlog_obj.run()
             session.questlog_obj.render()
         
-        elif pyg.overlay == 'textbox':
+        elif pyg.overlay_state == 'textbox':
             session.textbox.run()
             session.textbox.render()
         
         #########################################################
-        # Side overlays
-        elif pyg.overlay == 'inv':
+        # Add side overlay
+        elif pyg.overlay_state == 'inv':
             session.inv.run()
             session.inv.render()
         
-        elif pyg.overlay == 'dev':
+        elif pyg.overlay_state == 'dev':
             session.dev.run()
             session.dev.render()
         
-        elif pyg.overlay == 'hold':
+        elif pyg.overlay_state == 'hold':
             session.hold_obj.run()
             session.hold_obj.render()
         
-        elif pyg.overlay == 'trade':
+        elif pyg.overlay_state == 'trade':
             session.trade_obj.run()
             session.trade_obj.render()
         
-        elif pyg.overlay in ['ent_stats', 'pet_stats']:
+        elif pyg.overlay_state in ['ent_stats', 'pet_stats']:
             session.stats_obj.run()
             session.stats_obj.render()
         
         #########################################################
-        # Finish up
-        ## Finish rendering
+        # Add fade
+        if pyg.fade_state != 'off':
+            pyg.update_fade()
+
+        #########################################################
+        # Render
+        ## Render display
         render_all()
         session.img.render()
-
-        ## Render display
         for (surface, pos) in pyg.display_queue:
             pyg.display.blit(surface, pos)
-
-        ## Render overlays
-        for (surface, pos) in pyg.overlay_queue:
-            pyg.overlays.blit(surface, pos)
-
         display = pygame.transform.scale(
             pyg.display, 
             (pyg.screen_width, pyg.screen_height))
-        fade = pygame.transform.scale(
-            pyg.fade, 
-            (pyg.screen_width, pyg.screen_height))
+        pyg.screen.blit(display, (0, 0))
+        
+        ## Render overlays
+        for (surface, pos) in pyg.overlay_queue:
+            pyg.overlays.blit(surface, pos)
         overlays = pygame.transform.scale(
             pyg.overlays, 
             (pyg.screen_width, pyg.screen_height))
-        
-        pyg.screen.blit(display,  (0, 0))
-        pyg.screen.blit(fade,     (0, 0))
         pyg.screen.blit(overlays, (0, 0))
+
+        ## Render fade
+        for (surface, pos) in pyg.fade_queue:
+            pyg.fade.blit(surface, pos)
+        fade = pygame.transform.scale(
+            pyg.fade, 
+            (pyg.screen_width, pyg.screen_height))
+        pyg.screen.blit(fade, (0, 0))
+
         pygame.display.flip()
         pyg.clock.tick(30)
         
-        ## Update API
+        #########################################################
+        # Update API
         times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']
         if API_toggle: API(
             state   = times[session.player_obj.ent.env.env_time-1],

@@ -109,7 +109,7 @@ class InventoryMenu:
             self.dic_indices[index][0] = self.offset
             self.dic_indices[index][1] = self.choice
         
-        pyg.overlay = 'inv'
+        pyg.overlay_state = 'inv'
         return
 
     def render(self):
@@ -239,7 +239,7 @@ class InventoryMenu:
         pyg = session.pyg
 
         pyg.last_press_time = float(time.time())
-        pyg.overlay         = None
+        pyg.overlay_state         = None
 
     def key_QUEST(self):
         if not self.detail: self.detail = True
@@ -265,7 +265,7 @@ class InventoryMenu:
         pygame.draw.polygon(self.cursor_border, session.pyg.white, cursor_points, cursor_width)
 
     def key_DEV(self):
-        session.pyg.overlay = 'dev'
+        session.pyg.overlay_state = 'dev'
         pygame.event.clear()
 
     def key_ENTER(self):
@@ -309,7 +309,7 @@ class InventoryMenu:
             self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
             self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
             self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        else: session.pyg.overlay = None
+        else: session.pyg.overlay_state = None
 
     def find_item(self, offset=None):
         
@@ -417,7 +417,7 @@ class CatalogMenu:
             self.dic_indices[index][0] = self.offset
             self.dic_indices[index][1] = self.choice
         
-        pyg.overlay = 'dev'
+        pyg.overlay_state = 'dev'
         return
 
     def render(self):
@@ -573,7 +573,7 @@ class CatalogMenu:
                 names = self.img_names.copy())
         
         self.img_x, self.img_y = None, None
-        pyg.overlay = None
+        pyg.overlay_state = None
 
     def key_DEV(self):
         self.last_press_time = float(time.time())
@@ -595,14 +595,14 @@ class CatalogMenu:
         pygame.draw.polygon(self.cursor_border, session.pyg.white, cursor_points, cursor_width)
 
     def key_INV(self):
-        session.pyg.overlay = 'inv'
+        session.pyg.overlay_state = 'inv'
         pygame.event.clear()
 
     def key_BACK(self):
         pyg = session.pyg
 
         pyg.last_press_time = float(time.time())
-        pyg.overlay         = None
+        pyg.overlay_state         = None
 
     # Tools
     def update_data(self):
@@ -716,7 +716,7 @@ class AbilitiesMenu:
             elif event.type == pygame.KEYUP:
                 if event.key in pyg.key_HOLD:
                     self.sequence_toggle = False
-                    pyg.overlay          = None
+                    pyg.overlay_state          = None
                     return
             
             #########################################################
@@ -731,7 +731,7 @@ class AbilitiesMenu:
                 self.check_sequence(sequence_string)
                 self.key_sequence = []
         
-        pyg.overlay = 'hold'
+        pyg.overlay_state = 'hold'
         return
 
     def update_data(self):
@@ -897,7 +897,7 @@ class ExchangeMenu:
                 if (event.key in pyg.key_BACK) or (event.key in pyg.key_HOLD):
                     if time.time()-pyg.last_press_time > pyg.cooldown_time:
                         pyg.last_press_time = float(time.time())
-                        pyg.overlay = None
+                        pyg.overlay_state = None
                         return
                 
                 ## >>SWITCH<<
@@ -957,7 +957,7 @@ class ExchangeMenu:
                                 self.cursor_pos_bnm[1] = 32*len(self.dic_bnm)
                                 self.choice_bnm = (len(self.dic_bnm) - self.offset_bnm - 1)%len(self.dic_bnm)
                         else:
-                            pyg.overlay = None
+                            pyg.overlay_state = None
                             return
                     
                     # Navigate player's inventory
@@ -973,7 +973,7 @@ class ExchangeMenu:
                                 self.cursor_pos[1] = 32*len(self.dic)
                                 self.choice = (len(self.dic) - self.offset - 1)%len(self.dic)
                         else:
-                            pyg.overlay = None
+                            pyg.overlay_state = None
                             return
                 
                 ## >>DETAILS<<
@@ -991,17 +991,17 @@ class ExchangeMenu:
                     self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][0] = self.offset_bnm
                     self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1] = self.choice_bnm
                 else:
-                    pyg.overlay = None
+                    pyg.overlay_state = None
                     return
             else:
                 if self.dic_indices:
                     self.dic_indices[self.dic_index%len(self.dic_indices)][0] = self.offset
                     self.dic_indices[self.dic_index%len(self.dic_indices)][1] = self.choice
                 else:
-                    pyg.overlay = None
+                    pyg.overlay_state = None
                     return
         
-        pyg.overlay = 'trade'
+        pyg.overlay_state = 'trade'
         return
 
     def update_data(self):
@@ -1043,7 +1043,7 @@ class ExchangeMenu:
             self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]%len(self.inv_dics)
             self.dic    = self.inv_dics[list(self.inv_dics.keys())[self.dic_index%len(self.inv_dics)]]
         else:
-            pyg.overlay = None
+            pyg.overlay_state = None
             return
         
         # Right selection restoration
@@ -1056,7 +1056,7 @@ class ExchangeMenu:
             self.choice_bnm = self.dic_indices_bnm[self.dic_index_bnm%len(self.dic_indices_bnm)][1]%len(self.inv_dics_bnm)
             self.dic_bnm    = self.inv_dics_bnm[list(self.inv_dics_bnm.keys())[self.dic_index_bnm%len(self.inv_dics_bnm)]]
         else:
-            pyg.overlay = None
+            pyg.overlay_state = None
             return
 
     def select(self):
