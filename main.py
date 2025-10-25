@@ -93,7 +93,7 @@ from pypresence import Presence
 import session
 from items_entities import Player
 from utilities import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
-from utilities import Images, Audio, render_all, render_hud
+from utilities import Images, Audio, render_display, render_hud
 from mechanics import Pygame, Mechanics
 from mechanics import NewGameMenu, PlayGame, PlayGarden
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
@@ -225,11 +225,18 @@ def game_states():
         # Add fade
         if pyg.fade_state != 'off':
             pyg.update_fade()
+        
+        #########################################################
+        # Rendering
+        rendering()
+        API_updating()
+
+def rendering():
+        pyg = session.pyg
 
         #########################################################
-        # Render
-        ## Render display
-        render_all()
+        # Render display
+        render_display()
         session.img.render()
         for (surface, pos) in pyg.display_queue:
             pyg.display.blit(surface, pos)
@@ -237,7 +244,8 @@ def game_states():
             pyg.display, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(display, (0, 0))
         
-        ## Render HUD
+        #########################################################
+        # Render HUD
         render_hud()
         for (surface, pos) in pyg.hud_queue:
             pyg.overlays.blit(surface, pos)
@@ -245,21 +253,24 @@ def game_states():
             pyg.hud, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(hud, (0, 0))
 
-        ## Render overlays
+        #########################################################
+        # Render overlays
         for (surface, pos) in pyg.overlay_queue:
             pyg.overlays.blit(surface, pos)
         overlays = pygame.transform.scale(
             pyg.overlays, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(overlays, (0, 0))
 
-        ## Render fade
+        #########################################################
+        # Render fade
         for (surface, pos) in pyg.fade_queue:
             pyg.fade.blit(surface, pos)
         fade = pygame.transform.scale(
             pyg.fade, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(fade, (0, 0))
 
-        ## Prepare for next frame
+        #########################################################
+        # Prepare for next frame
         pygame.display.flip()
         pyg.clock.tick(30)
         
@@ -273,12 +284,11 @@ def game_states():
         pyg.overlay_queue = []
         pyg.fade_queue    = []
 
-        #########################################################
-        # Update API
-        times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']
-        if API_toggle: API(
-            state   = times[session.player_obj.ent.env.env_time-1],
-            details = session.player_obj.ent.env.name.capitalize())
+def API_updating():
+    times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']
+    if API_toggle: API(
+        state   = times[session.player_obj.ent.env.env_time-1],
+        details = session.player_obj.ent.env.name.capitalize())
 
 ########################################################################################################################################################
 # Other
