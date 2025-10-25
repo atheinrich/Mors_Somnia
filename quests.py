@@ -55,6 +55,8 @@ class QuestMenu:
         self.choice          = 0
         self.background_size = (pyg.screen_width, pyg.screen_height)
         self.backdrop_size   = (32*18, 32*13)
+        self.gui_cache = False
+        self.msg_cache = False
 
         self.cooldown_time   = 1
         
@@ -86,15 +88,10 @@ class QuestMenu:
         pygame.draw.polygon(self.cursor_surface, pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
 
     def run(self):
-        
         pyg = session.pyg
 
         #########################################################
         # Initialize
-        ## Save GUI settings
-        self.msg_toggle = pyg.msg_toggle
-        self.gui_toggle = pyg.gui_toggle
-        
         ## Switch overlay
         if self.overlay != pyg.overlay_state:
             self.overlay = pyg.overlay_state
@@ -142,15 +139,8 @@ class QuestMenu:
         return
 
     def render(self):
-        
         pyg = session.pyg
 
-        #########################################################
-        # Clear GUI
-        pyg.msg_toggle = False
-        pyg.gui_toggle = False
-        pyg.update_gui()
-        
         #########################################################
         # Render surfaces
         ## Backdrop
@@ -218,9 +208,8 @@ class QuestMenu:
     def key_BACK(self):
         pyg = session.pyg
 
-        pyg.msg_toggle = self.msg_toggle
-        pyg.gui_toggle = self.gui_toggle
-        pyg.overlay_state    = None
+        pyg.hud_state     = 'on'
+        pyg.overlay_state = None
 
     # Tools
     def init_questlog(self, env_name):
@@ -540,6 +529,7 @@ class Bloodkin:
                 options  = note_text,
                 position = 'top left')
             pyg.overlay_state = 'textbox'
+            pyg.hud_state     = 'off'
         
         # Initialize quest and characters
         if 'Learning a language' not in session.player_obj.ent.questlog.keys():

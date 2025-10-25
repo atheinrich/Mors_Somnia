@@ -239,7 +239,7 @@ class InventoryMenu:
         pyg = session.pyg
 
         pyg.last_press_time = float(time.time())
-        pyg.overlay_state         = None
+        pyg.overlay_state   = None
 
     def key_QUEST(self):
         if not self.detail: self.detail = True

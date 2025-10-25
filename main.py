@@ -93,7 +93,7 @@ from pypresence import Presence
 import session
 from items_entities import Player
 from utilities import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
-from utilities import Images, Audio, render_all
+from utilities import Images, Audio, render_all, render_hud
 from mechanics import Pygame, Mechanics
 from mechanics import NewGameMenu, PlayGame, PlayGarden
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
@@ -179,7 +179,7 @@ def game_states():
             session.main_menu_obj.run()
             session.main_menu_obj.render()
         
-        elif pyg.game_state == 'new_game':
+        elif pyg.overlay_state == 'new_game':
             session.new_game_obj.run()
             session.new_game_obj.render()
         
@@ -237,6 +237,14 @@ def game_states():
             pyg.display, (pyg.screen_width, pyg.screen_height))
         pyg.screen.blit(display, (0, 0))
         
+        ## Render HUD
+        render_hud()
+        for (surface, pos) in pyg.hud_queue:
+            pyg.overlays.blit(surface, pos)
+        hud = pygame.transform.scale(
+            pyg.hud, (pyg.screen_width, pyg.screen_height))
+        pyg.screen.blit(hud, (0, 0))
+
         ## Render overlays
         for (surface, pos) in pyg.overlay_queue:
             pyg.overlays.blit(surface, pos)
@@ -256,10 +264,12 @@ def game_states():
         pyg.clock.tick(30)
         
         pyg.display.fill((0, 0, 0, 0))
-        pyg.fade.fill((0, 0, 0, 0))
+        pyg.hud.fill((0, 0, 0, 0))
         pyg.overlays.fill((0, 0, 0, 0))
+        pyg.fade.fill((0, 0, 0, 0))
 
         pyg.display_queue = []
+        pyg.hud_queue     = []
         pyg.overlay_queue = []
         pyg.fade_queue    = []
 

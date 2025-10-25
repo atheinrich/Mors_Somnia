@@ -45,6 +45,8 @@ class MainMenu:
         
         self.last_press_time = 0
         self.cooldown_time   = 0.5
+        self.gui_cache = False
+        self.msg_cache = False
 
         #########################################################
         # Surface initialization
@@ -126,8 +128,7 @@ class MainMenu:
                     #########################################################
                     # Enter new game menu
                     if self.choices[self.choice] == "NEW GAME":
-                        pyg.game_state = 'new_game'
-                        pyg.overlay_state = None
+                        pyg.overlay_state = 'new_game'
                         return
                     
                     #########################################################
@@ -167,8 +168,6 @@ class MainMenu:
         return
 
     def render(self):
-
-        ## Shorthand
         pyg = session.pyg
         
         #########################################################
@@ -223,6 +222,7 @@ class MainMenu:
         pyg = session.pyg
 
         pyg.last_press_time = float(time.time())
+        pyg.hud_state     = 'on'
         pyg.overlay_state = None
 
     def update_choices(self):
@@ -264,6 +264,7 @@ class MainMenu:
                     env = session.player_obj.ent.last_env,
                     loc = session.player_obj.ent.last_env.player_coordinates)
                 pyg.game_state = 'play_game'
+                pyg.hud_state  = 'on'
 
 class FileMenu:
 
@@ -297,6 +298,8 @@ class FileMenu:
 
         ## Other
         self.choice = 0
+        self.gui_cache = False
+        self.msg_cache = False
 
         #########################################################
         # Surface initialization
@@ -412,11 +415,11 @@ class FileMenu:
         if session.player_obj.ent.dead:
             session.play_game_obj.death_checked = True
         session.player_obj.ent.env.camera.zoom_in(factor=0)
-        pyg.gui_toggle               = True
-        pyg.msg_toggle               = True
-        pyg.startup_toggle           = False
-        pyg.game_state               = 'play_game'
-        pyg.overlay_state            = 'main_menu'
+        pyg.gui_toggle     = True
+        pyg.msg_toggle     = True
+        pyg.startup_toggle = False
+        pyg.game_state     = 'play_game'
+        pyg.overlay_state  = 'main_menu'
 
     def check_player_id(self, id):
         """ Overwrites a save if it matches the provided ID of a living save file. """
@@ -429,7 +432,6 @@ class FileMenu:
                     self.save_account()
 
     def render(self):
-        
         pyg = session.pyg
 
         # Render background
@@ -466,6 +468,8 @@ class CtrlMenu:
         
         ## Other
         self.choice = 0
+        self.gui_cache = False
+        self.msg_cache = False
 
         #########################################################
         # Surface initialization
@@ -513,16 +517,19 @@ class CtrlMenu:
             if event.type == KEYDOWN:
                 
                 #########################################################
-                # Handle input
-                ## Change layout
-                if event.key in pyg.key_LEFT:    self.update_controls(-1)
-                elif event.key in pyg.key_RIGHT: self.update_controls(1)
+                # Change layout
+                if event.key in pyg.key_LEFT:
+                    self.update_controls(-1)
+                elif event.key in pyg.key_RIGHT:
+                    self.update_controls(1)
                 
-                ## Return
-                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
-                    pyg.last_press_time = float(time.time())
+            elif event.type == KEYUP:
+
+                #########################################################
+                ## Return to main menu
+                if event.key in pyg.key_BACK:
                     pyg.overlay_state = 'menu'
-                    return None
+                    return
                 
         pyg.overlay_state = self.name
         return
@@ -791,6 +798,8 @@ class Textbox:
 
         ## Other
         self.backdrop_size = (32*18, 32*13)
+        self.gui_cache = False
+        self.msg_cache = False
         
         #########################################################
         # Surface initialization
@@ -821,17 +830,11 @@ class Textbox:
         pyg = session.pyg
 
         #########################################################
-        # Save GUI settings
-        self.msg_toggle = pyg.msg_toggle
-        self.gui_toggle = pyg.gui_toggle
-        
-        #########################################################
         # Close after any key is pressed
         for event in pygame.event.get():
             if event.type == KEYDOWN:
-                pyg.msg_toggle = self.msg_toggle
-                pyg.gui_toggle = self.gui_toggle
-                pyg.overlay_state    = None
+                pyg.hud_state     = 'on'
+                pyg.overlay_state = None
                 return
 
         pyg.overlay_state = 'textbox'
@@ -839,11 +842,6 @@ class Textbox:
 
     def render(self):
         pyg = session.pyg
-        
-        # Clear GUI
-        pyg.msg_toggle = False
-        pyg.gui_toggle = False
-        pyg.update_gui()
         
         # Render backdrop
         pyg.overlay_queue.append([self.background_fade, (0, 0)])
@@ -1665,10 +1663,6 @@ def screenshot(folder, filename, blur=False):
     
     pyg = session.pyg
 
-    # Turn off GUI
-    gui_cache, msg_cache = pyg.gui_toggle, pyg.msg_toggle
-    pyg.gui_toggle, pyg.msg_toggle = False, False
-
     # Render display
     render_all()
     session.img.render()
@@ -1681,7 +1675,6 @@ def screenshot(folder, filename, blur=False):
     
     # Save image
     path = folder + '/' + filename
-    pyg.gui_toggle, pyg.msg_toggle = False, False
     pygame.image.save(pyg.display, path)
     
     # Add effects
@@ -1689,11 +1682,6 @@ def screenshot(folder, filename, blur=False):
         image_before = Image.open(folder + '/' + filename)
         image_after  = image_before.filter(ImageFilter.BLUR)
         image_after.save(folder + '/' + filename)
-    
-    # Return GUI settings
-    pyg.gui_toggle = gui_cache
-    pyg.msg_toggle = msg_cache
-    render_all()
 
 def bw_binary():
     import numpy as np
@@ -1722,8 +1710,8 @@ def render_all():
     #########################################################
     # Initialize
     ## Select entity to focus on
-    if pyg.game_state == 'new_game': ent = session.new_game_obj.temp.ent
-    else:                            ent = session.player_obj.ent
+    if pyg.overlay_state == 'new_game': ent = session.new_game_obj.temp.ent
+    else:                               ent = session.player_obj.ent
 
     ## Shorthand
     camera = ent.env.camera
@@ -1767,27 +1755,27 @@ def render_all():
                         image, (X, Y) = tile.draw()
                         pyg.display_queue.append([image, (X, Y)])
     
-    #########################################################
-    # Apply effects
-    if img.render_fx == 'bw_binary': bw_binary()
+    session.aud.shuffle()
+
+def render_hud():
+    """ Draws tiles and stuff. Constantly runs. """
     
-    #########################################################
-    # Render GUI
-    if pyg.overlay_state != 'menu':
-        if bool(img.impact):
-            for i in range(len(img.impact_images)):
-                pyg.overlay_queue.append([img.impact_images[i], img.impact_image_pos[i]])
+    pyg = session.pyg
+
+    if pyg.hud_state == 'on':
         
-        # Print messages
+        #########################################################
+        # Messages
         if pyg.msg_toggle: 
             Y = 3
             
             # Find how many messages to write
             for message in pyg.msg:
-                pyg.overlay_queue.append([message, (5, Y)])
+                pyg.hud_queue.append([message, (5, Y)])
                 Y += 16
         
-        # Print status bars and time
+        #########################################################
+        # Status bars and time
         if pyg.gui_toggle:
             gui = list(pyg.gui.values())
             for i in range(len(pyg.gui)):
@@ -1804,8 +1792,6 @@ def render_all():
                 elif i == 4: x = pyg.screen_width - gui[i].get_width() - 16
                 
                 y = pyg.screen_height - 27
-                pyg.overlay_queue.append([gui[i], (x, y)])
-    
-    session.aud.shuffle()
+                pyg.hud_queue.append([gui[i], (x, y)])
 
 ########################################################################################################################################################

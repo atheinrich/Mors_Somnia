@@ -33,56 +33,24 @@ class Pygame:
         """
 
         #########################################################
-        # Set shorthand and pygame parameters
-        self.set_controls()
-        self.set_colors()
-        self.set_graphics()
-        
-        #########################################################
         # Start pygame
         pygame.init()
         pygame.key.set_repeat(250, 150)
         pygame.display.set_caption("Mors Somnia")
 
         #########################################################
-        # Pygame screen
-        self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
-        self.windowed = False
-        self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True)
-        self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True)
-        self.clock    = pygame.time.Clock()
-
+        # Shorthand and gameplay parameters
+        self.set_graphics()
+        self.set_controls('numpad 1')
+        self.set_colors()
+        
         #########################################################
-        # Display screen
-        self.display       = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
-        self.game_state    = 'startup'
-        self.display_queue = []
-
-        #########################################################
-        # Overlay screen
-        self.overlays      = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
-        self.overlay_state = 'menu'
-        self.overlay_queue = []
-
-        self.gui           = {
-            'health':   self.font.render('', True, self.red),
-            'stamina':  self.font.render('', True, self.green),
-            'location': self.font.render('', True, self.gray)}
-
-        #########################################################
-        # Fade screen
-        self.fade         = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
-        self.fade_surface = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
-        self.fade_state   = 'in'
-        self.fade_queue   = []
-        self.fade_cache   = []
-        self.fn_queue     = []
-
-        self.fade_speed   = 5
-        self.fade_delay   = 0
-        self.max_alpha    = 255
-        self.min_alpha    = 0
-        self.fade_alpha   = 255
+        # Screens
+        self.init_screen()
+        self.init_display()
+        self.init_hud()
+        self.init_overlay()
+        self.init_fade()
 
         #########################################################
         # Utility
@@ -90,8 +58,68 @@ class Pygame:
         self.startup_toggle  = True
         self.cooldown_time   = 0.2
         self.last_press_time = 0
+
+    # Screens
+    def init_screen(self):
+        """ Final window that everything is shown on. """
         
-    def set_controls(self, controls='numpad 1'):
+        self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
+        self.windowed = False
+        self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True)
+        self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True)
+        self.clock    = pygame.time.Clock()
+
+    def init_display(self):
+        """ World pieces, like environment tiles and entities. """
+        
+        self.display       = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        self.game_state    = 'startup'
+        self.display_queue = []
+
+    def init_hud(self):
+        """ Status bars, time, and messages/dialogue. """
+        
+        self.hud       = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.hud_state = 'off'
+        self.hud_queue = []
+        
+        self.msg = []  # list of font objects; messages to be rendered
+        self.gui = {
+            'health':   self.font.render('', True, self.red),
+            'stamina':  self.font.render('', True, self.green),
+            'location': self.font.render('', True, self.gray)}
+        
+        self.msg_toggle  = True  # bool; shows or hides messages
+        self.gui_toggle  = True  # bool; shows or hides GUI
+        self.msg_height  = 4     # number of lines shown
+        self.msg_width   = int(self.screen_width / 6)
+        self.msg_history = {}
+
+    def init_overlay(self):
+        """ Menus and action bars. """
+        
+        self.overlays      = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.overlay_state = 'menu'
+        self.overlay_queue = []
+
+    def init_fade(self):
+        """ Black surface of variable opacity, overlaid text, and background functions. """
+        
+        self.fade          = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.fade_surface  = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.fade_state    = 'in'
+        self.fade_queue    = []
+        self.fade_cache    = []
+        self.fn_queue      = []
+
+        self.fade_speed    = 5
+        self.fade_delay    = 0
+        self.max_alpha     = 255
+        self.min_alpha     = 0
+        self.fade_alpha    = 255
+
+    # Gameplay settings and shorthand
+    def set_controls(self, controls):
         
         #########################################################
         # Change control scheme
@@ -103,88 +131,88 @@ class Pygame:
         if controls == 'arrows':
             
             # Movement
-            self.key_UP       = ['↑', K_UP,    K_w]             # up
-            self.key_DOWN     = ['↓', K_DOWN,  K_s]             # down
-            self.key_LEFT     = ['←', K_LEFT,  K_a]             # left
-            self.key_RIGHT    = ['→', K_RIGHT, K_d]             # right
+            self.key_UP       = ['↑', K_UP,    K_w]
+            self.key_DOWN     = ['↓', K_DOWN,  K_s]
+            self.key_LEFT     = ['←', K_LEFT,  K_a]
+            self.key_RIGHT    = ['→', K_RIGHT, K_d]
             
             # Actions
-            self.key_BACK     = ['/', K_BACKSPACE, K_ESCAPE,  K_SLASH, K_KP_DIVIDE]  # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]       # show/hide gui
-            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]            # action 2
-            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
-            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
+            self.key_BACK     = ['/', K_BACKSPACE, K_ESCAPE,  K_SLASH, K_KP_DIVIDE]
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS]
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]
             self.key_HOLD     = ['0', K_0, K_KP0]
             
             # Menus
-            self.key_INV      = ['4', K_4, K_KP4]               # inventory
-            self.key_DEV      = ['6', K_6, K_KP6]               # catalog
-            self.key_INFO     = ['7', K_7, K_KP7]               # player information
-            self.key_SPEED    = ['8', K_8, K_KP8]               # movement speed
-            self.key_QUEST    = ['9', K_9, K_KP9]               # questlog
+            self.key_INV      = ['4', K_4, K_KP4]
+            self.key_DEV      = ['6', K_6, K_KP6]
+            self.key_INFO     = ['7', K_7, K_KP7]
+            self.key_SPEED    = ['8', K_8, K_KP8]
+            self.key_QUEST    = ['9', K_9, K_KP9]
             
             # Other
-            self.key_EQUIP    = ['2', K_2, K_KP2]               # inventory (equip)
-            self.key_DROP     = ['3', K_3, K_KP3]               # inventory (drop)
+            self.key_EQUIP    = ['2', K_2, K_KP2]
+            self.key_DROP     = ['3', K_3, K_KP3]
 
         ## Alternate 1
         elif controls == 'numpad 1':
             
             # Movement
-            self.key_UP       = ['5', K_5, K_KP5,  K_UP]          # up
-            self.key_DOWN     = ['2', K_2, K_KP2,  K_DOWN]        # down
-            self.key_LEFT     = ['1', K_1, K_KP1,  K_LEFT]        # left
-            self.key_RIGHT    = ['3', K_3, K_KP3,  K_RIGHT]       # right
+            self.key_UP       = ['5', K_5, K_KP5,  K_UP]
+            self.key_DOWN     = ['2', K_2, K_KP2,  K_DOWN]
+            self.key_LEFT     = ['1', K_1, K_KP1,  K_LEFT]
+            self.key_RIGHT    = ['3', K_3, K_KP3,  K_RIGHT]
 
             # Actions
-            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]         # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]       # show/hide gui
-            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]            # action 2
-            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
-            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
-            self.key_HOLD     = ['0', K_0, K_KP0]                       # attack sequences
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS]
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]
+            self.key_HOLD     = ['0', K_0, K_KP0]
             
             # Menus
-            self.key_INV      = ['4', K_4, K_KP4]                 # inventory
-            self.key_DEV      = ['6', K_6, K_KP6]                 # catalog
-            self.key_INFO     = ['7', K_7, K_KP7]                 # player information
-            self.key_SPEED    = ['8', K_8, K_KP8]                 # movement speed
-            self.key_QUEST    = ['9', K_9, K_KP9]                 # questlog
+            self.key_INV      = ['4', K_4, K_KP4]
+            self.key_DEV      = ['6', K_6, K_KP6]
+            self.key_INFO     = ['7', K_7, K_KP7]
+            self.key_SPEED    = ['8', K_8, K_KP8]
+            self.key_QUEST    = ['9', K_9, K_KP9]
             
             # Unused
-            self.key_EQUIP    = []                           # inventory (equip)
-            self.key_DROP     = []                           # inventory (drop)
+            self.key_EQUIP    = []
+            self.key_DROP     = []
 
         # Alternate 2
         elif controls == 'numpad 2':
             
             # Movement
-            self.key_UP       = ['8', K_8, K_KP8,  K_UP]          # up
-            self.key_DOWN     = ['5', K_5, K_KP5,  K_DOWN]        # down
-            self.key_LEFT     = ['4', K_4, K_KP4,  K_LEFT]        # left
-            self.key_RIGHT    = ['6', K_6, K_KP6,  K_RIGHT]       # right
+            self.key_UP       = ['8', K_8, K_KP8,  K_UP]
+            self.key_DOWN     = ['5', K_5, K_KP5,  K_DOWN]
+            self.key_LEFT     = ['4', K_4, K_KP4,  K_LEFT]
+            self.key_RIGHT    = ['6', K_6, K_KP6,  K_RIGHT]
 
             # Actions
-            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]         # exit/main menu
-            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]       # show/hide gui
-            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]          # action 1
-            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]            # action 2
-            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS] # zoom
-            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]          # zoom
-            self.key_HOLD     = ['0', K_0, K_KP0]                       # attack sequences
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS]
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]
+            self.key_HOLD     = ['0', K_0, K_KP0]
             
             # Menus
-            self.key_INV      = ['7', K_7, K_KP7]                 # inventory
-            self.key_DEV      = ['9', K_9, K_KP9]                 # catalog
-            self.key_INFO     = ['1', K_1, K_KP1]                 # player information
-            self.key_SPEED    = ['2', K_2, K_KP2]                 # movement speed
-            self.key_QUEST    = ['3', K_3, K_KP3]                 # questlog
+            self.key_INV      = ['7', K_7, K_KP7]
+            self.key_DEV      = ['9', K_9, K_KP9]
+            self.key_INFO     = ['1', K_1, K_KP1]
+            self.key_SPEED    = ['2', K_2, K_KP2]
+            self.key_QUEST    = ['3', K_3, K_KP3]
             
             # Unused
-            self.key_EQUIP    = []                           # inventory (equip)
-            self.key_DROP     = []                           # inventory (drop)
+            self.key_EQUIP    = []
+            self.key_DROP     = []
 
         # Categories
         self.key_movement = self.key_UP + self.key_DOWN + self.key_LEFT + self.key_RIGHT
@@ -219,23 +247,14 @@ class Pygame:
         self.tile_map_width    = int(self.map_width/self.tile_width)
         self.tile_map_height   = int(self.map_height/self.tile_height)
 
-        #########################################################
-        # Graphics overlays
-        self.msg_toggle        = True # Boolean; shows or hides messages
-        self.msg               = []   # list of font objects; messages to be rendered
-        self.gui_toggle        = True # Boolean; shows or hides GUI
-        self.gui               = None # font object; stats to be rendered
-        self.msg_width         = int(self.screen_width / 6)
-        self.msg_height        = 4    # number of lines shown
-        self.msg_history       = {}
-
+    # HUD tools
     def textwrap(self, text, width):
         """ Separates long chunks of text into consecutive lines. """
         
         #########################################################
         # Initialize
-        words = text.split()
-        lines = []
+        words        = text.split()
+        lines        = []
         current_line = []
 
         #########################################################
@@ -332,7 +351,7 @@ class Pygame:
             'stamina':  self.minifont.render(stamina, True, self.green),
             'location': self.minifont.render(env,     True, bottom_color)}
 
-    # Fade screen
+    # Fade tools
     def update_fade(self):
         """ Update the fade's alpha each frame and queues the intertitle with effects.
             Pauses the game while the fade is ongoing.
@@ -452,6 +471,8 @@ class NewGameMenu:
         ## Other
         self.last_press_time = 0
         self.cooldown_time   = 0.7
+        self.gui_cache = False
+        self.msg_cache = False
 
         #########################################################
         # Menu
@@ -481,11 +502,10 @@ class NewGameMenu:
             finalize_player : womb, garden, home, overworld, and dungeon; persistent
         """
         
+        pyg = session.pyg
+
         #########################################################
         # Initialize
-        ## Define shorthand
-        pyg = session.pyg
-        
         ## Return to garden at startup
         if not session.player_obj.ent:
             self.temp          = self.init_player()
@@ -497,6 +517,7 @@ class NewGameMenu:
         
         ## Wait for input
         for event in pygame.event.get():
+
             if event.type == KEYDOWN:
             
                 #########################################################
@@ -525,19 +546,21 @@ class NewGameMenu:
                         self.key_BACK()
                         return
         
+            elif event.type == KEYUP:
+
                 #########################################################
-                # Return to main menu
-                elif time.time()-pyg.last_press_time > pyg.cooldown_time:
+                ## Return to main menu
+                if event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
                 
-        pyg.game_state = 'new_game'
+        pyg.overlay_state = 'new_game'
         return
 
     def render(self):
         
         pyg = session.pyg
-
+        
         #########################################################
         # Render environment and character
         ## Rotate character
@@ -584,18 +607,7 @@ class NewGameMenu:
             self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
 
     def key_BACK(self):
-
-        # Define shorthand
-        pyg = session.pyg
-        env = session.player_obj.ent.env
-
-        # Reset press and turn off startup transition
-        pyg.last_press_time = float(time.time())
-
-        # Set return destination
-        if env.name == 'garden': pyg.game_state = 'play_garden'
-        else:                    pyg.game_state = 'play_game'
-        pyg.overlay_state = 'menu'
+        session.pyg.overlay_state = 'menu'
 
     # Tools
     def init_player(self):
@@ -799,10 +811,10 @@ class NewGameMenu:
         #########################################################
         # Switch game state
         self.temp          = self.init_player()
-        pyg.gui_toggle     = True
-        pyg.msg_toggle     = True
         pyg.startup_toggle = False
         pyg.game_state     = 'play_game'
+        pyg.hud_state      = 'on'
+        pyg.overlay_state  = None
 
 class PlayGame:
 
@@ -842,7 +854,7 @@ class PlayGame:
                     if not ent.dead:
                             
                         #########################################################
-                        # Move player and adjust speed
+                        # Move player
                         if event.key in pyg.key_UP:
                             self.key_UP()
                         elif event.key in pyg.key_DOWN:
@@ -851,8 +863,6 @@ class PlayGame:
                             self.key_LEFT()
                         elif event.key in pyg.key_RIGHT:
                             self.key_RIGHT()
-                        elif event.key in pyg.key_SPEED:
-                            self.key_SPEED()
 
                         #########################################################
                         # Activate objects below
@@ -866,32 +876,37 @@ class PlayGame:
                         elif event.key in pyg.key_HOLD:
                             pyg.overlay_state = 'hold'
                             return
-                
+            
+                        #########################################################
+                        # Zoom camera
+                        elif event.key in pyg.key_PLUS:
+                            self.key_PLUS()
+                        elif event.key in pyg.key_MINUS:
+                            self.key_MINUS()
+                        
+                elif event.type == pygame.KEYUP:
+
+                    if not ent.dead:
+                        
+                        #########################################################
+                        # Adjust speed
+                        if event.key in pyg.key_SPEED:
+                            self.key_SPEED()
+
                         #########################################################
                         # View stats
                         elif event.key in pyg.key_INFO:
                             pyg.overlay_state = 'ent_stats'
                             return
             
-                    #########################################################
-                    # Zoom camera
-                    if event.key in pyg.key_PLUS:
-                        self.key_PLUS()
-                    elif event.key in pyg.key_MINUS:
-                        self.key_MINUS()
-                    
-                    #########################################################
-                    # Toggle GUI
-                    elif event.key in pyg.key_GUI:
-                        self.key_GUI()
-                    
-                elif event.type == pygame.KEYUP:
-
-                    if not ent.dead:
-
+                        #########################################################
+                        # Toggle GUI
+                        elif event.key in pyg.key_GUI:
+                            self.key_GUI()
+                        
                         #########################################################
                         # Open inventory
-                        if event.key in pyg.key_INV:
+                        elif event.key in pyg.key_INV:
                             pyg.overlay_state = 'inv'
                             return
                         
@@ -906,14 +921,16 @@ class PlayGame:
                     if event.key in pyg.key_QUEST:
                         session.questlog_obj.update_questlog()
                         pyg.overlay_state = 'questlog'
+                        pyg.hud_state     = 'off'
                         return
                     
                     #########################################################
-                    # Close menu or open main menu
+                    # Open main menu
                     elif event.key in pyg.key_BACK:
                         if time.time()-pyg.last_press_time > pyg.cooldown_time:
                             pyg.last_press_time = float(time.time())
                             pyg.overlay_state = 'menu'
+                            pyg.hud_state     = 'off'
                             return
 
                 # Quit
@@ -1173,8 +1190,6 @@ class PlayGarden:
                         # Activate objects below
                         elif event.key in pyg.key_ENTER:
                             self.key_ENTER()
-                        elif event.key in pyg.key_PERIOD:
-                            self.key_PERIOD()
                         
                         #########################################################
                         # Enter combo sequence
@@ -1208,11 +1223,12 @@ class PlayGarden:
                     elif event.key in pyg.key_QUEST:
                         session.questlog_obj.update_questlog()
                         pyg.overlay_state = 'gardenlog'
+                        pyg.hud_state     = 'off'
                         return
                     
 
                     #########################################################
-                    # Close menu or open main menu
+                    # Open main menu
                     elif event.key in pyg.key_BACK:
                         if time.time()-pyg.last_press_time > pyg.cooldown_time:
                             pyg.last_press_time = float(time.time())
@@ -1250,28 +1266,6 @@ class PlayGarden:
         if session.player_obj.ent.tile.item:
             session.player_obj.ent.tile.item.pick_up()
 
-    def key_PERIOD(self):
-        
-        pyg = session.pyg
-
-        #########################################################
-        # Toggle messages
-        ## Hide messages
-        if pyg.msg_toggle:
-            pyg.msg_toggle = False
-        
-        else:
-
-            ## Hide messages and GUI
-            if pyg.gui_toggle:
-                pyg.gui_toggle = False
-                pyg.msg_toggle = False
-            
-            ## View messages and GUI
-            else:
-                pyg.gui_toggle = True
-                pyg.msg_toggle = True
-
     def key_SPEED(self):
         pyg = session.pyg
 
@@ -1282,10 +1276,7 @@ class PlayGarden:
             session.mech.movement_speed()
 
     def render(self):
-        pyg = session.pyg
-
-        pyg.msg_toggle = False
-        pyg.gui_toggle = False
+        pass
 
 ########################################################################################################################################################
 # Interactions
