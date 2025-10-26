@@ -1,86 +1,114 @@
 {
     "white": {
-        "slot": "skin"
+        "slot": "skin",
+        "height": 32
     },
     "black": {
-        "slot": "skin"
+        "slot": "skin",
+        "height": 32
     },
     "fat": {
-        "slot": "skin"
+        "slot": "skin",
+        "height": 32
     },
     "friend": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "eye": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "eyes": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "troll": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "triangle": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "purple": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "tentacles": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "round1": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "round2": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "grass": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "round3": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "lizard": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "red": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "rock": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "frog": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "red radish": {
-        "slot": null
+        "slot": null,
+        "height": 20
     },
     "orange radish": {
-        "slot": null
+        "slot": null,
+        "height": 20
     },
     "purple radish": {
-        "slot": null
+        "slot": null,
+        "height": 20
     },
     "star": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "plant": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "snake": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "buzz": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "egg": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "green blob": {
-        "slot": null
+        "slot": null,
+        "height": 32
     },
     "null": {
-        "slot": null
+        "slot": null,
+        "height": 32
     }
 }

@@ -5,22 +5,29 @@ weapon	dagger	weapon	dominant hand	[dagger; dropped]	101	TRUE	FALSE	FALSE	FALSE	
 weapon	sword	weapon	dominant hand	[sword; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	75	0	5	0	None
 weapon	blood_dagger	weapon	dominant hand	[blood dagger; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	500	0	10	0	None
 weapon	blood_sword	weapon	dominant hand	[blood sword; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	1000	0	15	0	None
-armor	green_clothes	armor	body	[green clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
-armor	orange_clothes	armor	body	[orange clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
-armor	exotic_clothes	armor	body	[exotic clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	20	1	0	1	None
-armor	yellow_dress	armor	body	[yellow dress; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
-armor	chain _dress	armor	body	[chain dress; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	20	0	0	2	None
+																	
+offhand	iron_shield	armor	non-dominant hand	[iron shield; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	50	0	0	10	None
+offhand	lamp	armor	non-dominant hand	[lamp; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	100	0	0	0	None
+																	
+clothes	green_clothes	armor	body	[green clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
+clothes	orange_clothes	armor	body	[orange clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
+clothes	exotic_clothes	armor	body	[exotic clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	20	1	0	1	None
+clothes	yellow_dress	armor	body	[yellow dress; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
+clothes	chain _dress	armor	body	[chain dress; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	20	0	0	2	None
+																	
 armor	iron_armor	armor	body	[iron armor; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	100	0	0	10	None
-armor	lamp	armor	non-dominant hand	[lamp; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	100	0	0	0	None
-armor	bald	armor	head	[bald; front]	101	TRUE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
-armor	brown_hair	armor	head	[brown hair; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	blue_hair	armor	head	[blue hair; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	short_brown_hair	armor	head	[short brown hair; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	clean	armor	face	[clean; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	brown_beard	armor	face	[brown beard; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	blue_beard	armor	face	[blue beard; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	white_beard	armor	face	[white beard; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	flat	armor	chest	[flat; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	bra	armor	chest	[bra; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	glasses	armor	face	[glasses; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
-armor	iron_shield	armor	non-dominant hand	[iron shield; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	50	0	0	10	None
+																	
+decor	bald	armor	head	[bald; front]	101	TRUE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
+decor	brown_hair	armor	head	[brown hair; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+decor	blue_hair	armor	head	[blue hair; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+decor	short_brown_hair	armor	head	[short brown hair; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+																	
+decor	clean	armor	face	[clean; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+decor	brown_beard	armor	face	[brown beard; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+decor	blue_beard	armor	face	[blue beard; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+decor	white_beard	armor	face	[white beard; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+																	
+decor	glasses	armor	face	[glasses; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+																	
+decor	flat	armor	chest	[flat; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+decor	bra	armor	chest	[bra; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None

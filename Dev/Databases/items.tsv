@@ -13,6 +13,7 @@ decor	frond	frond	other	None	[decor; frond]	101	FALSE	FALSE	FALSE	FALSE	FALSE	0	
 decor	blades	blades	other	None	[decor; blades]	101	FALSE	FALSE	TRUE	FALSE	TRUE	10	10	0	0	0	0	None
 decor	purple bulbs	purple bulbs	other	None	[decor; purple bulbs]	101	FALSE	FALSE	TRUE	FALSE	TRUE	10	10	0	0	0	0	None
 decor	lights	lights	other	None	[decor; lights]	101	FALSE	FALSE	TRUE	FALSE	FALSE	5	5	0	0	0	0	None
+																		
 dialogue	dots	dots	other	None	[bubbles; dots bubble]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 dialogue	exclamation	exclamation	other	None	[bubbles; dots bubble]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 dialogue	dollar	dollar	other	None	[bubbles; dollar bubble]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
@@ -21,6 +22,7 @@ dialogue	question	question	other	None	[bubbles; question bubble]	101	FALSE	FALSE
 dialogue	skull	skull	other	None	[bubbles; skull bubble]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 dialogue	heart	heart	other	None	[bubbles; heart bubble]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 dialogue	water	water	other	None	[bubbles; water bubble]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
+																		
 furniture	purple bed	purple bed	other	None	[furniture; purple bed]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 furniture	red bed	red bed	other	None	[furniture; red bed]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 furniture	shelf left	shelf left	other	None	[furniture; shelf left]	101	FALSE	FALSE	TRUE	TRUE	FALSE	0	0	0	0	0	0	None
@@ -48,20 +50,24 @@ furniture	green rug middle right	green rug middle right	other	None	[furniture; g
 furniture	green rug top left	green rug top left	other	None	[furniture; green rug top left]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 furniture	green rug top middle	green rug top middle	other	None	[furniture; green rug top middle]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 furniture	green rug top right	green rug top right	other	None	[furniture; green rug top right]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
+																		
 drugs	needle	needle	drugs	None	[drugs; needle]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	25	0	0	0	None
 drugs	skin	skin	drugs	None	[drugs; skin]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	0	None
 drugs	teeth	teeth	drugs	None	[drugs; teeth]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	0	None
 drugs	bowl	bowl	drugs	None	[drugs; bowl]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	30	0	0	0	None
 drugs	plant	plant	drugs	None	[drugs; plant]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	0	None
 drugs	bubbles	bubbles	drugs	None	[drugs; bubbles]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	50	0	0	0	None
+																		
 potions	jug of blood	jug of blood	potions	None	[potions; red potion]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	0	None
 potions	jug of grapes	jug of grapes	potions	None	[potions; purple potion]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	0	None
 potions	jug of water	jug of water	potions	None	[potions; blue potion]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	0	None
 potions	jug of cement	jug of cement	potions	None	[potions; gray potion]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	0	None
+																		
 scrolls	scroll of lightning bolt	scroll of lightning bolt	scrolls	None	[scrolls; closed]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	20	0	0	0	None
 scrolls	scroll of fireball	scroll of fireball	scrolls	None	[scrolls; closed]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	20	0	0	0	None
 scrolls	scroll of confusion	scroll of confusion	scrolls	None	[scrolls; closed]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	20	0	0	0	None
 scrolls	scroll of death	scroll of death	scrolls	None	[scrolls; open]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	1000	0	0	0	None
+																		
 structures	door	door	other	None	[stairs; door]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 structures	portal	portal	other	None	[stairs; portal]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
 structures	cave	cave	other	None	[floors; sand2]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
@@ -77,13 +83,16 @@ structures	gray wall left	gray wall left	other	None	[concrete; gray wall left]	1
 structures	gray wall	gray wall	other	None	[concrete; gray wall]	101	FALSE	FALSE	TRUE	TRUE	FALSE	0	0	0	0	0	0	None
 structures	gray wall right	gray wall right	other	None	[concrete; gray wall right]	101	FALSE	FALSE	TRUE	TRUE	FALSE	0	0	0	0	0	0	None
 structures	gray floor	gray floor	other	None	[concrete; gray floor]	101	FALSE	FALSE	TRUE	FALSE	FALSE	0	0	0	0	0	0	None
+																		
 weapons	shovel	shovel	weapons	dominant hand	[shovel; dropped]	100	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	15	0	2	10	None
 weapons	super shovel	super shovel	weapons	dominant hand	[super shovel; dropped]	1000	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	100	0	None
 weapons	dagger	dagger	weapons	dominant hand	[dagger; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	25	0	2	0	None
 weapons	sword	sword	weapons	dominant hand	[sword; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	75	0	5	0	None
 weapons	blood dagger	blood dagger	weapons	dominant hand	[blood dagger; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	500	0	10	0	None
 weapons	blood sword	blood sword	weapons	dominant hand	[blood sword; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	1000	0	15	0	None
+																		
 effects	eye	eye	weapons	dominant hand	[blood dagger; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
+																		
 armor	green clothes	green clothes	armor	body	[green clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
 armor	orange clothes	orange clothes	armor	body	[orange clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	0	1	None
 armor	exotic clothes	exotic clothes	armor	body	[exotic clothes; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	20	1	0	1	None
@@ -103,4 +112,5 @@ armor	flat	flat	armor	chest	[flat; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0
 armor	bra	bra	armor	chest	[bra; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
 armor	glasses	glasses	armor	face	[glasses; dropped]	101	TRUE	FALSE	TRUE	FALSE	TRUE	0	0	0	0	0	0	None
 armor	iron shield	iron shield	armor	non-dominant hand	[iron shield; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	50	0	0	10	None
+																		
 big	logo	logo	decor		[top; left]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	0	0	0	10	None

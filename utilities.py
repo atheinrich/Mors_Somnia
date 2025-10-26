@@ -18,7 +18,7 @@ from   PIL import Image, ImageFilter, ImageOps
 
 ## Local
 import session
-from data_management import img_ents_dict, img_equipment_dict, img_other_dict
+from data_management import img_dicts, other_dicts, find_path
 
 ########################################################################################################################################################
 # Classes
@@ -854,111 +854,6 @@ class Textbox:
         for i in range(len(self.text_render)):
             pyg.overlay_queue.append([self.text_render[i], self.text_pos[i]])
 
-TILESET_PATHS = {
-    'entities':  'Data/.Images/tileset_ent.png',
-    'equipment': 'Data/.Images/tileset_equip.png',
-    'other':     'Data/.Images/tileset_other.png',
-    'other_alt': 'Data/.Images/tileset_other_alt.png',
-    'big':       'Data/.Images/decor_1_m_logo.png'
-}
-
-OTHER_META = {
-
-    'decor': [
-        'tree', 'bones', 'boxes',  'fire', 'leafy', 'skeleton', 'shrooms',
-        'red plant right', 'red plant left', 'cup shroom', 'frond',  'blades', 'purple bulbs',
-        'lights'
-    ],
-
-    'bubbles': [
-        'dots', 'exclamation', 'dollar', 'cart', 'question', 'skull', 'heart', 'water'
-    ],
-
-    'furniture': [
-        'purple bed', 'red bed', 'shelf left', 'shelf right', 'long table left', 'long table right',
-        'table', 'red chair left', 'red chair right',
-        'red rug bottom left',   'red rug bottom middle',   'red rug bottom right',
-        'red rug middle left',   'red rug middle middle',  'red rug middle right',
-        'red rug top left',      'red rug top middle',      'red rug top right',
-        'green rug bottom left', 'green rug bottom middle', 'green rug bottom right',
-        'green rug middle left', 'green rug middle middle', 'green rug middle right',
-        'green rug top left',    'green rug top middle',    'green rug top right'
-    ],
-
-    'drugs': [
-        'needle', 'skin', 'teeth', 'bowl', 'plant', 'bubbles'
-    ],
-
-    'potions': [
-        'red', 'blue', 'gray', 'purple'
-    ],
-
-    'scrolls': [
-        'closed', 'open'
-    ],
-
-    'stairs': [
-        'door', 'portal'
-    ],
-
-    'floors': [
-        'dark green', 'dark blue', 'dark red',  'green',  'red',    'blue',
-        'wood',       'water',     'sand1',     'sand2',  'grass1', 'grass2',
-        'bubbles1',   'bubbles2',  'bubbles3',  'dirt1',  'dirt2',
-        'grass3',     'grass4',    'gray tile', 'brown tile'
-    ],
-
-    'walls': [
-        'dark green', 'dark red', 'dark blue', 'gray', 'red', 'green', 'gold'
-    ],
-
-    'roofs': [
-        'tiled', 'slats'
-    ],
-
-    'paths': [
-        'left right', 'up down', 'down right', 'down left', 'up right', 'up left'
-    ],
-
-    'concrete': [
-        'gray window', 'gray door', 'gray wall left', 'gray wall', 'gray wall right', 'gray floor'
-    ],
-
-    'null': [
-        'null'
-    ]
-}
-
-BIOMES = {
-    
-    'any':     ['any', 'land', 'wet', 'sea', 'forest', 'desert', 'dungeon', 'water', 'city', 'cave'],
-    'wet':     ['any', 'wet', 'forest', 'water'],
-
-    'land':    ['any', 'land', 'forest', 'desert', 'dungeon', 'cave'],
-    'forest':  ['any', 'forest'],
-    'desert':  ['any', 'desert'],
-    'dungeon': ['any', 'dungeon', 'cave'],
-    'city':    ['any', 'city'],
-    'cave':    ['any', 'cave', 'dungeon'],
-    
-    'sea':     ['water'],
-    'water':   ['water']}
-
-SHORT_LIST = [
-    'red radish', 'orange radish', 'purple radish']
-
-def get_short_list():
-    return SHORT_LIST
-
-def get_tileset_path(category_key):
-    return TILESET_PATHS.get(category_key)
-
-def get_other_meta():
-    return OTHER_META['names'], OTHER_META['options']
-
-def get_biomes():
-    return BIOMES
-
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
 
@@ -983,10 +878,6 @@ class Images:
             equip_names  : list of strings; name for each equipment image
             other_names  : list of strings; name for each other image
             
-            ent_count    : int; number of entity images
-            equip_count  : int; number of equipment images
-            other_count  : int; number of other images
-            
             biomes       : dict; set of biome names and associated region_id list 
 
             Alternates
@@ -995,37 +886,28 @@ class Images:
 
         pyg = session.pyg
 
-        self.creation_options = {
-            'hair':  ['bald'],
-            'face':  ['clean'],
-            'chest': ['flat'],
-            'skin':  [],
-            'armor': []}
-        
         # Create entity dictionary
-        self.load_entities(flipped)
+        self.ent, self.ent_data, skin_options = self.load_entities(flipped)
+        self.skin_options  = skin_options
         
         # Create equipment dictionary
-        self.load_equipment(flipped)
+        self.equip, self.equip_names, equipment_options = self.load_equipment(flipped)
+        self.hair_options  = equipment_options['hair']
+        self.face_options  = equipment_options['face']
+        self.chest_options = equipment_options['chest']
+        self.armor_names   = equipment_options['armor']
         
         # Create other dictionary
-        self.load_other(flipped)
-        self.load_other(flipped, alt=True)
+        self.other,     self.other_names = self.load_other(flipped)
+        self.other_alt, _                = self.load_other(flipped, alt=True)
         
         # Create combined dictionary
         self.dict = self.ent | self.equip | self.other
         
+        self.big = self.big_img()
+
         # Assign tiles to biomes
-        self.biomes = get_biomes()
-        
-        # Gather images for character_creation
-        self.hair_options  = self.creation_options['hair']
-        self.face_options  = self.creation_options['face']
-        self.chest_options = self.creation_options['chest']
-        self.skin_options  = self.creation_options['skin']
-        self.armor_names   = self.creation_options['armor']
-        
-        self.big_img()
+        self.biomes = self.load_biomes()
 
         self.impact_image      = self.get_impact_image()
         self.impact_images     = []
@@ -1091,36 +973,40 @@ class Images:
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
         
         # Import tiles
-        path       = get_tileset_path('entities')
+        path       = find_path(f'Data/.Images/tileset_ent.png')
         ent_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
         entity_options = ['front', 'back', 'left', 'right']
 
         # Identify character creation options
-        self.ent_names = []
+        img_ents_dict = img_dicts['img_ents']
+        ent_data      = {}
+        skin_options  = []
+
         for key, dict in img_ents_dict.items():
-            if dict['slot'] is not None:
-                self.creation_options[dict['slot']].append(key)
-            self.ent_names.append(key)
+            if dict['slot'] != None:
+                skin_options.append(key)
+            ent_data[key] = {keys: dict[keys] for keys in dict.keys() if keys != 'slot'}
 
         # Create image dictionary
-        self.ent = {key: None for key in self.ent_names}
+        ent_images = {key: None for key in ent_data.keys()}
         index = 0
-        for entity_name in self.ent:
-            self.ent[entity_name] = {option: image for (option, image) in zip(entity_options, ent_matrix[index])}
+        for entity_name in ent_images:
+            ent_images[entity_name] = {option: image for (option, image) in zip(entity_options, ent_matrix[index])}
             if flipped:
-                cache = self.ent[entity_name]['right']
-                self.ent[entity_name]['right'] = self.ent[entity_name]['left']
-                self.ent[entity_name]['left'] = cache
+                cache = ent_images[entity_name]['right']
+                ent_images[entity_name]['right'] = ent_images[entity_name]['left']
+                ent_images[entity_name]['left'] = cache
             index += 1
-        self.ent_count = len(self.ent_names)
+
+        return ent_images, ent_data, skin_options
 
     def load_equipment(self, flipped):
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
 
         # Import tiles
-        path         = get_tileset_path('equipment')
+        path         = find_path(f'Data/.Images/tileset_equip.png')
         equip_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
@@ -1131,63 +1017,68 @@ class Images:
             'bald':  'null'}
 
         # Identify character creation options
-        self.equip_names = []
+        img_equipment_dict = img_dicts['img_equipment']
+        equip_names        = []
+        equipment_options  = {
+            'hair':  ['bald'],
+            'face':  ['clean'],
+            'chest': ['flat'],
+            'armor': []}
+
         for key, dict in img_equipment_dict.items():
             if dict['slot'] is not None:
-                self.creation_options[dict['slot']].append(key)
-            self.equip_names.append(key)
+                equipment_options[dict['slot']].append(key)
+            equip_names.append(key)
 
         # Create image dictionary
-        self.equip = {key: None for key in self.equip_names}
+        equip = {key: None for key in equip_names}
         index = 0
-        for _ in self.equip_names:
-            self.equip[self.equip_names[index]] = {option: image for (option, image) in zip(equip_options, equip_matrix[index])}
+        for _ in equip_names:
+            equip[equip_names[index]] = {option: image for (option, image) in zip(equip_options, equip_matrix[index])}
             if flipped:
-                cache = self.equip[self.equip_names[index]]['right']
-                self.equip[self.equip_names[index]]['right'] = self.equip[self.equip_names[index]]['left']
-                self.equip[self.equip_names[index]]['left'] = cache
+                cache = equip[equip_names[index]]['right']
+                equip[equip_names[index]]['right'] = equip[equip_names[index]]['left']
+                equip[equip_names[index]]['left'] = cache
             index += 1
-        self.equip_count = len(self.equip_names)
         
         for key, val in equip_aliases.items():
-            self.equip[key] = self.equip[val]
+            equip[key] = equip[val]
+
+        return equip, equip_names, equipment_options
         
     def load_other(self, flipped=False, alt=False):
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
         
         # Choose tileset
-        if alt:
-            path           = get_tileset_path('other_alt')
-            self.other_alt = {}
-            tile_dict      = self.other_alt
-        else:
-            path           = get_tileset_path('other')
-            self.other     = {}
-            tile_dict      = self.other
+        if alt: path = find_path(f'Data/.Images/tileset_other_alt.png')
+        else:   path = find_path(f'Data/.Images/tileset_other.png')
         
         # Import tiles
         other_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
 
         # Identify character creation options
-        for key, dict in img_other_dict.items():
-            if dict['group'] not in tile_dict.keys():
-                tile_dict[dict['group']] = []
-            tile_dict[dict['group']].append(key)
-        self.other_names = list(tile_dict.keys())
+        img_other_dict = img_dicts['img_other']
+        other = {}
 
-        decor_options     = tile_dict['decor']
-        bubbles_options   = tile_dict['bubbles']
-        furniture_options = tile_dict['furniture']
-        drugs_options     = tile_dict['drugs']
-        potions_options   = tile_dict['potions']
-        scrolls_options   = tile_dict['scrolls']
-        stairs_options    = tile_dict['stairs']
-        floors_options    = tile_dict['floors']
-        walls_options     = tile_dict['walls']
-        roofs_options     = tile_dict['roofs']
-        paths_options     = tile_dict['paths']
-        concrete_options  = tile_dict['concrete']
-        null_options      = tile_dict['null']
+        for key, dict in img_other_dict.items():
+            if dict['group'] not in other.keys():
+                other[dict['group']] = []
+            other[dict['group']].append(key)
+        other_names = list(other.keys())
+
+        decor_options     = other['decor']
+        bubbles_options   = other['bubbles']
+        furniture_options = other['furniture']
+        drugs_options     = other['drugs']
+        potions_options   = other['potions']
+        scrolls_options   = other['scrolls']
+        stairs_options    = other['stairs']
+        floors_options    = other['floors']
+        walls_options     = other['walls']
+        roofs_options     = other['roofs']
+        paths_options     = other['paths']
+        concrete_options  = other['concrete']
+        null_options      = other['null']
 
         other_options = [
             decor_options,  bubbles_options, furniture_options,
@@ -1198,16 +1089,29 @@ class Images:
         
         # Create image dictionary
         index = 0
-        for _ in self.other_names:
-            tile_dict[self.other_names[index]] = {option: image for (option, image) in zip(other_options[index], other_matrix[index])}
+        for _ in other_names:
+            other[other_names[index]] = {option: image for (option, image) in zip(other_options[index], other_matrix[index])}
             index += 1
-        self.other_count = sum([len(options_list) for options_list in other_options])
+
+        return other, other_names
 
     def big_img(self):
     
         # Import tiles
-        path     = get_tileset_path('big')
-        self.big = self.import_tiles(path, flipped=False, effects=['posterize'])
+        path = find_path(f'Data/.Images/decor_1_m_logo.png')
+        big  = self.import_tiles(path, flipped=False, effects=['posterize'])
+        return big
+
+    def load_biomes(self):
+        
+        biomes = {}
+        biomes_dict = other_dicts['biomes']
+
+        for key, dict in biomes_dict.items():
+            if dict['habitats'] is not None:
+                biomes[key] = dict['habitats']
+        
+        return biomes
 
     # Utility
     def average(self):
@@ -1385,9 +1289,7 @@ class Images:
         
         pyg = session.pyg
 
-        short_list = get_short_list()
-        if ent.name in short_list: shift = 12
-        else:                      shift = 0
+        shift = 32 - self.ent_data[ent.name]['height']
         
         self.impact = True
         

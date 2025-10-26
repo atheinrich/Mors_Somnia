@@ -1,0 +1,76 @@
+{
+    "any": {
+        "habitats": [
+            "any",
+            "land",
+            "wet",
+            "sea",
+            "forest",
+            "desert",
+            "dungeon",
+            "water",
+            "city",
+            "cave"
+        ]
+    },
+    "wet": {
+        "habitats": [
+            "any",
+            "wet",
+            "forest",
+            "water"
+        ]
+    },
+    "land": {
+        "habitats": [
+            "any",
+            "land",
+            "forest",
+            "desert",
+            "dungeon",
+            "cave"
+        ]
+    },
+    "forest": {
+        "habitats": [
+            "any",
+            "forest"
+        ]
+    },
+    "desert": {
+        "habitats": [
+            "any",
+            "desert"
+        ]
+    },
+    "dungeon": {
+        "habitats": [
+            "any",
+            "dungeon",
+            "cave"
+        ]
+    },
+    "city": {
+        "habitats": [
+            "any",
+            "city"
+        ]
+    },
+    "cave": {
+        "habitats": [
+            "any",
+            "cave",
+            "dungeon"
+        ]
+    },
+    "sea": {
+        "habitats": [
+            "water"
+        ]
+    },
+    "water": {
+        "habitats": [
+            "water"
+        ]
+    }
+}

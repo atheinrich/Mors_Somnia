@@ -1,24 +1,35 @@
 category	key	slot
 armor	iron armor	armor
+		
 clothes	green clothes	armor
+		
 offhand	iron shield	None
+		
 clothes	orange clothes	armor
 clothes	exotic clothes	armor
 clothes	yellow dress	armor
 clothes	chain dress	armor
-clothes	bra	chest
+		
+decor	bra	chest
+		
 offhand	lamp	None
-clothes	glasses	face
-hair	brown hair	hair
-hair	blue hair	hair
-hair	blue beard	face
-hair	brown beard	face
-hair	white beard	face
-hair	short brown hair	hair
+		
+decor	glasses	face
+		
+decor	brown hair	hair
+decor	blue hair	hair
+		
+decor	blue beard	face
+decor	brown beard	face
+decor	white beard	face
+		
+decor	short brown hair	hair
+		
 weapon	dagger	None
 weapon	blood dagger	None
 weapon	shovel	None
 weapon	super shovel	None
 weapon	sword	None
 weapon	blood sword	None
+		
 blank	null	None

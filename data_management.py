@@ -99,9 +99,10 @@ def load_tsv(path):
     
         Syntax
         ------
-        category : meta data, not used anywhere
-        key      : used to locate a given row in the output dictionary
-        lists    : () for integers and [] for strings with entries separated by semicolons
+        category    : meta data, not used anywhere
+        key         : used to locate a given row in the output dictionary
+        lists       : () for integers and [] for strings with entries separated by semicolons
+        blank lines : ignored
 
         Parameters
         ----------
@@ -145,10 +146,13 @@ def load_tsv(path):
         reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
             key = row['key']
-            
-            # Convert one row of data to a dictionary entry
-            entry = {col: parse_value(val) for col, val in row.items() if col not in ['category', 'key']}
-            items[key] = entry
+
+            # Skip blank lines
+            if key:
+                
+                # Convert one row of data to a dictionary entry
+                entry = {col: parse_value(val) for col, val in row.items() if col not in ['category', 'key']}
+                items[key] = entry
 
     return items
 
@@ -164,14 +168,14 @@ def save_json(data, filename):
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-def rebuild_databases():
+def rebuild_databases(filename_list):
     """ Converts convenient file types (ex. TSV) to efficient types (ex. JSON).
         Run this after changing the convenient files.
     """
 
-    for file in ['items', 'item_effects', 'ents', 'NPCs', 'img_ents', 'img_equipment', 'img_other']:
+    for file in filename_list:
 
-        print(f"Converting {file}...")
+        print(f"Converting {file}.tsv...")
         load_path = find_path(target=f'{file}.tsv', folder='Databases')
         load_data = load_tsv(load_path)
         save_path = os.path.join(find_path(target='.Databases'), f'{file}.json')
@@ -181,13 +185,17 @@ def rebuild_databases():
 
 ########################################################################################################################################################
 # Initializations
-#rebuild_databases()
-item_dict          = load_json(find_path('Data/.Databases/items.json'))
-ent_dict           = load_json(find_path('Data/.Databases/ents.json'))
-effect_dict        = load_json(find_path('Data/.Databases/item_effects.json'))
-NPC_dict           = load_json(find_path('Data/.Databases/NPCs.json'))
-img_ents_dict      = load_json(find_path('Data/.Databases/img_ents.json'))
-img_equipment_dict = load_json(find_path('Data/.Databases/img_equipment.json'))
-img_other_dict     = load_json(find_path('Data/.Databases/img_other.json'))
+## Group database files
+img_names   = ['img_ents', 'img_equipment', 'img_other']
+obj_names   = ['items', 'item_effects', 'ents', 'NPCs']
+other_names = ['biomes']
+
+## Build JSON files
+#rebuild_databases(['img_ents']) # img_names + obj_names + other_names
+
+## Load JSON files
+obj_dicts   = {name: load_json(find_path(f'Data/.Databases/{name}.json')) for name in obj_names}
+other_dicts = {name: load_json(find_path(f'Data/.Databases/{name}.json')) for name in other_names}
+img_dicts   = {name: load_json(find_path(f'Data/.Databases/{name}.json')) for name in img_names}
 
 ########################################################################################################################################################

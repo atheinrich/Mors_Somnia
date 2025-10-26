@@ -1,0 +1,13 @@
+category	key	habitats
+?	any	[any; land; wet; sea; forest; desert; dungeon; water; city; cave]
+?	wet	[any; wet; forest; water]
+		
+?	land	[any; land; forest; desert; dungeon; cave]
+?	forest	[any; forest]
+?	desert	[any; desert]
+?	dungeon	[any; dungeon; cave]
+?	city	[any; city]
+?	cave	[any; cave; dungeon]
+		
+?	sea	[water]
+?	water	[water]

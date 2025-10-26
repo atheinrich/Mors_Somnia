@@ -1,29 +1,33 @@
-category	key	slot
-human	white	skin
-human	black	skin
-human	fat	skin
-NPC	friend	None
-enemy	eye	None
-enemy	eyes	None
-enemy	troll	None
-enemy	triangle	None
-enemy	purple	None
-enemy	tentacles	None
-enemy	round1	None
-enemy	round2	None
-enemy	grass	None
-enemy	round3	None
-enemy	lizard	None
-enemy	red	None
-enemy	rock	None
-enemy	frog	None
-pet	red radish	None
-pet	orange radish	None
-pet	purple radish	None
-enemy	star	None
-enemy	plant	None
-enemy	snake	None
-enemy	buzz	None
-enemy	egg	None
-projectile	green blob	None
-bug fix	null	None
+category	key	slot	height
+human	white	skin	32
+human	black	skin	32
+human	fat	skin	32
+			
+NPC	friend	None	32
+			
+enemy	eye	None	32
+enemy	eyes	None	32
+enemy	troll	None	32
+enemy	triangle	None	32
+enemy	purple	None	32
+enemy	tentacles	None	32
+enemy	round1	None	32
+enemy	round2	None	32
+enemy	grass	None	32
+enemy	round3	None	32
+enemy	lizard	None	32
+enemy	red	None	32
+enemy	rock	None	32
+enemy	frog	None	32
+pet	red radish	None	20
+pet	orange radish	None	20
+pet	purple radish	None	20
+enemy	star	None	32
+enemy	plant	None	32
+enemy	snake	None	32
+enemy	buzz	None	32
+enemy	egg	None	32
+			
+projectile	green blob	None	32
+			
+bug fix	null	None	32

@@ -10,7 +10,7 @@ import random
 
 ## Local
 import session
-from data_management import item_dict, effect_dict, ent_dict, NPC_dict
+from data_management import obj_dicts
 
 ########################################################################################################################################################
 
@@ -110,7 +110,9 @@ def create_item(names, effect=False):
     from mechanics import Item
 
     # Look for item
-    item = None
+    item      = None
+    item_dict = obj_dicts['items']
+
     if type(names) in [tuple, list]:
         for val in item_dict.values():
             if val['img_names'] == names:
@@ -119,8 +121,11 @@ def create_item(names, effect=False):
     
     # Add effect
     if item:
+        effect_dict = obj_dicts['item_effects']
+
         if effect:
             item.effect = effect
+
         elif item.name in effect_dict:
             effect = effect_dict[item.name]
             item.effect = Effect(
@@ -131,6 +136,7 @@ def create_item(names, effect=False):
                 sequence      = effect['sequence'],
                 cooldown_time = effect['cooldown_time'],
                 other         = effect['other'])
+            
         else:
             item.effect = None
     
@@ -148,7 +154,9 @@ def create_entity(names):
     from mechanics import Entity
 
     # Look for entity
-    item = None
+    item     = None
+    ent_dict = obj_dicts['ents']
+
     if type(names) in [tuple, list]:
         for val in ent_dict.values():
             if val.img_names == names:
@@ -164,7 +172,9 @@ def create_NPC(name):
     """ A more specific version of create_entity. """
     
     # Look for entity
-    ent = None
+    ent      = None
+    NPC_dict = obj_dicts['NPCs']
+
     if name in NPC_dict.keys():
         NPC = NPC_dict[name]
 

@@ -542,7 +542,7 @@ class CatalogMenu:
                 session.player_obj.ent.env.build_room(obj)
         
         # Place entity
-        elif self.img_names[0] in session.img.ent_names:
+        elif self.img_names[0] in session.img.ent_data.keys():
             item = create_entity(
                 names = self.img_names.copy())
             place_object(
@@ -552,7 +552,7 @@ class CatalogMenu:
                 names = self.img_names.copy())
         
         # Place item
-        elif self.img_names[1] not in session.img.ent_names:
+        elif self.img_names[1] not in session.img.ent_data.keys():
             item = create_item(
                 names = self.img_names)
             place_object(
