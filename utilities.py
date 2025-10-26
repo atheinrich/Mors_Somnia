@@ -18,6 +18,7 @@ from   PIL import Image, ImageFilter, ImageOps
 
 ## Local
 import session
+from data_management import img_ents_dict, img_equipment_dict, img_other_dict
 
 ########################################################################################################################################################
 # Classes
@@ -861,118 +862,71 @@ TILESET_PATHS = {
     'big':       'Data/.Images/decor_1_m_logo.png'
 }
 
-ENT_META = {
-
-    'names': [
-        'white',     'black',  'fat',
-        'friend',    'eye',    'eyes',   'troll',      'triangle',      'purple',
-        'tentacles', 'round1', 'round2', 'grass',      'round3',        'lizard',
-        'red',       'rock',   'frog',   'red radish', 'orange radish', 'purple radish',
-        'star',      'plant',  'snake',  'buzz',       'egg',           'green blob',
-        'bald'
-    ],
-
-    'options': ['front', 'back', 'left', 'right']
-}
-
-EQUIP_META = {
-
-    'names': [
-        'iron armor', 'green clothes', 'iron shield', 'orange clothes', 'exotic clothes', 'yellow dress', 'chain dress',      'bra',   'lamp',
-        'glasses',    'brown hair',    'blue hair',   'blue beard',     'brown beard',    'white beard',  'short brown hair',
-        'dagger',     'blood dagger',  'shovel',      'super shovel',   'sword',          'blood sword',  'clean'
-    ],
-
-    'options': ['dropped', 'front', 'back', 'left', 'right'],
-
-    'aliases': {
-        'flat': 'clean'
-    },
-
-    'armor_names': ['iron armor', 'green clothes', 'orange clothes', 'exotic clothes', 'yellow dress', 'chain dress']
-}
-
 OTHER_META = {
 
-    'names': [
-        'decor', 'bubbles', 'furniture', 'drugs', 'potions', 'scrolls',
-        'stairs', 'floors', 'walls', 'roofs', 'paths', 'concrete',
-        'null'
+    'decor': [
+        'tree', 'bones', 'boxes',  'fire', 'leafy', 'skeleton', 'shrooms',
+        'red plant right', 'red plant left', 'cup shroom', 'frond',  'blades', 'purple bulbs',
+        'lights'
     ],
 
-    'options': {
+    'bubbles': [
+        'dots', 'exclamation', 'dollar', 'cart', 'question', 'skull', 'heart', 'water'
+    ],
 
-        'decor': [
-            'tree', 'bones', 'boxes',  'fire', 'leafy', 'skeleton', 'shrooms',
-            'red plant right', 'red plant left', 'cup shroom', 'frond',  'blades', 'purple bulbs',
-            'lights'
-        ],
+    'furniture': [
+        'purple bed', 'red bed', 'shelf left', 'shelf right', 'long table left', 'long table right',
+        'table', 'red chair left', 'red chair right',
+        'red rug bottom left',   'red rug bottom middle',   'red rug bottom right',
+        'red rug middle left',   'red rug middle middle',  'red rug middle right',
+        'red rug top left',      'red rug top middle',      'red rug top right',
+        'green rug bottom left', 'green rug bottom middle', 'green rug bottom right',
+        'green rug middle left', 'green rug middle middle', 'green rug middle right',
+        'green rug top left',    'green rug top middle',    'green rug top right'
+    ],
 
-        'bubbles': [
-            'dots', 'exclamation', 'dollar', 'cart', 'question', 'skull', 'heart', 'water'
-        ],
+    'drugs': [
+        'needle', 'skin', 'teeth', 'bowl', 'plant', 'bubbles'
+    ],
 
-        'furniture': [
-            'purple bed', 'red bed', 'shelf left', 'shelf right', 'long table left', 'long table right',
-            'table', 'red chair left', 'red chair right',
-            'red rug bottom left',   'red rug bottom middle',   'red rug bottom right',
-            'red rug middle left',   'red rug middle middle',  'red rug middle right',
-            'red rug top left',      'red rug top middle',      'red rug top right',
-            'green rug bottom left', 'green rug bottom middle', 'green rug bottom right',
-            'green rug middle left', 'green rug middle middle', 'green rug middle right',
-            'green rug top left',    'green rug top middle',    'green rug top right'
-        ],
+    'potions': [
+        'red', 'blue', 'gray', 'purple'
+    ],
 
-        'drugs': [
-            'needle', 'skin', 'teeth', 'bowl', 'plant', 'bubbles'
-        ],
+    'scrolls': [
+        'closed', 'open'
+    ],
 
-        'potions': [
-            'red', 'blue', 'gray', 'purple'
-        ],
+    'stairs': [
+        'door', 'portal'
+    ],
 
-        'scrolls': [
-            'closed', 'open'
-        ],
+    'floors': [
+        'dark green', 'dark blue', 'dark red',  'green',  'red',    'blue',
+        'wood',       'water',     'sand1',     'sand2',  'grass1', 'grass2',
+        'bubbles1',   'bubbles2',  'bubbles3',  'dirt1',  'dirt2',
+        'grass3',     'grass4',    'gray tile', 'brown tile'
+    ],
 
-        'stairs': [
-            'door', 'portal'
-        ],
+    'walls': [
+        'dark green', 'dark red', 'dark blue', 'gray', 'red', 'green', 'gold'
+    ],
 
-        'floors': [
-            'dark green', 'dark blue', 'dark red',  'green',  'red',    'blue',
-            'wood',       'water',     'sand1',     'sand2',  'grass1', 'grass2',
-            'bubbles1',   'bubbles2',  'bubbles3',  'dirt1',  'dirt2',
-            'grass3',     'grass4',    'gray tile', 'brown tile'
-        ],
+    'roofs': [
+        'tiled', 'slats'
+    ],
 
-        'walls': [
-            'dark green', 'dark red', 'dark blue', 'gray', 'red', 'green', 'gold'
-        ],
+    'paths': [
+        'left right', 'up down', 'down right', 'down left', 'up right', 'up left'
+    ],
 
-        'roofs': [
-            'tiled', 'slats'
-        ],
+    'concrete': [
+        'gray window', 'gray door', 'gray wall left', 'gray wall', 'gray wall right', 'gray floor'
+    ],
 
-        'paths': [
-            'left right', 'up down', 'down right', 'down left', 'up right', 'up left'
-        ],
-
-        'concrete': [
-            'gray window', 'gray door', 'gray wall left', 'gray wall', 'gray wall right', 'gray floor'
-        ],
-
-        'null': [
-            'null'
-        ]
-    }
-}
-
-CREATION_OPTIONS = {
-    'hair':  ['bald',  'brown hair',  'blue hair',  'short brown hair'],
-    'face':  ['clean', 'brown beard', 'blue beard', 'white beard', 'glasses'],
-    'chest': ['flat',  'bra'],
-    'skin':  ['white', 'black', 'fat']
+    'null': [
+        'null'
+    ]
 }
 
 BIOMES = {
@@ -999,17 +953,8 @@ def get_short_list():
 def get_tileset_path(category_key):
     return TILESET_PATHS.get(category_key)
 
-def get_entity_names():
-    return ENT_META['names'], ENT_META['options']
-
-def get_equipment_names():
-    return EQUIP_META['names'], EQUIP_META['options'], EQUIP_META.get('aliases', {}), EQUIP_META.get('armor_names', [])
-
 def get_other_meta():
     return OTHER_META['names'], OTHER_META['options']
-
-def get_creation_options():
-    return CREATION_OPTIONS
 
 def get_biomes():
     return BIOMES
@@ -1050,6 +995,13 @@ class Images:
 
         pyg = session.pyg
 
+        self.creation_options = {
+            'hair':  ['bald'],
+            'face':  ['clean'],
+            'chest': ['flat'],
+            'skin':  [],
+            'armor': []}
+        
         # Create entity dictionary
         self.load_entities(flipped)
         
@@ -1067,11 +1019,11 @@ class Images:
         self.biomes = get_biomes()
         
         # Gather images for character_creation
-        creation_options   = get_creation_options()
-        self.hair_options  = creation_options['hair']
-        self.face_options  = creation_options['face']
-        self.chest_options = creation_options['chest']
-        self.skin_options  = creation_options['skin']
+        self.hair_options  = self.creation_options['hair']
+        self.face_options  = self.creation_options['face']
+        self.chest_options = self.creation_options['chest']
+        self.skin_options  = self.creation_options['skin']
+        self.armor_names   = self.creation_options['armor']
         
         self.big_img()
 
@@ -1143,7 +1095,14 @@ class Images:
         ent_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
-        self.ent_names, entity_options = get_entity_names()
+        entity_options = ['front', 'back', 'left', 'right']
+
+        # Identify character creation options
+        self.ent_names = []
+        for key, dict in img_ents_dict.items():
+            if dict['slot'] is not None:
+                self.creation_options[dict['slot']].append(key)
+            self.ent_names.append(key)
 
         # Create image dictionary
         self.ent = {key: None for key in self.ent_names}
@@ -1165,7 +1124,18 @@ class Images:
         equip_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
-        self.equip_names, equip_options, equip_aliases, self.armor_names = get_equipment_names()
+        equip_options = ['dropped', 'front', 'back', 'left', 'right']
+        equip_aliases = {
+            'clean': 'null',
+            'flat':  'null',
+            'bald':  'null'}
+
+        # Identify character creation options
+        self.equip_names = []
+        for key, dict in img_equipment_dict.items():
+            if dict['slot'] is not None:
+                self.creation_options[dict['slot']].append(key)
+            self.equip_names.append(key)
 
         # Create image dictionary
         self.equip = {key: None for key in self.equip_names}
@@ -1198,22 +1168,26 @@ class Images:
         # Import tiles
         other_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
 
-        # Define tile names and options
-        self.other_names, options_dict = get_other_meta()
+        # Identify character creation options
+        for key, dict in img_other_dict.items():
+            if dict['group'] not in tile_dict.keys():
+                tile_dict[dict['group']] = []
+            tile_dict[dict['group']].append(key)
+        self.other_names = list(tile_dict.keys())
 
-        decor_options     = options_dict['decor']
-        bubbles_options   = options_dict['bubbles']
-        furniture_options = options_dict['furniture']
-        drugs_options     = options_dict['drugs']
-        potions_options   = options_dict['potions']
-        scrolls_options   = options_dict['scrolls']
-        stairs_options    = options_dict['stairs']
-        floors_options    = options_dict['floors']
-        walls_options     = options_dict['walls']
-        roofs_options     = options_dict['roofs']
-        paths_options     = options_dict['paths']
-        concrete_options  = options_dict['concrete']
-        null_options      = options_dict['null']
+        decor_options     = tile_dict['decor']
+        bubbles_options   = tile_dict['bubbles']
+        furniture_options = tile_dict['furniture']
+        drugs_options     = tile_dict['drugs']
+        potions_options   = tile_dict['potions']
+        scrolls_options   = tile_dict['scrolls']
+        stairs_options    = tile_dict['stairs']
+        floors_options    = tile_dict['floors']
+        walls_options     = tile_dict['walls']
+        roofs_options     = tile_dict['roofs']
+        paths_options     = tile_dict['paths']
+        concrete_options  = tile_dict['concrete']
+        null_options      = tile_dict['null']
 
         other_options = [
             decor_options,  bubbles_options, furniture_options,

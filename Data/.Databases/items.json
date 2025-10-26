@@ -313,7 +313,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "dots"
+            "dots bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -335,7 +335,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "dots"
+            "dots bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -357,7 +357,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "dollar"
+            "dollar bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -379,7 +379,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "cart"
+            "cart bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -401,7 +401,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "question"
+            "question bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -423,7 +423,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "skull"
+            "skull bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -445,7 +445,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "heart"
+            "heart bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -467,7 +467,7 @@
         "slot": null,
         "img_names": [
             "bubbles",
-            "water"
+            "water bubble"
         ],
         "durability": 101,
         "equippable": false,
@@ -1215,7 +1215,7 @@
         "slot": null,
         "img_names": [
             "potions",
-            "red"
+            "red potion"
         ],
         "durability": 101,
         "equippable": false,
@@ -1237,7 +1237,7 @@
         "slot": null,
         "img_names": [
             "potions",
-            "purple"
+            "purple potion"
         ],
         "durability": 101,
         "equippable": false,
@@ -1259,7 +1259,7 @@
         "slot": null,
         "img_names": [
             "potions",
-            "blue"
+            "blue potion"
         ],
         "durability": 101,
         "equippable": false,
@@ -1281,7 +1281,7 @@
         "slot": null,
         "img_names": [
             "potions",
-            "gray"
+            "gray potion"
         ],
         "durability": 101,
         "equippable": false,

@@ -1,0 +1,320 @@
+{
+    "tree": {
+        "group": "decor"
+    },
+    "bones": {
+        "group": "decor"
+    },
+    "boxes": {
+        "group": "decor"
+    },
+    "fire": {
+        "group": "decor"
+    },
+    "leafy": {
+        "group": "decor"
+    },
+    "skeleton": {
+        "group": "decor"
+    },
+    "shrooms": {
+        "group": "decor"
+    },
+    "red plant right": {
+        "group": "decor"
+    },
+    "red plant left": {
+        "group": "decor"
+    },
+    "cup shroom": {
+        "group": "decor"
+    },
+    "frond": {
+        "group": "decor"
+    },
+    "blades": {
+        "group": "decor"
+    },
+    "purple bulbs": {
+        "group": "decor"
+    },
+    "lights": {
+        "group": "decor"
+    },
+    "dots bubble": {
+        "group": "bubbles"
+    },
+    "exclamation bubble": {
+        "group": "bubbles"
+    },
+    "dollar bubble": {
+        "group": "bubbles"
+    },
+    "cart bubble": {
+        "group": "bubbles"
+    },
+    "question bubble": {
+        "group": "bubbles"
+    },
+    "skull bubble": {
+        "group": "bubbles"
+    },
+    "heart bubble": {
+        "group": "bubbles"
+    },
+    "water bubble": {
+        "group": "bubbles"
+    },
+    "purple bed": {
+        "group": "furniture"
+    },
+    "red bed": {
+        "group": "furniture"
+    },
+    "shelf left": {
+        "group": "furniture"
+    },
+    "shelf right": {
+        "group": "furniture"
+    },
+    "long table left": {
+        "group": "furniture"
+    },
+    "long table right": {
+        "group": "furniture"
+    },
+    "table": {
+        "group": "furniture"
+    },
+    "red chair left": {
+        "group": "furniture"
+    },
+    "red chair right": {
+        "group": "furniture"
+    },
+    "red rug bottom left": {
+        "group": "furniture"
+    },
+    "red rug bottom middle": {
+        "group": "furniture"
+    },
+    "red rug bottom right": {
+        "group": "furniture"
+    },
+    "red rug middle left": {
+        "group": "furniture"
+    },
+    "red rug middle middle": {
+        "group": "furniture"
+    },
+    "red rug middle right": {
+        "group": "furniture"
+    },
+    "red rug top left": {
+        "group": "furniture"
+    },
+    "red rug top middle": {
+        "group": "furniture"
+    },
+    "red rug top right": {
+        "group": "furniture"
+    },
+    "green rug bottom left": {
+        "group": "furniture"
+    },
+    "green rug bottom middle": {
+        "group": "furniture"
+    },
+    "green rug bottom right": {
+        "group": "furniture"
+    },
+    "green rug middle left": {
+        "group": "furniture"
+    },
+    "green rug middle middle": {
+        "group": "furniture"
+    },
+    "green rug middle right": {
+        "group": "furniture"
+    },
+    "green rug top left": {
+        "group": "furniture"
+    },
+    "green rug top middle": {
+        "group": "furniture"
+    },
+    "green rug top right": {
+        "group": "furniture"
+    },
+    "needle": {
+        "group": "drugs"
+    },
+    "skin": {
+        "group": "drugs"
+    },
+    "teeth": {
+        "group": "drugs"
+    },
+    "bowl": {
+        "group": "drugs"
+    },
+    "plant": {
+        "group": "drugs"
+    },
+    "bubbles": {
+        "group": "drugs"
+    },
+    "red potion": {
+        "group": "potions"
+    },
+    "blue potion": {
+        "group": "potions"
+    },
+    "gray potion": {
+        "group": "potions"
+    },
+    "purple potion": {
+        "group": "potions"
+    },
+    "closed": {
+        "group": "scrolls"
+    },
+    "open": {
+        "group": "scrolls"
+    },
+    "door": {
+        "group": "stairs"
+    },
+    "portal": {
+        "group": "stairs"
+    },
+    "dark green floor": {
+        "group": "floors"
+    },
+    "dark blue floor": {
+        "group": "floors"
+    },
+    "dark red floor": {
+        "group": "floors"
+    },
+    "green floor": {
+        "group": "floors"
+    },
+    "red floor": {
+        "group": "floors"
+    },
+    "blue": {
+        "group": "floors"
+    },
+    "wood": {
+        "group": "floors"
+    },
+    "water": {
+        "group": "floors"
+    },
+    "sand1": {
+        "group": "floors"
+    },
+    "sand2": {
+        "group": "floors"
+    },
+    "grass1": {
+        "group": "floors"
+    },
+    "grass2": {
+        "group": "floors"
+    },
+    "bubbles1": {
+        "group": "floors"
+    },
+    "bubbles2": {
+        "group": "floors"
+    },
+    "bubbles3": {
+        "group": "floors"
+    },
+    "dirt1": {
+        "group": "floors"
+    },
+    "dirt2": {
+        "group": "floors"
+    },
+    "grass3": {
+        "group": "floors"
+    },
+    "grass4": {
+        "group": "floors"
+    },
+    "gray tile": {
+        "group": "floors"
+    },
+    "brown tile": {
+        "group": "floors"
+    },
+    "dark green": {
+        "group": "walls"
+    },
+    "dark red": {
+        "group": "walls"
+    },
+    "dark blue": {
+        "group": "walls"
+    },
+    "gray": {
+        "group": "walls"
+    },
+    "red": {
+        "group": "walls"
+    },
+    "green": {
+        "group": "walls"
+    },
+    "gold": {
+        "group": "walls"
+    },
+    "tiled": {
+        "group": "roofs"
+    },
+    "slats": {
+        "group": "roofs"
+    },
+    "left right": {
+        "group": "paths"
+    },
+    "up down": {
+        "group": "paths"
+    },
+    "down right": {
+        "group": "paths"
+    },
+    "down left": {
+        "group": "paths"
+    },
+    "up right": {
+        "group": "paths"
+    },
+    "up left": {
+        "group": "paths"
+    },
+    "gray window": {
+        "group": "concrete"
+    },
+    "gray door": {
+        "group": "concrete"
+    },
+    "gray wall left": {
+        "group": "concrete"
+    },
+    "gray wall": {
+        "group": "concrete"
+    },
+    "gray wall right": {
+        "group": "concrete"
+    },
+    "gray floor": {
+        "group": "concrete"
+    },
+    "null": {
+        "group": "null"
+    }
+}

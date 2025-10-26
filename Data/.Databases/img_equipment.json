@@ -1,0 +1,71 @@
+{
+    "iron armor": {
+        "slot": "armor"
+    },
+    "green clothes": {
+        "slot": "armor"
+    },
+    "iron shield": {
+        "slot": null
+    },
+    "orange clothes": {
+        "slot": "armor"
+    },
+    "exotic clothes": {
+        "slot": "armor"
+    },
+    "yellow dress": {
+        "slot": "armor"
+    },
+    "chain dress": {
+        "slot": "armor"
+    },
+    "bra": {
+        "slot": "chest"
+    },
+    "lamp": {
+        "slot": null
+    },
+    "glasses": {
+        "slot": "face"
+    },
+    "brown hair": {
+        "slot": "hair"
+    },
+    "blue hair": {
+        "slot": "hair"
+    },
+    "blue beard": {
+        "slot": "face"
+    },
+    "brown beard": {
+        "slot": "face"
+    },
+    "white beard": {
+        "slot": "face"
+    },
+    "short brown hair": {
+        "slot": "hair"
+    },
+    "dagger": {
+        "slot": null
+    },
+    "blood dagger": {
+        "slot": null
+    },
+    "shovel": {
+        "slot": null
+    },
+    "super shovel": {
+        "slot": null
+    },
+    "sword": {
+        "slot": null
+    },
+    "blood sword": {
+        "slot": null
+    },
+    "null": {
+        "slot": null
+    }
+}

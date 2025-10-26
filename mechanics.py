@@ -1501,8 +1501,8 @@ class Item:
         if not self.owner: self.owner = ent
         
         # Equip or dequip
-        if self.equipped:  self.dequip(ent, silent)
-        else:              self.equip(ent,  silent)
+        if self.equipped: self.dequip(ent, silent)
+        else:             self.equip(ent,  silent)
 
     def equip(self, ent, silent=False):
         """ Unequips object if the slot is already being used. """
@@ -1651,7 +1651,7 @@ class Entity:
         self.garden_effects = [
             Effect(
                 name          = 'scare',
-                img_names     = ['bubbles', 'exclamation'],
+                img_names     = ['bubbles', 'exclamation bubble'],
                 function      = session.mech.entity_scare,
                 trigger       = 'active',
                 sequence      = '⮟⮜⮟',
@@ -1660,7 +1660,7 @@ class Entity:
             
             Effect(
                 name          = 'comfort',
-                img_names     = ['bubbles', 'heart'],
+                img_names     = ['bubbles', 'heart bubble'],
                 function      = session.mech.entity_comfort,
                 trigger       = 'active',
                 sequence      = '⮟⮞⮜',
@@ -1669,7 +1669,7 @@ class Entity:
             
             Effect(
                 name          = 'clean',
-                img_names     = ['bubbles', 'dots'],
+                img_names     = ['bubbles', 'dots bubble'],
                 function      = session.mech.entity_clean,
                 trigger       = 'active',
                 sequence      = '⮟⮟⮟',
@@ -1688,7 +1688,7 @@ class Entity:
 
             Effect(
                 name          = 'scare',
-                img_names     = ['bubbles', 'exclamation'],
+                img_names     = ['bubbles', 'exclamation bubble'],
                 function      = session.mech.entity_scare,
                 trigger       = 'active',
                 sequence      = '⮟⮜⮟',
@@ -1697,7 +1697,7 @@ class Entity:
                 
             Effect(
                 name          = 'capture',
-                img_names     = ['bubbles', 'heart'],
+                img_names     = ['bubbles', 'heart bubble'],
                 function      = session.mech.entity_capture,
                 trigger       = 'active',
                 sequence      = '⮟⮞⮟',
@@ -2282,12 +2282,12 @@ class Entity:
         pyg.display_queue.append([surface, (0, 0)])
 
         # Blit dialogue bubble
-        if self.dialogue: pyg.display_queue.append([session.img.dict['bubbles']['dots'], (X, Y-pyg.tile_height)])
+        if self.dialogue: pyg.display_queue.append([session.img.dict['bubbles']['dots bubble'], (X, Y-pyg.tile_height)])
         
         # Blit trading bubble
         elif self.trade_times:
             if session.player_obj.ent.env.env_time in self.trade_times:
-                pyg.display_queue.append([session.img.dict['bubbles']['cart'], (X, Y-pyg.tile_height)])
+                pyg.display_queue.append([session.img.dict['bubbles']['cart bubble'], (X, Y-pyg.tile_height)])
 
 class Mechanics:
     """ Game parameters. Does not need to be saved. """
@@ -2741,17 +2741,17 @@ class Mechanics:
             
             # Send directions to entity
             ent.motions_log = motions_log
-            image = session.img.dict['bubbles']['question']
+            image = session.img.dict['bubbles']['question bubble']
 
         # Bathe
         else:
             if session.stats_obj.pet_moods['anger']:
                 session.stats_obj.pet_moods['anger'] -= 1
-                image = session.img.dict['bubbles']['water']
+                image = session.img.dict['bubbles']['water bubble']
             
             else:
                 session.stats_obj.pet_moods['boredom'] += 1
-                image = session.img.dict['bubbles']['dots']
+                image = session.img.dict['bubbles']['dots bubble']
             
         session.img.flash_above(ent, image)
 
@@ -2805,11 +2805,11 @@ class Mechanics:
             
             # Send directions to entity
             ent.motions_log = motions_log
-            image = session.img.dict['bubbles']['question']
+            image = session.img.dict['bubbles']['question bubble']
 
         # Sleep
         else:
-            image = session.img.dict['bubbles']['dots']
+            image = session.img.dict['bubbles']['dots bubble']
             
         session.img.flash_above(ent, image)
 
@@ -2819,7 +2819,7 @@ class Mechanics:
         
         session.stats_obj.pet_moods['happiness'] += 1
         session.stats_obj.pet_moods['boredom']   -= 1
-        image = session.img.dict['bubbles']['heart']
+        image = session.img.dict['bubbles']['heart bubble']
         session.img.flash_above(ent, image)
         ent.tile.item = None
 
@@ -2843,7 +2843,7 @@ class Mechanics:
                 session.stats_obj.pet_moods['lethargy'] -= 1
                 session.stats_obj.pet_moods['boredom']  -= 1
             
-            image = session.img.dict['bubbles']['exclamation']
+            image = session.img.dict['bubbles']['exclamation bubble']
             for ent in ent_list:
                 for tile in get_vicinity(ent).values():
                     if not tile.blocked:
@@ -2870,7 +2870,7 @@ class Mechanics:
         
         # Activate effect if entities are found
         if ent:
-            image = session.img.dict['bubbles']['heart']
+            image = session.img.dict['bubbles']['heart bubble']
             session.img.flash_above(ent, image)
             session.img.flash_on(ent, session.img.dict[ent.img_names[0]][ent.img_names[1]])
             
@@ -2901,7 +2901,7 @@ class Mechanics:
         if ent_list:
             session.stats_obj.pet_moods['sadness'] -= 1
             if session.stats_obj.pet_moods['sadness'] <= 0: session.stats_obj.pet_moods['boredom'] += 1
-            image = session.img.dict['bubbles']['heart']
+            image = session.img.dict['bubbles'][' bubble']
             for ent in ent_list:
                 session.img.flash_above(ent, image)
                 self.spin(ent)
@@ -2967,8 +2967,8 @@ class Mechanics:
                 "Typical.",
                 "Caves can kill in mysterious ways."]}
         
-        if random.randint(0, 4): image = session.img.dict['bubbles']['skull']
-        else:                    image = session.img.dict['bubbles']['exclamation']
+        if random.randint(0, 4): image = session.img.dict['bubbles']['skull bubble']
+        else:                    image = session.img.dict['bubbles']['exclamation bubble']
         session.img.flash_above(session.player_obj.ent, image)
 
 ########################################################################################################################################################

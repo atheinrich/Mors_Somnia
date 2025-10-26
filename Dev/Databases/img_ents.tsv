@@ -1,0 +1,29 @@
+category	key	slot
+human	white	skin
+human	black	skin
+human	fat	skin
+NPC	friend	None
+enemy	eye	None
+enemy	eyes	None
+enemy	troll	None
+enemy	triangle	None
+enemy	purple	None
+enemy	tentacles	None
+enemy	round1	None
+enemy	round2	None
+enemy	grass	None
+enemy	round3	None
+enemy	lizard	None
+enemy	red	None
+enemy	rock	None
+enemy	frog	None
+pet	red radish	None
+pet	orange radish	None
+pet	purple radish	None
+enemy	star	None
+enemy	plant	None
+enemy	snake	None
+enemy	buzz	None
+enemy	egg	None
+projectile	green blob	None
+bug fix	null	None

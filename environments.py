@@ -59,7 +59,6 @@ class Environments:
         """ Generates the overworld environment. """
         
         from mechanics import place_objects
-        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -131,8 +130,6 @@ class Environments:
 
     def build_womb(self, area):
         """ Generates the overworld environment. """
-        
-        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -142,8 +139,8 @@ class Environments:
             lvl_num    = 0,
             size       = 1,
             soundtrack = ['menu'],
-            img_names  = ['floors', 'dark green'],
-            floors     = ['floors', 'dark green'],
+            img_names  = ['floors', 'dark green floor'],
+            floors     = ['floors', 'dark green floor'],
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'],
             blocked    = False,
@@ -203,7 +200,6 @@ class Environments:
         from items_entities import create_item, create_entity
         from mechanics import place_object
         from quests import Quest, Bloodkin
-        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -214,7 +210,7 @@ class Environments:
             size       = 5,
             soundtrack = ['home'],
             img_names  = ['walls', 'gray'],
-            floors     = ['floors', 'green'],
+            floors     = ['floors', 'green floor'],
             walls      = ['walls', 'gray'],
             roofs      = ['roofs', 'tiled'],
             area       = area)
@@ -319,7 +315,6 @@ class Environments:
         from items_entities import create_item, create_NPC
         from mechanics import place_object, place_objects, create_text_room
         from quests import FriendlyFaces
-        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -401,7 +396,7 @@ class Environments:
                     biome   = 'city',
                     hidden = False,
                     objects = False,
-                    floor  = ['floors', 'dark green'],
+                    floor  = ['floors', 'dark green floor'],
                     walls  = env.walls,
                     roof   = env.roofs,
                     plan = create_text_room(width, height))
@@ -447,7 +442,7 @@ class Environments:
                     biome   = 'city',
                     hidden  = False,
                     objects = False,
-                    floor   = ['floors', 'dark green'],
+                    floor   = ['floors', 'dark green floor'],
                     walls   = env.walls,
                     roof    = env.roofs,
                     plan = ['  -----     ',
@@ -487,7 +482,7 @@ class Environments:
             biome   = 'any',
             hidden  = False,
             objects = False,
-            floor   = ['floors', 'red'],
+            floor   = ['floors', 'red floor'],
             walls   = env.walls,
             roof    = env.roofs,
             plan = ['  --------------           ---------- ',
@@ -580,7 +575,6 @@ class Environments:
         
         from items_entities import create_item
         from mechanics import place_object, place_objects
-        from data_management import Camera
 
         ###############################################################
         # Initialize environment
@@ -695,7 +689,6 @@ class Environments:
         
         from items_entities import create_item
         from mechanics import place_object, place_objects
-        from data_management import Camera
 
         ###############################################################
         # Initialize environment
@@ -710,7 +703,7 @@ class Environments:
             size       = 2 * (1 + lvl_num//3),
             soundtrack = [f'dungeon {lvl_num}'],
             img_names  = ['walls', 'gray'],
-            floors     = ['floors', 'dark green'],
+            floors     = ['floors', 'dark green floor'],
             walls      = ['walls', 'gray'],
             roofs      = None,
             blocked    = True,
@@ -743,9 +736,9 @@ class Environments:
             y        = random.randint(0, len(env.map[0]) - height - 1)
             
             floor = random.choice([
-                ['floors', 'dark green'],
-                ['floors', 'dark green'],
-                ['floors', 'green']])
+                ['floors', 'dark green floor'],
+                ['floors', 'dark green floor'],
+                ['floors', 'green floor']])
             
             new_room = Room(
                 name    = 'dungeon room',
@@ -818,7 +811,6 @@ class Environments:
         
         from items_entities import create_item
         from mechanics import place_object, place_objects, create_text_room
-        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -833,7 +825,7 @@ class Environments:
             size       = 3,
             soundtrack = [f'hallucination {lvl_num}'],
             img_names  = ['walls',  'gold'],
-            floors     = ['floors', 'green'],
+            floors     = ['floors', 'green floor'],
             walls      = ['walls',  'gold'],
             roofs      = None,
             blocked    = True,
@@ -919,7 +911,7 @@ class Environments:
                     biome   = 'city',
                     hidden = False,
                     objects = False,
-                    floor  = ['floors', 'dark green'],
+                    floor  = ['floors', 'dark green floor'],
                     walls  = env.walls,
                     roof   = env.roofs,
                     plan = create_text_room(width, height, doors=False))
@@ -992,7 +984,6 @@ class Environments:
 
         from items_entities import create_item, create_NPC
         from mechanics import place_object, place_objects, create_text_room
-        from data_management import Camera
 
         ###############################################################
         ## Initialize environment
@@ -1063,7 +1054,7 @@ class Environments:
                     biome   = 'city',
                     hidden = False,
                     objects = False,
-                    floor  = ['floors', 'dark green'],
+                    floor  = ['floors', ' floor'],
                     walls  = env.walls,
                     roof   = env.roofs,
                     plan = create_text_room(width, height))
@@ -1088,7 +1079,7 @@ class Environments:
             biome   = 'any',
             hidden  = False,
             objects = False,
-            floor   = ['floors', 'dark green'],
+            floor   = ['floors', 'dark green floor'],
             walls   = env.walls,
             roof    = env.roofs,
             plan = ['  -----     ',
@@ -1120,7 +1111,7 @@ class Environments:
             biome   = 'any',
             hidden  = False,
             objects = False,
-            floor   = ['floors', 'red'],
+            floor   = ['floors', 'red floor'],
             walls   = env.walls,
             roof    = env.roofs,
             plan = ['  --------------           ---------- ',
@@ -1932,7 +1923,7 @@ class Tile:
             if (time.time() // self.timer) % self.timer == 0: image = session.img.other_alt[self.img_names[0]][self.img_names[1]]
             else:                                             image = session.img.other[self.img_names[0]][self.img_names[1]]
         else:                                                 image = session.img.other[self.img_names[0]][self.img_names[1]]
-        
+
         ## (Optional) Add shift effect
         if self.img_names[0] != 'roofs':
             if self.img_names[1] != 'wood':                   image = session.img.shift(image, [abs(self.rand_X), abs(self.rand_Y)])
@@ -2154,6 +2145,172 @@ class Weather:
         data.append(self.update_lamps())
 
         for image, (X, Y) in data: session.pyg.display_queue.append([image, (X, Y)])
+
+class Camera:
+    """ Defines a camera to follow the player. """
+    
+    def __init__(self, ent):
+        """ Defines a camera and its parameters. 
+            
+            Parameters
+            ----------
+            ent             : Entity object; focus of camera
+            width           : int; number of visible tiles in screen coordinates
+            height          : int; number of visible tiles in screen coordinates
+            tile_map_width  : int; number of visible tiles in tile coordinates
+            tile_map_height : int; number of visible tiles in tile coordinates
+            
+            X               : int; top left in screen coordinates
+            Y               : int; top left in screen coordinates
+            tile_map_x      : int; top left in tile coordinates
+            tile_map_y      : int; top left in tile coordinates
+            
+            right           : int; number of visible tiles + displacement in screen coordinates
+            bottom          : int; number of visible tiles + displacement in screen coordinates
+            x_range         : int; number of visible tiles + displacement in tile coordinates
+            y_range         : int; number of visible tiles + displacement in tile coordinates
+            (questionable)
+            
+            fix_position    : bool; prevents adjustment of parameters
+        """
+        
+        pyg = session.pyg
+
+        self.ent             = ent
+        self.width           = pyg.screen_width
+        self.height          = pyg.screen_height + pyg.tile_height
+        self.tile_map_width  = int(self.width / pyg.tile_width)
+        self.tile_map_height = int(self.height / pyg.tile_height)
+        
+        self.X               = int(self.ent.X - int(self.width / 2))
+        self.Y               = int(self.ent.Y - int(self.height / 2))
+        self.tile_map_x      = int(self.X / pyg.tile_width)
+        self.tile_map_y      = int(self.Y / pyg.tile_height)
+        
+        self.right           = self.X + self.width
+        self.bottom          = self.Y + self.height
+        self.x_range         = self.tile_map_x + self.tile_map_width
+        self.y_range         = self.tile_map_y + self.tile_map_height
+        
+        self.center_X        = int(self.X + int(self.width / 2))
+        self.center_Y        = int(self.Y + int(self.height / 2))
+        
+        self.zoom            = 1
+        self.fixed           = False
+        self.fix_position()
+
+    def update(self):
+        """ ? """
+        
+        pyg = session.pyg
+
+        if not self.fixed:
+            X_move          = int(self.ent.X - self.center_X)
+            self.X          = int(self.X + X_move)
+            self.center_X   = int(self.center_X + X_move)
+            self.right      = int(self.right + X_move)
+            self.tile_map_x = int(self.X / pyg.tile_width)
+            self.x_range    = int(self.tile_map_x + self.tile_map_width)
+
+            Y_move          = int(self.ent.Y - self.center_Y)
+            self.Y          = int(self.Y + Y_move)
+            self.center_Y   = int(self.center_Y + Y_move)
+            self.bottom     = int(self.bottom + Y_move)
+            self.tile_map_y = int(self.Y / pyg.tile_height)
+            self.y_range    = int(self.tile_map_y + self.tile_map_height)
+            
+            self.fix_position()
+
+    def fix_position(self):
+        """ ? """
+
+        pyg = session.pyg
+
+        if self.X < 0:
+            self.X          = 0
+            self.center_X   = self.X + int(self.width / 2)
+            self.right      = self.X + self.width
+            self.tile_map_x = int(self.X / (pyg.tile_width / self.zoom))
+            self.x_range    = self.tile_map_x + self.tile_map_width
+        
+        elif self.right > (len(self.ent.env.map)-1) * pyg.tile_width:
+            self.right      = (len(self.ent.env.map)) * pyg.tile_width
+            self.X          = self.right - self.width
+            self.center_X   = self.X + int(self.width / 2)
+            self.tile_map_x = int(self.X / (pyg.tile_width / self.zoom))
+            self.x_range    = self.tile_map_x + self.tile_map_width
+        
+        if self.Y < 0:
+            self.Y          = 0
+            self.center_Y   = self.Y + int(self.height / 2)
+            self.bottom     = (self.Y + self.height + 320) / self.zoom
+            self.tile_map_y = int(self.Y / (pyg.tile_height / self.zoom))
+            self.y_range    = self.tile_map_y + self.tile_map_height
+        
+        elif self.bottom > (len(self.ent.env.map[0])) * pyg.tile_height:
+            self.bottom     = (len(self.ent.env.map[0])) * pyg.tile_height
+            self.Y          = self.bottom - self.height
+            self.center_Y   = self.Y + int(self.height / 2)
+            self.tile_map_y = int(self.Y / (pyg.tile_height / self.zoom))
+            self.y_range    = self.tile_map_y + self.tile_map_height
+
+    def zoom_in(self, factor=0.1, custom=None):
+        """ Zoom in by reducing the camera's width and height. """
+        
+        pyg = session.pyg
+
+        # Set to a specific value
+        if custom and (self.zoom != custom):
+            self.zoom = custom
+            pyg.update_gui()
+            self.width  = int(pyg.screen_width / self.zoom)
+            self.height = int(pyg.screen_height / self.zoom)
+            pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            self._recalculate_bounds()
+        
+        elif not custom and not self.fixed:
+            self.zoom += factor
+            pyg.update_gui()
+            self.width  = int(pyg.screen_width / self.zoom)
+            self.height = int(pyg.screen_height / self.zoom)
+            pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            self._recalculate_bounds()
+
+    def zoom_out(self, factor=0.1, custom=None):
+        """ Zoom out by increasing the camera's width and height. """
+        
+        pyg = session.pyg
+
+        if not self.fixed:
+            if round(self.zoom, 2) > factor:  # Ensure zoom level stays positive
+                if custom:
+                    self.zoom = custom
+                else:
+                    self.zoom -= factor
+                pyg.update_gui()
+                self.width = int(pyg.screen_width / self.zoom)
+                self.height = int(pyg.screen_height / self.zoom)
+                pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+                self._recalculate_bounds()
+
+    def _recalculate_bounds(self):
+        """ Recalculate dependent properties after zooming. """
+
+        pyg = session.pyg
+
+        self.X               = self.ent.X - int(self.width / 2)
+        self.Y               = self.ent.Y - int(self.height / 2)
+        self.center_X        = self.X + int(self.width / 2)
+        self.center_Y        = self.Y + int(self.height / 2)
+        self.right           = self.X + self.width
+        self.bottom          = self.Y + self.height
+        self.tile_map_width  = int(self.width / pyg.tile_width)
+        self.tile_map_height = int(self.height / pyg.tile_height)
+        self.tile_map_x      = int(self.X / pyg.tile_width)
+        self.tile_map_y      = int(self.Y / pyg.tile_height)
+        self.x_range         = self.tile_map_x + self.tile_map_width
+        self.y_range         = self.tile_map_y + self.tile_map_height
+        self.fix_position()
 
 ########################################################################################################################################################
 # Tools

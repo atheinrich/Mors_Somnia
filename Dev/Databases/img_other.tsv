@@ -1,0 +1,107 @@
+category	key	group
+flora	tree	decor
+decor	bones	decor
+decor	boxes	decor
+decor	fire	decor
+flora	leafy	decor
+decor	skeleton	decor
+flora	shrooms	decor
+flora	red plant right	decor
+flora	red plant left	decor
+flora	cup shroom	decor
+flora	frond	decor
+flora	blades	decor
+flora	purple bulbs	decor
+decor	lights	decor
+bubbles	dots bubble	bubbles
+bubbles	exclamation bubble	bubbles
+bubbles	dollar bubble	bubbles
+bubbles	cart bubble	bubbles
+bubbles	question bubble	bubbles
+bubbles	skull bubble	bubbles
+bubbles	heart bubble	bubbles
+bubbles	water bubble	bubbles
+bed	purple bed	furniture
+bed	red bed	furniture
+shelf	shelf left	furniture
+shelf	shelf right	furniture
+table	long table left	furniture
+table	long table right	furniture
+table	table	furniture
+chair	red chair left	furniture
+chair	red chair right	furniture
+red rug	red rug bottom left	furniture
+red rug	red rug bottom middle	furniture
+red rug	red rug bottom right	furniture
+red rug	red rug middle left	furniture
+red rug	red rug middle middle	furniture
+red rug	red rug middle right	furniture
+red rug	red rug top left	furniture
+red rug	red rug top middle	furniture
+red rug	red rug top right	furniture
+green rug	green rug bottom left	furniture
+green rug	green rug bottom middle	furniture
+green rug	green rug bottom right	furniture
+green rug	green rug middle left	furniture
+green rug	green rug middle middle	furniture
+green rug	green rug middle right	furniture
+green rug	green rug top left	furniture
+green rug	green rug top middle	furniture
+green rug	green rug top right	furniture
+drugs	needle	drugs
+drugs	skin	drugs
+drugs	teeth	drugs
+drugs	bowl	drugs
+drugs	plant	drugs
+drugs	bubbles	drugs
+potions	red potion	potions
+potions	blue potion	potions
+potions	gray potion	potions
+potions	purple potion	potions
+scrolls	closed	scrolls
+scrolls	open	scrolls
+stairs	door	stairs
+stairs	portal	stairs
+floors	dark green floor	floors
+floors	dark blue floor	floors
+floors	dark red floor	floors
+floors	green floor	floors
+floors	red floor	floors
+floors	blue	floors
+floors	wood	floors
+floors	water	floors
+floors	sand1	floors
+floors	sand2	floors
+floors	grass1	floors
+floors	grass2	floors
+floors	bubbles1	floors
+floors	bubbles2	floors
+floors	bubbles3	floors
+floors	dirt1	floors
+floors	dirt2	floors
+floors	grass3	floors
+floors	grass4	floors
+floors	gray tile	floors
+floors	brown tile	floors
+walls	dark green	walls
+walls	dark red	walls
+walls	dark blue	walls
+walls	gray	walls
+walls	red	walls
+walls	green	walls
+walls	gold	walls
+roofs	tiled	roofs
+roofs	slats	roofs
+paths	left right	paths
+paths	up down	paths
+paths	down right	paths
+paths	down left	paths
+paths	up right	paths
+paths	up left	paths
+concrete	gray window	concrete
+concrete	gray door	concrete
+concrete	gray wall left	concrete
+concrete	gray wall	concrete
+concrete	gray wall right	concrete
+concrete	gray floor	concrete
+null	null	null

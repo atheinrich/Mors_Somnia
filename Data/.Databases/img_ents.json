@@ -1,0 +1,86 @@
+{
+    "white": {
+        "slot": "skin"
+    },
+    "black": {
+        "slot": "skin"
+    },
+    "fat": {
+        "slot": "skin"
+    },
+    "friend": {
+        "slot": null
+    },
+    "eye": {
+        "slot": null
+    },
+    "eyes": {
+        "slot": null
+    },
+    "troll": {
+        "slot": null
+    },
+    "triangle": {
+        "slot": null
+    },
+    "purple": {
+        "slot": null
+    },
+    "tentacles": {
+        "slot": null
+    },
+    "round1": {
+        "slot": null
+    },
+    "round2": {
+        "slot": null
+    },
+    "grass": {
+        "slot": null
+    },
+    "round3": {
+        "slot": null
+    },
+    "lizard": {
+        "slot": null
+    },
+    "red": {
+        "slot": null
+    },
+    "rock": {
+        "slot": null
+    },
+    "frog": {
+        "slot": null
+    },
+    "red radish": {
+        "slot": null
+    },
+    "orange radish": {
+        "slot": null
+    },
+    "purple radish": {
+        "slot": null
+    },
+    "star": {
+        "slot": null
+    },
+    "plant": {
+        "slot": null
+    },
+    "snake": {
+        "slot": null
+    },
+    "buzz": {
+        "slot": null
+    },
+    "egg": {
+        "slot": null
+    },
+    "green blob": {
+        "slot": null
+    },
+    "null": {
+        "slot": null
+    }
+}

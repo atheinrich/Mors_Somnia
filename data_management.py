@@ -7,12 +7,6 @@ import os
 import time
 import json
 
-## Specific
-import pygame
-
-## Local
-import session
-
 ########################################################################################################################################################
 # Backend tools
 def find_path(target, folder=None, start_dir='/'):
@@ -90,174 +84,6 @@ def load_json(filename):
         return json.load(f)
 
 ########################################################################################################################################################
-# Gameplay tools
-class Camera:
-    """ Defines a camera to follow the player. """
-    
-    def __init__(self, ent):
-        """ Defines a camera and its parameters. 
-            
-            Parameters
-            ----------
-            ent             : Entity object; focus of camera
-            width           : int; number of visible tiles in screen coordinates
-            height          : int; number of visible tiles in screen coordinates
-            tile_map_width  : int; number of visible tiles in tile coordinates
-            tile_map_height : int; number of visible tiles in tile coordinates
-            
-            X               : int; top left in screen coordinates
-            Y               : int; top left in screen coordinates
-            tile_map_x      : int; top left in tile coordinates
-            tile_map_y      : int; top left in tile coordinates
-            
-            right           : int; number of visible tiles + displacement in screen coordinates
-            bottom          : int; number of visible tiles + displacement in screen coordinates
-            x_range         : int; number of visible tiles + displacement in tile coordinates
-            y_range         : int; number of visible tiles + displacement in tile coordinates
-            (questionable)
-            
-            fix_position    : bool; prevents adjustment of parameters
-        """
-        
-        pyg = session.pyg
-
-        self.ent             = ent
-        self.width           = pyg.screen_width
-        self.height          = pyg.screen_height + pyg.tile_height
-        self.tile_map_width  = int(self.width / pyg.tile_width)
-        self.tile_map_height = int(self.height / pyg.tile_height)
-        
-        self.X               = int(self.ent.X - int(self.width / 2))
-        self.Y               = int(self.ent.Y - int(self.height / 2))
-        self.tile_map_x      = int(self.X / pyg.tile_width)
-        self.tile_map_y      = int(self.Y / pyg.tile_height)
-        
-        self.right           = self.X + self.width
-        self.bottom          = self.Y + self.height
-        self.x_range         = self.tile_map_x + self.tile_map_width
-        self.y_range         = self.tile_map_y + self.tile_map_height
-        
-        self.center_X        = int(self.X + int(self.width / 2))
-        self.center_Y        = int(self.Y + int(self.height / 2))
-        
-        self.zoom            = 1
-        self.fixed           = False
-        self.fix_position()
-
-    def update(self):
-        """ ? """
-        
-        pyg = session.pyg
-
-        if not self.fixed:
-            X_move          = int(self.ent.X - self.center_X)
-            self.X          = int(self.X + X_move)
-            self.center_X   = int(self.center_X + X_move)
-            self.right      = int(self.right + X_move)
-            self.tile_map_x = int(self.X / pyg.tile_width)
-            self.x_range    = int(self.tile_map_x + self.tile_map_width)
-
-            Y_move          = int(self.ent.Y - self.center_Y)
-            self.Y          = int(self.Y + Y_move)
-            self.center_Y   = int(self.center_Y + Y_move)
-            self.bottom     = int(self.bottom + Y_move)
-            self.tile_map_y = int(self.Y / pyg.tile_height)
-            self.y_range    = int(self.tile_map_y + self.tile_map_height)
-            
-            self.fix_position()
-
-    def fix_position(self):
-        """ ? """
-
-        pyg = session.pyg
-
-        if self.X < 0:
-            self.X          = 0
-            self.center_X   = self.X + int(self.width / 2)
-            self.right      = self.X + self.width
-            self.tile_map_x = int(self.X / (pyg.tile_width / self.zoom))
-            self.x_range    = self.tile_map_x + self.tile_map_width
-        
-        elif self.right > (len(self.ent.env.map)-1) * pyg.tile_width:
-            self.right      = (len(self.ent.env.map)) * pyg.tile_width
-            self.X          = self.right - self.width
-            self.center_X   = self.X + int(self.width / 2)
-            self.tile_map_x = int(self.X / (pyg.tile_width / self.zoom))
-            self.x_range    = self.tile_map_x + self.tile_map_width
-        
-        if self.Y < 0:
-            self.Y          = 0
-            self.center_Y   = self.Y + int(self.height / 2)
-            self.bottom     = (self.Y + self.height + 320) / self.zoom
-            self.tile_map_y = int(self.Y / (pyg.tile_height / self.zoom))
-            self.y_range    = self.tile_map_y + self.tile_map_height
-        
-        elif self.bottom > (len(self.ent.env.map[0])) * pyg.tile_height:
-            self.bottom     = (len(self.ent.env.map[0])) * pyg.tile_height
-            self.Y          = self.bottom - self.height
-            self.center_Y   = self.Y + int(self.height / 2)
-            self.tile_map_y = int(self.Y / (pyg.tile_height / self.zoom))
-            self.y_range    = self.tile_map_y + self.tile_map_height
-
-    def zoom_in(self, factor=0.1, custom=None):
-        """ Zoom in by reducing the camera's width and height. """
-        
-        pyg = session.pyg
-
-        # Set to a specific value
-        if custom and (self.zoom != custom):
-            self.zoom = custom
-            pyg.update_gui()
-            self.width  = int(pyg.screen_width / self.zoom)
-            self.height = int(pyg.screen_height / self.zoom)
-            pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-            self._recalculate_bounds()
-        
-        elif not custom and not self.fixed:
-            self.zoom += factor
-            pyg.update_gui()
-            self.width  = int(pyg.screen_width / self.zoom)
-            self.height = int(pyg.screen_height / self.zoom)
-            pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-            self._recalculate_bounds()
-
-    def zoom_out(self, factor=0.1, custom=None):
-        """ Zoom out by increasing the camera's width and height. """
-        
-        pyg = session.pyg
-
-        if not self.fixed:
-            if round(self.zoom, 2) > factor:  # Ensure zoom level stays positive
-                if custom:
-                    self.zoom = custom
-                else:
-                    self.zoom -= factor
-                pyg.update_gui()
-                self.width = int(pyg.screen_width / self.zoom)
-                self.height = int(pyg.screen_height / self.zoom)
-                pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-                self._recalculate_bounds()
-
-    def _recalculate_bounds(self):
-        """ Recalculate dependent properties after zooming. """
-
-        pyg = session.pyg
-
-        self.X               = self.ent.X - int(self.width / 2)
-        self.Y               = self.ent.Y - int(self.height / 2)
-        self.center_X        = self.X + int(self.width / 2)
-        self.center_Y        = self.Y + int(self.height / 2)
-        self.right           = self.X + self.width
-        self.bottom          = self.Y + self.height
-        self.tile_map_width  = int(self.width / pyg.tile_width)
-        self.tile_map_height = int(self.height / pyg.tile_height)
-        self.tile_map_x      = int(self.X / pyg.tile_width)
-        self.tile_map_y      = int(self.Y / pyg.tile_height)
-        self.x_range         = self.tile_map_x + self.tile_map_width
-        self.y_range         = self.tile_map_y + self.tile_map_height
-        self.fix_position()
-
-########################################################################################################################################################
 # Development tools
 def debug_call(func):
     """ Just a print statement for debugging. Shows which function is called alongside variable details. """
@@ -271,6 +97,12 @@ def debug_call(func):
 def load_tsv(path):
     """ Load TSV data into a nested dictionary of dictionaries, automatically detecting types.
     
+        Syntax
+        ------
+        category : meta data, not used anywhere
+        key      : used to locate a given row in the output dictionary
+        lists    : () for integers and [] for strings with entries separated by semicolons
+
         Parameters
         ----------
         path : str; file path, such as one returned by find_path
@@ -282,25 +114,40 @@ def load_tsv(path):
     
     def parse_value(val):
         val = val.strip()
-        if val   == 'None':   return None
-        elif val == 'True':   return True
-        elif val == 'False':  return False
+
+        # Keywords
+        if val.upper()   == 'NONE':   return None
+        elif val.upper() == 'TRUE':   return True
+        elif val.upper() == 'FALSE':  return False
+
+        # Lists of strings; semicolon separated entries
         elif val.startswith('[') and val.endswith(']'):
             return [x.strip("'\" ") for x in val[1:-1].split(';') if x.strip()]
+        
+        # Lists of integers; semicolon separated entries
         elif val.startswith('(') and val.endswith(')'):
             return [int(x.strip("'\" ")) for x in val[1:-1].split(';') if x.strip()]
+        
         else:
-            try:               return int(val)
-            except ValueError: return val.strip("'\"")
+            
+            # Integers
+            try:
+                return int(val)
+
+            # Strings
+            except ValueError:
+                return val.strip("'\"")
     
+    # Initialize data container
     items = {}
+
     with open(path, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
             key = row['key']
-
-            entry = {col: parse_value(val) for col, val in row.items() if col not in ('category', 'key')}
-
+            
+            # Convert one row of data to a dictionary entry
+            entry = {col: parse_value(val) for col, val in row.items() if col not in ['category', 'key']}
             items[key] = entry
 
     return items
@@ -322,20 +169,25 @@ def rebuild_databases():
         Run this after changing the convenient files.
     """
 
-    for file in ['items', 'item_effects', 'ents', 'NPCs']:
+    for file in ['items', 'item_effects', 'ents', 'NPCs', 'img_ents', 'img_equipment', 'img_other']:
+
         print(f"Converting {file}...")
         load_path = find_path(target=f'{file}.tsv', folder='Databases')
         load_data = load_tsv(load_path)
         save_path = os.path.join(find_path(target='.Databases'), f'{file}.json')
         save_json(load_data, save_path)
+
     print("Databases rebuilt!")
 
 ########################################################################################################################################################
 # Initializations
 #rebuild_databases()
-item_dict   = load_json(find_path('Data/.Databases/items.json'))
-ent_dict    = load_json(find_path('Data/.Databases/ents.json'))
-effect_dict = load_json(find_path('Data/.Databases/item_effects.json'))
-NPC_dict    = load_json(find_path('Data/.Databases/NPCs.json'))
+item_dict          = load_json(find_path('Data/.Databases/items.json'))
+ent_dict           = load_json(find_path('Data/.Databases/ents.json'))
+effect_dict        = load_json(find_path('Data/.Databases/item_effects.json'))
+NPC_dict           = load_json(find_path('Data/.Databases/NPCs.json'))
+img_ents_dict      = load_json(find_path('Data/.Databases/img_ents.json'))
+img_equipment_dict = load_json(find_path('Data/.Databases/img_equipment.json'))
+img_other_dict     = load_json(find_path('Data/.Databases/img_other.json'))
 
 ########################################################################################################################################################
