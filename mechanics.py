@@ -306,10 +306,12 @@ class Pygame:
                 if line in self.msg_history.keys():
                     del self.msg_history[line]
                 self.msg_history[line] = color
-        
+
         ## Find which messages to display
-        lines  = list(self.msg_history.keys())[:self.msg_height]
-        colors = list(self.msg_history.values())[:self.msg_height]
+        index               = len(self.msg_history) - self.msg_height
+        if index < 0: index = 0
+        lines  = list(self.msg_history.keys())[index:]
+        colors = list(self.msg_history.values())[index:]
 
         ## Construct list for display
         self.msg = []
@@ -1071,14 +1073,7 @@ class PlayGame:
         session.player_obj.ent.env.camera.zoom_out()
 
     def key_SPEED(self):
-        
-        pyg = session.pyg
-
-        #########################################################
-        # Change speed
-        if time.time()-pyg.last_press_time > pyg.cooldown_time:
-            pyg.last_press_time = float(time.time())
-            session.mech.movement_speed()
+        session.mech.movement_speed()
 
     def render(self):
         pyg = session.pyg

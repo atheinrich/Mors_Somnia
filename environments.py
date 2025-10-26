@@ -726,7 +726,7 @@ class Environments:
         
         ###############################################################
         # Construct rooms
-        num_rooms = int(self.max_rooms * env.lvl_num) + 2
+        num_rooms = int(self.max_rooms * env.lvl_num) + 3
         for i in range(num_rooms):
             
             # Construct room
@@ -1466,7 +1466,7 @@ class Environment:
     
         # Sort through each room
         cache = []
-        rooms_copy = copy.deepcopy(self.rooms)
+        rooms_copy = list(self.rooms)
         for i in range(len(rooms_copy)):
             for j in range(len(rooms_copy)):
                 if rooms_copy[i] != rooms_copy[j]:
@@ -1522,11 +1522,9 @@ class Environment:
                                 self.rooms[j].tiles_list.append(tile)
                                 self.rooms[i].tiles_list.remove(tile)
         
-        rooms_copy = copy.deepcopy(self.rooms)
-        counter = 0
-        for i in range(len(rooms_copy)):
-            if self.rooms[i-counter].delete: self.rooms.remove(self.rooms[i-counter])
-            counter += 1
+        for room in self.rooms[:]:
+            if room.delete:
+                self.rooms.remove(room)
 
     def create_tunnel(self, x, y):
         """ Creates vertical tunnel. min() and max() are used if y1 is greater than y2. """
@@ -1950,7 +1948,7 @@ class Weather:
         self.env = env
 
         # Dark blue background
-        self.sky = pygame.Surface((pyg.screen_width * 10, pyg.screen_height * 10), pygame.SRCALPHA)
+        self.sky = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
         
         self.last_hour = time.localtime().tm_hour + 1
         self.last_min  = time.localtime().tm_min + 1
@@ -1962,6 +1960,7 @@ class Weather:
         self.clouds = []
 
     def run(self):
+        self.sky.fill((0, 0, 0, 255))
         
         # Set day
         if (time.localtime().tm_hour + 1) != self.last_hour:
@@ -2089,7 +2088,7 @@ class Weather:
                                         X = x * pyg.tile_width - self.env.camera.X
                                         Y = y * pyg.tile_height - self.env.camera.Y
                                         
-                                        data.append([image, (X, Y)])
+                                        self.sky.blit(image, (X, Y))
 
         return data
 
@@ -2127,24 +2126,20 @@ class Weather:
                         width  - i * 32,
                         height - i * 32)
                     self.sky.fill((0, 0, 0, 255-alpha*i), transparent_rect)
-            
-        return [self.sky, (0, 0)]
 
     def render(self):
         """ Creates a black overlay and cuts out regions for lighting.
             Light is shown for any of the following conditions.
                 1. The object has self.lamp as an effect and is not owned by an entity.
                 2. The object has self.lamp as an effect and is equipped by an entity. """
-        
-        # Check for clouds
-        data = []
-        if self.cloudy: data.extend(self.update_clouds())
 
         # Check for lights
-        self.sky.fill((0, 0, 0))
-        data.append(self.update_lamps())
+        self.update_lamps()
 
-        for image, (X, Y) in data: session.pyg.display_queue.append([image, (X, Y)])
+        # Check for clouds
+        if self.cloudy: self.update_clouds()
+
+        session.pyg.display_queue.append([self.sky, (0, 0)])
 
 class Camera:
     """ Defines a camera to follow the player. """
@@ -2196,6 +2191,8 @@ class Camera:
         self.center_Y        = int(self.Y + int(self.height / 2))
         
         self.zoom            = 1
+        self.min_zoom        = 2
+        self.max_zoom        = 0.5
         self.fixed           = False
         self.fix_position()
 
@@ -2268,7 +2265,7 @@ class Camera:
             pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             self._recalculate_bounds()
         
-        elif not custom and not self.fixed:
+        elif (not custom) and (not self.fixed) and (self.zoom < self.min_zoom):
             self.zoom += factor
             pyg.update_gui()
             self.width  = int(pyg.screen_width / self.zoom)
@@ -2281,14 +2278,14 @@ class Camera:
         
         pyg = session.pyg
 
-        if not self.fixed:
-            if round(self.zoom, 2) > factor:  # Ensure zoom level stays positive
-                if custom:
-                    self.zoom = custom
-                else:
-                    self.zoom -= factor
+        if (not self.fixed) and (self.zoom > self.max_zoom):
+            if round(self.zoom, 2) > factor:
+
+                if custom: self.zoom = custom
+                else:      self.zoom = round(self.zoom - factor, 1)
+                
                 pyg.update_gui()
-                self.width = int(pyg.screen_width / self.zoom)
+                self.width  = int(pyg.screen_width / self.zoom)
                 self.height = int(pyg.screen_height / self.zoom)
                 pyg.display = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
                 self._recalculate_bounds()

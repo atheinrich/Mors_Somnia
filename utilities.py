@@ -1793,14 +1793,14 @@ def render_display():
     #########################################################
     # Initialize
     ## Select entity to focus on
-    if pyg.overlay_state == 'new_game': ent = session.new_game_obj.temp.ent
-    else:                               ent = session.player_obj.ent
+    if pyg.overlay_state == 'new_game':
+        ent = session.new_game_obj.temp.ent
+        session.player_obj.ent.env.camera.zoom_in(custom=1)
+    else:
+        ent = session.player_obj.ent
 
     ## Shorthand
     camera = ent.env.camera
-
-    ## Clear previous screen
-    pyg.display.fill(pyg.black)
 
     #########################################################
     # Draw visible tiles
@@ -1837,6 +1837,7 @@ def render_display():
                         image, (X, Y) = tile.draw()
                         pyg.display_queue.append([image, (X, Y)])
     
+    ent.env.weather.render()
     session.aud.shuffle()
 
 def render_hud():

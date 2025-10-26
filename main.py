@@ -99,6 +99,9 @@ from mechanics import NewGameMenu, PlayGame, PlayGarden
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
 from quests import QuestMenu
 
+## Debugging
+import cProfile
+
 ########################################################################################################################################################
 # Global values
 API_toggle = False
@@ -171,7 +174,6 @@ def game_states():
             session.play_game_obj.run()
             session.play_game_obj.render()
             session.player_obj.ent.env.weather.run()
-            session.player_obj.ent.env.weather.render()
         
         #########################################################
         # Add big overlay
@@ -274,7 +276,7 @@ def rendering():
         pygame.display.flip()
         pyg.clock.tick(30)
         
-        pyg.display.fill((0, 0, 0, 0))
+        pyg.display.fill(pyg.black)
         pyg.hud.fill((0, 0, 0, 0))
         pyg.overlays.fill((0, 0, 0, 0))
         pyg.fade.fill((0, 0, 0, 0))
@@ -309,6 +311,6 @@ def API(state, details, init=False):
 ########################################################################################################################################################
 # Global scripts
 if __name__ == "__main__":
-    init()
+    cProfile.run('init()', sort='cumtime')
 
 ########################################################################################################################################################

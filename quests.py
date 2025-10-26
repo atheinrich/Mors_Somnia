@@ -524,10 +524,8 @@ class Bloodkin:
         if not dialogue:
             note_text = ["ξνμλ λξ ξλι ξγθιβξ ξ θθ.", "Ηκρσ σρσ λβνξθι νθ.", "Ψπθ αβνιθ πθμ."]
             session.textbox = Textbox(
-                name     = 'textbox',
-                header   = "mysterious note",
-                options  = note_text,
-                position = 'top left')
+                header = "mysterious note",
+                text   = note_text)
             pyg.overlay_state = 'textbox'
             pyg.hud_state     = 'off'
         
