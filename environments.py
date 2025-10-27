@@ -7,7 +7,6 @@
 # Imports
 ## Standard
 import time
-import copy
 import random
 
 ## Specific
@@ -15,6 +14,7 @@ import pygame
 
 ## Local
 import session
+from quests import Questlog
 
 ########################################################################################################################################################
 # Classes
@@ -302,15 +302,17 @@ class Environments:
         self.player_obj.ent.questlines = {}
         self.player_obj.ent.questlines['Bloodkin'] = Bloodkin()
         
-        ent.quest    = Quest(
-            name     = "Making a friend",
-            notes    = ["I wonder who this is. Maybe I should say hello."],
-            tasks    = ["☐ Say hello to the creature.",
-                        "☐ Get to know them."],
-            category = 'Side',
-            function = self.player_obj.ent.questlines['Bloodkin'].making_a_friend)
-        ent.quest.content = ent.quest.notes + ent.quest.tasks
-        self.player_obj.ent.questlog['Making a friend'] = ent.quest
+        ###############################################################
+        # Quests
+        #ent.quest    = Quest(
+        #    name     = "Making a friend",
+        #    notes    = ["I wonder who this is. Maybe I should say hello."],
+        #    tasks    = ["☐ Say hello to the creature.",
+        #                "☐ Get to know them."],
+        #    category = 'Side',
+        #    function = self.player_obj.ent.questlines['Bloodkin'].making_a_friend)
+        #ent.quest.content = ent.quest.notes + ent.quest.tasks
+        #self.player_obj.ent.questlog['Making a friend'] = ent.quest
         
         # Initial position
         env.player_coordinates = env.center
@@ -1211,6 +1213,8 @@ class Area:
         self.levels     = {}
         self.last_env   = None
 
+        self.questlog   = Questlog()
+
     def add_level(self, name):
         self.levels[name] = self.envs.build_env(name, self)
 
@@ -1386,7 +1390,7 @@ class Environment:
         """ Checks if a placed tile has other placed tiles around it.
             If so, it creates a room if these placed tiles form a closed shape. """
         
-        from utilities import get_vicinity
+        from pygame_utilities import get_vicinity
 
         # Make a list of the tile and its neighbors
         first_neighbors = [obj]        # list of initial set of tiles; temporary

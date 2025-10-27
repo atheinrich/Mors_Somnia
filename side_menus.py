@@ -40,7 +40,7 @@ class InventoryMenu:
         self.detail      = True
 
         self.category_index = 0 # which category is active
-        self.item_index     = 0# which item (in that category) is active
+        self.item_index     = 0 # which item (in that category) is active
 
         self.categories = []
         self.items      = []
@@ -49,28 +49,35 @@ class InventoryMenu:
 
         #########################################################
         # Surface initialization
+        ## Background
         self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
 
-        #########################################################
-        # Create cursor
-        self.cursor = pygame.Surface((32, 32), pygame.SRCALPHA)
+        ## Cursor
+        self.cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
         cursor_data = {
             'size':  31,
             'width': 1,
             'alpha': 128}
         
-        self.locked_cursor = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.locked_cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.locked_cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
         locked_cursor_data = {
             'size':  30,
             'width': 2,
             'alpha': 192}
         
-        for (cursor, data) in [(self.cursor, cursor_data), (self.locked_cursor, locked_cursor_data)]:
+        cursors = [
+            (self.cursor,        self.cursor_fill,        cursor_data),
+            (self.locked_cursor, self.locked_cursor_fill, locked_cursor_data)]
+        
+        for (cursor, fill, data) in cursors:
 
-            cursor.fill((255, 255, 255, data['alpha']))
+            fill.fill((255, 255, 255, data['alpha']))
+
             pygame.draw.polygon(
-                self.cursor, 
+                cursor, 
                 pygame.Color('white'), 
                 [
                     (0, 0),
@@ -161,8 +168,10 @@ class InventoryMenu:
         ## Background
         if not self.locked: pyg.overlay_queue.append([self.background_fade, (0, 0)])
         
-        ## Cursor
+        ## Cursor fill
         #if self.cursor_pos[1] < 32: self.cursor_pos[1] = 32
+        if self.locked: pyg.overlay_queue.append([self.locked_cursor_fill, self.cursor_pos])
+        else:           pyg.overlay_queue.append([self.cursor_fill,        self.cursor_pos])
 
         ## Color
         session.img.average()
@@ -196,53 +205,48 @@ class InventoryMenu:
             img = session.img.dict[item.img_names[0]][item.img_names[1]]
             pyg.overlay_queue.append([img, (0, Y)])
         
+        ## Cursor border
         if self.locked: pyg.overlay_queue.append([self.locked_cursor, self.cursor_pos])
         else:           pyg.overlay_queue.append([self.cursor,        self.cursor_pos])
 
     # Keys
     def key_UP(self):
 
-        pyg = session.pyg
-
         if not self.locked:
             self.item_index = (self.item_index - 1) % len(self.items)
             self.update_cursor()
 
         else:
-            session.player_obj.ent.move(0, -pyg.tile_height)
+            session.player_obj.ent.move(0, -session.pyg.tile_height)
 
     def key_DOWN(self):
-
-        pyg = session.pyg
 
         if not self.locked:
             self.item_index = (self.item_index + 1) % len(self.items)
             self.update_cursor()
 
         else:
-            session.player_obj.ent.move(0, pyg.tile_height)
+            session.player_obj.ent.move(0, session.pyg.tile_height)
 
     def key_LEFT(self):
-        if len(self.categories) > 1:
-            
-            if not self.locked and self.categories:
-                self.category_index = (self.category_index - 1) % len(self.categories)
-                self.item_index = 0
-                self.rebuild_inventory_snapshot()
 
-            else:
-                session.player_obj.ent.move(-session.pyg.tile_height, 0)
+        if (not self.locked) and (self.categories):
+            self.category_index = (self.category_index - 1) % len(self.categories)
+            self.item_index     = 0
+            self.rebuild_inventory_snapshot()
+
+        else:
+            session.player_obj.ent.move(-session.pyg.tile_height, 0)
 
     def key_RIGHT(self):
-        if len(self.categories) > 1:
-            
-            if not self.locked and self.categories:
-                self.category_index = (self.category_index + 1) % len(self.categories)
-                self.item_index = 0
-                self.rebuild_inventory_snapshot()
-            
-            else:
-                session.player_obj.ent.move(session.pyg.tile_width, 0)
+        
+        if (not self.locked) and (self.categories):            
+            self.category_index = (self.category_index + 1) % len(self.categories)
+            self.item_index = 0
+            self.rebuild_inventory_snapshot()
+        
+        else:
+            session.player_obj.ent.move(session.pyg.tile_width, 0)
 
     def key_BACK(self):
         pyg = session.pyg

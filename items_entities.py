@@ -42,16 +42,20 @@ class Player:
         self.name       = 'Player'
         self.role       = 'player'
         self.img_names  = ['white', 'front']
+
         self.exp        = 0
         self.rank       = 1
+
         self.hp         = 10
         self.max_hp     = 10
         self.attack     = 0
         self.defense    = 1
         self.sanity     = 1
         self.stamina    = 100
+
         self.X          = 0
         self.Y          = 0
+
         self.habitat    = 'any'
         self.follow     = False
         self.lethargy   = 5
@@ -154,15 +158,14 @@ def create_entity(names):
     from mechanics import Entity
 
     # Look for entity
-    item     = None
     ent_dict = obj_dicts['ents']
 
     if type(names) in [tuple, list]:
         for val in ent_dict.values():
             if val.img_names == names:
-                ent = Entity(**val)
+                ent            = Entity(**val)
                 ent.handedness = random.choice(['left', 'right'])
-    else:       ent = Entity(**ent_dict[names])
+    else:       ent            = Entity(**ent_dict[names])
     
     # Return if found
     if not ent: raise Exception(names)
@@ -175,6 +178,8 @@ def create_NPC(name):
     ent      = None
     NPC_dict = obj_dicts['NPCs']
 
+    #########################################################
+    # Custom
     if name in NPC_dict.keys():
         NPC = NPC_dict[name]
 
@@ -199,6 +204,8 @@ def create_NPC(name):
                 item = create_item(item)
                 item.pick_up(ent, silent=True)
     
+    #########################################################
+    # Randomly generated
     elif name == 'random':
         
         # Basics
@@ -223,6 +230,7 @@ def create_NPC(name):
             face.toggle_equip(ent, silent=True)
         
         ent.lethargy = random.randint(1, 10)
+
         dialogue_options = [
             [f"{ent.name}: ...",
             f"{ent.name}: I had the strangest dream last night... Huh? Just talking to myself.",
@@ -234,7 +242,6 @@ def create_NPC(name):
             [f"{ent.name}: Oxi can get whatever you need, but he only sells at night.",
             f"{ent.name}: Sometimes, I just pick weeds for fun. The ground looks nice without them.",
             f"{ent.name}: ...Did you see that? Maybe I should spend less time with Oxi..."]]
-
         ent.default_dialogue = random.choice(dialogue_options)
     
     return ent

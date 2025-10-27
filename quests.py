@@ -5,15 +5,13 @@
 
 ########################################################################################################################################################
 # Imports
-## Standard
-import json
-
 ## Specific
 import pygame
 from   pygame.locals import *
 
 ## Local
 import session
+from data_management import load_json
 
 ########################################################################################################################################################
 # Classes
@@ -249,12 +247,11 @@ class QuestMenu:
         quest = log[self.choice]
         
         # Extract categories
-        self.categories = ["quest"]
-        self.categories += ["notes" for _ in quest.description]
+        self.categories  = ["notes" for _ in quest.description]
         self.categories += ["tasks" for _ in quest.objectives]
 
         # Extract objectives
-        self.choices = [quest.name] + quest.description
+        self.choices = list(quest.description)
         for objective in quest.objectives:
             if objective.complete: checkbox = "☑ "
             else:                  checkbox = "☐ "
@@ -394,12 +391,9 @@ class Questlog:
         session.bus.subscribe('item_used',         self.on_item_used)
 
     def load_quest(self, filename):
-        from data_management import find_path
 
         # Import file
-        path = find_path(f'Data/.Quests/{filename}.json')
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
+        data = load_json(f'Data/.Quests/{filename}.json')
         
         # Load objectives as keywords
         objectives = [
@@ -557,6 +551,8 @@ class QuestObjective:
         if self.on_complete:
             self.on_complete(self)
 
+########################################################################################################################################################
+# Old
 class Quest_old:
     """ Holds quest information. """
 
@@ -694,7 +690,7 @@ class Bloodkin:
         
         pyg = session.pyg
 
-        from utilities import Textbox
+        from pygame_utilities import Textbox
         
         # Read the note
         if not dialogue:

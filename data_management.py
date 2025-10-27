@@ -80,7 +80,8 @@ def load_json(filename):
         filename : str; path of the JSON file to create (including extension)
     """
 
-    with open(filename, 'r', encoding='utf-8') as f:
+    path = find_path(filename)
+    with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 ########################################################################################################################################################
@@ -194,8 +195,8 @@ other_names = ['biomes']
 #rebuild_databases(['img_ents']) # img_names + obj_names + other_names
 
 ## Load JSON files
-obj_dicts   = {name: load_json(find_path(f'Data/.Databases/{name}.json')) for name in obj_names}
-other_dicts = {name: load_json(find_path(f'Data/.Databases/{name}.json')) for name in other_names}
-img_dicts   = {name: load_json(find_path(f'Data/.Databases/{name}.json')) for name in img_names}
+obj_dicts   = {name: load_json(f'Data/.Databases/{name}.json') for name in obj_names}
+other_dicts = {name: load_json(f'Data/.Databases/{name}.json') for name in other_names}
+img_dicts   = {name: load_json(f'Data/.Databases/{name}.json') for name in img_names}
 
 ########################################################################################################################################################

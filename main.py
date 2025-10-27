@@ -92,8 +92,8 @@ from pypresence import Presence
 ## Local
 import session
 from items_entities import Player
-from utilities import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
-from utilities import Images, Audio, EventBus, render_display, render_hud
+from big_menus import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
+from pygame_utilities import Images, Audio, EventBus, render_display, render_hud
 from mechanics import Pygame, Mechanics
 from mechanics import NewGameMenu, PlayGame, PlayGarden
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
@@ -196,7 +196,7 @@ def game_states():
             session.ctrl_menu.run()
             session.ctrl_menu.render()
         
-        elif pyg.overlay_state in ['questlog', 'gardenlog']:
+        elif pyg.overlay_state == 'questlog':
             session.questlog_obj.run()
             session.questlog_obj.render()
         
@@ -289,14 +289,14 @@ def rendering():
         pyg.overlay_queue = []
         pyg.fade_queue    = []
 
+########################################################################################################################################################
+# Other
 def API_updating():
     times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']
     if API_toggle: API(
         state   = times[session.player_obj.ent.env.env_time-1],
         details = session.player_obj.ent.env.name.capitalize())
 
-########################################################################################################################################################
-# Other
 def API(state, details, init=False):
     global RPC
     

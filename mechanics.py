@@ -651,10 +651,6 @@ class NewGameMenu:
             reach       = player_obj.reach)
         
         ## Player-specific attributes
-        player_obj.ent.questlog    = {}
-        player_obj.ent.gardenlog   = Questlog()
-        player_obj.ent.gardenlog.load_quest('garden_build_a_shed')
-        player_obj.ent.gardenlog.load_quest('garden_provide_water')
         player_obj.ent.discoveries = player_obj.discoveries
         player_obj.ent.player_id   = random.randint(100_000_000, 999_999_999)
         
@@ -671,6 +667,10 @@ class NewGameMenu:
         player_obj.envs.add_area('underworld', permadeath=True)
         player_obj.envs.areas['underworld'].add_level('womb')
         player_obj.envs.areas['underworld'].add_level('garden')
+        
+        player_obj.ent.gardenlog.load_quest('garden_build_a_shed')
+        player_obj.ent.gardenlog.load_quest('garden_provide_water')
+
         session.stats_obj.pet_startup(player_obj.envs.areas['underworld']['garden'])
         
         ## Place temporary player in character creator
@@ -2515,8 +2515,6 @@ class Mechanics:
     # Item effects
     def swing(self, ent=None):
 
-        from utilities import get_vicinity
-
         # Set entity
         if not ent: ent = session.player_obj.ent
         
@@ -2819,8 +2817,6 @@ class Mechanics:
 
         pyg = session.pyg
 
-        from utilities import get_vicinity
-
         # Find entities in vicinity
         ent_list = []
         for tile in get_vicinity(session.player_obj.ent).values():
@@ -2848,8 +2844,6 @@ class Mechanics:
         """ Combo effect. """
 
         pyg = session.pyg
-
-        from utilities import get_vicinity
 
         # Find entities in vicinity
         ent = None
@@ -2880,8 +2874,6 @@ class Mechanics:
     def entity_comfort(self):
         """ Combo effect. """
 
-        from utilities import get_vicinity
-
         # Find pets in vicinity
         ent_list = []
         for tile in get_vicinity(session.player_obj.ent).values():
@@ -2899,8 +2891,6 @@ class Mechanics:
 
     def entity_clean(self):
         """ Combo effect. """
-
-        from utilities import get_vicinity
         
         # Find pets in vicinity
         ent_list = []
@@ -3371,6 +3361,28 @@ def add_doors(room):
                         
                         except:
                             continue
+
+def get_vicinity(obj):
+    """ Returns a list of tiles surrounding the given location.
+    
+        Returns
+        -------
+        obj.vicinity : dict of Tile objects
+    """
+
+    pyg = session.pyg
+
+    (x, y) = obj.X//pyg.tile_width, obj.Y//pyg.tile_width
+    obj.vicinity = {
+        'top middle'    : session.player_obj.ent.env.map[x][y-1],
+        'top right'     : session.player_obj.ent.env.map[x+1][y-1],
+        'right'         : session.player_obj.ent.env.map[x+1][y],
+        'bottom right'  : session.player_obj.ent.env.map[x+1][y+1],
+        'bottom middle' : session.player_obj.ent.env.map[x][y+1],
+        'bottom left'   : session.player_obj.ent.env.map[x-1][y+1],
+        'middle left'   : session.player_obj.ent.env.map[x-1][y],
+        'top left'      : session.player_obj.ent.env.map[x-1][y-1]}
+    return obj.vicinity
 
 ########################################################################################################################################################
 # Other
