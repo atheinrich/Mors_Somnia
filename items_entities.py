@@ -39,7 +39,7 @@ class Player:
         self.temp       = False
 
         # Default entity parameters
-        self.name       = 'Player'
+        self.name       = "player"
         self.role       = 'player'
         self.img_names  = ['white', 'front']
 

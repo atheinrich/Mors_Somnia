@@ -299,11 +299,11 @@ class Environments:
         ent = create_entity('friend')
         place_object(ent, [x, y], env)
         ent.dialogue = "Walk into something to interact with it, or press Enter (↲) if you're above it."
-        self.player_obj.ent.questlines = {}
-        self.player_obj.ent.questlines['Bloodkin'] = Bloodkin()
         
         ###############################################################
         # Quests
+        #self.player_obj.ent.questlines = {}
+        #self.player_obj.ent.questlines['Bloodkin'] = Bloodkin()
         #ent.quest    = Quest(
         #    name     = "Making a friend",
         #    notes    = ["I wonder who this is. Maybe I should say hello."],
@@ -575,8 +575,11 @@ class Environments:
             # Spawn entity
             place_object(ent, (x, y), env)
         
-        self.player_obj.ent.questlines['Friendly Faces'] = FriendlyFaces()
-        self.player_obj.ent.questlines['Friendly Faces'].making_an_introduction()
+        ###############################################################
+        # Quests
+        area.questlog.load_quest('greet_the_town')
+        #self.player_obj.ent.questlines['Friendly Faces'] = FriendlyFaces()
+        #self.player_obj.ent.questlines['Friendly Faces'].making_an_introduction()
             
         return env
 

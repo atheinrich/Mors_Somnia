@@ -668,8 +668,8 @@ class NewGameMenu:
         player_obj.envs.areas['underworld'].add_level('womb')
         player_obj.envs.areas['underworld'].add_level('garden')
         
-        player_obj.ent.gardenlog.load_quest('garden_build_a_shed')
-        player_obj.ent.gardenlog.load_quest('garden_provide_water')
+        player_obj.envs.areas['underworld'].questlog.load_quest('garden_build_a_shed')
+        player_obj.envs.areas['underworld'].questlog.load_quest('garden_provide_water')
 
         session.stats_obj.pet_startup(player_obj.envs.areas['underworld']['garden'])
         
@@ -1221,7 +1221,7 @@ class PlayGarden:
                     #########################################################
                     # Open questlog
                     elif event.key in pyg.key_QUEST:
-                        pyg.overlay_state = 'gardenlog'
+                        pyg.overlay_state = 'questlog'
                         pyg.hud_state     = 'off'
                         return
 
@@ -1476,8 +1476,8 @@ class Item:
         # Declare event
         session.bus.emit(
             event_id = 'item_used',
-            item_id  = self.name,
-            ent_id   = ent.name)
+            ent_id   = ent.name,
+            item_id  = self.name)
         
         # Handle equipment
         if self.equippable: self.toggle_equip(ent)
@@ -1893,6 +1893,12 @@ class Entity:
         # Interact with an entity
         elif self.env.map[x][y].entity:
             ent = self.env.map[x][y].entity
+
+            # Emit interaction
+            session.bus.emit(
+                event_id      = 'entity_interacted',
+                ent_id        = self.name,
+                target_ent_id = ent.name)
             
             # Talk to the entity
             if ent.dialogue or ent.default_dialogue:

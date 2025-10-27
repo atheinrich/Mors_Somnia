@@ -5,6 +5,9 @@
 
 ########################################################################################################################################################
 # Imports
+## Standard
+import random
+
 ## Specific
 import pygame
 from   pygame.locals import *
@@ -23,7 +26,7 @@ class QuestMenu:
         
             Parameters
             ----------
-            overlay    : str in ['questlog', 'gardenlog']; game state; toggles the set of quests
+            area       : str; name of the current set of environments; toggles the set of quests
             mode       : str in ['log', 'quest']; toggles individual quest view
             choices    : list of str
             categories : list of str
@@ -34,9 +37,9 @@ class QuestMenu:
         #########################################################
         # Parameters        
         ## Basics
-        self.overlay     = 'questlog'
-        self.mode        = 'log'
-        self.header      = 'questlog'
+        self.area   = None
+        self.mode   = 'log'
+        self.header = "QUESTLOG"
         
         self.choices    = [] # set later
         self.categories = [] # set later
@@ -80,6 +83,10 @@ class QuestMenu:
                 (0,                       self.backdrop_size[1]-1)],
             width = 1)
         
+        ## header
+        self.header_surface = pyg.font.render(self.header, True, pyg.white)
+        self.header_pos     = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
+
         ## Cursor
         self.cursor_surface = pygame.Surface((16, 16)).convert()
         self.cursor_surface.set_colorkey(self.cursor_surface.get_at((0, 0)))
@@ -90,10 +97,10 @@ class QuestMenu:
 
         #########################################################
         # Initialize
-        ## Switch between questlog and gardenlog
-        if self.overlay != pyg.overlay_state:
-            self.overlay = pyg.overlay_state
-            self.choice  = 0
+        ## Switch between questlogs for different areas
+        if self.area != session.player_obj.ent.env.area.name:
+            self.area   = session.player_obj.ent.env.area.name
+            self.choice = 0
             self.update_questlog()
 
         ## Set navigation speed
@@ -133,7 +140,7 @@ class QuestMenu:
                     self.key_BACK()
                     return
 
-        pyg.overlay_state = self.overlay
+        pyg.overlay_state = 'questlog'
         return
 
     def render(self):
@@ -213,10 +220,7 @@ class QuestMenu:
     def update_questlog(self):
         """ Updates and sorts main quests and side quests. """
 
-        ent = session.player_obj.ent
-
-        if self.overlay == 'questlog':    log = ent.questlog.active_quests
-        elif self.overlay == 'gardenlog': log = ent.gardenlog.active_quests
+        log = session.player_obj.ent.env.area.questlog.active_quests
 
         if self.mode == 'log':            self.update_quest_list(log)
         elif self.mode == 'quest':        self.update_quest_details(log)
@@ -234,9 +238,8 @@ class QuestMenu:
             self.categories.append(quest.category)
 
         # Construct surfaces
-        self.header            = self.overlay.upper()
+        self.header            = "QUESTLOG"
         self.header_surface    = pyg.font.render(self.header, True, pyg.white)
-        self.header_pos        = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
         self.choices_render    = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
         self.categories_render = [pyg.font.render(f'{category.lower()}', True, pyg.gray) for category in self.categories]
 
@@ -258,7 +261,7 @@ class QuestMenu:
             self.choices.append(checkbox + objective.description)
 
         # Construct surfaces
-        self.header            = quest.name
+        self.header            = quest.name.upper()
         self.header_surface    = pyg.font.render(self.header, True, pyg.white)
         self.header_pos        = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
         self.choices_render    = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
@@ -430,30 +433,33 @@ class Questlog:
         return sorted(self.active_quests, key=sort_key)
 
     # Event functions
-    def on_interact(self, active_ent, passive_ent):
+    def on_interact(self, ent_id, target_ent_id):
         for quest in self.active_quests:
-            quest.notify('entity_interacted', active_ent, passive_ent)
+            quest.notify(
+                event_id      = 'entity_interacted',
+                ent_id        = ent_id,
+                target_ent_it = target_ent_id)
 
-    def on_item_pickup(self, item_id, ent_id):
+    def on_item_pickup(self, ent_id, item_id):
         for quest in self.active_quests:
             quest.notify(
                 event_id = 'item_picked_up',
-                item_id  = item_id,
-                ent_id   = ent_id)
+                ent_id   = ent_id,
+                item_id  = item_id)
 
-    def on_item_placed(self, item_id, ent_id):
+    def on_item_placed(self, ent_id, item_id):
         for quest in self.active_quests:
             quest.notify(
                 event_id = 'item_placed',
-                item_id  = item_id,
-                ent_id   = ent_id)
+                ent_id   = ent_id,
+                item_id  = item_id)
 
-    def on_item_used(self, item_id, ent_id):
+    def on_item_used(self, ent_id, item_id):
         for quest in self.active_quests:
             quest.notify(
                 event_id = 'item_used',
-                item_id  = item_id,
-                ent_id   = ent_id)
+                ent_id   = ent_id,
+                item_id  = item_id)
 
 class Quest:
 
@@ -550,6 +556,27 @@ class QuestObjective:
 
         if self.on_complete:
             self.on_complete(self)
+
+class Dialogue:
+    def __init__(self):
+        self.dialogue_cache = {}
+        self.npc_states = {}  # Tracks which dialogue key to use per NPC
+
+    def load_npc(self, npc_id):
+        if npc_id not in self.dialogue_cache:
+            
+            self.dialogue_cache[npc_id] = load_json(f'Data/.Dialogue/{npc_id}.json')
+            
+            self.npc_states[npc_id] = "default"
+
+    def unlock_dialogue(self, npc_id, line_id):
+        self.npc_states[npc_id] = line_id
+
+    def get_dialogue(self, npc_id):
+        self.load_npc(npc_id)
+        key = self.npc_states.get(npc_id, "default")
+        lines = self.dialogue_cache[npc_id].get(key, self.dialogue_cache[npc_id]["default"])
+        return random.choice(lines)  # Works for one or multiple options
 
 ########################################################################################################################################################
 # Old

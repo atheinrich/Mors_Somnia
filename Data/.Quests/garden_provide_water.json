@@ -6,33 +6,42 @@
     "These odd beings seem thirsty.",
     "I should pour out some water for them."],
 
+
 "objectives": [
+
 
    {"event_id":    "item_used",
     "description": "Pour out some water.",
     "conditions": {
+
         "item_id": "jug of water",
         "ent_id":  "Player"}},
+
 
    {"event_id":    "tile_occupied",
     "description": "Let it take a drink.",
     "conditions": {
+
         "tile_id": "water",
         "ent_id":  [
             "red radish",
             "orange radish",
-            "purple radish"]
-    }}
+            "purple radish"]}}
+
+
 ],
 
 "on_complete": [
+
 
    {"event_id":   "reward",
     "action_id":  "add_item",
     "item_id":    "bubbles"},
 
+
    {"event_id":   "quest",
     "action_id":  "add_quest",
     "item_id":    "garden_provide_food"}
+
 
 ]}

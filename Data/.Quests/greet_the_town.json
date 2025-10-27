@@ -1,38 +1,127 @@
 {
 "quest_id":    "greet_the_town",
 "name":        "Greet the Town",
-"description": "Talk to everyone in town.",
+"category":    "main",
+"description": [
+   "Talk to everyone in town."],
 
 
 "objectives": [
 
-   {"event_type":  "entity_interacted",
-    "target":      "npc_kyrio",
+
+   {"event_id":    "entity_interacted",
     "description": "Talk to Kyrio.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "Kyrio"},
+        
     "on_complete": [
 
-       {"event_type": "dialogue",
-        "action":     "unlock",
-        "target":     "npc_kyrio",
-        "dialogue":   "after_greet"}]},
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "Kyrio",
+        "dialogue": "after_greet"}]},
 
-   {"event_type":   "entity_interacted",
-    "target": "npc_kapno",
+
+   {"event_id":    "entity_interacted",
     "description": "Talk to Kapno.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "Kapno"},
+        
     "on_complete": [
 
-       {"event_type": "dialogue",
-        "action":     "unlock",
-        "target":     "npc_kapno",
-        "dialogue":   "after_greet"}]}
-],
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "Kapno",
+        "dialogue": "after_greet"}]},
 
+
+   {"event_id":    "entity_interacted",
+    "description": "Talk to Erasti.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "Erasti"},
+        
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "Erasti",
+        "dialogue": "after_greet"}]},
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Talk to Merci.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "Merci"},
+        
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "Oxi",
+        "dialogue": "after_greet"}]},
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Talk to Oxi.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "Aya"},
+        
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "Aya",
+        "dialogue": "after_greet"}]},
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Talk to Zung.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "Zung"},
+        
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "Zung",
+        "dialogue": "after_greet"}]},
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Talk to Lilao.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "Lilao"},
+        
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "Lilao",
+        "dialogue": "after_greet"}]}
+
+
+],
 
 "on_complete": [
 
-   {"event_type": "dialogue",
-    "action":     "broadcast",
-    "target":     "npc_mayor",
-    "dialogue":   "quest_complete"}
+   
+   {"event_id": "dialogue",
+    "action":   "broadcast",
+    "target":   "npc_mayor",
+    "dialogue": "quest_complete"}
 
 ]}
