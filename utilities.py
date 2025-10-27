@@ -23,6 +23,7 @@ from data_management import img_dicts, other_dicts, find_path
 ########################################################################################################################################################
 # Classes
 class MainMenu:
+    """ Host a menu for file management and gameplay options. """
 
     # Core
     def __init__(self):
@@ -226,7 +227,10 @@ class MainMenu:
         pyg.hud_state     = 'on'
         pyg.overlay_state = None
 
+    # Tools
     def update_choices(self):
+        """ Adds a toggle to place player in the garden or main game. """
+
         pyg = session.pyg
         option_dict = {
             'play_game':   "GARDEN",
@@ -244,6 +248,7 @@ class MainMenu:
             self.choice_surfaces[0] = pyg.font.render(option_dict[self.game_state], True, pyg.gray)
         
     def switch_states(self):
+        """ Places player in the garden or main game. """
 
         pyg = session.pyg
 
@@ -252,6 +257,7 @@ class MainMenu:
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time())
 
+            # Place player in garden
             if session.player_obj.ent.env.name != 'garden':
                 place_player(
                     ent = session.player_obj.ent,
@@ -259,6 +265,7 @@ class MainMenu:
                     loc = session.player_obj.envs.areas['underworld']['garden'].player_coordinates)
                 pyg.game_state = 'play_garden'
             
+            # Place player in world
             elif not pyg.startup_toggle:
                 place_player(
                     ent = session.player_obj.ent,
@@ -269,6 +276,7 @@ class MainMenu:
 
 class FileMenu:
 
+    # Core
     def __init__(self):
         """ Hosts file saving and loading. Takes screenshots for background images.
             The mode is passed from the game state, which also populates the header.
@@ -317,9 +325,6 @@ class FileMenu:
         ## Backgrounds
         self.update_backgrounds()
 
-    def update_backgrounds(self):
-        self.backgrounds_render = [pygame.image.load(path).convert() for path in self.backgrounds]
-
     def run(self):
         
         pyg = session.pyg
@@ -359,13 +364,30 @@ class FileMenu:
         pyg.overlay_state = self.mode
         return
 
+    def render(self):
+        pyg = session.pyg
+
+        # Render background
+        pyg.overlay_queue.append([self.backgrounds_render[self.choice], (0, 0)])
+        
+        # Render header and cursor
+        pyg.overlay_queue.append([self.header_dict[self.mode], (25, 10)])
+        pyg.overlay_queue.append([self.cursor_render, (25, self.options_dict[self.choice])])
+        
+        # Render categories and options
+        for i in range(len(self.options)):
+            option_render = pyg.font.render(self.options[i], True, pyg.gray)
+            pyg.overlay_queue.append([option_render, (50, self.options_dict[i])])
+
+    # Keys
     def key_UP(self):
         self.choice = (self.choice - 1) % len(self.options)
         
     def key_DOWN(self):
         self.choice = (self.choice + 1) % len(self.options)
 
-    def save_account(self):    
+    # Tools
+    def save_account(self):
         """ Pickles a Player object, """
         
         #########################################################
@@ -393,7 +415,7 @@ class FileMenu:
         # Clean up and return
         session.pyg.overlay_state = 'main_menu'
 
-    def load_account(self):    
+    def load_account(self):
         """ Loads a pickled Player object. """
         
         pyg = session.pyg
@@ -422,6 +444,9 @@ class FileMenu:
         pyg.game_state     = 'play_game'
         pyg.overlay_state  = 'main_menu'
 
+    def update_backgrounds(self):
+        self.backgrounds_render = [pygame.image.load(path).convert() for path in self.backgrounds]
+
     def check_player_id(self, id):
         """ Overwrites a save if it matches the provided ID of a living save file. """
 
@@ -432,23 +457,9 @@ class FileMenu:
                     self.choice = choice
                     self.save_account()
 
-    def render(self):
-        pyg = session.pyg
-
-        # Render background
-        pyg.overlay_queue.append([self.backgrounds_render[self.choice], (0, 0)])
-        
-        # Render header and cursor
-        pyg.overlay_queue.append([self.header_dict[self.mode], (25, 10)])
-        pyg.overlay_queue.append([self.cursor_render, (25, self.options_dict[self.choice])])
-        
-        # Render categories and options
-        for i in range(len(self.options)):
-            option_render = pyg.font.render(self.options[i], True, pyg.gray)
-            pyg.overlay_queue.append([option_render, (50, self.options_dict[i])])
-
 class CtrlMenu:
 
+    # Core
     def __init__(self):
         """ Shows controls and allows preset selection. Menu design is set in update_controls.
             The options are keywords set in the Pygame class.
@@ -476,34 +487,6 @@ class CtrlMenu:
         # Surface initialization
         self.header_render = pyg.font.render(self.header, True, pyg.white)
         self.update_controls()
-
-    def update_controls(self, direction=None):
-        
-        pyg = session.pyg
-
-        #########################################################
-        # Change layout
-        if direction:
-            current_index = self.options.index(pyg.controls_preset)
-            new_index = (current_index + direction) % len(self.options)
-            pyg.set_controls(self.options[new_index])
-
-        #########################################################
-        # Reconstruct options for rendering
-        layout = [
-            f"Move up:                                {pyg.key_UP[0]}                     Exit:                                         {pyg.key_BACK[0]}",
-            f"Move down:                           {pyg.key_DOWN[0]}                     Activate 1:                             {pyg.key_ENTER[0]}",
-            f"Move left:                               {pyg.key_LEFT[0]}                     Activate 2:                               {pyg.key_PERIOD[0]}",
-            f"Move right:                            {pyg.key_RIGHT[0]}",
-            "",
-            
-            f"Toggle inventory:                  {pyg.key_INV[0]}                     Enter combo:                         {pyg.key_HOLD[0]}",
-            f"Toggle Catalog:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
-            f"Toggle GUI:                            {pyg.key_GUI[0]}                     Zoom in:                                {pyg.key_PLUS[0]}",
-            f"View stats:                             {pyg.key_INFO[0]}                     Zoom out:                              {pyg.key_MINUS[0]}",
-            f"View questlog:                      {pyg.key_QUEST[0]}"]
-    
-        self.layout_render = [pyg.font.render(row, True, pyg.gray) for row in layout]
 
     def run(self):
         
@@ -550,6 +533,36 @@ class CtrlMenu:
         for i in range(len(self.layout_render)):
             pyg.overlay_queue.append([self.layout_render[i], (50, 38+24*i)])
 
+    # Tools
+    def update_controls(self, direction=None):
+        
+        pyg = session.pyg
+
+        #########################################################
+        # Change layout
+        if direction:
+            current_index = self.options.index(pyg.controls_preset)
+            new_index = (current_index + direction) % len(self.options)
+            pyg.set_controls(self.options[new_index])
+
+        #########################################################
+        # Reconstruct options for rendering
+        layout = [
+            f"Move up:                                {pyg.key_UP[0]}                     Exit:                                         {pyg.key_BACK[0]}",
+            f"Move down:                           {pyg.key_DOWN[0]}                     Activate 1:                             {pyg.key_ENTER[0]}",
+            f"Move left:                               {pyg.key_LEFT[0]}                     Activate 2:                               {pyg.key_PERIOD[0]}",
+            f"Move right:                            {pyg.key_RIGHT[0]}",
+            "",
+            
+            f"Toggle inventory:                  {pyg.key_INV[0]}                     Enter combo:                         {pyg.key_HOLD[0]}",
+            f"Toggle Catalog:                   {pyg.key_DEV[0]}                     Change speed:                      {pyg.key_SPEED[0]}",
+            f"Toggle GUI:                            {pyg.key_GUI[0]}                     Zoom in:                                {pyg.key_PLUS[0]}",
+            f"View stats:                             {pyg.key_INFO[0]}                     Zoom out:                              {pyg.key_MINUS[0]}",
+            f"View questlog:                      {pyg.key_QUEST[0]}"]
+    
+        self.layout_render = [pyg.font.render(row, True, pyg.gray) for row in layout]
+
+# Needs updating
 class StatsMenu:
     
     def __init__(self):
@@ -854,6 +867,7 @@ class Textbox:
         for i in range(len(self.text_render)):
             pyg.overlay_queue.append([self.text_render[i], self.text_pos[i]])
 
+# Needs updating
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
 
@@ -898,8 +912,8 @@ class Images:
         self.armor_names   = equipment_options['armor']
         
         # Create other dictionary
-        self.other,     self.other_names = self.load_other(flipped)
-        self.other_alt, _                = self.load_other(flipped, alt=True)
+        self.other, self.other_names = self.load_other(flipped)
+        self.other_alt, _            = self.load_other(flipped, alt=True)
         
         # Create combined dictionary
         self.dict = self.ent | self.equip | self.other
@@ -1377,6 +1391,7 @@ class Images:
                     else:
                         self.render_log.pop(j)
 
+# Needs updating/fixing
 class Audio:
     """ Manages audio. One save for each file. """
 
@@ -1535,70 +1550,23 @@ class Audio:
                     pygame.time.delay(self.speech_speed)
                     pygame.event.clear()
 
+class EventBus:
+
+    def __init__(self):
+        """ Accepts event information, holds functions tied to events, and calls the functions if events match. """
+        self.listeners = {}
+
+    def subscribe(self, event_id, function):
+        """ Adds a new function to be called when the given event type occurs. """
+        self.listeners.setdefault(event_id, []).append(function)
+
+    def emit(self, event_id, **kwargs):
+        """ Accepts an event flag and calls any functions with a matching event. """
+        for function in self.listeners.get(event_id, []):
+            function(**kwargs)
+
 ########################################################################################################################################################
 # Tools
-def check_tile(x, y, ent=None, startup=False):
-    """ Reveals newly explored regions with respect to the player's position. """
-    
-    # Select entity
-    if not ent: ent = session.player_obj.ent
-
-    # Define some shorthand
-    tile = ent.env.map[x][y]
-    
-    # Reveal a square around the player
-    for u in range(x-1, x+2):
-        for v in range(y-1, y+2):
-            ent.env.map[u][v].hidden = False
-    
-    # Reveal a hidden room
-    if tile.room:
-        
-        if tile.room.hidden:
-            tile.room.hidden = False
-            for room_tile in tile.room.tiles_list:
-                room_tile.hidden = False
-        
-        # Check if the player enters or leaves a room
-        if ent.prev_tile:
-            if (tile.room != ent.prev_tile.room) or (startup == True):
-                
-                # Hide the roof if the player enters a room
-                if tile.room and tile.room.roof:
-                    for spot in tile.room.tiles_list:
-                        if spot not in tile.room.walls_list:
-                            spot.img_names = tile.room.floor
-    
-    # Reveal the roof if the player leaves the room
-    if ent.prev_tile:
-        prev_tile = ent.prev_tile
-        if prev_tile.room and not tile.room:
-            if prev_tile.room.roof:
-                for spot in prev_tile.room.tiles_list:
-                    if spot not in prev_tile.room.walls_list:
-                        spot.img_names = prev_tile.room.roof
-
-def is_blocked(env, loc):
-    """ Checks for barriers and triggers dialogue. """
-    
-    try:
-        # Check for barriers
-        if env.map[loc[0]][loc[1]].blocked:
-            return True
-        
-        # Check for monsters
-        if env.map[loc[0]][loc[1]].entity: 
-            return True
-        
-        # Triggers message for hidden passages
-        if env.map[loc[0]][loc[1]].unbreakable:
-            #session.pyg.update_gui("A mysterious breeze seeps through the cracks.", session.pyg.dark_gray)
-            pygame.event.clear()
-            return True
-    except: return False
-    
-    return False
-
 def get_vicinity(obj):
     """ Returns a list of tiles surrounding the given location.
     
@@ -1620,28 +1588,6 @@ def get_vicinity(obj):
         'middle left'   : session.player_obj.ent.env.map[x-1][y],
         'top left'      : session.player_obj.ent.env.map[x-1][y-1]}
     return obj.vicinity
-
-def sort_inventory(ent=None):   
-    
-    # Allow for NPC actions
-    if not ent: ent = session.player_obj.ent
-        
-    inventory_cache = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
-    other_cache     = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
-
-    # Sort by category
-    for item_list in ent.inventory.values():
-        for item in item_list:
-            inventory_cache[item.role].append(item)
-    
-    # Sort by stats:
-    sorted(inventory_cache['weapons'], key=lambda obj: obj.attack_bonus + obj.defense_bonus + obj.hp_bonus)
-    sorted(inventory_cache['armor'],  key=lambda obj: obj.attack_bonus + obj.defense_bonus + obj.hp_bonus)
-    sorted(inventory_cache['potions'], key=lambda obj: obj.name)
-    sorted(inventory_cache['scrolls'], key=lambda obj: obj.name)
-    sorted(inventory_cache['other'],  key=lambda obj: obj.name)
-
-    ent.inventory = inventory_cache
 
 def screenshot(folder, filename, blur=False):
     """ Takes a screenshot. """
@@ -1670,11 +1616,16 @@ def screenshot(folder, filename, blur=False):
 
 def bw_binary():
     import numpy as np
+    pyg = session.pyg
+    
+    for (surface, pos) in pyg.display_queue:
+        pyg.display.blit(surface, pos)
+    display = pygame.transform.scale(
+        pyg.display, (pyg.screen_width, pyg.screen_height))
     
     # Extract screen as image
-    screen_surface = pygame.display.get_surface()
-    raw_str        = pygame.image.tostring(screen_surface, 'RGB')
-    image          = Image.frombytes('RGB', screen_surface.get_size(), raw_str)
+    raw_str = pygame.image.tostring(display, 'RGB')
+    image   = Image.frombytes('RGB', display.get_size(), raw_str)
     
     # Apply PIL effects
     image = image.convert('L')
@@ -1685,7 +1636,8 @@ def bw_binary():
     image = image.T
     image = np.stack([image] * 3, axis=-1)
     image = pygame.surfarray.make_surface(image)
-    session.pyg.screen.blit(image, (0, 0))
+    
+    session.pyg.display_queue = [[image, (0, 0)]]
 
 def render_display():
     """ Adds tiles, entities, items, etc to the queue for rendering. """
@@ -1740,6 +1692,9 @@ def render_display():
                         pyg.display_queue.append([image, (X, Y)])
     
     ent.env.weather.render()
+
+    if session.img.render_fx == 'bw_binary': bw_binary()
+
     session.aud.shuffle()
 
 def render_hud():

@@ -6,7 +6,7 @@
 ########################################################################################################################################################
 # Imports
 ## Standard
-import time
+import json
 
 ## Specific
 import pygame
@@ -92,7 +92,7 @@ class QuestMenu:
 
         #########################################################
         # Initialize
-        ## Switch overlay
+        ## Switch between questlog and gardenlog
         if self.overlay != pyg.overlay_state:
             self.overlay = pyg.overlay_state
             self.choice  = 0
@@ -212,55 +212,96 @@ class QuestMenu:
         pyg.overlay_state = None
 
     # Tools
-    def init_questlog(self, env_name):
-        """ Sets intro quests and updates menu. Only runs once when a new game is started.
+    def update_questlog(self):
+        """ Updates and sorts main quests and side quests. """
 
-            quests          : list of Quest objects
-            quest_names     : list of strings
-            categories      : list of strings; 'main' or 'side'
-            main_quests     : list of Quest objects
-            side_quests     : list of Quest objects
-            selected_quest  : Quest object """
+        ent = session.player_obj.ent
 
-        # GUI text and Quest objects for each quest in the current log
-        for quest in self.default_Quests(env_name):
-            quest.content = quest.notes + quest.tasks
+        if self.overlay == 'questlog':    log = ent.questlog.active_quests
+        elif self.overlay == 'gardenlog': log = ent.gardenlog.active_quests
+
+        if self.mode == 'log':            self.update_quest_list(log)
+        elif self.mode == 'quest':        self.update_quest_details(log)
         
-        self.update_questlog()
+    def update_quest_list(self, log):
+        """ Prepares names and categories of active quests. """
 
+        pyg = session.pyg
+
+        # Extract choices and categories from questlog
+        self.choices    = []
+        self.categories = []
+        for quest in log:
+            self.choices.append(quest.name)
+            self.categories.append(quest.category)
+
+        # Construct surfaces
+        self.header            = self.overlay.upper()
+        self.header_surface    = pyg.font.render(self.header, True, pyg.white)
+        self.header_pos        = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
+        self.choices_render    = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
+        self.categories_render = [pyg.font.render(f'{category.lower()}', True, pyg.gray) for category in self.categories]
+
+    def update_quest_details(self, log):
+        """ Prepares description and objectives for selected quest. """
+
+        pyg   = session.pyg
+        quest = log[self.choice]
+        
+        # Extract categories
+        self.categories = ["quest"]
+        self.categories += ["notes" for _ in quest.description]
+        self.categories += ["tasks" for _ in quest.objectives]
+
+        # Extract objectives
+        self.choices = [quest.name] + quest.description
+        for objective in quest.objectives:
+            if objective.complete: checkbox = "☑ "
+            else:                  checkbox = "☐ "
+            self.choices.append(checkbox + objective.description)
+
+        # Construct surfaces
+        self.header            = quest.name
+        self.header_surface    = pyg.font.render(self.header, True, pyg.white)
+        self.header_pos        = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
+        self.choices_render    = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
+        self.categories_render = [pyg.font.render(f'{category.lower()}', True, pyg.gray) for category in self.categories]
+
+    # Old
     def default_Quests(self, env_name):
         
         # Stage 0: 
         if env_name == 'garden':
+            session.player_obj.gardenlog.add_quest('garden_build_a_shed')
         
-            water = Quest(
-                name='Leading a radix to water',
-                notes=['These odd beings seem thirsty.',
-                       'I should pour out some water for them.'],
-                tasks=['☐ Empty your jug of water.',
-                       '☐ Make a radix drink.'],
-                category='Main')
+            #water = Quest(
+            #    name='Lead a root to water',
+            #    notes=['These odd beings seem thirsty.',
+            #           'I should pour out some water for them.'],
+            #    tasks=['☐ Empty your jug of water.',
+            #           '☐ Make a radix drink.'],
+            #    category='Main')
 
-            food = Quest(
-                name='Fruit of the earth',
-                notes=['Set out some food.'],
-                tasks=['☐ Get a radix to eat.'],
-                category='Main')
+            #food = Quest(
+            #    name='Fruit of the earth',
+            #    notes=['Set out some food.'],
+            #    tasks=['☐ Get a radix to eat.'],
+            #    category='Main')
             
-            building_shelter = Quest(
-                name='Build a house',
-                notes=['Shelter would be nice.'],
-                tasks=['☐ Contruct walls.',
-                       '☐ Set a floor.',
-                       '☐ Decorate.'],
-                category='Side')
+            #building_shelter = Quest(
+            #    name='Build a house',
+            #    notes=['Shelter would be nice.'],
+            #    tasks=['☐ Contruct walls.',
+            #           '☐ Set a floor.',
+            #           '☐ Decorate.'],
+            #    category='Side')
             
-            session.player_obj.ent.gardenlog = {
-                water.name:             water,
-                food.name:              food,
-                building_shelter.name:  building_shelter}
+            #session.player_obj.ent.gardenlog = {
+            #    water.name:             water,
+            #    food.name:              food,
+            #    building_shelter.name:  building_shelter}
             
-            return water, food, building_shelter
+            #return water, food, building_shelter
         
         # Stage one: first dream
         elif env_name in [f'dungeon {n}' for n in range(10)]:
@@ -336,52 +377,187 @@ class QuestMenu:
             pyg.update_gui(f"Quest complete: {quest.name}", pyg.violet)
             del log[quest.name]
 
-    def update_questlog(self):
-        """ Updates and sorts main quests and side quests. """
+class Questlog:
 
-        # Shorthand
-        pyg = session.pyg
+    # Initializations
+    def __init__(self):
+        """ Loads and tracks all active quests and tells them about event information.
+            Defines one function for each event that might be needed for a quest, such as dialogue.
+        """
 
-        if self.overlay == 'questlog':    log = session.player_obj.ent.questlog
-        elif self.overlay == 'gardenlog': log = session.player_obj.ent.gardenlog
+        self.active_quests = []
 
-        ## Look for completed tasks and quests
-        if self.mode == 'quest':
-            quest = list(log.keys())[self.choice]
-            
-            self.header = log[list(log.keys())[self.choice]].name
-            self.choices = log[list(log.keys())[self.choice]].content
-            self.categories = log[list(log.keys())[self.choice]].categories
+        # Event functions
+        session.bus.subscribe('entity_interacted', self.on_interact)
+        session.bus.subscribe('item_picked_up',    self.on_item_pickup)
+        session.bus.subscribe('item_placed',       self.on_item_placed)
+        session.bus.subscribe('item_used',         self.on_item_used)
 
-        elif self.mode == 'log':
-            self.header = self.overlay.upper()
-            self.choices = list(log.keys())
-            self.categories = []
+    def load_quest(self, filename):
+        from data_management import find_path
 
-            ## Sort quests
-            self.main_quests = []
-            self.side_quests = []
-            
-            # Find main quests
-            for quest in log.values():
-                if not quest.finished:
-                    if quest.category == 'Main':
-                        self.main_quests.append(quest)
-                        self.categories.append(quest.category)
-            
-            # Find side quests
-            for quest in log.values():
-                if not quest.finished:
-                    if quest.category == 'Side':
-                        self.side_quests.append(quest)
-                        self.categories.append(quest.category)
+        # Import file
+        path = find_path(f'Data/.Quests/{filename}.json')
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        
+        # Load objectives as keywords
+        objectives = [
 
-        self.header_surface    = pyg.font.render(self.header, True, pyg.white)
-        self.header_pos        = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
-        self.choices_render    = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
-        self.categories_render = [pyg.font.render(f'{category.lower()}', True, pyg.gray) for category in self.categories]
+            QuestObjective(
+                event_id    = obj['event_id'],
+                description = obj['description'],
+                conditions  = obj['conditions'],
+                on_complete = obj.get('on_complete', []))
+
+            for obj in data["objectives"]]
+        
+        # Load quest as keywords
+        quest = Quest(
+            quest_id    = data['quest_id'],
+            name        = data['name'],
+            category    = data['category'],
+            description = data['description'],
+            objectives  = objectives,
+            on_complete = data.get('on_complete', []))
+        
+        self.active_quests.append(quest)
+
+        # Sort alphabetically and by category
+        self.sort_quests()
+    
+    def sort_quests(self):
+
+        def sort_key(quest):
+            if quest.category == 'main': category_order = 0
+            else:                        category_order = 1
+            return (category_order, quest.name.lower())
+
+        return sorted(self.active_quests, key=sort_key)
+
+    # Event functions
+    def on_interact(self, active_ent, passive_ent):
+        for quest in self.active_quests:
+            quest.notify('entity_interacted', active_ent, passive_ent)
+
+    def on_item_pickup(self, item_id, ent_id):
+        for quest in self.active_quests:
+            quest.notify(
+                event_id = 'item_picked_up',
+                item_id  = item_id,
+                ent_id   = ent_id)
+
+    def on_item_placed(self, item_id, ent_id):
+        for quest in self.active_quests:
+            quest.notify(
+                event_id = 'item_placed',
+                item_id  = item_id,
+                ent_id   = ent_id)
+
+    def on_item_used(self, item_id, ent_id):
+        for quest in self.active_quests:
+            quest.notify(
+                event_id = 'item_used',
+                item_id  = item_id,
+                ent_id   = ent_id)
 
 class Quest:
+
+    def __init__(self, quest_id, name, category, description, objectives, on_complete=None):
+        """ Represents a single quest. Holds objectives and checks if all are complete.
+        
+            Parameters
+            ----------
+            quest_id    : str; unique name for each quest
+            name        : str; displayed name for each quest; not necessarily unique
+            category    : str in ['main', 'side']; questlog categorization
+            description : str; description shown in questlog
+
+            objectives  : list of QuestObjective objects; tasks to be completed
+            on_complete : list of dicts; actions associated with completion
+        """
+
+        # Identifiers
+        self.quest_id    = quest_id
+        self.name        = name
+        self.category    = category
+        self.description = description
+
+        # Actions
+        self.objectives  = objectives
+        self.on_complete = on_complete
+
+    def notify(self, event_id, **kwargs):
+
+        # Check if the event satisfies an objective
+        for objective in self.objectives:
+            objective.check_event(event_id, **kwargs)
+
+        # Check if that completes all objectives
+        if self.complete:
+            for action in self.on_complete:
+                session.bus.emit("quest_action", action=action)
+
+    def complete(self):
+        return all(obj.complete for obj in self.objectives)
+
+class QuestObjective:
+
+    def __init__(self, event_id, description, conditions, on_complete=None):
+        """ Represents a single objective. Sets which events to listen for.
+            Allows a function (on_complete) to run directly and/or emits a completion flag.
+
+            Parameters
+            ----------
+            event_id    : str; event needed for objective
+            target_id   : str; name of an item, object, entity, or location
+            description : str; description to be displayed in questlog
+            on_complete : function; action to take upon completion of objective
+
+            complete    : bool; toggles task completion
+        """
+
+        self.event_id    = event_id
+        self.description = description
+
+        self.conditions  = conditions or {}
+
+        self.on_complete = on_complete
+        self.complete    = False
+
+    def check_event(self, event_id, **kwargs):
+        """ Checks if the event matches the objective. If so, checks if all conditions match. """
+
+        # Ignore events if the objective is complete
+        if self.complete:
+            return
+
+        # Ignore events that don't match the objective
+        if event_id != self.event_id:
+            return
+
+        # Check all conditions
+        for key, value in self.conditions.items():
+            event_val = kwargs.get(key)
+
+            # Check if any of multiple options satisfies the condition
+            if isinstance(value, (list, set, tuple)):
+                if event_val not in value:
+                    return
+            
+            # Check if a single option satisfies the condition
+            else:
+                if event_val != value:
+                    return
+
+        # All conditions passed
+        self.complete = True
+        session.bus.emit("objective_completed", quest=self)
+
+        if self.on_complete:
+            self.on_complete(self)
+
+class Quest_old:
     """ Holds quest information. """
 
     def __init__(self, name, notes, tasks, category, function=None):

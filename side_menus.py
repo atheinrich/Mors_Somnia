@@ -38,11 +38,47 @@ class InventoryMenu:
         self.img_names   = ['null', 'null']
         self.locked      = False
         self.detail      = True
-        
+
+        self.category_index = 0 # which category is active
+        self.item_index     = 0# which item (in that category) is active
+
+        self.categories = []
+        self.items      = []
+        self.offset     = 0
+        self.choice     = 0
+
         #########################################################
         # Surface initialization
         self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
+
+        #########################################################
+        # Create cursor
+        self.cursor = pygame.Surface((32, 32), pygame.SRCALPHA)
+        cursor_data = {
+            'size':  31,
+            'width': 1,
+            'alpha': 128}
+        
+        self.locked_cursor = pygame.Surface((32, 32), pygame.SRCALPHA)
+        locked_cursor_data = {
+            'size':  30,
+            'width': 2,
+            'alpha': 192}
+        
+        for (cursor, data) in [(self.cursor, cursor_data), (self.locked_cursor, locked_cursor_data)]:
+
+            cursor.fill((255, 255, 255, data['alpha']))
+            pygame.draw.polygon(
+                self.cursor, 
+                pygame.Color('white'), 
+                [
+                    (0, 0),
+                    (data['size'], 0),
+                    (data['size'], data['size']),
+                    (0, data['size'])
+                ],  
+                data['width'])
 
     def run(self):
         
@@ -126,53 +162,42 @@ class InventoryMenu:
         if not self.locked: pyg.overlay_queue.append([self.background_fade, (0, 0)])
         
         ## Cursor
-        if self.cursor_pos[1] < 32: self.cursor_pos[1] = 32
-        pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
+        #if self.cursor_pos[1] < 32: self.cursor_pos[1] = 32
 
         ## Color
         session.img.average()
         color = pygame.Color(session.img.left_correct, session.img.left_correct, session.img.left_correct)
         
-        ## Renders entries (up to 13 visible)
-        Y = 32
-        visible_count = 0
-        for i in range(len(list(self.dic))):
+        ## Items
+        for i in range(self.offset, min(len(self.items), self.offset + 12)):
+            item = self.items[i]
+            Y = 32 + (i - self.offset) * 32
             
-            # Stop at the 12th image, starting with respect to the offset 
-            if visible_count <= 12:
+            # Render details
+            if self.detail:
+                Y_detail = int(Y)
                 
-                # Extract image details
-                items_list = list(self.dic.keys())
-                item_name  = items_list[(i+self.offset)%len(self.dic)]
-                item       = self.find_item(offset=(i+self.offset)%len(self.dic))
+                if item:
+                    if item.equipped: detail = '(equipped)'
+                    else:             detail = ''
+                else:                 detail = ''
                 
-                # Render details
-                if self.detail:
-                    Y_detail = int(Y)
-                    
-                    if item:
-                        if item.equipped: detail = '(equipped)'
-                        else:             detail = ''
-                    else:                 detail = ''
-                    
-                    self.menu_choices = [item_name, detail]
-                    self.menu_choices_surfaces = []
-                    for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(
-                            pyg.minifont.render(self.menu_choices[i], True, color))
-                    
-                    for menu_choice_surface in self.menu_choices_surfaces:
-                        pyg.overlay_queue.append([menu_choice_surface, (40, Y_detail)])
-                        Y_detail += 12
+                self.menu_choices = [item.name, detail]
+                self.menu_choices_surfaces = []
+                for i in range(len(self.menu_choices)):
+                    self.menu_choices_surfaces.append(
+                        pyg.minifont.render(self.menu_choices[i], True, color))
                 
-                # Render image
-                pyg.overlay_queue.append([self.dic[item_name], (0, Y)])
-                Y += pyg.tile_height
-                visible_count += 1                
-                
-            else: break
+                for menu_choice_surface in self.menu_choices_surfaces:
+                    pyg.overlay_queue.append([menu_choice_surface, (40, Y_detail)])
+                    Y_detail += 12
+            
+            # Render image
+            img = session.img.dict[item.img_names[0]][item.img_names[1]]
+            pyg.overlay_queue.append([img, (0, Y)])
         
-        pyg.overlay_queue.append([self.cursor_border, self.cursor_pos])
+        if self.locked: pyg.overlay_queue.append([self.locked_cursor, self.cursor_pos])
+        else:           pyg.overlay_queue.append([self.cursor,        self.cursor_pos])
 
     # Keys
     def key_UP(self):
@@ -180,57 +205,41 @@ class InventoryMenu:
         pyg = session.pyg
 
         if not self.locked:
-            self.choice -= 1
-            if self.cursor_pos[1] == 32: self.offset -= 1
-            else: self.cursor_pos[1] -= pyg.tile_height
+            self.item_index = (self.item_index - 1) % len(self.items)
+            self.update_cursor()
 
         else:
             session.player_obj.ent.move(0, -pyg.tile_height)
-                
+
     def key_DOWN(self):
 
         pyg = session.pyg
 
         if not self.locked:
-            self.choice += 1
-            if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-            else: self.cursor_pos[1] += pyg.tile_height
+            self.item_index = (self.item_index + 1) % len(self.items)
+            self.update_cursor()
 
         else:
             session.player_obj.ent.move(0, pyg.tile_height)
 
     def key_LEFT(self):
-        if len(self.dic_categories) > 1:
+        if len(self.categories) > 1:
             
-            if not self.locked:
-                self.dic_index -= 1
-                self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-                self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-                self.choice = self.cursor_pos[1]//32 + self.offset - 1
-                
-                # Move cursor to the highest spot in the dictionary
-                if self.cursor_pos[1] > 32*len(self.dic):
-                    self.cursor_pos[1] = 32*len(self.dic)
-                    self.choice = len(self.dic) - self.offset - 1
+            if not self.locked and self.categories:
+                self.category_index = (self.category_index - 1) % len(self.categories)
+                self.item_index = 0
+                self.rebuild_inventory_snapshot()
 
             else:
                 session.player_obj.ent.move(-session.pyg.tile_height, 0)
 
     def key_RIGHT(self):
-        if len(self.dic_categories) > 1:
+        if len(self.categories) > 1:
             
-            if not self.locked:
-                self.dic_index += 1
-                self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-                self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-                self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-                self.choice = self.cursor_pos[1]//32 + self.offset - 1
-                
-                # Move cursor to the highest spot in the dictionary
-                if self.cursor_pos[1] > 32*len(self.dic):
-                    self.cursor_pos[1] = 32*len(self.dic)
-                    self.choice = len(self.dic) - self.offset - 1
+            if not self.locked and self.categories:
+                self.category_index = (self.category_index + 1) % len(self.categories)
+                self.item_index = 0
+                self.rebuild_inventory_snapshot()
             
             else:
                 session.player_obj.ent.move(session.pyg.tile_width, 0)
@@ -274,66 +283,79 @@ class InventoryMenu:
 
     def key_PERIOD(self):
         self.find_item().drop()
-        if self.cursor_pos[1] >= 32*len(self.dic):
-            self.cursor_pos[1] = 32*(len(self.dic)-1)
-            self.choice = len(self.dic) - self.offset - 2
+        self.update_data()
 
     # Tools
     def update_data(self):
-        
-        # Initialize cursor
-        if bool(self.locked): size, width, alpha = 30, 2, 192
-        else:                 size, width, alpha = 31, 1, 128
-        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill.fill((255, 255, 255, alpha))
-        pygame.draw.polygon(
-            self.cursor_border, 
-            pygame.Color('white'), 
-            [(0, 0), (size, 0), (size, size), (0, size)],  width)
-        
-        # Initialize tile selection
-        self.inventory_dics = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
-        self.dic_categories = ['weapons',     'armor',     'potions',     'scrolls',     'drugs',     'other']
-        for key, value in session.player_obj.ent.inventory.items():
-            for item in value:
-                if not item.hidden:
-                    self.inventory_dics[key][item.name] = session.img.dict[item.img_names[0]][item.img_names[1]]
-        for key, value in self.inventory_dics.items():
-            if not value: self.dic_categories.remove(key)
-        
-        # Restore last selection
-        if len(self.dic_indices) != len(self.dic_categories):
-            self.dic_indices = [[0, 0] for _ in self.dic_categories] # offset, choice
-        if self.dic_indices:
-            self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-            self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
-            self.dic    = self.inventory_dics[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        else: session.pyg.overlay_state = None
+        self.inventory_dics = self.rebuild_inventory_snapshot()
 
-    def find_item(self, offset=None):
+        self.categories = list(self.inventory_dics.keys())
+
+        if not self.categories:
+            session.pyg.overlay_state = None
+            return
+
+        self.category_index %= len(self.categories)
+
+        # 4. Update current item list
+        self.items = self.inventory_dics[self.categories[self.category_index]]
+
+        if self.items:
+            self.item_index %= len(self.items)
+        else:
+            self.item_index = 0
+
+        # 5. Derive offset/cursor (no manual tweaking here)
+        self.update_cursor()
+
+    def rebuild_inventory_snapshot(self):
+        """Rebuilds a cleaned dictionary of visible inventory items, grouped by category."""
+
+        inv = session.player_obj.ent.inventory
+
+        inventory_dics = {}
+
+        for category, items in inv.items():
+            visible_items = [item for item in items if not item.hidden]
+            if visible_items:
+                inventory_dics[category] = visible_items
+
+        return inventory_dics
+
+    def update_cursor(self):
+        max_visible = 12
+
+        if len(self.items) <= max_visible:
+            self.offset = 0
         
-        # Retrieve inventory list
-        outer_list = list(session.player_obj.ent.inventory.items())
-        length = len(outer_list)
-        filter_empty = []
-        
-        # Remove names without objects
-        for i in range(length):
-            if outer_list[i][1]: filter_empty.append(outer_list[i])
-        
-        # Name and list of objects for the selected category
-        outer_key, inner_list = filter_empty[self.dic_index%len(filter_empty)]
-        
-        # Remove hidden items
-        filtered_list = [item for item in inner_list if not item.hidden]
-        
-        # Select the item
-        if filtered_list:
-            
-            if type(offset) == int: item = filtered_list[offset%len(filtered_list)]
-            else: item = filtered_list[self.choice%len(filtered_list)]
-            return item
+        else:
+            # Keep the selected item visible
+            if self.item_index < self.offset:
+                self.offset = self.item_index
+            elif self.item_index >= self.offset + max_visible:
+                self.offset = self.item_index - max_visible + 1
+
+        # Cursor Y position is derived — not tracked separately
+        self.cursor_pos[1] = 32 + (self.item_index - self.offset) * 32
+    
+    def find_item(self):
+        """
+        Return the currently selected item in the active category,
+        or the item at a relative offset (with cycling wrap-around).
+        """
+        if not self.categories:
+            return None
+
+        # Active category and item list
+        category = self.categories[self.category_index]
+        items = self.inventory_dics.get(category, [])
+
+        if not items:
+            return None
+
+        # Compute wrapped index
+        index = (self.item_index + self.item_index - self.offset) % len(items)
+        return items[index]
 
 class CatalogMenu:
     

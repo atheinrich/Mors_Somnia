@@ -93,7 +93,7 @@ from pypresence import Presence
 import session
 from items_entities import Player
 from utilities import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
-from utilities import Images, Audio, render_display, render_hud
+from utilities import Images, Audio, EventBus, render_display, render_hud
 from mechanics import Pygame, Mechanics
 from mechanics import NewGameMenu, PlayGame, PlayGarden
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
@@ -131,6 +131,9 @@ def init():
     
     #########################################################
     # Gamestates
+    ## Event handling
+    session.bus              = EventBus()
+
     ## Primary
     session.new_game_obj     = NewGameMenu()
     session.play_game_obj    = PlayGame()

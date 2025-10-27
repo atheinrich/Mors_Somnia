@@ -620,6 +620,7 @@ class NewGameMenu:
         from items_entities import create_item
         from items_entities import Player
         from environments import Environments
+        from quests import Questlog
 
         #########################################################
         # Create player and entity
@@ -650,10 +651,12 @@ class NewGameMenu:
             reach       = player_obj.reach)
         
         ## Player-specific attributes
-        player_obj.ent.questlog        = {}
-        player_obj.ent.garden_questlog = {}
-        player_obj.ent.discoveries     = player_obj.discoveries
-        player_obj.ent.player_id       = random.randint(100_000_000, 999_999_999)
+        player_obj.ent.questlog    = {}
+        player_obj.ent.gardenlog   = Questlog()
+        player_obj.ent.gardenlog.load_quest('garden_build_a_shed')
+        player_obj.ent.gardenlog.load_quest('garden_provide_water')
+        player_obj.ent.discoveries = player_obj.discoveries
+        player_obj.ent.player_id   = random.randint(100_000_000, 999_999_999)
         
         #########################################################
         # Set default items
@@ -661,7 +664,7 @@ class NewGameMenu:
             item = create_item(item_name)
             item.pick_up(player_obj.ent,      silent=True)
             item.toggle_equip(player_obj.ent, silent=True)
-            
+        
         #########################################################
         # Initialize environments
         player_obj.envs = Environments(player_obj)
@@ -769,7 +772,6 @@ class NewGameMenu:
 
         #########################################################
         # Import
-        from utilities import sort_inventory
         from items_entities import create_item
 
         #########################################################
@@ -886,6 +888,8 @@ class PlayGame:
                         elif event.key in pyg.key_MINUS:
                             self.key_MINUS()
                         
+                        print((ent.X, ent.Y))
+
                 elif event.type == pygame.KEYUP:
 
                     if not ent.dead:
@@ -921,7 +925,6 @@ class PlayGame:
                     #########################################################
                     # Open questlog
                     if event.key in pyg.key_QUEST:
-                        session.questlog_obj.update_questlog()
                         pyg.overlay_state = 'questlog'
                         pyg.hud_state     = 'off'
                         return
@@ -1143,6 +1146,7 @@ class PlayGarden:
         """ Hosts garden gamestate as a lightweight variant of PlayGame. """
         
         pyg = session.pyg
+        ent = session.player_obj.ent
 
         #########################################################
         # Initialize
@@ -1198,6 +1202,7 @@ class PlayGarden:
                             pyg.overlay_state = 'pet_stats'
                             return
             
+                        print((ent.X, ent.Y))
 
                 elif event.type == pygame.KEYUP:
 
@@ -1216,11 +1221,9 @@ class PlayGarden:
                     #########################################################
                     # Open questlog
                     elif event.key in pyg.key_QUEST:
-                        session.questlog_obj.update_questlog()
                         pyg.overlay_state = 'gardenlog'
                         pyg.hud_state     = 'off'
                         return
-                    
 
                     #########################################################
                     # Open main menu
@@ -1388,9 +1391,6 @@ class Item:
 
         pyg = session.pyg
 
-        #########################################################
-        # Imports
-        from utilities import sort_inventory
         if not ent: ent = session.player_obj.ent
         
         #########################################################
@@ -1472,6 +1472,12 @@ class Item:
 
         # Allow for NPC actions
         if not ent: ent = session.player_obj.ent
+
+        # Declare event
+        session.bus.emit(
+            event_id = 'item_used',
+            item_id  = self.name,
+            ent_id   = ent.name)
         
         # Handle equipment
         if self.equippable: self.toggle_equip(ent)
@@ -1792,10 +1798,6 @@ class Entity:
         pyg = session.pyg
 
         #########################################################
-        # Imports
-        from utilities import is_blocked
-
-        #########################################################
         # Check if direction matches entity orientation
         ## Determine direction
         if   dY > 0: self.direction = 'front'
@@ -1862,10 +1864,6 @@ class Entity:
         """ Annex of move() for player actions. """
 
         pyg = session.pyg
-
-        #########################################################
-        # Imports
-        from utilities import check_tile, is_blocked
 
         #########################################################
         # Move forwards
@@ -1962,8 +1960,6 @@ class Entity:
         self.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
 
     def move_pet(self, x, y, dX, dY):
-
-        from utilities import is_blocked
 
         # Move forwards
         if not is_blocked(self.env, [x, y]):
@@ -2977,7 +2973,6 @@ def place_objects(env, items, entities):
         items    : list of lists; [[<biome str>, <object str>, <unlikelihood int>], ...]
         entities :  """
     
-    from utilities import is_blocked
     from items_entities import create_item, create_entity
 
     # Sort through each tile
@@ -3055,9 +3050,8 @@ def place_object(obj, loc, env, names=None):
         obj.Y0   = loc[1] * pyg.tile_height
         obj.env  = env
         obj.tile = env.map[loc[0]][loc[1]]
-        env.map[loc[0]][loc[1]].item = obj
-        if obj.blocked:
-            env.map[loc[0]][loc[1]].blocked = True
+        env.map[loc[0]][loc[1]].item    = obj
+        env.map[loc[0]][loc[1]].blocked = obj.blocked
     
     # Place entity
     elif type(obj) == Entity:
@@ -3068,6 +3062,7 @@ def place_object(obj, loc, env, names=None):
         obj.env  = env
         obj.tile = env.map[loc[0]][loc[1]]
         env.map[loc[0]][loc[1]].entity = obj
+        env.map[loc[0]][loc[1]].blocked = False
         env.entities.append(obj)
 
 def place_player(ent, env, loc):
@@ -3079,9 +3074,6 @@ def place_player(ent, env, loc):
         loc : list of integers; new location of player in tile coordinates """
     
     pyg = session.pyg
-
-    # Imports
-    from utilities import check_tile
 
     if not ent.dead:
         
@@ -3430,5 +3422,89 @@ def check_level_up():
         session.player_obj.ent.attack += 1
         session.player_obj.ent.defense += 1
         pyg.update_gui()
+
+def sort_inventory(ent=None):   
+    
+    # Allow for NPC actions
+    if not ent: ent = session.player_obj.ent
+        
+    inventory_cache = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
+    other_cache     = {'weapons': [], 'armor': [], 'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
+
+    # Sort by category
+    for item_list in ent.inventory.values():
+        for item in item_list:
+            inventory_cache[item.role].append(item)
+    
+    # Sort by stats:
+    sorted(inventory_cache['weapons'], key=lambda obj: obj.attack_bonus + obj.defense_bonus + obj.hp_bonus)
+    sorted(inventory_cache['armor'],  key=lambda obj: obj.attack_bonus + obj.defense_bonus + obj.hp_bonus)
+    sorted(inventory_cache['potions'], key=lambda obj: obj.name)
+    sorted(inventory_cache['scrolls'], key=lambda obj: obj.name)
+    sorted(inventory_cache['other'],  key=lambda obj: obj.name)
+
+    ent.inventory = inventory_cache
+
+def check_tile(x, y, ent=None, startup=False):
+    """ Reveals newly explored regions with respect to the player's position. """
+    
+    # Select entity
+    if not ent: ent = session.player_obj.ent
+
+    # Define some shorthand
+    tile = ent.env.map[x][y]
+    
+    # Reveal a square around the player
+    for u in range(x-1, x+2):
+        for v in range(y-1, y+2):
+            ent.env.map[u][v].hidden = False
+    
+    # Reveal a hidden room
+    if tile.room:
+        
+        if tile.room.hidden:
+            tile.room.hidden = False
+            for room_tile in tile.room.tiles_list:
+                room_tile.hidden = False
+        
+        # Check if the player enters or leaves a room
+        if ent.prev_tile:
+            if (tile.room != ent.prev_tile.room) or (startup == True):
+                
+                # Hide the roof if the player enters a room
+                if tile.room and tile.room.roof:
+                    for spot in tile.room.tiles_list:
+                        if spot not in tile.room.walls_list:
+                            spot.img_names = tile.room.floor
+    
+    # Reveal the roof if the player leaves the room
+    if ent.prev_tile:
+        prev_tile = ent.prev_tile
+        if prev_tile.room and not tile.room:
+            if prev_tile.room.roof:
+                for spot in prev_tile.room.tiles_list:
+                    if spot not in prev_tile.room.walls_list:
+                        spot.img_names = prev_tile.room.roof
+
+def is_blocked(env, loc):
+    """ Checks for barriers and triggers dialogue. """
+    
+    try:
+        # Check for barriers
+        if env.map[loc[0]][loc[1]].blocked:
+            return True
+        
+        # Check for monsters
+        if env.map[loc[0]][loc[1]].entity: 
+            return True
+        
+        # Triggers message for hidden passages
+        if env.map[loc[0]][loc[1]].unbreakable:
+            #session.pyg.update_gui("A mysterious breeze seeps through the cracks.", session.pyg.dark_gray)
+            pygame.event.clear()
+            return True
+    except: return False
+    
+    return False
 
 ########################################################################################################################################################

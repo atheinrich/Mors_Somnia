@@ -1,0 +1,38 @@
+{
+"quest_id":    "greet_the_town",
+"name":        "Greet the Town",
+"description": "Talk to everyone in town.",
+
+
+"objectives": [
+
+   {"event_type":  "entity_interacted",
+    "target":      "npc_kyrio",
+    "description": "Talk to Kyrio.",
+    "on_complete": [
+
+       {"event_type": "dialogue",
+        "action":     "unlock",
+        "target":     "npc_kyrio",
+        "dialogue":   "after_greet"}]},
+
+   {"event_type":   "entity_interacted",
+    "target": "npc_kapno",
+    "description": "Talk to Kapno.",
+    "on_complete": [
+
+       {"event_type": "dialogue",
+        "action":     "unlock",
+        "target":     "npc_kapno",
+        "dialogue":   "after_greet"}]}
+],
+
+
+"on_complete": [
+
+   {"event_type": "dialogue",
+    "action":     "broadcast",
+    "target":     "npc_mayor",
+    "dialogue":   "quest_complete"}
+
+]}

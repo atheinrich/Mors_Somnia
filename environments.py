@@ -58,7 +58,8 @@ class Environments:
     def build_garden(self, area):
         """ Generates the overworld environment. """
         
-        from mechanics import place_objects
+        from mechanics import place_objects, place_object
+        from items_entities import create_item
 
         ###############################################################
         ## Initialize environment
@@ -111,7 +112,7 @@ class Environments:
             walls   = env.walls,
             roof    = None,
             unbreakable = True)
-        x, y = new_room.center()[0], new_room.center()[1]
+        center = new_room.center()
         
         ###############################################################
         # Generate items and entities
@@ -119,12 +120,18 @@ class Environments:
         entities = [['forest', 'red radish', 50, [None]]]
         place_objects(env, items, entities)
         
+        x = center[0] + random.randint(1, 5)
+        y = center[1] + random.randint(1, 5)
+        item = create_item('jug of water')
+        place_object(item, (x, y), env)
+
         # Place player in first room
-        env.player_coordinates = [x, y]
-        env.map[x][y].item     = None
-        env.entity = self.player_obj.ent
+        x, y = center
+        env.player_coordinates   = center
+        env.map[x][y].item       = None
+        env.entity               = self.player_obj.ent
         self.player_obj.ent.tile = env.map[x][y]
-        env.center = new_room.center()
+        env.center = center
         
         return env
 
@@ -294,6 +301,7 @@ class Environments:
         ent.dialogue = "Walk into something to interact with it, or press Enter (↲) if you're above it."
         self.player_obj.ent.questlines = {}
         self.player_obj.ent.questlines['Bloodkin'] = Bloodkin()
+        
         ent.quest    = Quest(
             name     = "Making a friend",
             notes    = ["I wonder who this is. Maybe I should say hello."],

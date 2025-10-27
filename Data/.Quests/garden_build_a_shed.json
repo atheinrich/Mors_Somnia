@@ -1,0 +1,37 @@
+{
+"quest_id":    "garden_build_a_shed",
+"name":        "Build a Shed",
+"category":    "side",
+"description": [
+    "Build a shed to rest in."],
+
+
+"objectives": [
+
+   {"event_id":    "item_placed",
+    "description": "Build a wall for your shed.",
+    "conditions": {
+        "tile_id": "wall",
+        "ent_id":  "Player"}},
+
+   {"event_id":    "item_placed",
+    "description": "Build a floor for your shed.",
+    "conditions": {
+        "tile_id": "floor",
+        "ent_id":  "Player"}},
+
+   {"event_id":    "item_placed",
+    "description": "Add some furniture to your shed.",
+    "conditions": {
+        "item_id": "furniture",
+        "ent_id":  "Player"}}
+],
+
+
+"on_complete": [
+
+   {"event_id":   "reward",
+    "action_id":  "add_discovery",
+    "item_id":    "frond"}
+
+]}
