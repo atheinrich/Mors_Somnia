@@ -618,13 +618,13 @@ class NewGameMenu:
         #########################################################
         # Imports
         from items_entities import create_item
-        from items_entities import Player
+        from items_entities import PlayerData
         from environments import Environments
         from quests import Questlog
 
         #########################################################
         # Create player and entity
-        player_obj      = Player()
+        player_obj      = PlayerData()
         player_obj.ent  = Entity(
             name        = player_obj.name,
             role        = player_obj.role,
@@ -951,22 +951,23 @@ class PlayGame:
         #########################################################
         # Move AI controlled entities
         if not pyg.pause:
-            for entity in ent.env.entities: entity.ai()
+            for ent in ent.env.entities:
+                movement_system.ai(ent)
         
         pyg.game_state = 'play_game'
         return
 
     def key_UP(self):
-        session.player_obj.ent.move(0, -session.pyg.tile_height)
+        movement_system.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
     def key_DOWN(self):
-        session.player_obj.ent.move(0, session.pyg.tile_height)
+        movement_system.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
     def key_LEFT(self):
-        session.player_obj.ent.move(-session.pyg.tile_width, 0)
+        movement_system.move(session.player_obj.ent, -session.pyg.tile_width, 0)
 
     def key_RIGHT(self):
-        session.player_obj.ent.move(session.pyg.tile_width, 0)
+        movement_system.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
     def key_ENTER(self):
 
@@ -1240,22 +1241,23 @@ class PlayGarden:
         
         #########################################################
         # Move AI controlled entities
-        for entity in session.player_obj.ent.env.entities: entity.ai()
-        session.player_obj.ent.ai()
+        for ent in session.player_obj.ent.env.entities:
+            movement_system.ai(ent)
+        movement_system.ai(session.player_obj.ent)
         
         pyg.game_state = 'play_garden'
 
     def key_UP(self):
-        session.player_obj.ent.move(0, -session.pyg.tile_height) # >>MOVE<<
+        movement_system.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
     def key_DOWN(self):
-        session.player_obj.ent.move(0, session.pyg.tile_height)  # >>MOVE<<
+        movement_system.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
     def key_LEFT(self):
-        session.player_obj.ent.move(-session.pyg.tile_width, 0)  # >>MOVE<<
+        movement_system.move(session.player_obj.ent, -session.pyg.tile_width, 0)
 
     def key_RIGHT(self):
-        session.player_obj.ent.move(session.pyg.tile_width, 0)   # >>MOVE<<
+        movement_system.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
     def key_ENTER(self):
 
@@ -1570,7 +1572,7 @@ class Entity:
     def __init__(self, **kwargs):
         """ Parameters
             ----------
-            player_obj    : Player object
+            player_obj     : PlayerData object
 
             name           : string
             role           : string in ['player', 'enemy', 'NPC']
@@ -1705,469 +1707,6 @@ class Entity:
                 cooldown_time = 1,
                 other         = None)]
         self.effects    = []
-        
-    def ai(self):
-        """ Preset movements. """
-        
-        #########################################################
-        # Move if alive
-        moved = False
-        if not self.dead:
-            if time.time()-self.last_press > self.cooldown:
-                self.last_press = float(time.time())
-                
-                # Move or follow
-                if not self.motions_log:
-                    distance = self.distance_to(session.player_obj.ent)
-                    
-                    #########################################################
-                    # Flee
-                    if self.fear and (type(self.fear) == int):
-                        if not random.randint(0, self.lethargy//10):
-                            self.move_towards(self.X0, self.Y0)
-                            self.fear -= 1
-                            if self.fear < 0: self.fear = 0
-                    
-                    #########################################################
-                    # Approach far, possibly attack
-                    elif self.follow and (distance < 320):
-                        if not random.randint(0, self.lethargy//2):
-                            self.move_towards(session.player_obj.ent.X, session.player_obj.ent.Y)
-                    
-                        # Attack if close and aggressive; chance based on miss_rate
-                        if self.aggression:
-                            if (distance < 64) and not random.randint(0, self.miss_rate):
-                                self.attack_target(session.player_obj.ent)
-                    
-                    #########################################################
-                    # Approach near, possibly attack
-                    elif self.aggression and (session.player_obj.ent.hp > 0):
-                        
-                        # Attack if close and aggressive; chance based on miss_rate
-                        if (distance < 64) and not random.randint(0, self.miss_rate):
-                            self.attack_target(session.player_obj.ent)
-                        
-                        # Move towards the player if distant; chance based on lethargy
-                        elif (distance < self.aggression*session.pyg.tile_width) and not random.randint(0, self.lethargy//2) and not moved:
-                            self.move_towards(session.player_obj.ent.X, session.player_obj.ent.Y)
-                    
-                    #########################################################
-                    # Idle if not following or aggressive
-                    else:
-                        if self.role != 'player': self.idle()
-                
-                #########################################################
-                # Continue a prescribed pattern
-                else:
-                    loc = self.motions_log[0]
-                    self.move(loc[0], loc[1])
-                    self.motions_log.remove(loc)
-
-    def idle(self):
-        """ Randomly walks around """
-        
-        pyg = session.pyg
-
-        # Choose direction
-        if random.randint(0, 1):
-            dX = random.randint(-1, 1) * pyg.tile_width
-            dY = 0
-        else:
-            dX = 0
-            dY = random.randint(-1, 1) * pyg.tile_width
-        
-        # Move
-        if self.distance_new([self.X+dX, self.Y+dY], [self.X0, self.Y0]) <= self.reach:
-            if   (dX < 0) and (self.img_names[1] == 'left'):  chance = 5
-            elif (dX > 0) and (self.img_names[1] == 'right'): chance = 5
-            elif (dY < 0) and (self.img_names[1] == 'back'):  chance = 5
-            elif (dY > 0) and (self.img_names[1] == 'front'): chance = 5
-            else:                                             chance = 1
-            if not random.randint(0, self.lethargy//chance):
-                self.move(dX, dY)
-
-    def move(self, dX, dY):
-        """ Moves the player by the given amount if the destination is not blocked.
-            May activate any of the following:
-            - motion
-            - floor effects
-            - dialogue
-            - combat
-            - digging """
-        
-        pyg = session.pyg
-
-        #########################################################
-        # Check if direction matches entity orientation
-        ## Determine direction
-        if   dY > 0: self.direction = 'front'
-        elif dY < 0: self.direction = 'back'
-        elif dX < 0: self.direction = 'left'
-        elif dX > 0: self.direction = 'right'
-        else:        self.direction = random.choice(['front', 'back', 'left', 'right'])
-        
-        ## Change orientation before moving
-        if self.img_names[1] != self.direction:
-            if self.img_names[1]:
-                self.img_names[1] = self.direction
-
-        #########################################################
-        # Move to new position
-        else:
-            x = int((self.X + dX)/pyg.tile_width)
-            y = int((self.Y + dY)/pyg.tile_height)
-            
-            #########################################################
-            # Move player
-            if self.role == 'player': self.move_player(x, y, dX, dY)
-            
-            #########################################################
-            # Move pet
-            pet_list = ['red radish', 'orange radish', 'purple radish']
-            if self.img_names[0] in pet_list: self.move_pet(x, y, dX, dY)
-            
-            #########################################################
-            # Move NPC, enemy, or projectile
-            else:
-                
-                # Move NPC or enemy
-                if not is_blocked(self.env, [x, y]):
-                    
-                    # Keep the entity in its native habitat
-                    if self.env.map[x][y].biome in session.img.biomes[self.habitat]:
-                        
-                        if self.env.map[x][y].item and self.role == 'enemy':
-                            if self.env.map[x][y].item.img_names[0] != 'stairs':
-                                self.X          += dX
-                                self.Y          += dY
-                                self.tile.entity = None
-                                session.player_obj.ent.env.map[x][y].entity = self
-                                self.tile        = session.player_obj.ent.env.map[x][y]
-                        
-                        else:
-                            self.X          += dX
-                            self.Y          += dY
-                            self.tile.entity = None
-                            session.player_obj.ent.env.map[x][y].entity = self
-                            self.tile        = session.player_obj.ent.env.map[x][y]
-                
-                # Projectiles
-                else:
-                    if self.role == 'projectile':
-                        if self.env.map[x][y].entity:
-                            self.attack_target(self.env.map[x][y].entity)
-                            self.death()
-                        else:
-                            self.death()
-
-    def move_player(self, x, y, dX, dY):
-        """ Annex of move() for player actions. """
-
-        pyg = session.pyg
-
-        #########################################################
-        # Move forwards
-        if not is_blocked(self.env, [x, y]):
-            
-            # Move player and update map
-            self.prev_tile              = self.env.map[int(self.X/pyg.tile_width)][int(self.Y/pyg.tile_height)]
-            self.X                      += dX
-            self.Y                      += dY
-            self.tile.entity            = None
-            self.env.map[x][y].entity   = self
-            self.tile                   = self.env.map[x][y]
-            self.env.player_coordinates = [x, y]
-            check_tile(x, y)
-            
-            # Trigger floor effects
-            if self.env.map[x][y].item:
-                if self.env.map[x][y].item.effect:
-                    floor_effects(self.env.map[x][y].item.effect.name)
-            
-            # Check stamina
-            if (session.mech.movement_speed_toggle == 1) and (self.stamina > 0):
-                self.stamina -= 1/2
-                pyg.update_gui()
-        
-        #########################################################
-        # Interact with an entity
-        elif self.env.map[x][y].entity:
-            ent = self.env.map[x][y].entity
-
-            # Emit interaction
-            session.bus.emit(
-                event_id      = 'entity_interacted',
-                ent_id        = self.name,
-                target_ent_id = ent.name)
-            
-            # Talk to the entity
-            if ent.dialogue or ent.default_dialogue:
-                
-                # Quest dialogue
-                if ent.dialogue: dialogue = ent.dialogue
-                
-                # Idle chat and trading
-                else:
-                    
-                    # Idle chat
-                    dialogue = random.choice(ent.default_dialogue)
-                    
-                    # Trading
-                    if ent.trade_times:
-                        if session.player_obj.ent.env.env_time in ent.trade_times:
-                            session.trade_obj.ent = ent
-                            pyg.overlay_state = 'trade'
-                
-                # Play speech and update quests
-                if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
-                    pyg.update_gui(dialogue)
-                    session.aud.play_speech(dialogue)
-                    if ent.dialogue:
-                        ent.dialogue = ent.quest.dialogue(ent)
-            
-            # Make them flee
-            elif type(ent.fear) == int: ent.fear += 30
-            
-            # Attack the entity
-            elif (self.env.name != 'home') or (self.equipment['dominant hand'] in ['blood dagger', 'blood sword']):
-                self.attack_target(ent)
-        
-        #########################################################
-        # Dig a tunnel
-        elif self.equipment['dominant hand'] is not None:
-            if self.equipment['dominant hand'].name in ['shovel', 'super shovel']:
-                
-                # Move player and reveal tiles
-                if self.X >= 64 and self.Y >= 64:
-                    if self.super_dig or not self.env.map[x][y].unbreakable:
-                        self.env.create_tunnel(x, y)
-                        self.prev_tile                 = self.env.map[int(self.X/pyg.tile_width)][int(self.Y/pyg.tile_height)]
-                        self.X                         += dX
-                        self.Y                         += dY
-                        self.tile.entity               = None
-                        self.env.map[x][y].blocked     = False
-                        self.env.map[x][y].unbreakable = False
-                        self.env.map[x][y].img_names   = self.env.floors
-                        self.env.map[x][y].entity      = self
-                        self.tile                      = self.env.map[x][y]
-                        self.env.player_coordinates    = [x, y]
-                        check_tile(x, y)
-                    else:
-                        pyg.update_gui("The shovel strikes the barrier but does not break it.", pyg.dark_gray)
-                    
-                    # Update durability
-                    if self.equipment['dominant hand'].durability <= 100:
-                        self.equipment['dominant hand'].durability -= 1
-                    if self.equipment['dominant hand'].durability <= 0:
-                        pyg.update_gui(f"Broken {self.equipment['dominant hand'].name}!", color=pyg.dark_gray)
-                        self.equipment['dominant hand'].drop()
-                        self.tile.item = None # removes item from world
-        
-        self.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
-
-    def move_pet(self, x, y, dX, dY):
-
-        # Move forwards
-        if not is_blocked(self.env, [x, y]):
-            
-            # Move and update map
-            self.X                      += dX
-            self.Y                      += dY
-            self.tile.entity            = None
-            session.player_obj.ent.env.map[x][y].entity   = self
-            self.tile                   = self.env.map[x][y]
-            
-        # Trigger floor effects
-        if self.env.map[x][y].item:
-            if self.env.map[x][y].item.effect:
-                if self.env.map[x][y].item.effect.function == session.mech.entity_eat:
-                    self.env.map[x][y].item.effect.function(self)
-
-    def move_towards(self, target_X, target_Y):
-        """ Moves object towards target. """
-        
-        pyg = session.pyg
-
-        dX       = target_X - self.X
-        dY       = target_Y - self.Y
-        distance = (dX ** 2 + dY ** 2)**(1/2)
-        if distance:
-            
-            if dX and not dY:
-                dX = round(dX/distance) * pyg.tile_width
-                dY = 0
-            
-            elif dY and not dX:
-                dX = 0
-                dY = round(dX/distance) * pyg.tile_width
-            
-            elif dX and dY:
-                if random.randint(0, 1):
-                    dX = round(dX/distance) * pyg.tile_width
-                    dY = 0
-                else:
-                    dX = 0
-                    dY = round(dY/distance) * pyg.tile_width
-            
-            self.move(dX, dY)
-
-    def distance_to(self, other):
-        """ Returns the distance to another object. """
-        
-        if type(other) in [tuple, list]:
-            dX = other[0] - self.X
-            dY = other[1] - self.Y
-        else:
-            dX = other.X - self.X
-            dY = other.Y - self.Y
-        return (dX ** 2 + dY ** 2)**(1/2)
-
-    def distance(self, X, Y):
-        """ Returns the distance to some coordinates. """
-        
-        return ((X - self.X) ** 2 + (Y - self.Y) ** 2)**(1/2)
-
-    def distance_new(self, loc_1, loc_2):
-        return ((loc_2[0] - loc_1[0]) ** 2 + (loc_2[1] - loc_1[1]) ** 2)**(1/2)
-
-    def attack_target(self, target, effect_check=True):
-        """ Calculates and applies attack damage. """
-        
-        pyg = session.pyg
-
-        # Only attack living targets
-        if not target.dead:
-            
-            # No attacking yourself
-            if self.name != target.name:
-                
-                # Default damage calculation
-                damage = self.attack - target.defense
-                
-                # Deal damage
-                if damage > 0:
-                    
-                    # Apply an effect
-                    if effect_check and not random.randint(0, 1):
-                        if self.equipment['dominant hand']:
-                            if self.equipment['dominant hand'].effect:
-                                if self.equipment['dominant hand'].effect.trigger == 'passive':
-                                    self.equipment['dominant hand'].effect.function(self)
-                        
-                        # Regular attack
-                        else:
-                            pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", pyg.red)
-                            target.take_damage(damage)
-                    
-                    # Regular attack
-                    else:
-                        pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", pyg.red)
-                        target.take_damage(damage)
-                else:
-                    pyg.update_gui(self.name.capitalize() + " strikes " + target.name + " but it has no effect!", pyg.red)
-        return
-
-    def take_damage(self, damage):
-        """ Applies damage if possible. """
-        
-        if damage > 0:
-            
-            # Apply damage
-            self.hp -= damage
-            
-            # Damage animation
-            session.img.flash_over(self)
-            
-            # Check for death
-            if self.hp <= 0:
-                self.hp = 0
-                self.death()
-                
-                # Gain experience
-                if self != session.player_obj.ent:
-                    session.player_obj.ent.exp += self.exp
-                    check_level_up()
-                else:
-                    session.pyg.update_gui()
-
-    def death(self):
-        
-        pyg = session.pyg
-
-        #########################################################
-        # Imports
-        from items_entities import create_item
-
-        #########################################################
-        # Player death
-        if self.role == 'player':
-            pyg.update_gui("You died!", pyg.red)
-            session.player_obj.ent.dead        = True
-            session.player_obj.ent.tile.entity = None
-            session.player_obj.ent.img_names   = session.player_obj.ent.img_names_backup
-            
-            item = create_item('skeleton')
-            item.name = f"the corpse of {self.name}"
-            place_object(item, [self.X//pyg.tile_width, self.Y//pyg.tile_height], self.env)
-            pygame.event.clear()
-        
-        #########################################################
-        # Entity or projectile death
-        else:
-            self.dead        = True
-            self.tile.entity = None
-            self.env.entities.remove(self)
-            if self in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(self)
-            
-            if self.role != 'projectile':
-                pyg.update_gui("The " + self.name + " is dead! You gain " + str(self.exp) + " experience points.", pyg.red)
-                
-                if not self.tile.item:
-                    item = create_item('bones')
-                    item.name = f"the corpse of {self.name}"
-                    place_object(item, [self.X//pyg.tile_width, self.Y//pyg.tile_height], self.env)
-                    self.role = 'corpse'
-
-            del self
-
-            pygame.event.get()
-        pygame.event.clear()
-
-    def heal(self, amount):
-        """ Heals player by the given amount without going over the maximum. """
-        
-        self.hp += amount
-        if self.hp > self.max_hp:
-            self.hp = self.max_hp
-
-    def jug_of_blood(self, amount):
-        """ Heals player by the given amount without going over the maximum. """
-        
-        self.hp -= amount
-        if self.hp <= 0:
-            self.hp = 0
-            self.dead = True
-        else:
-            self.attack += 1
-
-    def toggle_effects(self):
-        """ Switches between different sets of effects. """
-        
-        if self.env.name == 'garden': self.effects = self.garden_effects
-        else:                         self.effects = self.item_effects
-
-    def capture(self):
-        pyg = session.pyg
-
-        pyg.update_gui("The " + self.name + " has been captured!", pyg.red)
-
-        # Update entity
-        self.dead        = True
-        self.tile.entity = None
-        self.env.entities.remove(self)
-        if self in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(self)
-        
-        session.player_obj.ent.discoveries['entities'][self.name] = self.img_names
 
     def draw(self, loc=None):
         """ Draws the object at its position.
@@ -2285,6 +1824,471 @@ class Entity:
         elif self.trade_times:
             if session.player_obj.ent.env.env_time in self.trade_times:
                 pyg.display_queue.append([session.img.dict['bubbles']['cart bubble'], (X, Y-pyg.tile_height)])
+
+class MovementSystem:
+
+    def ai(self, ent):
+        """ Preset movements. """
+        
+        #########################################################
+        # Move if alive
+        moved = False
+        if not ent.dead:
+            if time.time()-ent.last_press > ent.cooldown:
+                ent.last_press = float(time.time())
+                
+                # Move or follow
+                if not ent.motions_log:
+                    distance = self.distance_to(ent, session.player_obj.ent)
+                    
+                    #########################################################
+                    # Flee
+                    if ent.fear and (type(ent.fear) == int):
+                        if not random.randint(0, ent.lethargy//10):
+                            self.move_towards(ent, ent.X0, ent.Y0)
+                            ent.fear -= 1
+                            if ent.fear < 0: ent.fear = 0
+                    
+                    #########################################################
+                    # Approach far, possibly attack
+                    elif ent.follow and (distance < 320):
+                        if not random.randint(0, ent.lethargy//2):
+                            self.move_towards(ent, session.player_obj.ent.X, session.player_obj.ent.Y)
+                    
+                        # Attack if close and aggressive; chance based on miss_rate
+                        if ent.aggression:
+                            if (distance < 64) and not random.randint(0, ent.miss_rate):
+                                interaction_system.attack_target(ent, session.player_obj.ent)
+                    
+                    #########################################################
+                    # Approach near, possibly attack
+                    elif ent.aggression and (session.player_obj.ent.hp > 0):
+                        
+                        # Attack if close and aggressive; chance based on miss_rate
+                        if (distance < 64) and not random.randint(0, ent.miss_rate):
+                            interaction_system.attack_target(ent, session.player_obj.ent)
+                        
+                        # Move towards the player if distant; chance based on lethargy
+                        elif (distance < ent.aggression*session.pyg.tile_width) and not random.randint(0, ent.lethargy//2) and not moved:
+                            self.move_towards(ent, session.player_obj.ent.X, session.player_obj.ent.Y)
+                    
+                    #########################################################
+                    # Idle if not following or aggressive
+                    else:
+                        if ent.role != 'player':
+                            self.idle(ent)
+                
+                #########################################################
+                # Continue a prescribed pattern
+                else:
+                    loc = ent.motions_log[0]
+                    self.move(ent, loc[0], loc[1])
+                    ent.motions_log.remove(loc)
+
+    def idle(self, ent):
+        """ Randomly walks around """
+        
+        pyg = session.pyg
+
+        # Choose direction
+        if random.randint(0, 1):
+            dX = random.randint(-1, 1) * pyg.tile_width
+            dY = 0
+        else:
+            dX = 0
+            dY = random.randint(-1, 1) * pyg.tile_width
+        
+        # Move
+        if self.distance_new(ent, [ent.X+dX, ent.Y+dY], [ent.X0, ent.Y0]) <= ent.reach:
+            if   (dX < 0) and (ent.img_names[1] == 'left'):  chance = 5
+            elif (dX > 0) and (ent.img_names[1] == 'right'): chance = 5
+            elif (dY < 0) and (ent.img_names[1] == 'back'):  chance = 5
+            elif (dY > 0) and (ent.img_names[1] == 'front'): chance = 5
+            else:                                             chance = 1
+            if not random.randint(0, ent.lethargy//chance):
+                self.move(ent, dX, dY)
+
+    def move(self, ent, dX, dY):
+        """ Moves the player by the given amount if the destination is not blocked.
+            May activate any of the following:
+            - motion
+            - floor effects
+            - dialogue
+            - combat
+            - digging """
+        
+        pyg = session.pyg
+
+        #########################################################
+        # Check if direction matches entity orientation
+        ## Determine direction
+        if   dY > 0: ent.direction = 'front'
+        elif dY < 0: ent.direction = 'back'
+        elif dX < 0: ent.direction = 'left'
+        elif dX > 0: ent.direction = 'right'
+        else:        ent.direction = random.choice(['front', 'back', 'left', 'right'])
+        
+        ## Change orientation before moving
+        if ent.img_names[1] != ent.direction:
+            if ent.img_names[1]:
+                ent.img_names[1] = ent.direction
+
+        #########################################################
+        # Move to new position
+        else:
+            x = int((ent.X + dX)/pyg.tile_width)
+            y = int((ent.Y + dY)/pyg.tile_height)
+            
+            #########################################################
+            # Move player
+            if ent.role == 'player': self.move_player(ent, x, y, dX, dY)
+            
+            #########################################################
+            # Move pet
+            pet_list = ['red radish', 'orange radish', 'purple radish']
+            if ent.img_names[0] in pet_list: self.move_pet(ent, x, y, dX, dY)
+            
+            #########################################################
+            # Move NPC, enemy, or projectile
+            else:
+                
+                # Move NPC or enemy
+                if not is_blocked(ent.env, [x, y]):
+                    
+                    # Keep the entity in its native habitat
+                    if ent.env.map[x][y].biome in session.img.biomes[ent.habitat]:
+                        
+                        if ent.env.map[x][y].item and ent.role == 'enemy':
+                            if ent.env.map[x][y].item.img_names[0] != 'stairs':
+                                ent.X          += dX
+                                ent.Y          += dY
+                                ent.tile.entity = None
+                                session.player_obj.ent.env.map[x][y].entity = ent
+                                ent.tile        = session.player_obj.ent.env.map[x][y]
+                        
+                        else:
+                            ent.X          += dX
+                            ent.Y          += dY
+                            ent.tile.entity = None
+                            session.player_obj.ent.env.map[x][y].entity = ent
+                            ent.tile        = session.player_obj.ent.env.map[x][y]
+                
+                # Projectiles
+                else:
+                    if ent.role == 'projectile':
+                        if ent.env.map[x][y].entity:
+                            interaction_system.attack_target(ent, ent.env.map[x][y].entity)
+                            interaction_system.death(ent)
+                        else:
+                            interaction_system.death(ent)
+
+    def move_player(self, ent, x, y, dX, dY):
+        """ Annex of move() for player actions. """
+
+        pyg = session.pyg
+
+        #########################################################
+        # Move forwards
+        if not is_blocked(ent.env, [x, y]):
+            
+            # Move player and update map
+            ent.prev_tile              = ent.env.map[int(ent.X/pyg.tile_width)][int(ent.Y/pyg.tile_height)]
+            ent.X                      += dX
+            ent.Y                      += dY
+            ent.tile.entity            = None
+            ent.env.map[x][y].entity   = ent
+            ent.tile                   = ent.env.map[x][y]
+            ent.env.player_coordinates = [x, y]
+            check_tile(x, y)
+            
+            # Trigger floor effects
+            if ent.env.map[x][y].item:
+                if ent.env.map[x][y].item.effect:
+                    floor_effects(ent.env.map[x][y].item.effect.name)
+            
+            # Check stamina
+            if (session.mech.movement_speed_toggle == 1) and (ent.stamina > 0):
+                ent.stamina -= 1/2
+                pyg.update_gui()
+        
+        #########################################################
+        # Interact with an entity
+        elif ent.env.map[x][y].entity:
+            target = ent.env.map[x][y].entity
+
+            # Emit interaction
+            session.bus.emit(
+                event_id      = 'entity_interacted',
+                ent_id        = ent.name,
+                target_ent_id = target.name)
+            
+            # Talk to the entity
+            if target.dialogue or target.default_dialogue:
+                
+                # Quest dialogue
+                if target.dialogue: dialogue = target.dialogue
+                
+                # Idle chat and trading
+                else:
+                    
+                    # Idle chat
+                    dialogue = random.choice(target.default_dialogue)
+                    
+                    # Trading
+                    if target.trade_times:
+                        if session.player_obj.ent.env.env_time in target.trade_times:
+                            session.trade_obj.ent = target
+                            pyg.overlay_state = 'trade'
+                
+                # Play speech and update quests
+                if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
+                    pyg.update_gui(dialogue)
+                    session.aud.play_speech(dialogue)
+                    if target.dialogue:
+                        target.dialogue = target.quest.dialogue(target)
+            
+            # Make them flee
+            elif type(target.fear) == int: target.fear += 30
+            
+            # Attack the entity
+            elif (target.env.name != 'home') or (target.equipment['dominant hand'] in ['blood dagger', 'blood sword']):
+                interaction_system.attack_target(ent, target)
+        
+        #########################################################
+        # Dig a tunnel
+        elif ent.equipment['dominant hand'] is not None:
+            if ent.equipment['dominant hand'].name in ['shovel', 'super shovel']:
+                
+                # Move player and reveal tiles
+                if ent.X >= 64 and ent.Y >= 64:
+                    if ent.super_dig or not ent.env.map[x][y].unbreakable:
+                        ent.env.create_tunnel(x, y)
+                        ent.prev_tile                 = ent.env.map[int(ent.X/pyg.tile_width)][int(ent.Y/pyg.tile_height)]
+                        ent.X                         += dX
+                        ent.Y                         += dY
+                        ent.tile.entity               = None
+                        ent.env.map[x][y].blocked     = False
+                        ent.env.map[x][y].unbreakable = False
+                        ent.env.map[x][y].img_names   = ent.env.floors
+                        ent.env.map[x][y].entity      = ent
+                        ent.tile                      = ent.env.map[x][y]
+                        ent.env.player_coordinates    = [x, y]
+                        check_tile(x, y)
+                    else:
+                        pyg.update_gui("The shovel strikes the barrier but does not break it.", pyg.dark_gray)
+                    
+                    # Update durability
+                    if ent.equipment['dominant hand'].durability <= 100:
+                        ent.equipment['dominant hand'].durability -= 1
+                    if ent.equipment['dominant hand'].durability <= 0:
+                        pyg.update_gui(f"Broken {ent.equipment['dominant hand'].name}!", color=pyg.dark_gray)
+                        ent.equipment['dominant hand'].drop()
+                        ent.tile.item = None # removes item from world
+        
+        ent.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
+
+    def move_pet(self, ent, x, y, dX, dY):
+
+        # Move forwards
+        if not is_blocked(ent.env, [x, y]):
+            
+            # Move and update map
+            ent.X                      += dX
+            ent.Y                      += dY
+            ent.tile.entity            = None
+            session.player_obj.ent.env.map[x][y].entity   = ent
+            ent.tile                   = ent.env.map[x][y]
+            
+        # Trigger floor effects
+        if ent.env.map[x][y].item:
+            if ent.env.map[x][y].item.effect:
+                if ent.env.map[x][y].item.effect.function == session.mech.entity_eat:
+                    ent.env.map[x][y].item.effect.function(ent)
+
+    def move_towards(self, ent, target_X, target_Y):
+        """ Moves object towards target. """
+        
+        pyg = session.pyg
+
+        dX       = target_X - ent.X
+        dY       = target_Y - ent.Y
+        distance = (dX ** 2 + dY ** 2)**(1/2)
+        if distance:
+            
+            if dX and not dY:
+                dX = round(dX/distance) * pyg.tile_width
+                dY = 0
+            
+            elif dY and not dX:
+                dX = 0
+                dY = round(dX/distance) * pyg.tile_width
+            
+            elif dX and dY:
+                if random.randint(0, 1):
+                    dX = round(dX/distance) * pyg.tile_width
+                    dY = 0
+                else:
+                    dX = 0
+                    dY = round(dY/distance) * pyg.tile_width
+            
+            self.move(ent, dX, dY)
+
+    def distance_to(self, ent, other):
+        """ Returns the distance to another object. """
+        
+        if type(other) in [tuple, list]:
+            dX = other[0] - ent.X
+            dY = other[1] - ent.Y
+        else:
+            dX = other.X - ent.X
+            dY = other.Y - ent.Y
+        return (dX ** 2 + dY ** 2)**(1/2)
+
+    def distance_new(self, ent, loc_1, loc_2):
+        return ((loc_2[0] - loc_1[0]) ** 2 + (loc_2[1] - loc_1[1]) ** 2)**(1/2)
+
+class InteractionSystem:
+
+    def attack_target(self, ent, target, effect_check=True):
+        """ Calculates and applies attack damage. """
+        
+        pyg = session.pyg
+
+        # Only attack living targets
+        if not target.dead:
+            
+            # No attacking yourent
+            if ent.name != target.name:
+                
+                # Default damage calculation
+                damage = ent.attack - target.defense
+                
+                # Deal damage
+                if damage > 0:
+                    
+                    # Apply an effect
+                    if effect_check and not random.randint(0, 1):
+                        if ent.equipment['dominant hand']:
+                            if ent.equipment['dominant hand'].effect:
+                                if ent.equipment['dominant hand'].effect.trigger == 'passive':
+                                    ent.equipment['dominant hand'].effect.function(ent)
+                        
+                        # Regular attack
+                        else:
+                            pyg.update_gui(ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", pyg.red)
+                            interaction_system.take_damage(target, damage)
+                    
+                    # Regular attack
+                    else:
+                        pyg.update_gui(ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points.", pyg.red)
+                        interaction_system.take_damage(target, damage)
+                else:
+                    pyg.update_gui(ent.name.capitalize() + " strikes " + target.name + " but it has no effect!", pyg.red)
+        return
+
+    def take_damage(self, ent, damage):
+        """ Applies damage if possible. """
+        
+        if damage > 0:
+            
+            # Apply damage
+            ent.hp -= damage
+            
+            # Damage animation
+            session.img.flash_over(ent)
+            
+            # Check for death
+            if ent.hp <= 0:
+                ent.hp = 0
+                interaction_system.death(ent)
+                
+                # Gain experience
+                if ent != session.player_obj.ent:
+                    session.player_obj.ent.exp += ent.exp
+                    check_level_up()
+                else:
+                    session.pyg.update_gui()
+
+    def death(self, ent):
+        
+        pyg = session.pyg
+
+        #########################################################
+        # Imports
+        from items_entities import create_item
+
+        #########################################################
+        # Player death
+        if ent.role == 'player':
+            pyg.update_gui("You died!", pyg.red)
+            session.player_obj.ent.dead        = True
+            session.player_obj.ent.tile.entity = None
+            session.player_obj.ent.img_names   = session.player_obj.ent.img_names_backup
+            
+            item = create_item('skeleton')
+            item.name = f"the corpse of {ent.name}"
+            place_object(item, [ent.X//pyg.tile_width, ent.Y//pyg.tile_height], ent.env)
+            pygame.event.clear()
+        
+        #########################################################
+        # Entity or projectile death
+        else:
+            ent.dead        = True
+            ent.tile.entity = None
+            ent.env.entities.remove(ent)
+            if ent in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(ent)
+            
+            if ent.role != 'projectile':
+                pyg.update_gui("The " + ent.name + " is dead! You gain " + str(ent.exp) + " experience points.", pyg.red)
+                
+                if not ent.tile.item:
+                    item = create_item('bones')
+                    item.name = f"the corpse of {ent.name}"
+                    place_object(item, [ent.X//pyg.tile_width, ent.Y//pyg.tile_height], ent.env)
+                    ent.role = 'corpse'
+
+            del ent
+
+            pygame.event.get()
+        pygame.event.clear()
+
+class EffectsSystem:
+
+    def heal(self, ent, amount):
+        """ Heals player by the given amount without going over the maximum. """
+        
+        ent.hp += amount
+        if ent.hp > ent.max_hp:
+            ent.hp = ent.max_hp
+
+    def jug_of_blood(self, ent, amount):
+        """ Heals player by the given amount without going over the maximum. """
+        
+        ent.hp -= amount
+        if ent.hp <= 0:
+            ent.hp = 0
+            ent.dead = True
+        else:
+            ent.attack += 1
+
+    def toggle_effects(self, ent):
+        """ Switches between different sets of effects. """
+        
+        if ent.env.name == 'garden': ent.effects = ent.garden_effects
+        else:                         ent.effects = ent.item_effects
+
+    def capture(self, ent):
+        pyg = session.pyg
+
+        pyg.update_gui("The " + ent.name + " has been captured!", pyg.red)
+
+        # Update entity
+        ent.dead        = True
+        ent.tile.entity = None
+        ent.env.entities.remove(ent)
+        if ent in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(ent)
+        
+        session.player_obj.ent.discoveries['entities'][ent.name] = ent.img_names
 
 class Mechanics:
     """ Game parameters. Does not need to be saved. """
@@ -2535,7 +2539,7 @@ class Mechanics:
             for tile in get_vicinity(ent).values():
                 if tile.entity:
                     ent.attack += 5
-                    ent.attack_target(tile.entity, effect_check=False)
+                    interaction_system.attack_target(ent, tile.entity, effect_check=False)
                     ent.attack -= 5
             
             # Decrease stamina
@@ -2669,7 +2673,7 @@ class Mechanics:
         session.img.vicinity_flash(session.player_obj.ent, image)
         
         # Kill player
-        session.player_obj.ent.death()
+        interaction_system.death(session.player_obj.ent)
         return
 
     def spin(self, ent):
@@ -2840,7 +2844,7 @@ class Mechanics:
             for ent in ent_list:
                 for tile in get_vicinity(ent).values():
                     if not tile.blocked:
-                        ent.move_towards(tile.X, tile.Y)
+                        self.move_towards(ent, tile.X, tile.Y)
                 session.img.flash_above(ent, image)
         
         else:
@@ -2868,12 +2872,12 @@ class Mechanics:
             if session.player_obj.ent.discoveries['entities'].values():
                 for names in session.player_obj.ent.discoveries['entities'].values():
                     if ent.name not in names:
-                        ent.capture()
+                        effects_system.capture(ent)
                         break
                     else:
                         pyg.update_gui("The " + ent.name + " has already been logged.", pyg.dark_gray)
             else:
-                ent.capture()
+                effects_system.capture(ent)
         else:
             pyg.update_gui("There are no entities in your vicinity.", pyg.dark_gray)
 
@@ -3094,7 +3098,7 @@ def place_player(ent, env, loc):
         ent.X0   = loc[0] * pyg.tile_width
         ent.Y    = loc[1] * pyg.tile_height
         ent.Y0   = loc[1] * pyg.tile_height
-        ent.toggle_effects()
+        effects_system.toggle_effects(ent)
         
         # Set time and date
         if ent.env.name in ['home', 'overworld', 'cave']:
@@ -3395,7 +3399,7 @@ def get_vicinity(obj):
 def floor_effects(floor_effect):
     if floor_effect:
         if floor_effect == 'damage':
-            session.player_obj.ent.take_damage(10)
+            interaction_system.take_damage(session.player_obj.ent, 10)
 
 def active_effects():
     """ Applies effects from items and equipment. Runs constantly. """
@@ -3524,5 +3528,11 @@ def is_blocked(env, loc):
     except: return False
     
     return False
+
+########################################################################################################################################################
+# Initializations
+movement_system = MovementSystem()
+interaction_system = InteractionSystem()
+effects_system = EffectsSystem()
 
 ########################################################################################################################################################

@@ -91,7 +91,7 @@ from pypresence import Presence
 
 ## Local
 import session
-from items_entities import Player
+from items_entities import PlayerData
 from big_menus import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
 from pygame_utilities import Images, Audio, EventBus, render_display, render_hud
 from mechanics import Pygame, Mechanics
@@ -126,7 +126,7 @@ def init():
     pygame.display.set_icon(session.img.dict['decor']['skeleton'])
     
     ## Player data
-    session.player_obj       = Player()
+    session.player_obj       = PlayerData()
     session.player_obj.temp  = True
     
     #########################################################

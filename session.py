@@ -10,7 +10,7 @@ class Session:
         self.aud              = None # Audio object
         self.img              = None # Images object
 
-        self.player_obj       = None # Player object
+        self.player_obj       = None # PlayerData object
 
         self.play_game_obj    = None # PlayGame object
         self.new_game_obj     = None # NewGameMenu object

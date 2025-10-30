@@ -557,27 +557,6 @@ class QuestObjective:
         if self.on_complete:
             self.on_complete(self)
 
-class Dialogue:
-    def __init__(self):
-        self.dialogue_cache = {}
-        self.npc_states = {}  # Tracks which dialogue key to use per NPC
-
-    def load_npc(self, npc_id):
-        if npc_id not in self.dialogue_cache:
-            
-            self.dialogue_cache[npc_id] = load_json(f'Data/.Dialogue/{npc_id}.json')
-            
-            self.npc_states[npc_id] = "default"
-
-    def unlock_dialogue(self, npc_id, line_id):
-        self.npc_states[npc_id] = line_id
-
-    def get_dialogue(self, npc_id):
-        self.load_npc(npc_id)
-        key = self.npc_states.get(npc_id, "default")
-        lines = self.dialogue_cache[npc_id].get(key, self.dialogue_cache[npc_id]["default"])
-        return random.choice(lines)  # Works for one or multiple options
-
 ########################################################################################################################################################
 # Old
 class Quest_old:

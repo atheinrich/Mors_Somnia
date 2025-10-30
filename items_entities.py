@@ -10,13 +10,13 @@ import random
 
 ## Local
 import session
-from data_management import obj_dicts
+from data_management import obj_dicts, load_json
 
 ########################################################################################################################################################
 
 ########################################################################################################################################################
 # Classes
-class Player:
+class PlayerData:
     """ Manages player file. One save for each file. """
 
     def __init__(self):
@@ -84,6 +84,43 @@ class Player:
                 'red chair right': ['furniture', 'red chair right']},
             'paths': {},
             'entities': {}}
+
+class Dialogue:
+    """ Imports and stores dialogue from JSON files, and returns a random piece of accessible dialogue. """
+
+    def __init__(self):
+        """ Initialize dialogue and state containers. The cache dictionary holds all dialogue for all loaded NPCs.
+            The states dictionary identifies the current set of dialogue for all loaded NPCs.
+
+            Parameters
+            ----------
+            dialogue_cache : dict; (key) NPC names → (key) dialogue set identifier → (value) dialogue string
+            npc_states     : dict; (key) NPC names → (value) dialogue set identifier
+        """
+
+        self.dialogue_cache = {}
+        self.npc_states     = {}
+
+    def load_npc(self, npc_id):
+        """ Sends all dialogue to dialogue_cache. """
+
+        if npc_id not in self.dialogue_cache:
+            
+            self.dialogue_cache[npc_id] = load_json(f'Data/.Dialogue/{npc_id}.json')
+            self.npc_states[npc_id]     = "default"
+
+    def unlock_dialogue(self, npc_id, dialogue_id):
+        """ Changes current set of available options. """
+
+        self.npc_states[npc_id] = dialogue_id
+
+    def get_dialogue(self, npc_id):
+        """ Return a random dialogue string from the character's current set of available options. """
+
+        self.load_npc(npc_id)
+        key   = self.npc_states.get(npc_id)
+        lines = self.dialogue_cache[npc_id].get(key)
+        return random.choice(lines)
 
 class Effect:
 

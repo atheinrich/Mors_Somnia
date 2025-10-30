@@ -14,6 +14,7 @@ from   pygame.locals import *
 
 ## Local
 import session
+from mechanics import movement_system
 
 ########################################################################################################################################################
 # Classes
@@ -217,7 +218,7 @@ class InventoryMenu:
             self.update_cursor()
 
         else:
-            session.player_obj.ent.move(0, -session.pyg.tile_height)
+            movement_system.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
     def key_DOWN(self):
 
@@ -226,7 +227,7 @@ class InventoryMenu:
             self.update_cursor()
 
         else:
-            session.player_obj.ent.move(0, session.pyg.tile_height)
+            movement_system.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
     def key_LEFT(self):
 
@@ -236,7 +237,7 @@ class InventoryMenu:
             self.rebuild_inventory_snapshot()
 
         else:
-            session.player_obj.ent.move(-session.pyg.tile_height, 0)
+            movement_system.move(session.player_obj.ent, -session.pyg.tile_height, 0)
 
     def key_RIGHT(self):
         
@@ -246,7 +247,7 @@ class InventoryMenu:
             self.rebuild_inventory_snapshot()
         
         else:
-            session.player_obj.ent.move(session.pyg.tile_width, 0)
+            movement_system.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
     def key_BACK(self):
         pyg = session.pyg
@@ -480,7 +481,7 @@ class CatalogMenu:
             else: self.cursor_pos[1] -= pyg.tile_height
         
         else:
-            session.player_obj.ent.move(0, -pyg.tile_height)
+            movement_system.move(session.player_obj.ent, 0, -pyg.tile_height)
                 
     def key_DOWN(self):
         pyg = session.pyg
@@ -491,7 +492,7 @@ class CatalogMenu:
             else: self.cursor_pos[1] += pyg.tile_height
             
         else:
-            session.player_obj.ent.move(0, pyg.tile_height)
+            movement_system.move(session.player_obj.ent, 0, pyg.tile_height)
 
     def key_LEFT(self):
 
@@ -503,7 +504,7 @@ class CatalogMenu:
                 self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
         
         else:
-            session.player_obj.ent.move(-session.pyg.tile_height, 0)
+            movement_system.move(session.player_obj.ent, -session.pyg.tile_height, 0)
 
         self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
         self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
@@ -524,7 +525,7 @@ class CatalogMenu:
                 self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
         
         else:
-            session.player_obj.ent.move(session.pyg.tile_width, 0)
+            movement_system.move(session.player_obj.ent, session.pyg.tile_width, 0)
         
         self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
         self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
@@ -664,7 +665,7 @@ class AbilitiesMenu:
     
     def __init__(self):
         """ Shows a sidebar menu when a key is held down, then processes input as a combo.
-            Options are based on the player's effects, which are managed in Player. 
+            Options are based on the player's effects, which are managed in PlayerData. 
             
             Parameters
             ----------
