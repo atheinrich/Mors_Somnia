@@ -8,6 +8,7 @@
 ## Standard
 import random
 import time
+import copy
 
 ## Specific
 import pygame
@@ -20,6 +21,436 @@ from data_management import img_dicts, other_dicts, find_path
 
 ########################################################################################################################################################
 # Classes
+class Pygame:
+
+    def __init__(self):
+        """ Manages pygame parameters, GUI details, and display transitions. Nothing here is saved elsewhere.
+            
+            There are four main surfaces that render in order.
+                1) Display: Tiles, entities, items, etc.
+                2) Overlay: Menus, inventories, questlogs, etc.
+                3) Fade:    Black screen, narrative, logos, etc.
+                5) Screen:  Final output of all prior surfaces.
+        """
+
+        #########################################################
+        # Start pygame
+        pygame.init()
+        pygame.key.set_repeat(250, 150)
+        pygame.display.set_caption("Mors Somnia")
+
+        #########################################################
+        # Shorthand and gameplay parameters
+        self.set_graphics()
+        self.set_controls('numpad 1')
+        self.set_colors()
+        
+        #########################################################
+        # Screens
+        self.init_screen()
+        self.init_display()
+        self.init_hud()
+        self.init_overlay()
+        self.init_fade()
+
+        #########################################################
+        # Utility
+        self.pause = False
+        self.startup_toggle  = True
+        self.cooldown_time   = 0.2
+        self.last_press_time = 0
+
+    # Screens
+    def init_screen(self):
+        """ Final window that everything is shown on. """
+        
+        self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
+        self.windowed = False
+        self.font     = pygame.font.SysFont('segoeuisymbol', 16, bold=True)
+        self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True)
+        self.clock    = pygame.time.Clock()
+
+    def init_display(self):
+        """ World pieces, like environment tiles and entities. """
+        
+        self.display       = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        self.game_state    = 'startup'
+        self.display_queue = []
+
+    def init_hud(self):
+        """ Status bars, time, and messages/dialogue. """
+        
+        self.hud       = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.hud_state = 'off'
+        self.hud_queue = []
+        
+        self.msg = []  # list of font objects; messages to be rendered
+        self.gui = {
+            'health':   self.font.render('', True, self.red),
+            'stamina':  self.font.render('', True, self.green),
+            'location': self.font.render('', True, self.gray)}
+        
+        self.msg_toggle  = True  # bool; shows or hides messages
+        self.gui_toggle  = True  # bool; shows or hides GUI
+        self.msg_height  = 4     # number of lines shown
+        self.msg_width   = int(self.screen_width / 6)
+        self.msg_history = {}
+
+    def init_overlay(self):
+        """ Menus and action bars. """
+        
+        self.overlays      = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.overlay_state = 'menu'
+        self.overlay_queue = []
+
+    def init_fade(self):
+        """ Black surface of variable opacity, overlaid text, and background functions. """
+        
+        self.fade          = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.fade_surface  = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
+        self.fade_state    = 'in'
+        self.fade_queue    = []
+        self.fade_cache    = []
+        self.fn_queue      = []
+
+        self.fade_speed    = 5
+        self.fade_delay    = 0
+        self.max_alpha     = 255
+        self.min_alpha     = 0
+        self.fade_alpha    = 255
+
+    # Gameplay settings and shorthand
+    def set_controls(self, controls):
+        
+        #########################################################
+        # Change control scheme
+        self.controls_preset = controls
+        
+        #########################################################
+        # Define control schemes
+        ## Extended
+        if controls == 'arrows':
+            
+            # Movement
+            self.key_UP       = ['↑', K_UP,    K_w]
+            self.key_DOWN     = ['↓', K_DOWN,  K_s]
+            self.key_LEFT     = ['←', K_LEFT,  K_a]
+            self.key_RIGHT    = ['→', K_RIGHT, K_d]
+            
+            # Actions
+            self.key_BACK     = ['/', K_BACKSPACE, K_ESCAPE,  K_SLASH, K_KP_DIVIDE]
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS]
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]
+            self.key_HOLD     = ['0', K_0, K_KP0]
+            
+            # Menus
+            self.key_INV      = ['4', K_4, K_KP4]
+            self.key_DEV      = ['6', K_6, K_KP6]
+            self.key_INFO     = ['7', K_7, K_KP7]
+            self.key_SPEED    = ['8', K_8, K_KP8]
+            self.key_QUEST    = ['9', K_9, K_KP9]
+            
+            # Other
+            self.key_EQUIP    = ['2', K_2, K_KP2]
+            self.key_DROP     = ['3', K_3, K_KP3]
+
+        ## Alternate 1
+        elif controls == 'numpad 1':
+            
+            # Movement
+            self.key_UP       = ['5', K_5, K_KP5,  K_UP]
+            self.key_DOWN     = ['2', K_2, K_KP2,  K_DOWN]
+            self.key_LEFT     = ['1', K_1, K_KP1,  K_LEFT]
+            self.key_RIGHT    = ['3', K_3, K_KP3,  K_RIGHT]
+
+            # Actions
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS]
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]
+            self.key_HOLD     = ['0', K_0, K_KP0]
+            
+            # Menus
+            self.key_INV      = ['4', K_4, K_KP4]
+            self.key_DEV      = ['6', K_6, K_KP6]
+            self.key_INFO     = ['7', K_7, K_KP7]
+            self.key_SPEED    = ['8', K_8, K_KP8]
+            self.key_QUEST    = ['9', K_9, K_KP9]
+            
+            # Unused
+            self.key_EQUIP    = []
+            self.key_DROP     = []
+
+        # Alternate 2
+        elif controls == 'numpad 2':
+            
+            # Movement
+            self.key_UP       = ['8', K_8, K_KP8,  K_UP]
+            self.key_DOWN     = ['5', K_5, K_KP5,  K_DOWN]
+            self.key_LEFT     = ['4', K_4, K_KP4,  K_LEFT]
+            self.key_RIGHT    = ['6', K_6, K_KP6,  K_RIGHT]
+
+            # Actions
+            self.key_BACK     = ['/', K_SLASH,     K_KP_DIVIDE]
+            self.key_GUI      = ['*', K_ASTERISK,  K_KP_MULTIPLY, K_a]
+            self.key_ENTER    = ['↲', K_RETURN,    K_KP_ENTER]
+            self.key_PERIOD   = ['.', K_KP_PERIOD, K_DELETE]
+            self.key_PLUS     = ['+', K_PLUS,      K_KP_PLUS, K_EQUALS]
+            self.key_MINUS    = ['-', K_MINUS,     K_KP_MINUS]
+            self.key_HOLD     = ['0', K_0, K_KP0]
+            
+            # Menus
+            self.key_INV      = ['7', K_7, K_KP7]
+            self.key_DEV      = ['9', K_9, K_KP9]
+            self.key_INFO     = ['1', K_1, K_KP1]
+            self.key_SPEED    = ['2', K_2, K_KP2]
+            self.key_QUEST    = ['3', K_3, K_KP3]
+            
+            # Unused
+            self.key_EQUIP    = []
+            self.key_DROP     = []
+
+        # Categories
+        self.key_movement = self.key_UP + self.key_DOWN + self.key_LEFT + self.key_RIGHT
+
+    def set_colors(self):
+        
+        #########################################################
+        # Define shorthand
+        self.black     = pygame.color.THECOLORS['black']
+        self.dark_gray = pygame.color.THECOLORS['gray60']
+        self.gray      = pygame.color.THECOLORS['gray90']
+        self.white     = pygame.color.THECOLORS['white']
+        self.red       = pygame.color.THECOLORS['orangered3']
+        self.green     = pygame.color.THECOLORS['palegreen4']
+        self.blue      = pygame.color.THECOLORS['blue']
+        self.yellow    = pygame.color.THECOLORS['yellow']
+        self.orange    = pygame.color.THECOLORS['orange']
+        self.violet    = pygame.color.THECOLORS['violet']
+        self.colors    = [self.black, self.dark_gray, self.gray, self.white,
+                          self.red, self.orange, self.yellow, self.green, self.blue, self.violet]
+
+    def set_graphics(self):
+        
+        #########################################################
+        # Graphics parameters
+        self.screen_width      = 640 # 20 tiles
+        self.screen_height     = 480 # 15 tiles
+        self.tile_width        = 32
+        self.tile_height       = 32
+        self.map_width         = 640 * 2
+        self.map_height        = 480 * 2
+        self.tile_map_width    = int(self.map_width/self.tile_width)
+        self.tile_map_height   = int(self.map_height/self.tile_height)
+
+    # HUD tools
+    def textwrap(self, text, width):
+        """ Separates long chunks of text into consecutive lines. """
+        
+        #########################################################
+        # Initialize
+        words        = text.split()
+        lines        = []
+        current_line = []
+
+        #########################################################
+        # Split lines
+        for word in words:
+            if (sum(len(w) for w in current_line) + len(current_line) + len(word)) <= width:
+                current_line.append(word)
+            else:
+                lines.append(" ".join(current_line))
+                current_line = [word]
+        
+        if current_line:
+            lines.append(" ".join(current_line))
+
+        return lines
+
+    def update_gui(self, new_msg=None, color=None, ent=None):
+        """ Constructs (but does not render) messages in the top GUI and stats in the bottom GUI.
+
+            Parameters
+            ----------
+            new_msg     : str; text added to top GUI
+            color       : pygame Color; color of new message
+            ent         : Entity object; only specified at startup
+
+            msg_history : dict; all prior messages and colors in memory
+        """
+        
+        #########################################################
+        # Initialize
+        ## Shorthand
+        if not ent: ent = session.player_obj.ent
+        pyg             = session.pyg
+        img             = session.img
+
+        ## Prepare colors
+        img.average()
+        if not color:
+            color    = pygame.Color(255-img.top_color[0],    255-img.top_color[1],    255-img.top_color[2])
+        bottom_color = pygame.Color(255-img.bottom_color[0], 255-img.bottom_color[1], 255-img.bottom_color[2])
+        
+        #########################################################
+        # Messages (top GUI)
+        ## Add new message
+        if new_msg:
+            for line in pyg.textwrap(new_msg, pyg.msg_width):
+
+                # Only show a message once
+                if line in self.msg_history.keys():
+                    del self.msg_history[line]
+                self.msg_history[line] = color
+
+        ## Find which messages to display
+        index               = len(self.msg_history) - self.msg_height
+        if index < 0: index = 0
+        lines  = list(self.msg_history.keys())[index:]
+        colors = list(self.msg_history.values())[index:]
+
+        ## Construct list for display
+        self.msg = []
+        for i in range(len(lines)):
+            if colors[i] in pyg.colors: self.msg.append(self.font.render(lines[i], True, colors[i]))
+            else:                       self.msg.append(self.font.render(lines[i], True, color))
+        
+        #########################################################
+        # Stats (bottom GUI)
+        ## Health text
+        current_health  = int(ent.hp / ent.max_hp * 10)
+        leftover_health = 10 - current_health
+        health          = '⚪' * leftover_health + '⚫' * current_health
+        
+        ## Stamina text
+        current_stamina  = int((ent.stamina % 101) / 10)
+        leftover_stamina = 10 - current_stamina
+        stamina          = '⚫' * current_stamina + '⚪' * leftover_stamina
+        
+        ## Time text
+        time = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'][ent.env.env_time-1]
+        
+        ## Construct dictionary for display
+        if pyg.overlay_state:
+            if self.msg: self.msg = [self.msg[-1]]
+            
+            # Wallet text
+            wallet = f"⨋ {ent.wallet}"
+
+            # Location text
+            if ent.env.lvl_num: env = f"{ent.env.name} (level {ent.env.lvl_num})"
+            else:               env = f"{ent.env.name}"
+        else: wallet, env = '', ''
+        
+        self.gui = {
+            'wallet':   self.minifont.render(wallet,  True, bottom_color),
+            'health':   self.minifont.render(health,  True, self.red),
+            'time':     self.minifont.render(time,    True, bottom_color),
+            'stamina':  self.minifont.render(stamina, True, self.green),
+            'location': self.minifont.render(env,     True, bottom_color)}
+
+    # Fade tools
+    def update_fade(self):
+        """ Update the fade's alpha each frame and queues the intertitle with effects.
+            Pauses the game while the fade is ongoing.
+            
+            A fadein/fadeout is triggered by setting fade_state. Intertitles are held in fade_cache and
+            sent to fade_queue until the fadeout is complete. Functions to be delayed are held in fn_queue
+            and run in main after the fadein is complete.
+
+            Example
+            -------
+            pyg.add_intertitle("This is shown over a black screen.")
+            pyg.fn_queue.append([function_in_background,  {}])
+            pyg.fn_queue.append([function_with_arguments, {'parameter_name': value}])
+            pyg.fade_delay = 400
+            pyg.fade_state = 'out'
+        """
+
+        # Update alpha
+        if self.fade_state != 'off':
+            self.pause = True
+            self.fade_surface.fill((0, 0, 0))
+            
+            #########################################################
+            # Fade in from black
+            if self.fade_state == 'in':
+
+                # Change alpha
+                if self.fade_delay >= 0: self.fade_delay -= self.fade_speed
+                else:                    self.fade_alpha -= self.fade_speed
+
+                # End fade
+                if self.fade_alpha <= self.min_alpha:
+                    self.fade_alpha = self.min_alpha
+
+                    self.fade_cache = []
+                    self.pause      = False
+                    self.fade_state = 'off'
+            
+            #########################################################
+            # Fade out to black
+            elif self.fade_state == 'out':
+
+                # Change alpha
+                if self.fade_delay >= 0: self.fade_delay -= self.fade_speed
+                else:                    self.fade_alpha += self.fade_speed
+
+                # End fade
+                if self.fade_alpha >= self.max_alpha:
+                    self.fade_alpha = self.max_alpha
+
+                    self.fade_state = 'on'
+
+            #########################################################
+            # Run functions while holding a black screen
+            elif self.fade_state == 'on':
+                
+                # Check current time
+                start_time = time.time()
+
+                # Process functions in queue
+                while self.fn_queue:
+                    function, kwargs = self.fn_queue.pop(0)
+                    function(**kwargs)
+                self.fade_state = 'in'
+
+                # Hold text for at least 3 seconds, including run time
+                remaining_time = 4 - (time.time() - start_time)
+                if remaining_time > 0: time.sleep(remaining_time)
+
+            #########################################################
+            # Update surfaces
+            self.fade_surface.set_alpha(self.fade_alpha)
+            self.fade_queue.append([self.fade_surface, (0, 0)])
+
+            #if self.fade_alpha >= self.max_alpha * 0.8:
+            for (surface, loc) in self.fade_cache:
+
+                # Set flicker effect
+                flicker_low  = max(self.fade_alpha-100, self.min_alpha)
+                flicker_high = min(self.fade_alpha,     self.max_alpha-100)
+
+                surface.set_alpha(random.randint(flicker_low, flicker_high))
+                self.fade_queue.append([surface, loc])
+
+    def add_intertitle(self, text=None, surface=None, loc='centered'):
+        
+        if text: surface = self.font.render(text, True, self.white)
+        else:    surface = copy.copy(surface)
+
+        if loc == 'centered':
+            X = int((self.screen_width - surface.get_width())/2)
+            Y = int((self.screen_height - surface.get_height())/2)
+            loc = (X, Y)
+        
+        self.fade_cache.append([surface, loc])
+
 # Needs updating
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -458,7 +889,7 @@ class Images:
         
         pyg = session.pyg
 
-        shift = 32 - self.ent_data[ent.name]['height']
+        shift = 32 - self.ent_data[ent.img_names[0]]['height']
         
         self.impact = True
         

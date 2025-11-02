@@ -1,0 +1,15 @@
+{
+"default": [
+    ". . .",
+    "! ! !"],
+
+"tutorial_1": ["Walk into something to interact with it, or press Enter (↲) if you're above it."],
+"tutorial_2": ["Press Slash (/) to view the main menu. Try it again to return!"],
+"tutorial_3": ["Use Plus (+) to zoom in, or use Minus (-) to zoom out."],
+"tutorial_4": ["Press Four (4) to open your inventory. Period (.) drops, and Enter activates!"],
+"tutorial_5": ["Try holding Zero (0) to enter combos. Nine (9) can be used to view details."],
+
+"tutorial_complete": [
+    "Check out Options in the Main Menu!"]
+
+}

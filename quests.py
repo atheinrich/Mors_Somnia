@@ -104,7 +104,7 @@ class QuestMenu:
             self.update_questlog()
 
         ## Set navigation speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         ## Wait for input
         for event in pygame.event.get():
@@ -386,8 +386,9 @@ class Questlog:
         """
 
         self.active_quests = []
+        self.subscribe_events()
 
-        # Event functions
+    def subscribe_events(self):
         session.bus.subscribe('entity_interacted', self.on_interact)
         session.bus.subscribe('item_picked_up',    self.on_item_pickup)
         session.bus.subscribe('item_placed',       self.on_item_placed)
@@ -534,26 +535,32 @@ class QuestObjective:
 
         # Ignore events that don't match the objective
         if event_id != self.event_id:
+            print(-1, event_id, self.event_id, self.description)
             return
-
+        
         # Check all conditions
         for key, value in self.conditions.items():
             event_val = kwargs.get(key)
+            print(0, event_id, self.event_id, self.description)
 
             # Check if any of multiple options satisfies the condition
             if isinstance(value, (list, set, tuple)):
                 if event_val not in value:
+                    print(1, event_id, self.event_id, self.description)
                     return
             
             # Check if a single option satisfies the condition
             else:
                 if event_val != value:
+                    print(2, event_id, self.event_id, self.description)
                     return
 
         # All conditions passed
         self.complete = True
         session.bus.emit("objective_completed", quest=self)
-
+        
+        print(3, event_id, self.event_id, self.description)
+        
         if self.on_complete:
             self.on_complete(self)
 

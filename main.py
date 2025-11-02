@@ -91,13 +91,14 @@ from pypresence import Presence
 
 ## Local
 import session
+from pygame_utilities import Pygame, Images, Audio, EventBus
 from items_entities import PlayerData
-from big_menus import MainMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
-from pygame_utilities import Images, Audio, EventBus, render_display, render_hud
-from mechanics import Pygame, Mechanics
-from mechanics import NewGameMenu, PlayGame, PlayGarden
+from mechanics import MovementSystem, InteractionSystem, ItemSystem, EffectsSystem
+from mechanics import PlayGame, PlayGarden
+from big_menus import MainMenu, NewGameMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
 from quests import QuestMenu
+from pygame_utilities import render_display, render_hud
 
 ## Debugging
 import cProfile
@@ -115,9 +116,6 @@ def init():
     # Core
     ## Pygame
     session.pyg              = Pygame()
-    
-    ## Mechanics and audio
-    session.mech             = Mechanics()
     session.aud              = Audio()
     
     ## Images (sorted dictionary and cache)
@@ -125,22 +123,25 @@ def init():
     session.img.flipped      = Images(flipped=True)
     pygame.display.set_icon(session.img.dict['decor']['skeleton'])
     
-    ## Player data
+    ## Save data
     session.player_obj       = PlayerData()
-    session.player_obj.temp  = True
     
     #########################################################
     # Gamestates
     ## Event handling
     session.bus              = EventBus()
+    session.movement         = MovementSystem()
+    session.interact         = InteractionSystem()
+    session.items            = ItemSystem()
+    session.effects          = EffectsSystem()
 
     ## Primary
-    session.new_game_obj     = NewGameMenu()
     session.play_game_obj    = PlayGame()
     session.garden_obj       = PlayGarden()
 
     ## Big overlays
     session.main_menu_obj    = MainMenu()
+    session.new_game_obj     = NewGameMenu()
     session.file_menu        = FileMenu()
     session.ctrl_menu        = CtrlMenu()
     session.questlog_obj     = QuestMenu()

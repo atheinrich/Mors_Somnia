@@ -14,7 +14,6 @@ from   pygame.locals import *
 
 ## Local
 import session
-from mechanics import movement_system
 
 ########################################################################################################################################################
 # Classes
@@ -96,7 +95,7 @@ class InventoryMenu:
         self.update_data()
 
         ## Set navigation speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         ## Define shorthand
         pyg = session.pyg
@@ -218,7 +217,7 @@ class InventoryMenu:
             self.update_cursor()
 
         else:
-            movement_system.move(session.player_obj.ent, 0, -session.pyg.tile_height)
+            session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
     def key_DOWN(self):
 
@@ -227,7 +226,7 @@ class InventoryMenu:
             self.update_cursor()
 
         else:
-            movement_system.move(session.player_obj.ent, 0, session.pyg.tile_height)
+            session.movement.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
     def key_LEFT(self):
 
@@ -237,7 +236,7 @@ class InventoryMenu:
             self.rebuild_inventory_snapshot()
 
         else:
-            movement_system.move(session.player_obj.ent, -session.pyg.tile_height, 0)
+            session.movement.move(session.player_obj.ent, -session.pyg.tile_height, 0)
 
     def key_RIGHT(self):
         
@@ -247,7 +246,7 @@ class InventoryMenu:
             self.rebuild_inventory_snapshot()
         
         else:
-            movement_system.move(session.player_obj.ent, session.pyg.tile_width, 0)
+            session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
     def key_BACK(self):
         pyg = session.pyg
@@ -283,11 +282,11 @@ class InventoryMenu:
         pygame.event.clear()
 
     def key_ENTER(self):
-        self.find_item().use()
+        session.items.use(self.find_item())
         self.update_data()
 
     def key_PERIOD(self):
-        self.find_item().drop()
+        session.items.drop(self.find_item())
         self.update_data()
 
     # Tools
@@ -394,7 +393,7 @@ class CatalogMenu:
         self.update_data()
         
         ## Set navigation speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         ## Define shorthand
         pyg = session.pyg
@@ -481,7 +480,7 @@ class CatalogMenu:
             else: self.cursor_pos[1] -= pyg.tile_height
         
         else:
-            movement_system.move(session.player_obj.ent, 0, -pyg.tile_height)
+            session.movement.move(session.player_obj.ent, 0, -pyg.tile_height)
                 
     def key_DOWN(self):
         pyg = session.pyg
@@ -492,7 +491,7 @@ class CatalogMenu:
             else: self.cursor_pos[1] += pyg.tile_height
             
         else:
-            movement_system.move(session.player_obj.ent, 0, pyg.tile_height)
+            session.movement.move(session.player_obj.ent, 0, pyg.tile_height)
 
     def key_LEFT(self):
 
@@ -504,7 +503,7 @@ class CatalogMenu:
                 self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
         
         else:
-            movement_system.move(session.player_obj.ent, -session.pyg.tile_height, 0)
+            session.movement.move(session.player_obj.ent, -session.pyg.tile_height, 0)
 
         self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
         self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
@@ -525,7 +524,7 @@ class CatalogMenu:
                 self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
         
         else:
-            movement_system.move(session.player_obj.ent, session.pyg.tile_width, 0)
+            session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
         
         self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
         self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
@@ -705,7 +704,7 @@ class AbilitiesMenu:
         self.update_data()
 
         ## Set navigation speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         ## Define shorthand
         pyg = session.pyg
@@ -887,7 +886,7 @@ class ExchangeMenu:
         pyg = session.pyg
 
         # Restrict movement speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         # Update dictionaries and create cursors
         self.update_data()
@@ -1036,7 +1035,7 @@ class ExchangeMenu:
         pyg = session.pyg
 
         # Restrict movement speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         ## Dictionaries
         # Left dictionary
@@ -1109,7 +1108,7 @@ class ExchangeMenu:
             item      = list(self.dic.values())[index][1]
         
         # Trade item
-        item.trade(owner, recipient)
+        session.items.trade(item, owner, recipient)
         
         # Adjust cursor
         if self.menu_toggle == 'right':

@@ -1,0 +1,85 @@
+{
+"quest_id":    "tutorial",
+"name":        "Tutorial",
+"category":    "main",
+"description": [
+   "Talk to the friend."],
+
+
+"objectives": [
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the controls.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "friend",
+        "dialogue": "tutorial_2"}]},
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the controls.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "friend",
+        "dialogue": "tutorial_3"}]},
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the controls.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "friend",
+        "dialogue": "tutorial_4"}]},
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the controls.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id": "dialogue",
+        "action":   "unlock",
+        "ent_id":   "friend",
+        "dialogue": "tutorial_5"}]}
+
+
+],
+
+"on_complete": [
+
+   
+   {"event_id": "dialogue",
+    "action":   "broadcast",
+    "target":   "friend",
+    "dialogue": "tutorial_complete"}
+
+]}

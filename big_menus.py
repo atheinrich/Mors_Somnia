@@ -10,6 +10,7 @@ import random
 import time
 import pickle
 import sys
+import copy
 
 ## Specific
 import pygame
@@ -93,7 +94,7 @@ class MainMenu:
             self.update_choices()
 
         ## Restrict keystroke speed
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         ## Wait for input
         for event in pygame.event.get():
@@ -272,6 +273,381 @@ class MainMenu:
                 pyg.game_state = 'play_game'
                 pyg.hud_state  = 'on'
 
+class NewGameMenu:
+
+    # Core
+    def __init__(self):
+        """ Creates a temporary player for customization in the Womb environment.
+            Hosts a menu that can discard the temporary player or keep it to replace the current player.
+            If kept, an introduction screen is displayed before entering the dungeon.
+        
+            HAIR:       sets hair by altering hair_index, which is used in new_game to add hair as an Object hidden in the inventory
+            HANDEDNESS: mirrors player/equipment tiles, which are saved in session.img.dict and session.img.cache
+            ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
+        
+        pyg = session.pyg
+
+        #########################################################
+        # Menu details
+        ## Basics
+        self.menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
+        self.orientations = ['front', 'right', 'back', 'left']
+
+        ## Other
+        self.last_press_time = 0
+        self.cooldown_time   = 0.7
+        self.gui_cache = False
+        self.msg_cache = False
+
+        #########################################################
+        # Menu
+        ## Cursor
+        self.cursor_img = pygame.Surface((16, 16)).convert()
+        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
+        
+        ## Options
+        for i in range(len(self.menu_choices)):
+            if   i == len(self.menu_choices)-2:  color = pyg.green
+            elif i == len(self.menu_choices)-1:  color = pyg.red
+            else:                                color = pyg.gray
+            self.menu_choices[i] = pyg.font.render(self.menu_choices[i], True, color)
+        self.choice         = 0
+        self.choices_length = len(self.menu_choices)-1
+        self.cursor_pos     = [50, 424-len(self.menu_choices)*24]
+        self.top_choice     = [50, 424-len(self.menu_choices)*24]
+
+    def run(self):
+        """ Creates a temporary player, then returns to garden at startup or hosts character creation otherwise.
+        
+            Player creation
+            ---------------
+            init_player     : womb and garden; stays in NewGameMenu
+            startup         : womb and garden; scrapped after finalize_player
+            finalize_player : womb, garden, home, overworld, and dungeon; persistent
+        """
+        
+        pyg = session.pyg
+
+        #########################################################
+        # Initialize
+        ## Return to garden at startup
+        if not session.player_obj.ent:
+            self.temp          = self.init_player()
+            session.player_obj = self.startup()
+            return
+
+        ## Set navigation speed
+        session.effects.movement_speed(toggle=False, custom=2)
+        
+        ## Wait for input
+        for event in pygame.event.get():
+
+            if event.type == KEYDOWN:
+            
+                #########################################################
+                # Move cursor
+                if event.key in pyg.key_UP:
+                    self.key_UP()
+                elif event.key in pyg.key_DOWN:
+                    self.key_DOWN()
+
+                elif event.key in pyg.key_ENTER:
+
+                    #########################################################
+                    # Apply option
+                    if self.choice <= 4:
+                        self.apply_option()
+                        
+                    #########################################################
+                    # Accept and start game
+                    elif self.choice == 6:
+                        self.fade_to_game()
+                        return
+                    
+                    #########################################################
+                    # Return to main menu
+                    elif self.choice == 7:
+                        self.key_BACK()
+                        return
+        
+            elif event.type == KEYUP:
+
+                #########################################################
+                ## Return to main menu
+                if event.key in pyg.key_BACK:
+                    self.key_BACK()
+                    return
+                
+        pyg.overlay_state = 'new_game'
+        return
+
+    def render(self):
+        
+        pyg = session.pyg
+        
+        #########################################################
+        # Render environment and character
+        ## Rotate character
+        if time.time()-self.last_press_time > self.cooldown_time:
+            self.last_press_time = float(time.time())
+            self.temp.img_names[1] = self.orientations[self.orientations.index(self.temp.img_names[1]) - 1]
+        
+        #########################################################
+        # Render menu
+        ## Choices
+        Y = self.top_choice[1] - 4
+        for self.menu_choice in self.menu_choices:
+            pyg.overlay_queue.append([self.menu_choice, (80, Y)])
+            Y += 24
+        
+        ## Cursor
+        pyg.overlay_queue.append([self.cursor_img, self.cursor_pos])
+
+    # Keys
+    def key_UP(self):
+        self.cursor_pos[1]     -= 24
+        self.choice            -= 1
+        
+        # Go to the top menu choice
+        if self.choice < 0:
+            self.choice         = self.choices_length
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-1) * 24
+        
+        # Skip a blank line
+        elif self.choice == (self.choices_length - 2):
+            self.choice         = self.choices_length - 3
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-4) * 24
+
+    def key_DOWN(self):
+        self.cursor_pos[1]     += 24
+        self.choice            += 1
+        
+        if self.choice > self.choices_length:
+            self.choice         = 0
+            self.cursor_pos[1]  = self.top_choice[1]
+        
+        elif self.choice == (self.choices_length - 2):
+            self.choice         = self.choices_length - 1
+            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
+
+    def key_BACK(self):
+        session.pyg.overlay_state = 'menu'
+
+    # Tools
+    def init_player(self):
+        """ Creates a temporary player and womb environment. """
+
+        #########################################################
+        # Imports
+        from items_entities import create_item
+        from items_entities import PlayerData, Entity, Dialogue
+        from environments import Environments
+        from mechanics import place_player
+
+        #########################################################
+        # Create player and entity
+        player_obj          = PlayerData()
+        player_obj.dialogue = Dialogue()
+        player_obj.ent  = Entity(
+            name        = player_obj.name,
+            role        = player_obj.role,
+            img_names   = player_obj.img_names,
+
+            exp         = player_obj.exp,
+            rank        = player_obj.rank,
+            hp          = player_obj.hp,
+            max_hp      = player_obj.max_hp,
+            attack      = player_obj.attack,
+            defense     = player_obj.defense,
+            sanity      = player_obj.sanity,
+            stamina     = player_obj.stamina,
+            
+            X           = player_obj.X,
+            Y           = player_obj.Y,
+            habitat     = player_obj.habitat,
+
+            follow      = player_obj.follow,
+            lethargy    = player_obj.lethargy,
+            miss_rate   = player_obj.miss_rate,
+            aggression  = player_obj.aggression,
+            fear        = player_obj.fear,
+            reach       = player_obj.reach)
+        
+        ## Player-specific attributes
+        player_obj.ent.discoveries = player_obj.discoveries
+        player_obj.ent.player_id   = random.randint(100_000_000, 999_999_999)
+        
+        #########################################################
+        # Set default items
+        for item_name in ['bald', 'clean', 'flat', 'dagger']:
+            item = create_item(item_name)
+            session.items.pick_up(item, player_obj.ent, silent=True)
+            session.items.toggle_equip(item, player_obj.ent, silent=True)
+        
+        #########################################################
+        # Initialize environments
+        player_obj.envs = Environments(player_obj)
+        player_obj.envs.add_area('underworld', permadeath=True)
+        player_obj.envs.areas['underworld'].add_level('womb')
+        player_obj.envs.areas['underworld'].add_level('garden')
+        
+        player_obj.envs.areas['underworld'].questlog.load_quest('garden_build_a_shed')
+        player_obj.envs.areas['underworld'].questlog.load_quest('garden_provide_water')
+
+        session.stats_obj.pet_startup(player_obj.envs.areas['underworld']['garden'])
+        
+        ## Place temporary player in character creator
+        player_obj.ent.last_env = player_obj.envs.areas['underworld']['womb']
+        place_player(
+            ent = player_obj.ent,
+            env = player_obj.envs.areas['underworld']['womb'],
+            loc = player_obj.envs.areas['underworld']['womb'].center)
+        
+        return player_obj
+
+    def startup(self):
+        """ Creates a second temporary player. This is meant to be a placeholder for the actual
+            player object, separate from the temporary player used only in the New Game menu.
+        """
+
+        from mechanics import place_player
+
+        #########################################################
+        # Make temporary player
+        session.player_obj = self.init_player()
+        session.dev.update_dict()
+
+        place_player(
+            ent = session.player_obj.ent,
+            env = session.player_obj.envs.areas['underworld']['garden'],
+            loc = session.player_obj.envs.areas['underworld']['garden'].center)
+        
+        #########################################################
+        # Fade into the main menu and garden
+        session.pyg.game_state = 'play_garden'
+
+        return session.player_obj
+
+    def apply_option(self):
+        
+        #########################################################
+        # Imports
+        from items_entities import create_item
+        
+        if self.choice in [0, 1, 2]:
+        
+            #########################################################
+            # Select option
+            if self.choice == 0:
+                role     = 'head'
+                img_dict = session.img.hair_options
+
+            elif self.choice == 1:
+                role     = 'face'
+                img_dict = session.img.face_options
+
+            elif self.choice == 2:
+                role     = 'chest'
+                img_dict = session.img.chest_options
+            
+            #########################################################
+            # Find next option and dequip last option
+            index    = (img_dict.index(self.temp.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
+            img_name = img_dict[index]
+            session.items.toggle_equip(self.temp.ent.equipment[role], self.temp.ent, silent=True)
+            
+            #########################################################
+            # Equip next option if already generated
+            if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp.ent.inventory.values()]:
+                session.items.toggle_equip(self.temp.ent.inventory[img_name][0], self.temp.ent, silent=True)
+            
+            ## Generate option before equip
+            else:
+                item = create_item(img_name)
+                self.temp.ent.inventory['armor'].append(item)
+                session.items.toggle_equip(item, self.temp.ent, silent=True)
+        
+        #########################################################
+        # Apply skin option
+        elif self.choice == 3:
+            if self.temp.ent.img_names[0] == 'white':   self.temp.ent.img_names[0] = 'black'
+            elif self.temp.ent.img_names[0] == 'black': self.temp.ent.img_names[0] = 'white'
+        
+        #########################################################
+        # Apply handedness option
+        elif self.choice == 4:
+            if self.temp.ent.handedness == 'left':      self.temp.ent.handedness = 'right'
+            elif self.temp.ent.handedness == 'right':   self.temp.ent.handedness = 'left'
+
+    def fade_to_game(self):
+        pyg = session.pyg
+
+        # Prepare fade screen
+        text = "Your hands tremble as the ground shudders in tune... something is wrong."
+        pyg.add_intertitle(text)
+        pyg.fn_queue.append([self.finalize_player,             {}])
+        pyg.fn_queue.append([session.effects.enter_dungeon_queue, {'lvl_num': 4}])
+        pyg.fade_state = 'out'
+
+    def finalize_player(self):
+        """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
+            Called in fade queue after the character creation menu is accepted. """
+        
+        pyg = session.pyg
+
+        #########################################################
+        # Import
+        from items_entities import create_item
+        from mechanics import place_player
+        from mechanics import sort_inventory
+
+        #########################################################
+        # Make object permanent
+        ## Copy player and womb environment
+        session.player_obj = copy.deepcopy(self.temp)
+        session.player_obj.ent.role = 'player'
+        session.dev.update_dict()
+
+        ## Shorthand
+        envs = session.player_obj.envs
+        ent  = session.player_obj.ent
+
+        ## Add additional environments
+        envs.add_area('overworld', permadeath=True)
+        envs.areas['overworld'].add_level('home')
+        envs.areas['overworld'].add_level('overworld')
+
+        envs.add_area('dungeon')
+        envs.areas['dungeon'].add_level('dungeon')
+
+        place_player(
+            ent = ent,
+            env = envs.areas['overworld']['home'],
+            loc = envs.areas['overworld']['home'].center)
+
+        #########################################################
+        # Create and equip items
+        items = ['shovel', 'lamp']
+
+        if ent.equipment['chest'].img_names[0] == 'bra': items.append('yellow dress')
+        else:                                            items.append('green clothes')
+
+        for name in items:
+            item = create_item(name)
+            session.items.pick_up(item, ent=ent, silent=True)
+            session.items.toggle_equip(item, ent=ent, silent=True)
+        
+        sort_inventory()
+
+        #########################################################
+        # Switch game state
+        self.temp          = self.init_player()
+        pyg.startup_toggle = False
+        pyg.game_state     = 'play_game'
+        pyg.hud_state      = 'on'
+        pyg.overlay_state  = None
+
 class FileMenu:
 
     # Core
@@ -330,7 +706,7 @@ class FileMenu:
         #########################################################
         # Initialize
         self.mode = pyg.overlay_state
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         for event in pygame.event.get():
             
@@ -494,7 +870,7 @@ class CtrlMenu:
 
         #########################################################
         # Initialize
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         for event in pygame.event.get():
             
@@ -626,7 +1002,7 @@ class StatsMenu:
 
         #########################################################
         # Initialize
-        session.mech.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=2)
         
         ## Switch overlay
         if self.overlay != pyg.overlay_state:

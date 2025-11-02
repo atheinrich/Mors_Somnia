@@ -58,7 +58,6 @@ class Environments:
     def build_garden(self, area):
         """ Generates the overworld environment. """
         
-        from mechanics import place_objects, place_object
         from items_entities import create_item
 
         ###############################################################
@@ -205,8 +204,6 @@ class Environments:
         """ Generates player's home. """
 
         from items_entities import create_item, create_entity
-        from mechanics import place_object
-        from quests import Quest, Bloodkin
 
         ###############################################################
         ## Initialize environment
@@ -298,21 +295,10 @@ class Environments:
         x, y = center[0]+1, center[1]
         ent = create_entity('friend')
         place_object(ent, [x, y], env)
-        ent.dialogue = "Walk into something to interact with it, or press Enter (↲) if you're above it."
         
         ###############################################################
         # Quests
-        #self.player_obj.ent.questlines = {}
-        #self.player_obj.ent.questlines['Bloodkin'] = Bloodkin()
-        #ent.quest    = Quest(
-        #    name     = "Making a friend",
-        #    notes    = ["I wonder who this is. Maybe I should say hello."],
-        #    tasks    = ["☐ Say hello to the creature.",
-        #                "☐ Get to know them."],
-        #    category = 'Side',
-        #    function = self.player_obj.ent.questlines['Bloodkin'].making_a_friend)
-        #ent.quest.content = ent.quest.notes + ent.quest.tasks
-        #self.player_obj.ent.questlog['Making a friend'] = ent.quest
+        area.questlog.load_quest('tutorial')
         
         # Initial position
         env.player_coordinates = env.center
@@ -323,8 +309,6 @@ class Environments:
         """ Generates the overworld environment. """
 
         from items_entities import create_item, create_NPC
-        from mechanics import place_object, place_objects, create_text_room
-        from quests import FriendlyFaces
 
         ###############################################################
         ## Initialize environment
@@ -587,7 +571,6 @@ class Environments:
         """ Generates a cave environment. """
         
         from items_entities import create_item
-        from mechanics import place_object, place_objects
 
         ###############################################################
         # Initialize environment
@@ -701,7 +684,6 @@ class Environments:
         """ Generates the overworld environment. """
         
         from items_entities import create_item
-        from mechanics import place_object, place_objects
 
         ###############################################################
         # Initialize environment
@@ -823,7 +805,6 @@ class Environments:
         """ Generates the overworld environment. """
         
         from items_entities import create_item
-        from mechanics import place_object, place_objects, create_text_room
 
         ###############################################################
         ## Initialize environment
@@ -996,7 +977,6 @@ class Environments:
         """ Generates the bitworld environment. """
 
         from items_entities import create_item, create_NPC
-        from mechanics import place_object, place_objects, create_text_room
 
         ###############################################################
         ## Initialize environment
@@ -2369,5 +2349,355 @@ def voronoi_biomes(env, biomes):
             #    except: continue
             
             tile.img_names = img_names
+
+def place_objects(env, items, entities):
+    """ Places entities and items according to probability and biome.
+
+        Parameters
+        ----------
+        env      : Environment object; location to be placed
+        items    : list of lists; [[<biome str>, <object str>, <unlikelihood int>], ...]
+        entities :  """
+    
+    from items_entities import create_item, create_entity
+    from mechanics import is_blocked
+
+    # Sort through each tile
+    for y in range(len(env.map[0])):
+        for x in range(len(env.map)):
+            
+            # Check that the space is not already occupied
+            if not is_blocked(env, [x, y]):
+
+                ## Randomly select and place an item
+                selection = random.choice(items)
+                
+                # Check that the object matches the biome
+                if env.map[x][y].biome in session.img.biomes[selection[0]]:
+                    if not random.randint(0, selection[2]) and not env.map[x][y].item:
+                        
+                        ## Place object
+                        item = create_item(selection[1])
+                        place_object(item, [x, y], env)
+                
+                ## Randomly select and place an entity
+                selection = random.choice(entities)
+                
+                # Check that the entity matches the biome
+                if env.map[x][y].biome in session.img.biomes[selection[0]]:
+                    if not random.randint(0, selection[2]) and not env.map[x][y].item:
+                        
+                        ## Create and place entity
+                        entity = create_entity(selection[1])
+                        for item in selection[3]:
+                            if item:
+                                obj = create_item(item)
+                                session.items.pick_up(obj, ent=entity)
+                                if obj.equippable:
+                                    session.items.toggle_equip(obj, entity)
+                                    if obj.effect:
+                                        obj.effect.trigger = 'passive'
+                        
+                        entity.biome = env.map[x][y].biome
+                        env.entities.append(entity)
+                        place_object(entity, [x, y], env)
+
+def place_object(obj, loc, env, names=None):
+    """ Places a single object in the given location.
+
+        Parameters
+        ----------
+        obj   : class object in [Tile, Item, Entity]; object to be placed
+        loc   : list of int; tile coordinates
+        env   : Environment object; desired location
+        names : list of str; Image dictionary names """  
+      
+    pyg = session.pyg
+
+    from environments import Tile
+    from items_entities import Entity, Item
+
+    # Place tile
+    if type(obj) == Tile:
+        env.map[loc[0]][loc[1]].img_names = names
+        
+        # Set properties
+        if names[1] in session.img.biomes['sea']:
+            env.map[loc[0]][loc[1]].biome   = 'water'
+        elif names[0] in ['walls']:
+            env.map[loc[0]][loc[1]].blocked = True
+            env.map[loc[0]][loc[1]].item    = None
+        else:
+            env.map[loc[0]][loc[1]].blocked = False
+    
+    # Place item
+    elif type(obj) == Item:
+        obj.X    = loc[0] * pyg.tile_width
+        obj.X0   = loc[0] * pyg.tile_width
+        obj.Y    = loc[1] * pyg.tile_height
+        obj.Y0   = loc[1] * pyg.tile_height
+        obj.env  = env
+        obj.tile = env.map[loc[0]][loc[1]]
+        env.map[loc[0]][loc[1]].item    = obj
+        env.map[loc[0]][loc[1]].blocked = obj.blocked
+    
+    # Place entity
+    elif type(obj) == Entity:
+        obj.X    = loc[0] * pyg.tile_width
+        obj.X0   = loc[0] * pyg.tile_width
+        obj.Y    = loc[1] * pyg.tile_height
+        obj.Y0   = loc[1] * pyg.tile_height
+        obj.env  = env
+        obj.tile = env.map[loc[0]][loc[1]]
+        env.map[loc[0]][loc[1]].entity = obj
+        env.map[loc[0]][loc[1]].blocked = False
+        env.entities.append(obj)
+
+def create_text_room(width=5, height=5, doors=True):
+    
+    ## Initialize size
+    if not width:  width = random.randint(5, 7)
+    if not height: height = random.randint(5, 7)
+    plan = [['' for x in range(width)] for y in range(height)]
+
+    ## Create a floor
+    last_left = 1
+    last_right = width - 1
+    for i in range(height):
+        
+        if not random.choice([0, 1]):
+            for j in range(width):
+                if last_left <= j <= last_right: plan[i][j] = '.'
+                else:                            plan[i][j] = ' '
+        
+        left = random.randint(1, width//2-1)
+        right = random.randint(width//2+1, width-1)
+        if (abs(left - last_left) < 2) or (abs(right - last_right) < 2):
+            for j in range(width):
+                if left <= j <= right: plan[i][j] = '.'
+                else:                  plan[i][j] = ' '
+        
+        elif random.choice([0, 1]):
+            left = random.choice([left, last_left])
+            right = random.choice([right, last_right])
+            for j in range(width):
+                if left <= j <= right: plan[i][j] = '.'
+                else:                  plan[i][j] = ' '
+        
+        else:
+            for j in range(width):
+                if last_left <= j <= last_right: plan[i][j] = '.'
+                else:                            plan[i][j] = ' '
+        
+        last_left  = left
+        last_right = right
+
+    ## Surround the floor with walls
+    plan[0] = [' ' for _ in range(width)]
+    plan[1] = [' ' for _ in range(width)]
+    plan.append([' ' for _ in range(width)])
+    for i in range(len(plan)): plan[i].append(' ')
+
+    for i in range(len(plan)):
+        for j in range(len(plan[0])):
+            for key in plan[i][j]:
+                if key == '.':
+                    if plan[i-1][j-1] != key: plan[i-1][j-1] = '-'
+                    if plan[i-1][j] != key:   plan[i-1][j]   = '-'
+                    if plan[i-1][j+1] != key: plan[i-1][j+1] = '-'
+                    if plan[i][j-1] != key:   plan[i][j-1]   = '-'
+                    if plan[i][j+1] != key:   plan[i][j+1]   = '-'
+                    if plan[i+1][j-1] != key: plan[i+1][j-1] = '-'
+                    if plan[i+1][j] != key:   plan[i+1][j]   = '-'
+                    if plan[i+1][j+1] != key: plan[i+1][j+1] = '-'
+
+    ## Place a door or two
+    if doors:
+        plan[0] = [' ' for _ in range(width)]
+        plan.append([' ' for _ in range(width)])
+        for i in range(len(plan)): plan[i].append(' ')
+
+        placed = False
+        for i in range(len(plan)):
+            for j in range(len(plan[0])):
+                if not placed:
+                    if plan[i][j] == '-':
+                        vertical = [
+                            plan[i-1][j],
+                            plan[i+1][j]]
+                        horizontal = [
+                            plan[i][j-1],
+                            plan[i][j+1]]
+                        if ('-' in vertical) and ('-' in horizontal):
+                            placed = False
+                        elif (' ' not in vertical) and (' ' not in horizontal):
+                            placed = False
+                        else:
+                            if not random.randint(0, 10):
+                                plan[i][j] = '|'
+                                if random.randint(0, 1): placed = True
+                    else: placed = False
+        if not placed:
+            for i in range(len(plan)):
+                for j in range(len(plan[0])):
+                    if not placed:
+                        if plan[i][j] == '-':
+                            vertical = [
+                                plan[i-1][j],
+                                plan[i+1][j]]
+                            horizontal = [
+                                plan[i][j-1],
+                                plan[i][j+1]]
+                            if ('-' in vertical) and ('-' in horizontal):
+                                placed = False
+                            elif (' ' not in vertical) and (' ' not in horizontal):
+                                placed = False
+                            else:
+                                if not random.randint(0, 10):
+                                    plan[i][j] = '|'
+                                    placed = True
+                        else: placed = False
+
+    ## Place furniture and decorations
+    def neighbors(i, j):
+        neighbors = [
+            plan[i-1][j-1], plan[i-1][j], plan[i-1][j+1],
+            plan[i][j-1],                 plan[i][j+1], 
+            plan[i+1][j-1], plan[i+1][j], plan[i+1][j+1]]
+        return neighbors
+    
+    ### Place one of each of these
+    bed    = False
+    dining = False
+    shelf  = False
+    lights = False
+    
+    # Look through tiles
+    for i in range(len(plan)):
+        for j in range(len(plan[0])):
+            if random.randint(0, 1):
+                
+                # Look for floors tiles indoors
+                if (plan[i][j] == '.') and ('|' not in neighbors(i, j)):
+                    if (plan[i][j+1] == '.') and ('|' not in neighbors(i, j+1)):
+                        
+                        # Three open spaces
+                        if (plan[i][j+2] == '.') and ('|' not in neighbors(i, j+2)):
+                            
+                            # Table and chairs
+                            if not dining and not random.randint(0, 5):
+                                plan[i][j]          = 'b'
+                                plan[i][j+1]        = 'T'
+                                plan[i][j+2]        = 'd'
+                                dining = True
+                        
+                        # Two open spaces
+                        else:
+                            
+                            # Bed
+                            if not bed and not random.randint(0, 3):
+                                plan[i][j]          = '='
+                                if not random.randint(0, 2): bed = True
+                            
+                            # Shelf
+                            else:
+                                if (not shelf) and (plan[i-1][j] == '-') and (plan[i-1][j+1] == '-'):
+                                    plan[i][j]      = '['
+                                    plan[i][j+1]    = ']'
+                                    shelf = True
+                
+                # Look outdoors
+                elif plan[i][j] == ' ':
+                    try:
+                        if '|' not in neighbors(i, j):
+                            
+                            # Lights
+                            if not lights:
+                                plan[i][j]              = 'L'
+                                lights = True
+                    
+                    except: continue
+    
+    ## Wrap things up
+    export = []
+    for row in plan:
+        export.append("".join(row))
+    return export
+
+def add_doors(room):
+    """ Add one or two doors to a room, and adds a entryway. """
+    
+    from items_entities import create_item
+
+    # Add two doors
+    if not random.randint(0, 10): num_doors = 2
+    else:                         num_doors = 1
+    
+    for _ in range(num_doors):
+    
+        ## Avoid corners
+        selected_tile = random.choice(room.noncorners_list)
+        loc = [selected_tile.X // 32, selected_tile.Y // 32]
+        
+        # Add to map
+        place_object(create_item('door'), loc, room.env)
+        room.env.map[loc[0]][loc[1]].blocked   = False
+        room.env.map[loc[0]][loc[1]].img_names = room.floor
+        try:    room.walls_list.remove(room.env.map[loc[0]][loc[1]])
+        except: pass
+        
+        ## Create wide entryway and clear items
+        if not random.randint(0, 1):
+            for i in range(3):
+                for j in range(3):
+                    try:
+                        
+                        # Make floors
+                        if list(room.env.map[x][y].img_names) != list(room.walls):
+                            x, y = loc[0]+i-1, loc[1]+j-1
+                            
+                            # Add roof
+                            if room.env.map[x][y] in room.tiles_list:
+                                room.env.map[x][y].roof      = room.roof
+                                room.env.map[x][y].img_names = room.roof
+                            else:
+                                room.env.map[x][y].img_names = room.floor
+                            
+                            # Clear items, but keep doors
+                            if ((i-1) or (j-1)):
+                                room.env.map[x][y].item    = None
+                                room.env.map[x][y].blocked = False
+                            
+                            room.env.map[x][y].biome == 'city'
+                    
+                    except: continue
+        
+        # Create narrow entryway and clear items
+        else:
+            for i in range(3):
+                for j in range(3):
+                    if not ((i-1) and (j-1)):
+                        try:
+                            
+                            # Make floors
+                            if list(room.env.map[loc[0]+i-1][loc[1]+j-1].img_names) != list(room.walls):
+                                x, y = loc[0]+i-1, loc[1]+j-1
+                                
+                                # Add roof
+                                if room.env.map[x][y] in room.tiles_list:
+                                    room.env.map[x][y].roof      = room.roof
+                                    room.env.map[x][y].img_names = room.roof
+                                else:
+                                    room.env.map[x][y].img_names = room.floor
+                                
+                                # Clear items, but keep doors
+                                if ((i-1) or (j-1)):
+                                    room.env.map[x][y].item    = None
+                                    room.env.map[x][y].blocked = False
+                                    
+                                room.env.map[x][y].biome == 'city'
+                        
+                        except:
+                            continue
 
 ########################################################################################################################################################
