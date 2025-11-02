@@ -3,7 +3,46 @@
 "name":        "Greet the Town",
 "category":    "main",
 "description": [
-   "Talk to everyone in town."],
+   "I should get to know my neighbors."],
+
+
+
+   
+"on_load": [
+   
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Kyrio",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Kapno",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Erasti",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Merci",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Oxi",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Aya",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Zung",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Lilao",
+    "dialogue_id": "quest_greet_the_town"}
+
+],
 
 
 "objectives": [
@@ -18,10 +57,11 @@
         
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "Kyrio",
-        "dialogue": "after_greet"}]},
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Kyrio",
+        "dialogue_id": "default"}]},
+
+
 
 
    {"event_id":    "entity_interacted",
@@ -33,10 +73,11 @@
         
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "Kapno",
-        "dialogue": "after_greet"}]},
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Kapno",
+        "dialogue_id": "default"}]},
+
+
 
 
    {"event_id":    "entity_interacted",
@@ -48,10 +89,11 @@
         
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "Erasti",
-        "dialogue": "after_greet"}]},
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Erasti",
+        "dialogue_id": "default"}]},
+
+
 
 
    {"event_id":    "entity_interacted",
@@ -63,10 +105,11 @@
         
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "Oxi",
-        "dialogue": "after_greet"}]},
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Merci",
+        "dialogue_id": "default"}]},
+
+
 
 
    {"event_id":    "entity_interacted",
@@ -78,10 +121,11 @@
         
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "Aya",
-        "dialogue": "after_greet"}]},
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Aya",
+        "dialogue_id": "default"}]},
+
+
 
 
    {"event_id":    "entity_interacted",
@@ -93,10 +137,11 @@
         
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "Zung",
-        "dialogue": "after_greet"}]},
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Zung",
+        "dialogue_id": "default"}]},
+
+
 
 
    {"event_id":    "entity_interacted",
@@ -108,20 +153,15 @@
         
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "Lilao",
-        "dialogue": "after_greet"}]}
-
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Lilao",
+        "dialogue_id": "default"}]}
 
 ],
 
 "on_complete": [
 
-   
-   {"event_id": "dialogue",
-    "action":   "broadcast",
-    "target":   "npc_mayor",
-    "dialogue": "quest_complete"}
+   {"event_id":    "emit_message",
+    "text":        "Guess that's everyone!"}
 
 ]}

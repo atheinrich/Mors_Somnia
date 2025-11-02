@@ -1,0 +1,16 @@
+{
+"default": [
+    "Erasti: ...",
+    "Erasti: Are you new to the region? Sorry, my memory is terrible!",
+    "Erasti: I know... the town needs work. I guess we should all pitch in.",
+    "Erasti: Sorry, I have a lot on my mind.",
+    "Erasti: Good to see you!",
+    "Erasti: Rumor has it that Kapno stashes a jar of herbs under his bed."],
+
+"quest_greet_the_town": ["Erasti: Oh! My name is Erasi. Have we met?"],
+
+"quest_mysterious_note_1": ["Erasti: Oh...! Hi!"],
+"quest_mysterious_note_2": ["Erasti: That symbol... have you seen it before? It gives me an eerie sense of déjà vu."],
+"quest_mysterious_note_3": ["Erasti: I saw Kyrio with something like that once. Or maybe it was a dream..."]
+
+}

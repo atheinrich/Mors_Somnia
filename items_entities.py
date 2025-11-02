@@ -172,7 +172,6 @@ class Entity:
         
         ## Mechanics
         self.dead        = False
-        self.quest       = False
         self.wallet      = 100
         self.trade_times = None
         self.inventory   = {'weapons': [], 'armor': [],  'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
@@ -188,7 +187,7 @@ class Entity:
             Effect(
                 name          = 'scare',
                 img_names     = ['bubbles', 'exclamation bubble'],
-                function      = session.effects.entity_scare,
+                effect_fn     = session.effects.entity_scare,
                 trigger       = 'active',
                 sequence      = '⮟⮜⮟',
                 cooldown_time = 1,
@@ -197,7 +196,7 @@ class Entity:
             Effect(
                 name          = 'comfort',
                 img_names     = ['bubbles', 'heart bubble'],
-                function      = session.effects.entity_comfort,
+                effect_fn     = session.effects.entity_comfort,
                 trigger       = 'active',
                 sequence      = '⮟⮞⮜',
                 cooldown_time = 1,
@@ -206,7 +205,7 @@ class Entity:
             Effect(
                 name          = 'clean',
                 img_names     = ['bubbles', 'dots bubble'],
-                function      = session.effects.entity_clean,
+                effect_fn     = session.effects.entity_clean,
                 trigger       = 'active',
                 sequence      = '⮟⮟⮟',
                 cooldown_time = 1,
@@ -216,7 +215,7 @@ class Entity:
             Effect(
                 name          = 'suicide',
                 img_names     = ['decor', 'bones'],
-                function      = session.effects.suicide,
+                effect_fn     = session.effects.suicide,
                 trigger       = 'active',
                 sequence      = '⮟⮟⮟',
                 cooldown_time = 1,
@@ -225,7 +224,7 @@ class Entity:
             Effect(
                 name          = 'scare',
                 img_names     = ['bubbles', 'exclamation bubble'],
-                function      = session.effects.entity_scare,
+                effect_fn     = session.effects.entity_scare,
                 trigger       = 'active',
                 sequence      = '⮟⮜⮟',
                 cooldown_time = 1,
@@ -234,12 +233,26 @@ class Entity:
             Effect(
                 name          = 'capture',
                 img_names     = ['bubbles', 'heart bubble'],
-                function      = session.effects.entity_capture,
+                effect_fn     = session.effects.entity_capture,
                 trigger       = 'active',
                 sequence      = '⮟⮞⮟',
                 cooldown_time = 1,
                 other         = None)]
         self.effects    = []
+
+    def quest_active(self):
+        if self.name in session.player_obj.dialogue.npc_states.keys():
+            if session.player_obj.dialogue.npc_states[self.name][:5] == 'quest':
+                return True
+        
+        return False
+
+    def trade_active(self):
+        if self.trade_times:
+            if session.player_obj.ent.env.env_time in self.trade_times:
+                return True
+        
+        return False
 
     def draw(self, loc=None):
         """ Adds skin and equipment layers to a fresh surface.
@@ -352,15 +365,14 @@ class Entity:
 
         #########################################################
         # Bubbles
-        ## Dialogue
+        bubble = None
         shift = 32 - session.img.ent_data[self.img_names[0]]['height']
-        if self.quest:
-            pyg.display_queue.append([session.img.dict['bubbles']['dots bubble'], (X, Y - pyg.tile_height + shift)])
+
+        if self.quest_active():                bubble = 'dots bubble'
+        if self.trade_active() and not bubble: bubble = 'cart bubble'
         
-        ## Trading
-        if self.trade_times:
-            if session.player_obj.ent.env.env_time in self.trade_times:
-                pyg.display_queue.append([session.img.dict['bubbles']['cart bubble'], (X, Y - pyg.tile_height + shift)])
+        if bubble:
+            pyg.display_queue.append([session.img.dict['bubbles'][bubble], (X, Y - pyg.tile_height + shift)])
 
 class Dialogue:
     """ Imports and stores dialogue from JSON files, and returns a random piece of accessible dialogue. """
@@ -411,6 +423,7 @@ class Dialogue:
         dialogue = self.get_dialogue(ent_id)
         session.pyg.update_gui(dialogue)
         if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
+            session.aud.last_press_time_speech = time.time()
             session.aud.play_speech(dialogue)
 
     def subscribe_events(self):
@@ -471,7 +484,7 @@ class Item:
         if self.effect:
             if self.effect.trigger == 'passive':
                 if self.role != 'weapons':
-                    self.effect.function(self)
+                    self.effect.effect_fn(self)
 
     def draw(self):
         """ Constructs (but does not render) surfaces for items and their positions. """
@@ -525,11 +538,11 @@ class Item:
 
 class Effect:
 
-    def __init__(self, name, img_names, function, trigger, sequence, cooldown_time, other):
+    def __init__(self, name, img_names, effect_fn, trigger, sequence, cooldown_time, other):
         
         self.name            = name
         self.img_names       = img_names
-        self.function        = function
+        self.effect_fn       = effect_fn
         
         self.trigger         = trigger
         self.sequence        = sequence
@@ -571,7 +584,7 @@ def create_item(names, effect=False):
             item.effect = Effect(
                 name          = effect['name'],
                 img_names     = effect['img_names'],
-                function      = eval(effect['function']),
+                effect_fn     = eval(effect['effect_fn']),
                 trigger       = effect['trigger'],
                 sequence      = effect['sequence'],
                 cooldown_time = effect['cooldown_time'],
@@ -643,7 +656,7 @@ def create_NPC(name):
         
         # Basics
         ent       = create_entity(str(random.choice(session.img.skin_options)))
-        ent.name  = random.choice(['Traveler', 'Settler', 'Stranger'])
+        ent.name  = random.choice(['traveler', 'settler', 'stranger'])
         ent.reach = 20
         
         # Equipment
@@ -663,18 +676,6 @@ def create_NPC(name):
             session.items.toggle_equip(face, ent, silent=True)
         
         ent.lethargy = random.randint(1, 10)
-
-        dialogue_options = [
-            [f"{ent.name}: ...",
-            f"{ent.name}: I had the strangest dream last night... Huh? Just talking to myself.",
-            f"{ent.name}: *seems busy*"],
-            [f"{ent.name}: Howdy!",
-            f"{ent.name}: Have you seen those cracks in the sand? My neighbor fell right through one!",
-            f"{ent.name}: Yeah, Merci is good. I always go to her for clothes and everyday items.",
-            f"{ent.name}: Grapes are great for health, but you can't build without concrete!"],
-            [f"{ent.name}: Oxi can get whatever you need, but he only sells at night.",
-            f"{ent.name}: Sometimes, I just pick weeds for fun. The ground looks nice without them.",
-            f"{ent.name}: ...Did you see that? Maybe I should spend less time with Oxi..."]]
     
     return ent
 

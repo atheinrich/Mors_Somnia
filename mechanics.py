@@ -716,31 +716,28 @@ class InteractionSystem:
         # Player specific
         if ent.role == 'player':
 
-            # Emit interaction
-            session.bus.emit(
-                event_id      = 'entity_interacted',
-                ent_id        = ent.name,
-                target_ent_id = target.name)
-        
             if target.role == 'NPC':
 
                 # Trading
-                if target.trade_times:
-                    if session.player_obj.ent.env.env_time in target.trade_times:
-                        session.trade_obj.ent = target
-                        session.pyg.overlay_state = 'trade'
+                if target.trade_active and not target.quest_active:
+                    session.trade_obj.ent = target
+                    session.pyg.overlay_state = 'trade'
             
                 # Dialogue
-                if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
-                    session.player_obj.dialogue.emit_dialogue(target.name)
+                session.player_obj.dialogue.emit_dialogue(target.name)
         
             # Make them flee
             elif type(target.fear) == int:
                 target.fear += 30
             
             # Attack
-            else:
-                self.attack_target(ent, target)
+            else: self.attack_target(ent, target)
+        
+            # Emit interaction
+            session.bus.emit(
+                event_id      = 'entity_interacted',
+                ent_id        = ent.name,
+                target_ent_id = target.name)
         
         # General
         else:
@@ -749,8 +746,7 @@ class InteractionSystem:
                 if target.role != 'player':
                     self.attack_target(ent, target)
             
-            else:
-                self.attack_target(ent, target)
+            else: self.attack_target(ent, target)
     
     def attack_target(self, ent, target, effect_check=True):
         """ Calculates and applies attack damage. """
@@ -775,7 +771,7 @@ class InteractionSystem:
                         if ent.equipment['dominant hand']:
                             if ent.equipment['dominant hand'].effect:
                                 if ent.equipment['dominant hand'].effect.trigger == 'passive':
-                                    ent.equipment['dominant hand'].effect.function(ent)
+                                    ent.equipment['dominant hand'].effect.effect_fn(ent)
                         
                         # Regular attack
                         else:
@@ -975,7 +971,7 @@ class ItemSystem:
                 ent.effects.append(item.effect)
             
             # Activate the item
-            else: item.effect.function(ent)
+            else: item.effect.effect_fn(ent)
         
         elif ent.role == 'player':
             pyg.update_gui("The " + item.name + " cannot be used.", pyg.dark_gray)
@@ -1074,7 +1070,7 @@ class EffectsSystem:
     def check_tile(self, ent):
         if ent.tile.item:
             if ent.tile.item.effect:
-                ent.tile.item.effect.function(ent)
+                ent.tile.item.effect.effect_fn(ent)
 
     def heal(self, ent, amount):
         """ Heals player by the given amount without going over the maximum. """
@@ -1351,7 +1347,6 @@ class EffectsSystem:
                 if item not in lamp_list: lamp_list.append(item)
             else:
                 if item in lamp_list:     lamp_list.remove(item)
-                    
         
         else:
             if item not in lamp_list: lamp_list.append(item)
@@ -1924,7 +1919,7 @@ def active_effects():
     # Apply non-dominant hand function
     if hand_2:
         if hand_2.effect.name == 'lamp':
-            hand_2.effect.function(hand_2)
+            hand_2.effect.effect_fn(hand_2)
 
 def check_level_up():
     """ Checks if the player's experience is enough to level-up. """

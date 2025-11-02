@@ -5,7 +5,7 @@
             "bubbles",
             "exclamation"
         ],
-        "function": "session.effects.skeleton",
+        "effect_fn": "session.effects.skeleton",
         "trigger": "active",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -17,7 +17,7 @@
             "lights",
             "dropped"
         ],
-        "function": "session.effects.lamp",
+        "effect_fn": "session.effects.lamp",
         "trigger": "passive",
         "sequence": null,
         "cooldown_time": 0,
@@ -29,7 +29,7 @@
             "drugs",
             "bowl"
         ],
-        "function": "session.effects.enter_hallucination",
+        "effect_fn": "session.effects.enter_hallucination",
         "trigger": "active",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -41,7 +41,7 @@
             "drugs",
             "bowl"
         ],
-        "function": "session.effects.enter_hallucination",
+        "effect_fn": "session.effects.enter_hallucination",
         "trigger": "active",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -53,7 +53,7 @@
             "drugs",
             "bowl"
         ],
-        "function": "session.effects.enter_bitworld",
+        "effect_fn": "session.effects.enter_bitworld",
         "trigger": "active",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -65,7 +65,7 @@
             "drugs",
             "bowl"
         ],
-        "function": "session.effects.enter_hallucination",
+        "effect_fn": "session.effects.enter_hallucination",
         "trigger": "active",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -77,7 +77,7 @@
             "drugs",
             "plant"
         ],
-        "function": "session.effects.boost_stamina",
+        "effect_fn": "session.effects.boost_stamina",
         "trigger": "active",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -89,7 +89,7 @@
             "drugs",
             "bubbles"
         ],
-        "function": "session.effects.entity_eat",
+        "effect_fn": "session.effects.entity_eat",
         "trigger": "active",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -101,7 +101,7 @@
             "green blob",
             "right"
         ],
-        "function": "session.effects.propagate",
+        "effect_fn": "session.effects.propagate",
         "trigger": "active",
         "sequence": "⮞⮜⮞",
         "cooldown_time": 1,
@@ -113,7 +113,7 @@
             "shovel",
             "dropped"
         ],
-        "function": "session.effects.suicide",
+        "effect_fn": "session.effects.suicide",
         "trigger": "active",
         "sequence": "⮟⮟⮟",
         "cooldown_time": 1,
@@ -125,7 +125,7 @@
             "dagger",
             "dropped"
         ],
-        "function": "session.effects.swing",
+        "effect_fn": "session.effects.swing",
         "trigger": "active",
         "sequence": "⮜⮟⮞",
         "cooldown_time": "0.1",
@@ -137,7 +137,7 @@
             "null",
             "null"
         ],
-        "function": "session.effects.swing",
+        "effect_fn": "session.effects.swing",
         "trigger": "passive",
         "sequence": null,
         "cooldown_time": "0.1",
@@ -149,7 +149,7 @@
             "iron shield",
             "dropped"
         ],
-        "function": "session.effects.lamp",
+        "effect_fn": "session.effects.lamp",
         "trigger": "passive",
         "sequence": null,
         "cooldown_time": 0,

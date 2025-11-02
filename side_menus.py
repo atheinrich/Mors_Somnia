@@ -784,7 +784,7 @@ class AbilitiesMenu:
             if effect.sequence == sequence_string:
                 if time.time()-effect.last_press_time > effect.cooldown_time:
                     effect.last_press_time = float(time.time())
-                    effect.function()
+                    effect.effect_fn()
                     return
 
     def render(self):

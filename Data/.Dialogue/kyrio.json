@@ -1,11 +1,14 @@
 {
 "default": [
-    "Nice weather today!",
-    "Hi!"],
+    "Kyrio: *furrows his brow*",
+    "Kyrio: Talk to my brother, Kapno. I know little of mercantile.",
+    "Kyrio: *seems not to notice*",
+    "Kyrio: Is there something you need?"],
 
-"quest_greet_town_start": [
-    "Oh, hello there! I’m Alice."],
-"quest_greet_town_complete": [
-    "You’ve met everyone already? Good job!"]
+"quest_greet_the_town": ["Kyrio: ... Yes, hello. Do you need something?"],
+
+"quest_mysterious_note_1": ["Kyrio: Huh? A glyph of some sort? I know nothing of such things."],
+"quest_mysterious_note_2": ["Kyrio: Rather inquisitive, are you? Never turns out well."],
+"quest_mysterious_note_3": ["Kyrio: Fine, yes, my brother might know. I am busy."]
 
 }

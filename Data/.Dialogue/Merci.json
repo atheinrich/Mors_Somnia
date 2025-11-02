@@ -1,0 +1,16 @@
+{
+"default": [
+    "Merci: Are you looking to buy anything in particular? Please, take a look at my stock.",
+    "Merci: We specialize in exotic goods, but the basics are available as well.",
+    "Merci: I prefer coins, but I could use the sale. Are you looking to trade?",
+    "Merci: Your purchase is free if you can find my keys. I cant sell my blades without them!",
+    "Merci: We have many items for sale.",
+    "Merci: ... Oh, welcome in!"],
+
+"quest_greet_the_town": ["Merci: Welcome! ...are you not here for my merchandise?"],
+
+"quest_mysterious_note_1": ["Merci: Welcome! ...are you not here for my merchandise?"],
+"quest_mysterious_note_2": ["Merci: I do not deal in the occult, so I will be of no help to you. Sorry."],
+"quest_mysterious_note_3": ["Merci: Oxi is shady enough... he seems like the type to ask."]
+
+}

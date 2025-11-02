@@ -9,12 +9,6 @@
         "beard": "white beard",
         "weapon": "blood dagger",
         "armor": null,
-        "dialogue": [
-            "Kyrio: *furrows his brow*",
-            "Kyrio: Talk to my brother, Kapno. I know little of mercantile.",
-            "Kyrio: *seems not to notice*",
-            "Kyrio: Is there something you need?"
-        ],
         "trade_times": null,
         "inv": null
     },
@@ -28,13 +22,6 @@
         "beard": "white beard",
         "weapon": "blood dagger",
         "armor": null,
-        "dialogue": [
-            "Kapno: Huh?",
-            "Kapno: Too many dry days, it seems. The lake is rather shallow.",
-            "Kapno: Have you seen my brother? He seems distracted as of late.",
-            "Kapno: My bones may be brittle, but I know good products when I see them.",
-            "Kapno: *mumbles*"
-        ],
         "trade_times": [
             3,
             4,
@@ -67,13 +54,6 @@
         "beard": "white beard",
         "weapon": "blood dagger",
         "armor": null,
-        "dialogue": [
-            "Blodo: Huh?",
-            "Blodo: Too many dry days, it seems. The lake is rather shallow.",
-            "Blodo: Have you seen my brother? He seems distracted as of late.",
-            "Blodo: My bones may be brittle, but I know good products when I see them.",
-            "Blodo: *mumbles*"
-        ],
         "trade_times": [
             3,
             4,
@@ -106,14 +86,6 @@
         "beard": null,
         "weapon": "shovel",
         "armor": null,
-        "dialogue": [
-            "Erasti: ...",
-            "Erasti: Are you new to the region? Sorry, my memory is terrible!",
-            "Erasti: I know... the town needs work. I guess we should all pitch in.",
-            "Erasti: Sorry, I have a lot on my mind.",
-            "Erasti: Good to see you!",
-            "Erasti: Rumor has it that Kapno stashes a jar of herbs under his bed."
-        ],
         "trade_times": null,
         "inv": null
     },
@@ -127,14 +99,6 @@
         "beard": null,
         "weapon": "shovel",
         "armor": null,
-        "dialogue": [
-            "Merci: Are you looking to buy anything in particular? Please, take a look at my stock.",
-            "Merci: We specialize in exotic goods, but the basics are available as well.",
-            "Merci: I prefer coins, but I could use the sale. Are you looking to trade?",
-            "Merci: Your purchase is free if you can find my keys. I cant sell my blades without them!",
-            "Merci: We have many items for sale.",
-            "Merci: ... Oh, welcome in!"
-        ],
         "trade_times": [
             3,
             4,
@@ -160,12 +124,6 @@
         "beard": "blue beard",
         "weapon": null,
         "armor": null,
-        "dialogue": [
-            "Oxi: Yeah, I got it... talk to me later. Youd be surprised by what I can find.",
-            "Oxi: Dont run your mouth about this. Just buy and leave.",
-            "Oxi: Werent you just here? Buy what you need, I guess.",
-            "Oxi: ..."
-        ],
         "trade_times": [
             1,
             2,
@@ -191,15 +149,6 @@
         "beard": null,
         "weapon": "sword",
         "armor": "iron shield",
-        "dialogue": [
-            "Aya: ...",
-            "Aya: I chop trees, vines, grass -- whatever needs to be cut.",
-            "Aya: Huh, havent seen you around. Been busy clearing paths.",
-            "Aya: Careful! My blades are sharp.",
-            "Aya: I can only dream of whats out there, beyond the town.",
-            "Aya: The trickle of the lake lulls me to sleep.",
-            "Aya: You dont talk much, huh? Just like Kyrio... what a curious old man."
-        ],
         "trade_times": null,
         "inv": null
     },
@@ -213,15 +162,6 @@
         "beard": null,
         "weapon": null,
         "armor": null,
-        "dialogue": [
-            "Zung: ...",
-            "Zung: Have you seen my sister, Aya? Shes scary, right?",
-            "Zung: No, I deal in rumors. If you want goods, ask Merci or Kapno.",
-            "Zung: I always thought we were the only town... until recently.",
-            "Zung: The jail also houses the bank. Secure? You bet.",
-            "Zung: *mumbles something about Erasti and Oxi*",
-            "Zung: Kyrio is fit for his age, but he hides it well."
-        ],
         "trade_times": null,
         "inv": null
     },
@@ -235,9 +175,6 @@
         "beard": null,
         "weapon": null,
         "armor": null,
-        "dialogue": [
-            "Lilao: ..."
-        ],
         "trade_times": null,
         "inv": null
     }

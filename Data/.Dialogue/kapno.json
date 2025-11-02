@@ -1,11 +1,15 @@
 {
 "default": [
-    "Nice weather today!",
-    "Hi!"],
+    "Kapno: Huh?",
+    "Kapno: Too many dry days, it seems. The lake is rather shallow.",
+    "Kapno: Have you seen my brother? He seems distracted as of late.",
+    "Kapno: My bones may be brittle, but I know good products when I see them.",
+    "Kapno: *mumbles*"],
 
-"quest_greet_town_start": [
-    "Oh, hello there! I’m Alice."],
-"quest_greet_town_complete": [
-    "You’ve met everyone already? Good job!"]
+"quest_greet_the_town": ["Kapno: Hello! I run a general store. Looking for anything specific?"],
+
+"quest_mysterious_note_1": ["Kapno: Exquisite! Where was this symbol found?"],
+"quest_mysterious_note_2": ["Kapno: It certainly peaks my interest. Strange occurances are frequent as of late."],
+"quest_mysterious_note_3": ["Kapno: Let me know if you find anything else, and check out my shop if you need anything."]
 
 }

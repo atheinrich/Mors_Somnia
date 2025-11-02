@@ -1,0 +1,14 @@
+{
+"default": [
+    "Oxi: Yeah, I got it... talk to me later. Youd be surprised by what I can find.",
+    "Oxi: Dont run your mouth about this. Just buy and leave.",
+    "Oxi: Werent you just here? Buy what you need, I guess.",
+    "Oxi: ..."],
+
+"quest_greet_the_town": ["Oxi: Can't sleep? I might have something for that. Come find me at night."],
+
+"quest_mysterious_note_1": ["Oxi: What do you want? You selling something?"],
+"quest_mysterious_note_2": ["Oxi: Hey! Don't just wave the arcane around like that."],
+"quest_mysterious_note_3": ["Oxi: Yeah, I've seen it before. Come find me later tonight... we can talk then."]
+
+}

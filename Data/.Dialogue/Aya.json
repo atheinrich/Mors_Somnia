@@ -1,0 +1,13 @@
+{
+"default": [
+    "Aya: ...",
+    "Aya: I chop trees, vines, grass -- whatever needs to be cut.",
+    "Aya: Huh, havent seen you around. Been busy clearing paths.",
+    "Aya: Careful! My blades are sharp.",
+    "Aya: I can only dream of whats out there, beyond the town.",
+    "Aya: The trickle of the lake lulls me to sleep.",
+    "Aya: You dont talk much, huh? Just like Kyrio... what a curious old man."],
+
+"quest_greet_the_town": ["Aya: You look like you can handle a blade... Oh! Did I say that out loud?"]
+
+}
