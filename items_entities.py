@@ -7,6 +7,7 @@
 # Imports
 ## Standard
 import random
+import time
 
 ## Specific
 import pygame
@@ -20,7 +21,14 @@ from data_management import obj_dicts, load_json
 ########################################################################################################################################################
 # Classes
 class PlayerData:
-    """ Manages player file. One save for each file. """
+    """ Manages player file. One save for each file.
+
+        Objects saved:
+            - Entity:       stats, location, current and previous environment, inventory, equipment
+            - Entities:     Entity instances for recurring characters for ease of access
+            - Environments: all initialized environments, including all objects and entities therein
+            - Dialogue:     all dialogue that has been loaded, as well as the current state for each
+    """
 
     def __init__(self):
         """ Holds everything regarding the player.
@@ -370,26 +378,48 @@ class Dialogue:
         self.dialogue_cache = {}
         self.npc_states     = {}
 
-    def load_npc(self, npc_id):
+        self.subscribe_events()
+    
+    def load_npc(self, ent_id):
         """ Sends all dialogue to dialogue_cache. """
 
-        if npc_id not in self.dialogue_cache:
+        if ent_id not in self.dialogue_cache:
             
-            self.dialogue_cache[npc_id] = load_json(f'Data/.Dialogue/{npc_id}.json')
-            self.npc_states[npc_id]     = "default"
+            self.dialogue_cache[ent_id] = load_json(f'Data/.Dialogue/{ent_id}.json')
+            self.npc_states[ent_id]     = "default"
 
-    def unlock_dialogue(self, npc_id, dialogue_id):
+    def unlock_dialogue(self, ent_id, dialogue_id):
         """ Changes current set of available options. """
 
-        self.npc_states[npc_id] = dialogue_id
+        self.load_npc(ent_id)
+        self.npc_states[ent_id] = dialogue_id
 
-    def get_dialogue(self, npc_id):
+    def get_dialogue(self, ent_id):
         """ Return a random dialogue string from the character's current set of available options. """
 
-        self.load_npc(npc_id)
-        key   = self.npc_states.get(npc_id)
-        lines = self.dialogue_cache[npc_id].get(key)
+        self.load_npc(ent_id)
+        key   = self.npc_states.get(ent_id)
+        lines = self.dialogue_cache[ent_id].get(key)
         return random.choice(lines)
+
+    def emit_dialogue(self, ent_id, dialogue_id=None):
+        """ Loads dialogue, sends it to the GUI, and plays some audio. """
+
+        if dialogue_id:
+            self.unlock_dialogue(ent_id, dialogue_id)
+
+        dialogue = self.get_dialogue(ent_id)
+        session.pyg.update_gui(dialogue)
+        if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
+            session.aud.play_speech(dialogue)
+
+    def subscribe_events(self):
+        session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
+        session.bus.subscribe('emit_dialogue',   self.emit_dialogue)
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.subscribe_events()
 
 class Item:
     

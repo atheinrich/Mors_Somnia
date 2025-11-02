@@ -55,6 +55,7 @@ class Pygame:
 
         #########################################################
         # Utility
+        self.subscribe_events()
         self.pause = False
         self.startup_toggle  = True
         self.cooldown_time   = 0.2
@@ -272,14 +273,14 @@ class Pygame:
 
         return lines
 
-    def update_gui(self, new_msg=None, color=None, ent=None):
+    def update_gui(self, text=None, color=None, ent=None):
         """ Constructs (but does not render) messages in the top GUI and stats in the bottom GUI.
 
             Parameters
             ----------
-            new_msg     : str; text added to top GUI
-            color       : pygame Color; color of new message
-            ent         : Entity object; only specified at startup
+            text  : str; text added to top GUI
+            color : pygame Color; color of new message
+            ent   : Entity object; only specified at startup
 
             msg_history : dict; all prior messages and colors in memory
         """
@@ -300,8 +301,8 @@ class Pygame:
         #########################################################
         # Messages (top GUI)
         ## Add new message
-        if new_msg:
-            for line in pyg.textwrap(new_msg, pyg.msg_width):
+        if text:
+            for line in pyg.textwrap(text, pyg.msg_width):
 
                 # Only show a message once
                 if line in self.msg_history.keys():
@@ -353,6 +354,9 @@ class Pygame:
             'time':     self.minifont.render(time,    True, bottom_color),
             'stamina':  self.minifont.render(stamina, True, self.green),
             'location': self.minifont.render(env,     True, bottom_color)}
+
+    def subscribe_events(self):
+        session.bus.subscribe('emit_message', self.update_gui)
 
     # Fade tools
     def update_fade(self):
@@ -1150,6 +1154,9 @@ class EventBus:
         """ Accepts an event flag and calls any functions with a matching event. """
         for function in self.listeners.get(event_id, []):
             function(**kwargs)
+
+    def clear(self):
+        self.listeners = {}
 
 ########################################################################################################################################################
 # Tools

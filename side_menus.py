@@ -539,7 +539,7 @@ class CatalogMenu:
         
         pyg = session.pyg
 
-        from mechanics import place_object
+        from environments import place_object
         from items_entities import create_item, create_entity
 
         # Note location and image names

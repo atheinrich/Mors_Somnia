@@ -1696,7 +1696,6 @@ class Room:
     def from_plan_fr(self):
 
         from items_entities import create_item
-        from mechanics import place_object
 
         for y in range(len(self.plan)):
             layer = list(self.plan[y])
@@ -2004,7 +2003,6 @@ class Weather:
         self.sky.set_alpha(alpha)
 
     def create_cloud(self):
-        from mechanics import create_text_room
 
         pyg = session.pyg
 

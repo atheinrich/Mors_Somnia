@@ -811,9 +811,17 @@ class FileMenu:
         
         #########################################################
         # Clean up and return
+        ## Update event bus
+        session.bus.clear()
+
+        ## Check if dead
         if session.player_obj.ent.dead:
             session.play_game_obj.death_checked = True
+
+        ## Update zoom
         session.player_obj.ent.env.camera.zoom_in(factor=0)
+
+        ## Update gamestate
         pyg.gui_toggle     = True
         pyg.msg_toggle     = True
         pyg.startup_toggle = False

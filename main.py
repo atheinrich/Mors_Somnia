@@ -115,6 +115,7 @@ def init():
     #########################################################
     # Core
     ## Pygame
+    session.bus              = EventBus()
     session.pyg              = Pygame()
     session.aud              = Audio()
     
@@ -128,8 +129,7 @@ def init():
     
     #########################################################
     # Gamestates
-    ## Event handling
-    session.bus              = EventBus()
+    ## Mechanics
     session.movement         = MovementSystem()
     session.interact         = InteractionSystem()
     session.items            = ItemSystem()

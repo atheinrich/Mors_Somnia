@@ -8,7 +8,6 @@
 ## Standard
 import random
 import time
-import copy
 import sys
 
 ## Specific
@@ -724,10 +723,6 @@ class InteractionSystem:
                 target_ent_id = target.name)
         
             if target.role == 'NPC':
-                    
-                # Dialogue
-                dialogue = session.player_obj.dialogue.get_dialogue(target.name)
-                print(ent.name, target.name)
 
                 # Trading
                 if target.trade_times:
@@ -735,10 +730,9 @@ class InteractionSystem:
                         session.trade_obj.ent = target
                         session.pyg.overlay_state = 'trade'
             
-                # Play speech and update quests
+                # Dialogue
                 if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
-                    session.pyg.update_gui(dialogue)
-                    session.aud.play_speech(dialogue)
+                    session.player_obj.dialogue.emit_dialogue(target.name)
         
             # Make them flee
             elif type(target.fear) == int:
@@ -1816,6 +1810,13 @@ def place_player(ent, env, loc):
         # Change song
         if ent.env.name != ent.last_env.name:
             session.aud.control(soundtrack=env.soundtrack)
+        
+        # Update event bus
+        session.bus.clear()
+        pyg.subscribe_events()
+        env.area.questlog.subscribe_events()
+        if session.player_obj.dialogue:
+            session.player_obj.dialogue.subscribe_events()
 
 def get_vicinity(obj):
     """ Returns a list of tiles surrounding the given location.

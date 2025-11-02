@@ -2,42 +2,32 @@
 "quest_id":    "tutorial",
 "name":        "Tutorial",
 "category":    "main",
+
 "description": [
-   "Talk to the friend."],
+
+   "Talk to the friend."
+
+],
+
+
+"on_load": [
+   
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "friend",
+    "dialogue_id": "tutorial_1"}
+
+],
 
 
 "objectives": [
 
-
    {"event_id":    "entity_interacted",
     "description": "Learn about the controls.",
     "conditions": {
 
         "ent_id":        "player",
-        "target_ent_id": "friend"},
+        "target_ent_id": "friend"}},
 
-    "on_complete": [
-
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "friend",
-        "dialogue": "tutorial_2"}]},
-
-
-
-   {"event_id":    "entity_interacted",
-    "description": "Learn about the controls.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "friend"},
-
-    "on_complete": [
-
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "friend",
-        "dialogue": "tutorial_3"}]},
 
 
 
@@ -50,10 +40,10 @@
 
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "friend",
-        "dialogue": "tutorial_4"}]},
+       {"event_id":    "emit_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "tutorial_2"}]},
+
 
 
 
@@ -66,20 +56,55 @@
 
     "on_complete": [
 
-       {"event_id": "dialogue",
-        "action":   "unlock",
-        "ent_id":   "friend",
-        "dialogue": "tutorial_5"}]}
+       {"event_id":    "emit_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "tutorial_3"}]},
 
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the controls.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id":    "emit_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "tutorial_4"}]},
+
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the controls.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id":    "emit_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "tutorial_5"}]}
 
 ],
 
+
 "on_complete": [
 
-   
-   {"event_id": "dialogue",
-    "action":   "broadcast",
-    "target":   "friend",
-    "dialogue": "tutorial_complete"}
+   {"event_id":    "emit_message",
+    "text":        "Check out Options in the Main Menu!"},
+
+
+
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "friend",
+    "dialogue_id": "default"}
 
 ]}
