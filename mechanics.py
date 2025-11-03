@@ -759,8 +759,8 @@ class InteractionSystem:
             if target.role == 'NPC':
 
                 # Trading
-                if target.trade_active and not target.quest_active:
-                    session.trade_obj.ent = target
+                if target.trade_active() and not target.quest_active():
+                    session.trade_obj.ent     = target
                     session.pyg.overlay_state = 'trade'
             
                 # Dialogue

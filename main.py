@@ -238,57 +238,57 @@ def game_states():
         API_updating()
 
 def rendering():
-        pyg = session.pyg
+    pyg = session.pyg
 
-        #########################################################
-        # Render display
-        render_display()
-        session.img.render()
-        for (surface, pos) in pyg.display_queue:
-            pyg.display.blit(surface, pos)
-        display = pygame.transform.scale(
-            pyg.display, (pyg.screen_width, pyg.screen_height))
-        pyg.screen.blit(display, (0, 0))
-        
-        #########################################################
-        # Render HUD
-        render_hud()
-        for (surface, pos) in pyg.hud_queue:
-            pyg.overlays.blit(surface, pos)
-        hud = pygame.transform.scale(
-            pyg.hud, (pyg.screen_width, pyg.screen_height))
-        pyg.screen.blit(hud, (0, 0))
+    #########################################################
+    # Render display
+    render_display()
+    session.img.render()
+    for (surface, pos) in pyg.display_queue:
+        pyg.display.blit(surface, pos)
+    display = pygame.transform.scale(
+        pyg.display, (pyg.screen_width, pyg.screen_height))
+    pyg.screen.blit(display, (0, 0))
+    
+    #########################################################
+    # Render HUD
+    render_hud()
+    for (surface, pos) in pyg.hud_queue:
+        pyg.overlays.blit(surface, pos)
+    hud = pygame.transform.scale(
+        pyg.hud, (pyg.screen_width, pyg.screen_height))
+    pyg.screen.blit(hud, (0, 0))
 
-        #########################################################
-        # Render overlays
-        for (surface, pos) in pyg.overlay_queue:
-            pyg.overlays.blit(surface, pos)
-        overlays = pygame.transform.scale(
-            pyg.overlays, (pyg.screen_width, pyg.screen_height))
-        pyg.screen.blit(overlays, (0, 0))
+    #########################################################
+    # Render overlays
+    for (surface, pos) in pyg.overlay_queue:
+        pyg.overlays.blit(surface, pos)
+    overlays = pygame.transform.scale(
+        pyg.overlays, (pyg.screen_width, pyg.screen_height))
+    pyg.screen.blit(overlays, (0, 0))
 
-        #########################################################
-        # Render fade
-        for (surface, pos) in pyg.fade_queue:
-            pyg.fade.blit(surface, pos)
-        fade = pygame.transform.scale(
-            pyg.fade, (pyg.screen_width, pyg.screen_height))
-        pyg.screen.blit(fade, (0, 0))
+    #########################################################
+    # Render fade
+    for (surface, pos) in pyg.fade_queue:
+        pyg.fade.blit(surface, pos)
+    fade = pygame.transform.scale(
+        pyg.fade, (pyg.screen_width, pyg.screen_height))
+    pyg.screen.blit(fade, (0, 0))
 
-        #########################################################
-        # Prepare for next frame
-        pygame.display.flip()
-        pyg.clock.tick(30)
-        
-        pyg.display.fill(pyg.black)
-        pyg.hud.fill((0, 0, 0, 0))
-        pyg.overlays.fill((0, 0, 0, 0))
-        pyg.fade.fill((0, 0, 0, 0))
+    #########################################################
+    # Prepare for next frame
+    pygame.display.flip()
+    pyg.clock.tick(30)
+    
+    pyg.display.fill(pyg.black)
+    pyg.hud.fill((0, 0, 0, 0))
+    pyg.overlays.fill((0, 0, 0, 0))
+    pyg.fade.fill((0, 0, 0, 0))
 
-        pyg.display_queue = []
-        pyg.hud_queue     = []
-        pyg.overlay_queue = []
-        pyg.fade_queue    = []
+    pyg.display_queue = []
+    pyg.hud_queue     = []
+    pyg.overlay_queue = []
+    pyg.fade_queue    = []
 
 ########################################################################################################################################################
 # Other

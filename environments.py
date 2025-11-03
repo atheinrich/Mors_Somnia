@@ -1373,7 +1373,7 @@ class Environment:
         """ Checks if a placed tile has other placed tiles around it.
             If so, it creates a room if these placed tiles form a closed shape. """
         
-        from pygame_utilities import get_vicinity
+        from mechanics import get_vicinity
 
         # Make a list of the tile and its neighbors
         first_neighbors = [obj]        # list of initial set of tiles; temporary
