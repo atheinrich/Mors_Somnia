@@ -21,6 +21,7 @@ import session
 # Core
 class PlayGame:
 
+    # Core
     def __init__(self):
 
         self.last_press_time = 0
@@ -77,7 +78,7 @@ class PlayGame:
                         #########################################################
                         # Enter combo sequence
                         elif event.key in pyg.key_HOLD:
-                            pyg.overlay_state = 'hold'
+                            self.key_HOLD()
                             return
             
                         #########################################################
@@ -99,43 +100,36 @@ class PlayGame:
                             self.key_SPEED()
 
                         #########################################################
-                        # View stats
-                        elif event.key in pyg.key_INFO:
-                            pyg.overlay_state = 'ent_stats'
-                            return
-            
-                        #########################################################
-                        # Toggle GUI
-                        elif event.key in pyg.key_GUI:
-                            self.key_GUI()
-                        
-                        #########################################################
-                        # Open inventory
+                        # Open side menu
                         elif event.key in pyg.key_INV:
-                            pyg.overlay_state = 'inv'
+                            self.key_INV()
                             return
-                        
-                        #########################################################
-                        # Open catalog
                         elif event.key in pyg.key_DEV:
-                            pyg.overlay_state = 'dev'
+                            self.key_DEV()
                             return
 
                     #########################################################
+                    # View stats
+                    if event.key in pyg.key_INFO:
+                        self.key_INFO()
+                        return
+                        
+                    #########################################################
                     # Open questlog
-                    if event.key in pyg.key_QUEST:
-                        pyg.overlay_state = 'questlog'
-                        pyg.hud_state     = 'off'
+                    elif event.key in pyg.key_QUEST:
+                        self.key_QUEST()
                         return
                     
                     #########################################################
+                    # Toggle GUI
+                    elif event.key in pyg.key_GUI:
+                        self.key_GUI()
+                        
+                    #########################################################
                     # Open main menu
                     elif event.key in pyg.key_BACK:
-                        if time.time()-pyg.last_press_time > pyg.cooldown_time:
-                            pyg.last_press_time = float(time.time())
-                            pyg.overlay_state = 'menu'
-                            pyg.hud_state     = 'off'
-                            return
+                        self.key_BACK()
+                        return
 
                 # Quit
                 elif event.type == QUIT:
@@ -156,6 +150,13 @@ class PlayGame:
         pyg.game_state = 'play_game'
         return
 
+    def render(self):
+        pyg = session.pyg
+
+        pyg.msg_height = 4
+        if not pyg.overlay_state: pyg.update_gui()
+
+    # Navigation
     def key_UP(self):
         session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
@@ -168,28 +169,29 @@ class PlayGame:
     def key_RIGHT(self):
         session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
+    # Action
     def key_ENTER(self):
-
         pyg = session.pyg
 
-        #########################################################
-        # Activate items
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
             pygame.event.clear()
             
-            # >>PICKUP/STAIRS<<
             # Check if an item is under the player
             if session.player_obj.ent.tile.item:
                 tile = session.player_obj.ent.tile
                 
-                # Activate entryway
+                #########################################################
+                # Entryway
                 if tile.item.name == 'dungeon':     session.effects.enter_dungeon()
                 elif tile.item.name == 'cave':      session.effects.enter_cave()
                 elif tile.item.name == 'overworld': session.effects.enter_overworld()
                 elif tile.item.name == 'home':      session.effects.enter_home()
                 
-                # Activate bed
+                
+                #########################################################
+                # Furniture
+                ## Bed
                 elif tile.item.name in ['red bed', 'purple bed']:
                     
                     # Check if it is the player's bed
@@ -207,12 +209,13 @@ class PlayGame:
                     
                     else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
                 
-                # Activate chair
+                ## Chair
                 elif tile.item.name in ['red chair left', 'red chair right']:
                     session.player_obj.ent.env.weather.set_day_and_time(increment=True)
                     pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 
-                # Pick up or activate
+                #########################################################
+                # Items
                 else: session.items.pick_up(session.player_obj.ent.tile.item)
 
     def key_PERIOD(self):
@@ -239,6 +242,35 @@ class PlayGame:
                             env = env,
                             loc = env.player_coordinates)
 
+    def key_SPEED(self):
+        session.effects.movement_speed()
+
+    def key_BACK(self):
+        pyg = session.pyg
+
+        pyg.overlay_state = 'menu'
+        pyg.hud_state     = 'off'
+
+    # Menus
+    def key_HOLD(self):
+        session.pyg.overlay_state = 'hold'
+
+    def key_INFO(self):
+        session.pyg.overlay_state = 'ent_stats'
+
+    def key_INV(self):
+        session.pyg.overlay_state = 'inv'
+
+    def key_DEV(self):
+        session.pyg.overlay_state = 'dev'
+
+    def key_QUEST(self):
+        pyg = session.pyg
+
+        pyg.overlay_state = 'questlog'
+        pyg.hud_state     = 'off'
+
+    # GUI
     def key_GUI(self):
         
         pyg = session.pyg
@@ -275,15 +307,7 @@ class PlayGame:
     def key_MINUS(self):
         session.player_obj.ent.env.camera.zoom_out()
 
-    def key_SPEED(self):
-        session.effects.movement_speed()
-
-    def render(self):
-        pyg = session.pyg
-
-        pyg.msg_height = 4
-        if not pyg.overlay_state: pyg.update_gui()
-
+    # Tools
     def handle_death(self):
         """ Overwrite save files for permadeath or revive the player. """
 
@@ -342,6 +366,7 @@ class PlayGame:
 
 class PlayGarden:
 
+    # Core
     def run(self):
         """ Hosts garden gamestate as a lightweight variant of PlayGame. """
         
@@ -354,6 +379,7 @@ class PlayGarden:
         session.stats_obj.pet_update()
         
         ## Active AI when viewing the main menu
+        print('--------------')
         if pyg.overlay_state == 'menu': session.player_obj.ent.role = 'NPC'
         else:                           session.player_obj.ent.role = 'player'
         
@@ -370,10 +396,11 @@ class PlayGarden:
                 #########################################################
                 # Keep playing
                 if event.type == KEYDOWN:
-                    if not session.player_obj.ent.dead:
-                        
+
+                    if not ent.dead:
+                            
                         #########################################################
-                        # Move player and adjust speed
+                        # Move player
                         if event.key in pyg.key_UP:
                             self.key_UP()
                         elif event.key in pyg.key_DOWN:
@@ -382,8 +409,6 @@ class PlayGarden:
                             self.key_LEFT()
                         elif event.key in pyg.key_RIGHT:
                             self.key_RIGHT()
-                        elif event.key in pyg.key_SPEED:
-                            self.key_SPEED()
 
                         #########################################################
                         # Activate objects below
@@ -393,59 +418,63 @@ class PlayGarden:
                         #########################################################
                         # Enter combo sequence
                         elif event.key in pyg.key_HOLD:
-                            pyg.overlay_state = 'hold'
+                            self.key_HOLD()
                             return
-                
-                        #########################################################
-                        # View stats
-                        elif event.key in pyg.key_INFO:
-                            pyg.overlay_state = 'pet_stats'
-                            return
-            
+
                         print((ent.X, ent.Y))
 
                 elif event.type == pygame.KEYUP:
 
+                    if not ent.dead:
+                        
+                        #########################################################
+                        # Open side menu
+                        if event.key in pyg.key_INV:
+                            self.key_INV()
+                            return
+                        elif event.key in pyg.key_DEV:
+                            self.key_DEV()
+                            return
+
                     #########################################################
-                    # Open inventory
-                    if event.key in pyg.key_INV:
-                        pyg.overlay_state = 'inv'
+                    # View stats
+                    if event.key in pyg.key_INFO:
+                        self.key_INFO()
                         return
                     
                     #########################################################
-                    # Open catalog
-                    elif event.key in pyg.key_DEV:
-                        pyg.overlay_state = 'dev'
-                        return
-
-                    #########################################################
                     # Open questlog
                     elif event.key in pyg.key_QUEST:
-                        pyg.overlay_state = 'questlog'
-                        pyg.hud_state     = 'off'
+                        self.key_QUEST()
                         return
-
+                    
                     #########################################################
                     # Open main menu
                     elif event.key in pyg.key_BACK:
-                        if time.time()-pyg.last_press_time > pyg.cooldown_time:
-                            pyg.last_press_time = float(time.time())
-                            pyg.overlay_state = 'menu'
-                            return
-                        
+                        self.key_BACK()
+                        return
+
                 # Quit
                 elif event.type == QUIT:
                     pygame.quit()
                     sys.exit()
-        
+
         #########################################################
         # Move AI controlled entities
-        for ent in session.player_obj.ent.env.entities:
-            session.movement.ai(ent)
-        session.movement.ai(session.player_obj.ent)
+        if not pyg.pause:
+
+            for ent in ent.env.entities:
+                session.movement.ai(ent)
+
+            session.movement.ai(session.player_obj.ent)
         
         pyg.game_state = 'play_garden'
+        return
 
+    def render(self):
+        pass
+
+    # Navigation
     def key_UP(self):
         session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
@@ -458,24 +487,35 @@ class PlayGarden:
     def key_RIGHT(self):
         session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
+    # Action
     def key_ENTER(self):
-
-        #########################################################
-        # Pick up items or activate stairs       
         if session.player_obj.ent.tile.item:
             session.items.pick_up(session.player_obj.ent.tile.item)
 
-    def key_SPEED(self):
+    def key_BACK(self):
         pyg = session.pyg
 
-        #########################################################
-        # Change speed
-        if time.time()-pyg.last_press_time > pyg.cooldown_time:
-            pyg.last_press_time = float(time.time())
-            session.effects.movement_speed()
+        pyg.overlay_state = 'menu'
+        pyg.hud_state     = 'off'
 
-    def render(self):
-        pass
+    # Menus
+    def key_HOLD(self):
+        session.pyg.overlay_state = 'hold'
+
+    def key_INFO(self):
+        session.pyg.overlay_state = 'pet_stats'
+
+    def key_INV(self):
+        session.pyg.overlay_state = 'inv'
+
+    def key_DEV(self):
+        session.pyg.overlay_state = 'dev'
+
+    def key_QUEST(self):
+        pyg = session.pyg
+
+        pyg.overlay_state = 'questlog'
+        pyg.hud_state     = 'off'
 
 ########################################################################################################################################################
 # Interactions
@@ -712,6 +752,7 @@ class MovementSystem:
 class InteractionSystem:
 
     def interact(self, ent, target):
+        """ Routes the interaction to the proper channel based on entities and location. """
 
         # Player specific
         if ent.role == 'player':
@@ -731,7 +772,8 @@ class InteractionSystem:
                 target.fear += 30
             
             # Attack
-            else: self.attack_target(ent, target)
+            elif session.pyg.game_state != 'play_garden':
+                self.attack_target(ent, target)
         
             # Emit interaction
             session.bus.emit(
@@ -740,13 +782,14 @@ class InteractionSystem:
                 target_ent_id = target.name)
         
         # General
-        else:
+        elif session.pyg.game_state != 'play_garden':
 
             if ent.role == 'NPC':
                 if target.role != 'player':
                     self.attack_target(ent, target)
             
-            else: self.attack_target(ent, target)
+            else:
+                self.attack_target(ent, target)
     
     def attack_target(self, ent, target, effect_check=True):
         """ Calculates and applies attack damage. """

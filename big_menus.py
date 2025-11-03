@@ -107,9 +107,11 @@ class MainMenu:
                 elif event.key in pyg.key_DOWN:
                     self.key_DOWN()
                 
+            elif event.type == KEYUP:
+            
                 #########################################################
                 # Adjust music
-                elif event.key in pyg.key_PLUS:
+                if event.key in pyg.key_PLUS:
                     session.aud.pause(paused=False)
                 elif event.key in pyg.key_MINUS:
                     session.aud.pause(paused=True)
@@ -128,7 +130,7 @@ class MainMenu:
                     
                     #########################################################
                     # Enter new game menu
-                    if self.choices[self.choice] == "NEW GAME":
+                    elif self.choices[self.choice] == "NEW GAME":
                         pyg.overlay_state = 'new_game'
                         return
                     
@@ -157,11 +159,9 @@ class MainMenu:
                         pygame.quit()
                         sys.exit()
         
-            elif event.type == KEYUP:
-            
                 #########################################################
                 # Return to game
-                if event.key in pyg.key_BACK:
+                elif event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
         
@@ -222,8 +222,8 @@ class MainMenu:
     def key_BACK(self):
         pyg = session.pyg
 
-        pyg.last_press_time = float(time.time())
-        pyg.hud_state     = 'on'
+        if pyg.game_state != 'play_garden':
+            pyg.hud_state = 'on'
         pyg.overlay_state = None
 
     # Tools
@@ -250,28 +250,34 @@ class MainMenu:
         """ Places player in the garden or main game. """
 
         pyg = session.pyg
+        ent = session.player_obj.ent
 
         from mechanics import place_player
 
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time())
+        #########################################################
+        # Place player in garden
+        if ent.env.name != 'garden':
 
-            # Place player in garden
-            if session.player_obj.ent.env.name != 'garden':
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.areas['underworld']['garden'],
-                    loc = session.player_obj.envs.areas['underworld']['garden'].player_coordinates)
-                pyg.game_state = 'play_garden'
+            place_player(
+                ent = ent,
+                env = session.player_obj.envs.areas['underworld']['garden'],
+                loc = session.player_obj.envs.areas['underworld']['garden'].player_coordinates)
             
-            # Place player in world
-            elif not pyg.startup_toggle:
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.ent.last_env,
-                    loc = session.player_obj.ent.last_env.player_coordinates)
-                pyg.game_state = 'play_game'
-                pyg.hud_state  = 'on'
+            pyg.game_state = 'play_garden'
+            pyg.hud_state  = 'off'
+        
+        #########################################################
+        # Place player in world
+        elif not pyg.startup_toggle:
+
+            place_player(
+                ent = ent,
+                env = ent.last_env,
+                loc = ent.last_env.player_coordinates)
+            
+            ent.role       = 'player'
+            pyg.game_state = 'play_game'
+            pyg.hud_state  = 'on'
 
 class NewGameMenu:
 
@@ -336,6 +342,9 @@ class NewGameMenu:
             self.temp          = self.init_player()
             session.player_obj = self.startup()
             return
+        
+        ## Pause the game
+        pyg.pause = True
 
         ## Set navigation speed
         session.effects.movement_speed(toggle=False, custom=2)
@@ -352,7 +361,9 @@ class NewGameMenu:
                 elif event.key in pyg.key_DOWN:
                     self.key_DOWN()
 
-                elif event.key in pyg.key_ENTER:
+            elif event.type == KEYUP:
+
+                if event.key in pyg.key_ENTER:
 
                     #########################################################
                     # Apply option
@@ -370,12 +381,8 @@ class NewGameMenu:
                     elif self.choice == 7:
                         self.key_BACK()
                         return
-        
-            elif event.type == KEYUP:
 
-                #########################################################
-                ## Return to main menu
-                if event.key in pyg.key_BACK:
+                elif event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
                 
@@ -432,7 +439,10 @@ class NewGameMenu:
             self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
 
     def key_BACK(self):
-        session.pyg.overlay_state = 'menu'
+        pyg = session.pyg
+        
+        pyg.pause = False
+        pyg.overlay_state = 'menu'
 
     # Tools
     def init_player(self):
@@ -643,6 +653,7 @@ class NewGameMenu:
         #########################################################
         # Switch game state
         self.temp          = self.init_player()
+        pyg.pause          = False
         pyg.startup_toggle = False
         pyg.game_state     = 'play_game'
         pyg.hud_state      = 'on'
@@ -706,33 +717,43 @@ class FileMenu:
         #########################################################
         # Initialize
         self.mode = pyg.overlay_state
+
+        ## Pause the game
+        pyg.pause = True
+
+        ## Set navigation speed
         session.effects.movement_speed(toggle=False, custom=2)
         
+        ## Wait for input
         for event in pygame.event.get():
             
-            #########################################################
-            # Choose a file
             if event.type == KEYDOWN:
                 
+                #########################################################
                 # Select file
-                if event.key in pyg.key_UP:     self.key_UP()
-                elif event.key in pyg.key_DOWN: self.key_DOWN()
+                if event.key in pyg.key_UP:
+                    self.key_UP()
+                elif event.key in pyg.key_DOWN:
+                    self.key_DOWN()
                 
-                # Activate and return
-                elif event.key in pyg.key_ENTER:
-                    if self.mode == 'save':   self.save_account()
-                    elif self.mode == 'load': self.load_account()
-
-                    pyg.overlay_state = 'menu'
-                    return
-            
-            #########################################################
-            # Return to main menu
             elif event.type == KEYUP:
 
-                if event.key in pyg.key_BACK:
-                    pyg.last_press_time = float(time.time())
-                    pyg.overlay_state = 'menu'
+                #########################################################
+                # Activate and return
+                if event.key in pyg.key_ENTER:
+                    if self.mode == 'save':
+                        self.save_account()
+                        self.key_BACK()
+                        return
+                    elif self.mode == 'load':
+                        self.load_account()
+                        self.key_BACK()
+                        return
+            
+                #########################################################
+                # Return to main menu
+                elif event.key in pyg.key_BACK:
+                    self.key_BACK()
                     return
         
         pyg.overlay_state = self.mode
@@ -760,6 +781,12 @@ class FileMenu:
     def key_DOWN(self):
         self.choice = (self.choice + 1) % len(self.options)
 
+    def key_BACK(self):
+        pyg = session.pyg
+
+        pyg.pause         = False
+        pyg.overlay_state = 'menu'
+
     # Tools
     def save_account(self):
         """ Pickles a Player object and takes a screenshot. """
@@ -786,10 +813,6 @@ class FileMenu:
             filename = "screenshot.png",
             blur     = True)
         self.update_backgrounds()
-        
-        #########################################################
-        # Clean up and return
-        session.pyg.overlay_state = 'main_menu'
 
     def load_account(self):
         """ Loads a pickled Player object. """
@@ -826,7 +849,6 @@ class FileMenu:
         pyg.msg_toggle     = True
         pyg.startup_toggle = False
         pyg.game_state     = 'play_game'
-        pyg.overlay_state  = 'main_menu'
 
     def update_backgrounds(self):
         self.backgrounds_render = [pygame.image.load(path).convert() for path in self.backgrounds]
@@ -878,8 +900,13 @@ class CtrlMenu:
 
         #########################################################
         # Initialize
+        ## Set navigation speed
         session.effects.movement_speed(toggle=False, custom=2)
         
+        ## Pause the game
+        pyg.pause = True
+
+        ## Wait for input
         for event in pygame.event.get():
             
             if event.type == KEYDOWN:
@@ -896,7 +923,10 @@ class CtrlMenu:
                 #########################################################
                 ## Return to main menu
                 if event.key in pyg.key_BACK:
-                    pyg.overlay_state = 'menu'
+                    self.key_BACK()
+                    return
+                if event.key in pyg.key_ENTER:
+                    self.key_BACK()
                     return
                 
         pyg.overlay_state = self.name
@@ -916,6 +946,13 @@ class CtrlMenu:
         # Render categories and options
         for i in range(len(self.layout_render)):
             pyg.overlay_queue.append([self.layout_render[i], (50, 38+24*i)])
+
+    # Keys
+    def key_BACK(self):
+        pyg = session.pyg
+
+        pyg.pause         = False
+        pyg.overlay_state = 'menu'
 
     # Tools
     def update_controls(self, direction=None):
@@ -1022,6 +1059,8 @@ class StatsMenu:
             
             if event.type == KEYUP:
 
+                #########################################################
+                # Close after any key is pressed
                 self.key_BACK()
                 return
                 
@@ -1227,12 +1266,12 @@ class Textbox:
     def run(self):
         pyg = session.pyg
 
-        #########################################################
-        # Close after any key is pressed
         for event in pygame.event.get():
-            if event.type == KEYDOWN:
-                pyg.hud_state     = 'on'
-                pyg.overlay_state = None
+
+            #########################################################
+            # Close after any key is pressed
+            if event.type == KEYUP:
+                self.key_BACK()
                 return
 
         pyg.overlay_state = 'textbox'
@@ -1250,5 +1289,12 @@ class Textbox:
         pyg.overlay_queue.append([self.header_render, self.header_pos])
         for i in range(len(self.text_render)):
             pyg.overlay_queue.append([self.text_render[i], self.text_pos[i]])
+
+    def key_BACK(self):
+        pyg = session.pyg
+
+        if pyg.game_state != 'play_garden':
+            pyg.hud_state = 'on'
+        pyg.overlay_state = None
 
 ########################################################################################################################################################

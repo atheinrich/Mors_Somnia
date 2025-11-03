@@ -1221,6 +1221,7 @@ def render_display():
     if pyg.overlay_state == 'new_game':
         ent = session.new_game_obj.temp.ent
         session.player_obj.ent.env.camera.zoom_in(custom=1)
+    
     else:
         ent = session.player_obj.ent
 

@@ -213,7 +213,8 @@ class QuestMenu:
     def key_BACK(self):
         pyg = session.pyg
 
-        pyg.hud_state     = 'on'
+        if pyg.game_state != 'play_garden':
+            pyg.hud_state = 'on'
         pyg.overlay_state = None
 
     # Tools

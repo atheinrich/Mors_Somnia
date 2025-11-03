@@ -244,16 +244,116 @@ class Entity:
         if self.name in session.player_obj.dialogue.npc_states.keys():
             if session.player_obj.dialogue.npc_states[self.name][:5] == 'quest':
                 return True
-        
         return False
 
     def trade_active(self):
         if self.trade_times:
             if session.player_obj.ent.env.env_time in self.trade_times:
                 return True
-        
         return False
 
+    def find_body(self, swimming):
+        
+        ## Left handed
+        if self.handedness == 'left': 
+
+            if swimming: img = session.img.halved([self.img_names[0], self.img_names[1]])
+            else:        img = session.img.dict[self.img_names[0]][self.img_names[1]]
+        
+        ## Right handed
+        else:
+
+            if swimming: img = session.img.halved([self.img_names[0], self.img_names[1]], flipped=True)
+            else:        img = session.img.flipped.dict[self.img_names[0]][self.img_names[1]]
+
+        return img
+    
+    def find_chest(self, swimming):
+
+        for item in self.equipment.values():
+            if item is not None:
+                if item.slot == 'chest':
+
+                    if self.handedness == 'left':
+                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]])
+                        else:        img = session.img.dict[item.img_names[0]][self.img_names[1]]
+
+                    else:
+                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
+                        else:        img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                    
+                    return img
+
+    def find_armor(self, swimming):
+
+        for item in self.equipment.values():
+            if item is not None:
+                if item.slot == 'body':
+
+                    if self.handedness == 'left':
+                        if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]])
+                        elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
+                        else:                 img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                    
+                    else:
+                        if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
+                        elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
+                        else:                 img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                    
+                    return img
+
+    def find_face(self, swimming):
+
+        for item in self.equipment.values():
+            if item is not None:
+                if item.slot == 'face':
+
+                    if self.handedness == 'left':
+                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]])
+                        else:        img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                    
+                    else:
+                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
+                        else:        img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                    
+                    return img
+        
+    def find_hair(self, swimming):
+
+        for item in self.equipment.values():
+            if item is not None:
+                if item.slot == 'head':
+                    
+                    if self.handedness == 'left':
+                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]])
+                        else:        img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                    
+                    else:
+                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
+                        else:        img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                    
+                    return img
+        
+    def find_holdables(self, swimming):
+
+        for item in self.equipment.values():
+            if item is not None:
+                if not item.hidden:
+                    if item.role in ['weapons', 'armor']:
+                        if item.slot in ['dominant hand', 'non-dominant hand']:
+                            
+                            if self.handedness == 'left':
+                                if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]])
+                                elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
+                                else:                 img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                            
+                            else:
+                                if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
+                                elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
+                                else:                 img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                            
+                            return img
+    
     def draw(self, loc=None):
         """ Adds skin and equipment layers to a fresh surface.
 
@@ -277,89 +377,26 @@ class Entity:
         
         #########################################################
         # Body
-        ## Swimming
+        ## Toggle lower half
         if self.tile.biome in session.img.biomes['sea']: swimming = True
         else:                                            swimming = False
 
-        ## Regular
-        if self.handedness == 'left': 
-            if swimming: surface.blit(session.img.halved([self.img_names[0], self.img_names[1]]), (0, 0))
-            else:        surface.blit(session.img.dict[self.img_names[0]][self.img_names[1]],     (0, 0))
-        
-        ## Flipped
-        else:
-            if swimming: surface.blit(session.img.halved([self.img_names[0], self.img_names[1]], flipped=True), (0, 0))
-            else:        surface.blit(session.img.flipped.dict[self.img_names[0]][self.img_names[1]],           (0, 0))
-        
-        #########################################################
-        # Equipment
+        ## Body
+        img = self.find_body(swimming)
+        surface.blit(img, (0, 0))
+    
+        ## Equipment for humanoids
         if self.img_names[0] in session.img.skin_options:
+            img_finders = [
+                self.find_chest,
+                self.find_armor,
+                self.find_face,
+                self.find_hair,
+                self.find_holdables]
             
-            # Chest
-            for item in self.equipment.values():
-                if item is not None:
-                    if item.slot == 'chest':
-                        if self.handedness == 'left':
-                            if swimming: surface.blit(session.img.halved([item.img_names[0], self.img_names[1]]), (0, 0))
-                            else:        surface.blit(session.img.dict[item.img_names[0]][self.img_names[1]],     (0, 0))
-                        else:
-                            if swimming: surface.blit(session.img.halved([item.img_names[0], self.img_names[1]], flipped=True), (0, 0))
-                            else:        surface.blit(session.img.flipped.dict[item.img_names[0]][self.img_names[1]],           (0, 0))
-                    else: pass
-
-            # Armor
-            for item in self.equipment.values():
-                if item is not None:
-                    if item.slot == 'body':
-                        if self.handedness == 'left':
-                            if swimming:          surface.blit(session.img.halved([item.img_names[0], self.img_names[1]]),        (0, 0))
-                            elif not self.rand_Y: surface.blit(session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]]), (0, 0))
-                            else:                 surface.blit(session.img.dict[item.img_names[0]][self.img_names[1]],            (0, 0))
-                        else:
-                            if swimming:          surface.blit(session.img.halved([item.img_names[0], self.img_names[1]], flipped=True), (0, 0))
-                            elif not self.rand_Y: surface.blit(session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]]),        (0, 0))
-                            else:                 surface.blit(session.img.flipped.dict[item.img_names[0]][self.img_names[1]],           (0, 0))
-                    else: pass
-
-            # Face
-            for item in self.equipment.values():
-                if item is not None:
-                    if item.slot == 'face':
-                        if self.handedness == 'left':
-                            if swimming: surface.blit(session.img.halved([item.img_names[0], self.img_names[1]]), (0, 0))
-                            else:        surface.blit(session.img.dict[item.img_names[0]][self.img_names[1]],     (0, 0))
-                        else:
-                            if swimming: surface.blit(session.img.halved([item.img_names[0], self.img_names[1]], flipped=True), (0, 0))
-                            else:        surface.blit(session.img.flipped.dict[item.img_names[0]][self.img_names[1]],           (0, 0))
-                    else: pass
-            
-            # Hair
-            for item in self.equipment.values():
-                if item is not None:
-                    if item.slot == 'head':
-                        if self.handedness == 'left':
-                            if swimming: surface.blit(session.img.halved([item.img_names[0], self.img_names[1]]), (0, 0))
-                            else:        surface.blit(session.img.dict[item.img_names[0]][self.img_names[1]],     (0, 0))
-                        else:
-                            if swimming: surface.blit(session.img.halved([item.img_names[0], self.img_names[1]], flipped=True), (0, 0))
-                            else:        surface.blit(session.img.flipped.dict[item.img_names[0]][self.img_names[1]],           (0, 0))
-                    else: pass
-            
-            # Holdables
-            for item in self.equipment.values():
-                if item is not None:
-                    if not item.hidden:
-                        if item.role in ['weapons', 'armor']:
-                            if item.slot in ['dominant hand', 'non-dominant hand']:
-                                if self.handedness == 'left':
-                                    if swimming:          surface.blit(session.img.halved([item.img_names[0], self.img_names[1]]),               (0, 0))
-                                    elif not self.rand_Y: surface.blit(session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]]),        (0, 0))
-                                    else:                 surface.blit(session.img.dict[item.img_names[0]][self.img_names[1]],                   (0, 0))
-                                else:
-                                    if swimming:          surface.blit(session.img.halved([item.img_names[0], self.img_names[1]], flipped=True), (0, 0))
-                                    elif not self.rand_Y: surface.blit(session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]]),        (0, 0))
-                                    else:                 surface.blit(session.img.flipped.dict[item.img_names[0]][self.img_names[1]],           (0, 0))
-                            else: pass
+            for img_finder in img_finders:
+                img = img_finder(swimming)
+                if img is not None: surface.blit(img, (0, 0))
         
         pyg.display_queue.append([surface, (X, Y)])
 
