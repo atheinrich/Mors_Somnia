@@ -296,32 +296,39 @@ class NewGameMenu:
         #########################################################
         # Menu details
         ## Basics
-        self.menu_choices = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
+        self.choices      = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
         self.orientations = ['front', 'right', 'back', 'left']
 
+        ## Positions
+        self.spacing    = 24
+        self.logo_pos   = []                                         # set later (list of tuples)
+        self.header_pos = (0,  85)                                   # set later (centered)
+        self.choice_pos = (48, 436 - len(self.choices)*self.spacing) # top choice
+        self.cursor_pos = (32, 436 - len(self.choices)*self.spacing) # top choice
+
         ## Other
+        self.choice = 0
+
         self.last_press_time = 0
         self.cooldown_time   = 0.7
+
         self.gui_cache = False
         self.msg_cache = False
 
         #########################################################
         # Menu
         ## Cursor
-        self.cursor_img = pygame.Surface((16, 16)).convert()
-        self.cursor_img.set_colorkey(self.cursor_img.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_img, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-        
+        self.cursor_surface = pygame.Surface((16, 16)).convert()
+        self.cursor_surface.set_colorkey(self.cursor_surface.get_at((0, 0)))
+        pygame.draw.polygon(self.cursor_surface, pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
+
         ## Options
-        for i in range(len(self.menu_choices)):
-            if   i == len(self.menu_choices)-2:  color = pyg.green
-            elif i == len(self.menu_choices)-1:  color = pyg.red
-            else:                                color = pyg.gray
-            self.menu_choices[i] = pyg.font.render(self.menu_choices[i], True, color)
-        self.choice         = 0
-        self.choices_length = len(self.menu_choices)-1
-        self.cursor_pos     = [50, 424-len(self.menu_choices)*24]
-        self.top_choice     = [50, 424-len(self.menu_choices)*24]
+        self.choice_surfaces = []
+        for i in range(len(self.choices)):
+            if   i == len(self.choices)-2:  color = pyg.green
+            elif i == len(self.choices)-1:  color = pyg.red
+            else:                           color = pyg.gray
+            self.choice_surfaces.append(pyg.font.render(self.choices[i], True, color))
 
     def run(self):
         """ Creates a temporary player, then returns to garden at startup or hosts character creation otherwise.
@@ -403,45 +410,36 @@ class NewGameMenu:
         #########################################################
         # Render menu
         ## Choices
-        Y = self.top_choice[1] - 4
-        for self.menu_choice in self.menu_choices:
-            pyg.overlay_queue.append([self.menu_choice, (80, Y)])
-            Y += 24
+        for i in range(len(self.choices)):
+            surface  = self.choice_surfaces[i]
+            offset   = self.spacing * i
+            position = (self.choice_pos[0], self.choice_pos[1] + offset)
+            pyg.overlay_queue.append([surface, position])
         
         ## Cursor
-        pyg.overlay_queue.append([self.cursor_img, self.cursor_pos])
+        offset     = self.spacing * self.choice
+        cursor_pos = (self.cursor_pos[0], self.cursor_pos[1] + offset)
+        pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
     # Keys
     def key_UP(self):
-        self.cursor_pos[1]     -= 24
-        self.choice            -= 1
-        
-        # Go to the top menu choice
-        if self.choice < 0:
-            self.choice         = self.choices_length
-            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-1) * 24
-        
-        # Skip a blank line
-        elif self.choice == (self.choices_length - 2):
-            self.choice         = self.choices_length - 3
-            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-4) * 24
+        self.choice = (self.choice - 1) % len(self.choices)
+
+        # Skip blank line
+        if not self.choices[self.choice]:
+            self.choice = (self.choice - 1) % len(self.choices)
 
     def key_DOWN(self):
-        self.cursor_pos[1]     += 24
-        self.choice            += 1
-        
-        if self.choice > self.choices_length:
-            self.choice         = 0
-            self.cursor_pos[1]  = self.top_choice[1]
-        
-        elif self.choice == (self.choices_length - 2):
-            self.choice         = self.choices_length - 1
-            self.cursor_pos[1]  = self.top_choice[1] + (len(self.menu_choices)-2) * 24
+        self.choice = (self.choice + 1) % len(self.choices)
+
+        # Skip blank line
+        if not self.choices[self.choice]:
+            self.choice = (self.choice + 1) % len(self.choices)
 
     def key_BACK(self):
         pyg = session.pyg
         
-        pyg.pause = False
+        pyg.pause         = False
         pyg.overlay_state = 'menu'
 
     # Tools

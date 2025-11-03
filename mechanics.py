@@ -379,7 +379,6 @@ class PlayGarden:
         session.stats_obj.pet_update()
         
         ## Active AI when viewing the main menu
-        print('--------------')
         if pyg.overlay_state == 'menu': session.player_obj.ent.role = 'NPC'
         else:                           session.player_obj.ent.role = 'player'
         
