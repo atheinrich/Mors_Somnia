@@ -101,7 +101,7 @@
             "green blob",
             "right"
         ],
-        "effect_fn": "session.effects.propagate",
+        "effect_fn": "session.abilities.propagate",
         "trigger": "active",
         "sequence": "⮞⮜⮞",
         "cooldown_time": 1,
@@ -113,7 +113,7 @@
             "shovel",
             "dropped"
         ],
-        "effect_fn": "session.effects.suicide",
+        "effect_fn": "session.abilities.suicide",
         "trigger": "active",
         "sequence": "⮟⮟⮟",
         "cooldown_time": 1,
@@ -125,7 +125,7 @@
             "dagger",
             "dropped"
         ],
-        "effect_fn": "session.effects.swing",
+        "effect_fn": "session.abilities.swing",
         "trigger": "active",
         "sequence": "⮜⮟⮞",
         "cooldown_time": "0.1",
@@ -137,7 +137,7 @@
             "null",
             "null"
         ],
-        "effect_fn": "session.effects.swing",
+        "effect_fn": "session.abilities.swing",
         "trigger": "passive",
         "sequence": null,
         "cooldown_time": "0.1",

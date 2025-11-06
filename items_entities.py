@@ -104,6 +104,7 @@ class PlayerData:
 class Entity:
     """ Player, enemies, and NPCs. Manages stats, inventory, and basic mechanics. """
     
+    # Core
     def __init__(self, **kwargs):
         """ Parameters
             ----------
@@ -138,10 +139,6 @@ class Entity:
             dialogue       : list or tuple of strings; quest or general dialogue """
         
         pyg = session.pyg
-
-        #########################################################
-        # Imports
-        from items_entities import Effect
 
         #########################################################
         # Set parameters
@@ -183,63 +180,20 @@ class Entity:
 
         #########################################################
         # Initialize reactions and abilities
-        self.garden_effects = [
-            Effect(
-                name          = 'scare',
-                img_names     = ['bubbles', 'exclamation bubble'],
-                effect_fn     = session.effects.entity_scare,
-                trigger       = 'active',
-                sequence      = '⮟⮜⮟',
-                cooldown_time = 1,
-                other         = None),
-            
-            Effect(
-                name          = 'comfort',
-                img_names     = ['bubbles', 'heart bubble'],
-                effect_fn     = session.effects.entity_comfort,
-                trigger       = 'active',
-                sequence      = '⮟⮞⮜',
-                cooldown_time = 1,
-                other         = None),
-            
-            Effect(
-                name          = 'clean',
-                img_names     = ['bubbles', 'dots bubble'],
-                effect_fn     = session.effects.entity_clean,
-                trigger       = 'active',
-                sequence      = '⮟⮟⮟',
-                cooldown_time = 1,
-                other         = None)]
+        self.garden_abilities = [
+            session.abilities.add_ability(self, 'entity_scare'),
+            session.abilities.add_ability(self, 'entity_comfort'),
+            session.abilities.add_ability(self, 'entity_clean')]
         
-        self.item_effects = [
-            Effect(
-                name          = 'suicide',
-                img_names     = ['decor', 'bones'],
-                effect_fn     = session.effects.suicide,
-                trigger       = 'active',
-                sequence      = '⮟⮟⮟',
-                cooldown_time = 1,
-                other         = None),
+        self.game_abilities = [
+            session.abilities.add_ability(self, 'entity_scare'),
+            session.abilities.add_ability(self, 'entity_capture'),
+            session.abilities.add_ability(self, 'suicide')]
+        
+        self.active_effects   = []
+        self.active_abilities = []
 
-            Effect(
-                name          = 'scare',
-                img_names     = ['bubbles', 'exclamation bubble'],
-                effect_fn     = session.effects.entity_scare,
-                trigger       = 'active',
-                sequence      = '⮟⮜⮟',
-                cooldown_time = 1,
-                other         = None),
-                
-            Effect(
-                name          = 'capture',
-                img_names     = ['bubbles', 'heart bubble'],
-                effect_fn     = session.effects.entity_capture,
-                trigger       = 'active',
-                sequence      = '⮟⮞⮟',
-                cooldown_time = 1,
-                other         = None)]
-        self.effects    = []
-
+    # Utility
     def quest_active(self):
         if self.name in session.player_obj.dialogue.npc_states.keys():
             if session.player_obj.dialogue.npc_states[self.name][:5] == 'quest':
@@ -252,7 +206,8 @@ class Entity:
                 return True
         return False
 
-    def find_body(self, swimming):
+    # Rendering
+    def _find_body(self, swimming):
         
         ## Left handed
         if self.handedness == 'left': 
@@ -268,7 +223,7 @@ class Entity:
 
         return img
     
-    def find_chest(self, swimming):
+    def _find_chest(self, swimming):
 
         for item in self.equipment.values():
             if item is not None:
@@ -284,7 +239,7 @@ class Entity:
                     
                     return img
 
-    def find_armor(self, swimming):
+    def _find_armor(self, swimming):
 
         for item in self.equipment.values():
             if item is not None:
@@ -302,7 +257,7 @@ class Entity:
                     
                     return img
 
-    def find_face(self, swimming):
+    def _find_face(self, swimming):
 
         for item in self.equipment.values():
             if item is not None:
@@ -318,7 +273,7 @@ class Entity:
                     
                     return img
         
-    def find_hair(self, swimming):
+    def _find_hair(self, swimming):
 
         for item in self.equipment.values():
             if item is not None:
@@ -334,7 +289,7 @@ class Entity:
                     
                     return img
         
-    def find_holdables(self, swimming):
+    def _find_holdables(self, swimming):
 
         for item in self.equipment.values():
             if item is not None:
@@ -382,17 +337,17 @@ class Entity:
         else:                                            swimming = False
 
         ## Body
-        img = self.find_body(swimming)
+        img = self._find_body(swimming)
         surface.blit(img, (0, 0))
     
         ## Equipment for humanoids
         if self.img_names[0] in session.img.skin_options:
             img_finders = [
-                self.find_chest,
-                self.find_armor,
-                self.find_face,
-                self.find_hair,
-                self.find_holdables]
+                self._find_chest,
+                self._find_armor,
+                self._find_face,
+                self._find_hair,
+                self._find_holdables]
             
             for img_finder in img_finders:
                 img = img_finder(swimming)
@@ -414,6 +369,7 @@ class Entity:
 class Dialogue:
     """ Imports and stores dialogue from JSON files, and returns a random piece of accessible dialogue. """
 
+    # Core
     def __init__(self):
         """ Initialize dialogue and state containers. The cache dictionary holds all dialogue for all loaded NPCs.
             The states dictionary identifies the current set of dialogue for all loaded NPCs.
@@ -428,7 +384,15 @@ class Dialogue:
         self.npc_states     = {}
 
         self.subscribe_events()
-    
+
+    def subscribe_events(self):
+        session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
+        session.bus.subscribe('emit_dialogue',   self.emit_dialogue)
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.subscribe_events()
+
     def load_npc(self, ent_id):
         """ Sends all dialogue to dialogue_cache. """
 
@@ -437,12 +401,6 @@ class Dialogue:
             self.dialogue_cache[ent_id] = load_json(f'Data/.Dialogue/{ent_id}.json')
             self.npc_states[ent_id]     = "default"
 
-    def unlock_dialogue(self, ent_id, dialogue_id):
-        """ Changes current set of available options. """
-
-        self.load_npc(ent_id)
-        self.npc_states[ent_id] = dialogue_id
-
     def get_dialogue(self, ent_id):
         """ Return a random dialogue string from the character's current set of available options. """
 
@@ -450,6 +408,13 @@ class Dialogue:
         key   = self.npc_states.get(ent_id)
         lines = self.dialogue_cache[ent_id].get(key)
         return random.choice(lines)
+
+    # Actions
+    def unlock_dialogue(self, ent_id, dialogue_id):
+        """ Changes current set of available options. """
+
+        self.load_npc(ent_id)
+        self.npc_states[ent_id] = dialogue_id
 
     def emit_dialogue(self, ent_id, dialogue_id=None):
         """ Loads dialogue, sends it to the GUI, and plays some audio. """
@@ -462,14 +427,6 @@ class Dialogue:
         if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
             session.aud.last_press_time_speech = time.time()
             session.aud.play_speech(dialogue)
-
-    def subscribe_events(self):
-        session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
-        session.bus.subscribe('emit_dialogue',   self.emit_dialogue)
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.subscribe_events()
 
 class Item:
     
@@ -498,23 +455,24 @@ class Item:
         
         #########################################################
         # Set parameters
+        ## Prepare for later setting
+        self.tile    = None
+        self.X       = None
+        self.Y       = None
+        self.owner   = None
+        self.effect  = None
+        self.ability = None
+        
+        self.big     = False
+        
         ## Import parameters
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        ## Other
-        self.tile   = None
-        self.X      = None
-        self.Y      = None
-        self.owner  = None
-        
         # Seed a seed for individual adjustments
         self.rand_X  = random.randint(-self.rand_X, self.rand_X)
         self.rand_Y  = random.randint(0,            self.rand_Y)
         self.flipped = random.choice([0, self.rand_Y])
-        
-        # Notify code of big object
-        self.big = False
         
         #########################################################
         # Initialize effect if passive

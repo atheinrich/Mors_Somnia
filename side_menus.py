@@ -721,12 +721,8 @@ class AbilitiesMenu:
             if event.type == pygame.KEYDOWN:
                 
                 #########################################################
-                # Listen for sequence
-                if event.key in pyg.key_HOLD:
-                    self.sequence_toggle = True
-
-                ## Add arrow keys to the current sequence
-                if self.sequence_toggle and (event.key in self.keys):
+                # Add arrow keys to the current sequence
+                if event.key in self.keys:
                     self.key_sequence.append(event.key)
                     
                     # Keep three most recent keys
@@ -742,8 +738,7 @@ class AbilitiesMenu:
             # Return to game
             elif event.type == pygame.KEYUP:
                 if event.key in pyg.key_HOLD:
-                    self.sequence_toggle = False
-                    pyg.overlay_state          = None
+                    pyg.overlay_state = None
                     return
             
             #########################################################
@@ -768,10 +763,9 @@ class AbilitiesMenu:
         inventory_dics      = {'effects': {}}
         self.dic_categories = ['effects']
         self.sequences      = {}
-        for effect in session.player_obj.ent.effects:
-            if effect.sequence:
-                inventory_dics['effects'][effect.name] = session.img.dict[effect.img_names[0]][effect.img_names[1]]
-                self.sequences[effect.name] = effect.sequence
+        for ability in session.player_obj.ent.active_abilities:
+            inventory_dics['effects'][ability.name] = session.img.dict[ability.img_names[0]][ability.img_names[1]]
+            self.sequences[ability.name] = ability.sequence
         
         # Restore last selection
         if len(self.dic_indices) != len(self.dic_categories):
@@ -781,11 +775,11 @@ class AbilitiesMenu:
     def check_sequence(self, sequence_string):
         
         # Look through item effects
-        for effect in session.player_obj.ent.effects:
-            if effect.sequence == sequence_string:
-                if time.time()-effect.last_press_time > effect.cooldown_time:
-                    effect.last_press_time = float(time.time())
-                    effect.effect_fn()
+        for ability in session.player_obj.ent.active_abilities:
+            if ability.sequence == sequence_string:
+                if time.time() - ability.last_press_time > ability.cooldown_time:
+                    ability.last_press_time = float(time.time())
+                    ability.activate()
                     return
 
     def render(self):

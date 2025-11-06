@@ -93,6 +93,7 @@ from pypresence import Presence
 import session
 from pygame_utilities import Pygame, Images, Audio, EventBus
 from items_entities import PlayerData
+from abilities import _abilities
 from mechanics import MovementSystem, InteractionSystem, ItemSystem, EffectsSystem
 from mechanics import PlayGame, PlayGarden
 from big_menus import MainMenu, NewGameMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
@@ -134,6 +135,7 @@ def init():
     session.interact         = InteractionSystem()
     session.items            = ItemSystem()
     session.effects          = EffectsSystem()
+    session.abilities        = _abilities
 
     ## Primary
     session.play_game_obj    = PlayGame()

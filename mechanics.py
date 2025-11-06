@@ -520,87 +520,7 @@ class PlayGarden:
 # Interactions
 class MovementSystem:
 
-    def ai(self, ent):
-        """ Preset movements. """
-        
-        #########################################################
-        # Move if alive
-        moved = False
-        if not ent.dead:
-            if time.time()-ent.last_press > ent.cooldown:
-                ent.last_press = float(time.time())
-                
-                # Move or follow
-                if not ent.motions_log:
-                    distance = self.distance_to(ent, session.player_obj.ent)
-                    
-                    #########################################################
-                    # Flee
-                    if ent.fear and (type(ent.fear) == int):
-                        if not random.randint(0, ent.lethargy//10):
-                            self.move_towards(ent, ent.X0, ent.Y0)
-                            ent.fear -= 1
-                            if ent.fear < 0: ent.fear = 0
-                    
-                    #########################################################
-                    # Approach far, possibly attack
-                    elif ent.follow and (distance < 320):
-                        if not random.randint(0, ent.lethargy//2):
-                            self.move_towards(ent, session.player_obj.ent.X, session.player_obj.ent.Y)
-                    
-                        # Attack if close and aggressive; chance based on miss_rate
-                        if ent.aggression:
-                            if (distance < 64) and not random.randint(0, ent.miss_rate):
-                                session.interact.attack_target(ent, session.player_obj.ent)
-                    
-                    #########################################################
-                    # Approach near, possibly attack
-                    elif ent.aggression and (session.player_obj.ent.hp > 0):
-                        
-                        # Attack if close and aggressive; chance based on miss_rate
-                        if (distance < 64) and not random.randint(0, ent.miss_rate):
-                            session.interact.attack_target(ent, session.player_obj.ent)
-                        
-                        # Move towards the player if distant; chance based on lethargy
-                        elif (distance < ent.aggression*session.pyg.tile_width) and not random.randint(0, ent.lethargy//2) and not moved:
-                            self.move_towards(ent, session.player_obj.ent.X, session.player_obj.ent.Y)
-                    
-                    #########################################################
-                    # Idle if not following or aggressive
-                    else:
-                        if ent.role != 'player':
-                            self.idle(ent)
-                
-                #########################################################
-                # Continue a prescribed pattern
-                else:
-                    loc = ent.motions_log[0]
-                    self.move(ent, loc[0], loc[1])
-                    ent.motions_log.remove(loc)
-
-    def idle(self, ent):
-        """ Randomly walks around """
-        
-        pyg = session.pyg
-
-        # Choose direction
-        if random.randint(0, 1):
-            dX = random.randint(-1, 1) * pyg.tile_width
-            dY = 0
-        else:
-            dX = 0
-            dY = random.randint(-1, 1) * pyg.tile_width
-        
-        # Move
-        if self.distance_new(ent, [ent.X+dX, ent.Y+dY], [ent.X0, ent.Y0]) <= ent.reach:
-            if   (dX < 0) and (ent.img_names[1] == 'left'):  chance = 5
-            elif (dX > 0) and (ent.img_names[1] == 'right'): chance = 5
-            elif (dY < 0) and (ent.img_names[1] == 'back'):  chance = 5
-            elif (dY > 0) and (ent.img_names[1] == 'front'): chance = 5
-            else:                                             chance = 1
-            if not random.randint(0, ent.lethargy//chance):
-                self.move(ent, dX, dY)
-
+    # Core
     def move(self, ent, dX, dY):
         """ Moves the player by the given amount if the destination is not blocked.
             May activate any of the following:
@@ -673,6 +593,253 @@ class MovementSystem:
 
         ent.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
 
+    def ai(self, ent):
+        """ Preset movements. """
+        
+        #########################################################
+        # Move if alive
+        moved = False
+        if not ent.dead:
+            if time.time()-ent.last_press > ent.cooldown:
+                ent.last_press = float(time.time())
+                
+                # Move or follow
+                if not ent.motions_log:
+                    distance = self.distance_to(ent, session.player_obj.ent)
+                    
+                    #########################################################
+                    # Flee
+                    if ent.fear and (type(ent.fear) == int):
+                        if not random.randint(0, ent.lethargy//10):
+                            self.move_towards(ent, ent.X0, ent.Y0)
+                            ent.fear -= 1
+                            if ent.fear < 0: ent.fear = 0
+                    
+                    #########################################################
+                    # Approach far, possibly attack
+                    elif ent.follow and (distance < 320):
+                        if not random.randint(0, ent.lethargy//2):
+                            self.move_towards(ent, session.player_obj.ent.X, session.player_obj.ent.Y)
+                    
+                        # Attack if close and aggressive; chance based on miss_rate
+                        if ent.aggression:
+                            if (distance < 64) and not random.randint(0, ent.miss_rate):
+                                session.interact.attack_target(ent, session.player_obj.ent)
+                    
+                    #########################################################
+                    # Approach near, possibly attack
+                    elif ent.aggression and (session.player_obj.ent.hp > 0):
+                        
+                        # Attack if close and aggressive; chance based on miss_rate
+                        if (distance < 64) and not random.randint(0, ent.miss_rate):
+                            session.interact.attack_target(ent, session.player_obj.ent)
+                        
+                        # Move towards the player if distant; chance based on lethargy
+                        elif (distance < ent.aggression*session.pyg.tile_width) and not random.randint(0, ent.lethargy//2) and not moved:
+                            self.move_towards(ent, session.player_obj.ent.X, session.player_obj.ent.Y)
+                    
+                    #########################################################
+                    # Idle if not following or aggressive
+                    else:
+                        if ent.role != 'player':
+                            self.idle(ent)
+                
+                #########################################################
+                # Continue a prescribed pattern
+                else:
+                    loc = ent.motions_log[0]
+                    self.move(ent, loc[0], loc[1])
+                    ent.motions_log.remove(loc)
+
+    # Preset sequence
+    def idle(self, ent):
+        """ Randomly walks around """
+        
+        pyg = session.pyg
+
+        # Choose direction
+        if random.randint(0, 1):
+            dX = random.randint(-1, 1) * pyg.tile_width
+            dY = 0
+        else:
+            dX = 0
+            dY = random.randint(-1, 1) * pyg.tile_width
+        
+        # Move
+        if self.distance_new(ent, [ent.X+dX, ent.Y+dY], [ent.X0, ent.Y0]) <= ent.reach:
+            if   (dX < 0) and (ent.img_names[1] == 'left'):  chance = 5
+            elif (dX > 0) and (ent.img_names[1] == 'right'): chance = 5
+            elif (dY < 0) and (ent.img_names[1] == 'back'):  chance = 5
+            elif (dY > 0) and (ent.img_names[1] == 'front'): chance = 5
+            else:                                             chance = 1
+            if not random.randint(0, ent.lethargy//chance):
+                self.move(ent, dX, dY)
+
+    def move_towards(self, ent, target_X, target_Y):
+        """ Moves object towards target. """
+        
+        pyg = session.pyg
+
+        dX       = target_X - ent.X
+        dY       = target_Y - ent.Y
+        distance = (dX ** 2 + dY ** 2)**(1/2)
+        if distance:
+            
+            if dX and not dY:
+                dX = round(dX/distance) * pyg.tile_width
+                dY = 0
+            
+            elif dY and not dX:
+                dX = 0
+                dY = round(dX/distance) * pyg.tile_width
+            
+            elif dX and dY:
+                if random.randint(0, 1):
+                    dX = round(dX/distance) * pyg.tile_width
+                    dY = 0
+                else:
+                    dX = 0
+                    dY = round(dY/distance) * pyg.tile_width
+            
+            self.move(ent, dX, dY)
+
+    def find_water(self, ent):
+        """ Moves entity towards water. """
+        
+        pyg = session.pyg
+
+        # Look for water
+        if ent.tile.img_names[1] != 'water':
+            
+            # Prepare movements
+            motions_log = []
+            
+            # Look for water
+            for y in range(len(ent.env.map[0])):
+                for x in range(len(ent.env.map)):
+                    if ent.env.map[x][y].img_names[1] == 'water':
+                        
+                        # Construct a path
+                        dX       = int(x*32) - ent.X
+                        dY       = int(y*32) - ent.Y
+                        distance = (dX ** 2 + dY ** 2)**(1/2)
+                        while distance > 0:
+                            
+                            if dX and not dY:
+                                dX = round(dX/distance) * pyg.tile_width
+                                dY = 0
+                            
+                            elif dY and not dX:
+                                dX = 0
+                                dY = round(dX/distance) * pyg.tile_width
+                            
+                            elif dX and dY:
+                                if random.randint(0, 1):
+                                    dX = round(dX/distance) * pyg.tile_width
+                                    dY = 0
+                                else:
+                                    dX = 0
+                                    dY = round(dY/distance) * pyg.tile_width
+                            
+                            motions_log.append([dX, dY])
+                            motions_log.append([dX, dY])
+                            distance -= 32
+            
+            # Send directions to entity
+            ent.motions_log = motions_log
+            image = session.img.dict['bubbles']['question bubble']
+
+        # Bathe
+        else:
+            if session.stats_obj.pet_moods['anger']:
+                session.stats_obj.pet_moods['anger'] -= 1
+                image = session.img.dict['bubbles']['water bubble']
+            
+            else:
+                session.stats_obj.pet_moods['boredom'] += 1
+                image = session.img.dict['bubbles']['dots bubble']
+            
+        session.img.flash_above(ent, image)
+
+    def find_bed(self, ent):
+        """ Moves entity towards water. """
+        
+        pyg = session.pyg
+
+        # Look for a bed
+        item = bool(ent.tile.item)
+        if item: bed = bool(ent.tile.item.name == 'bed')
+        else:    bed = False
+        if not item and not bed:
+            
+            # Prepare movements
+            motions_log = []
+            
+            # Look for a bed
+            for y in range(len(ent.env.map[0])):
+                for x in range(len(ent.env.map)):
+                    if ent.env.map[x][y].item:
+                        if ent.env.map[x][y].item.name == 'bed':
+                            if not ent.env.map[x][y].item.occupied:
+                                ent.env.map[x][y].item.occupied = True
+                                
+                                # Construct a path
+                                dX       = int(x*32) - ent.X
+                                dY       = int(y*32) - ent.Y
+                                distance = (dX ** 2 + dY ** 2)**(1/2)
+                                while distance > 0:
+                                    
+                                    if dX and not dY:
+                                        dX = round(dX/distance) * pyg.tile_width
+                                        dY = 0
+                                    
+                                    elif dY and not dX:
+                                        dX = 0
+                                        dY = round(dX/distance) * pyg.tile_width
+                                    
+                                    elif dX and dY:
+                                        if random.randint(0, 1):
+                                            dX = round(dX/distance) * pyg.tile_width
+                                            dY = 0
+                                        else:
+                                            dX = 0
+                                            dY = round(dY/distance) * pyg.tile_width
+                                    
+                                    motions_log.append([dX, dY])
+                                    motions_log.append([dX, dY])
+                                    distance -= 32
+            
+            # Send directions to entity
+            ent.motions_log = motions_log
+            image = session.img.dict['bubbles']['question bubble']
+
+        # Sleep
+        else:
+            image = session.img.dict['bubbles']['dots bubble']
+            
+        session.img.flash_above(ent, image)
+
+    def spin(self, ent):
+        
+        pyg = session.pyg
+
+        # Prepare movements
+        motions_log = []
+        
+        # Look forward first
+        if ent.img_names[0] != 'front':
+            motions_log.append([0, pyg.tile_height])
+        motions_log.append([-pyg.tile_width, 0])
+        
+        # Spin around
+        motions_log.append([0, -pyg.tile_height])
+        motions_log.append([pyg.tile_width, 0])
+        motions_log.append([0, pyg.tile_height])
+        
+        # Send directions to entity
+        ent.motions_log = motions_log
+
+    # Special motions
     def dig_tunnel(self, ent, x, y, dX, dY):
 
         #########################################################
@@ -705,35 +872,8 @@ class MovementSystem:
                     pyg.update_gui(f"Broken {ent.equipment['dominant hand'].name}!", color=pyg.dark_gray)
                     session.items.drop(ent.equipment['dominant hand'])
                     ent.tile.item = None # removes item from world
-    
-    def move_towards(self, ent, target_X, target_Y):
-        """ Moves object towards target. """
-        
-        pyg = session.pyg
 
-        dX       = target_X - ent.X
-        dY       = target_Y - ent.Y
-        distance = (dX ** 2 + dY ** 2)**(1/2)
-        if distance:
-            
-            if dX and not dY:
-                dX = round(dX/distance) * pyg.tile_width
-                dY = 0
-            
-            elif dY and not dX:
-                dX = 0
-                dY = round(dX/distance) * pyg.tile_width
-            
-            elif dX and dY:
-                if random.randint(0, 1):
-                    dX = round(dX/distance) * pyg.tile_width
-                    dY = 0
-                else:
-                    dX = 0
-                    dY = round(dY/distance) * pyg.tile_width
-            
-            self.move(ent, dX, dY)
-
+    # Utility
     def distance_to(self, ent, other):
         """ Returns the distance to another object. """
         
@@ -928,7 +1068,7 @@ class ItemSystem:
                 # Add to inventory
                 item.owner = ent
                 if item.effect and (item.effect.trigger == 'passive'):
-                    ent.item_effects.append(item.effect)
+                    ent.active_effects.append(item.effect)
                 
                 ent.inventory[item.role].append(item)
                 sort_inventory(ent)
@@ -960,8 +1100,14 @@ class ItemSystem:
             item.owner = None
             item.X     = ent.X
             item.Y     = ent.Y
+
             if item.effect:
-                if item.effect in ent.effects: ent.effects.remove(item.effect)
+                if item.effect in ent.active_effects:
+                    ent.active_effects.remove(item.effect)
+            if item.ability:
+                if item.ability in ent.active_abilities:
+                    ent.active_abilities.remove(item.ability)
+            
             ent.inventory[item.role].remove(item)
             ent.tile.item = item
 
@@ -1010,7 +1156,8 @@ class ItemSystem:
             
             # Add active effect
             if (ent.role == 'player') and (item.role in ['potions', 'weapons', 'armor']):
-                ent.effects.append(item.effect)
+                ent.active_effects.append(item.effect)
+                print(1234567, item.name, item.effect)
             
             # Activate the item
             else: item.effect.effect_fn(ent)
@@ -1043,8 +1190,14 @@ class ItemSystem:
         ent.max_hp  += item.hp_bonus
         ent.attack  += item.attack_bonus
         ent.defense += item.defense_bonus
+
         if item.effect:
-            if item.effect.trigger == 'active': ent.effects.append(item.effect)
+            if item.effect not in ent.active_effects:
+                ent.active_effects.append(item.effect)
+        if item.ability:
+            if item.ability not in ent.active_abilities:
+                ent.active_abilities.append(item.ability)
+
         item.equipped = True
 
         if ent.role == 'player':
@@ -1065,9 +1218,13 @@ class ItemSystem:
 
         if ent.hp > ent.max_hp:
             ent.hp = ent.max_hp
+
         if item.effect:
-            if item.effect in ent.effects:
-                ent.effects.remove(item.effect)
+            if item.effect in ent.active_effects:
+                ent.active_effects.remove(item.effect)
+        if item.ability:
+            if item.ability in ent.active_abilities:
+                ent.active_abilities.remove(item.ability)
 
         #########################################################
         # Notify change of status
@@ -1134,21 +1291,8 @@ class EffectsSystem:
     def toggle_effects(self, ent):
         """ Switches between different sets of effects. """
         
-        if ent.env.name == 'garden': ent.effects = ent.garden_effects
-        else:                         ent.effects = ent.item_effects
-
-    def capture(self, ent):
-        pyg = session.pyg
-
-        pyg.update_gui("The " + ent.name + " has been captured!", pyg.red)
-
-        # Update entity
-        ent.dead        = True
-        ent.tile.entity = None
-        ent.env.entities.remove(ent)
-        if ent in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(ent)
-        
-        session.player_obj.ent.discoveries['entities'][ent.name] = ent.img_names
+        if ent.env.name == 'garden': ent.active_abilities = ent.garden_abilities
+        else:                        ent.active_abilities = ent.game_abilities
 
     # Environments
     def enter_dungeon(self, text, lvl_num=0):
@@ -1347,28 +1491,6 @@ class EffectsSystem:
                     loc = envs.areas['bitworld']['overworld'].center)
 
     # Item effects
-    def swing(self, ent=None):
-
-        # Set entity
-        if not ent: ent = session.player_obj.ent
-        
-        # Check for remaining stamina
-        if ent.stamina:
-            
-            # Send animation to queue
-            image = session.img.dict[ent.equipment['dominant hand'].img_names[0]]['dropped']
-            session.img.vicinity_flash(ent, image)
-            
-            # Apply attack to enemies
-            for tile in get_vicinity(ent).values():
-                if tile.entity:
-                    ent.attack += 5
-                    session.interact.attack_target(ent, tile.entity, effect_check=False)
-                    ent.attack -= 5
-            
-            # Decrease stamina
-            ent.stamina -= 5
-
     def boost_stamina(self, ent):
         ent.stamina += 50
         if ent.stamina > 100: ent.stamina = 100
@@ -1394,49 +1516,14 @@ class EffectsSystem:
             if item not in lamp_list: lamp_list.append(item)
             else:                     lamp_list.remove(item)
 
-    def propagate(self, ent=None):
+    def entity_eat(self, ent):
+        """ Dropped item effect. """
         
-        pyg = session.pyg
-
-        from items_entities import create_entity
-        from environments import place_object
-
-        # Set entity
-        if not ent: ent = session.player_obj.ent
-        
-        # Note location and image names
-        img_x, img_y = int(ent.X/pyg.tile_width), int(ent.Y/pyg.tile_height)
-        
-        # Set location for drop
-        if ent.direction == 'front':   img_y += 1
-        elif ent.direction == 'back':  img_y -= 1
-        elif ent.direction == 'right': img_x += 1
-        elif ent.direction == 'left':  img_x -= 1
-        
-        # Place item
-        item = create_entity('green blob')
-        item.lethargy = 0
-        item.cooldown = 0.1
-        item.direction = None
-        place_object(
-            obj   = item,
-            loc   = [img_x, img_y],
-            env   = ent.env,
-            names = item.img_names)
-        
-        # Prepare movements
-        motions_log = []
-        directions = {
-            'front': [0, pyg.tile_height],
-            'back':  [0, -pyg.tile_height],
-            'left':  [-pyg.tile_width, 0],
-            'right': [pyg.tile_width, 0]}
-        
-        for _ in range(100):
-            motions_log.append(directions[ent.direction])
-        
-        # Send directions to entity
-        item.motions_log = motions_log
+        session.stats_obj.pet_moods['happiness'] += 1
+        session.stats_obj.pet_moods['boredom']   -= 1
+        image = session.img.dict['bubbles']['heart bubble']
+        session.img.flash_above(ent, image)
+        ent.tile.item = None
 
     # Gameplay
     def movement_speed(self, toggle=True, custom=None):
@@ -1489,253 +1576,6 @@ class EffectsSystem:
             else:
                 (hold_time, repeat_time) = self.slow_list[self.movement_speed_toggle][1]
                 pygame.key.set_repeat(hold_time, repeat_time)
-
-    def suicide(self, ent=None):
-        
-        # Activate animation
-        image = session.img.dict['decor']['bones']
-        session.img.vicinity_flash(session.player_obj.ent, image)
-        
-        # Kill player
-        session.interact.death(session.player_obj.ent)
-        return
-
-    def spin(self, ent):
-        
-        pyg = session.pyg
-
-        # Prepare movements
-        motions_log = []
-        
-        # Look forward first
-        if ent.img_names[0] != 'front':
-            motions_log.append([0, pyg.tile_height])
-        motions_log.append([-pyg.tile_width, 0])
-        
-        # Spin around
-        motions_log.append([0, -pyg.tile_height])
-        motions_log.append([pyg.tile_width, 0])
-        motions_log.append([0, pyg.tile_height])
-        
-        # Send directions to entity
-        ent.motions_log = motions_log
-
-    def find_water(self, ent):
-        """ Moves entity towards water. """
-        
-        pyg = session.pyg
-
-        # Look for water
-        if ent.tile.img_names[1] != 'water':
-            
-            # Prepare movements
-            motions_log = []
-            
-            # Look for water
-            for y in range(len(ent.env.map[0])):
-                for x in range(len(ent.env.map)):
-                    if ent.env.map[x][y].img_names[1] == 'water':
-                        
-                        # Construct a path
-                        dX       = int(x*32) - ent.X
-                        dY       = int(y*32) - ent.Y
-                        distance = (dX ** 2 + dY ** 2)**(1/2)
-                        while distance > 0:
-                            
-                            if dX and not dY:
-                                dX = round(dX/distance) * pyg.tile_width
-                                dY = 0
-                            
-                            elif dY and not dX:
-                                dX = 0
-                                dY = round(dX/distance) * pyg.tile_width
-                            
-                            elif dX and dY:
-                                if random.randint(0, 1):
-                                    dX = round(dX/distance) * pyg.tile_width
-                                    dY = 0
-                                else:
-                                    dX = 0
-                                    dY = round(dY/distance) * pyg.tile_width
-                            
-                            motions_log.append([dX, dY])
-                            motions_log.append([dX, dY])
-                            distance -= 32
-            
-            # Send directions to entity
-            ent.motions_log = motions_log
-            image = session.img.dict['bubbles']['question bubble']
-
-        # Bathe
-        else:
-            if session.stats_obj.pet_moods['anger']:
-                session.stats_obj.pet_moods['anger'] -= 1
-                image = session.img.dict['bubbles']['water bubble']
-            
-            else:
-                session.stats_obj.pet_moods['boredom'] += 1
-                image = session.img.dict['bubbles']['dots bubble']
-            
-        session.img.flash_above(ent, image)
-
-    def find_bed(self, ent):
-        """ Moves entity towards water. """
-        
-        pyg = session.pyg
-
-        # Look for a bed
-        item = bool(ent.tile.item)
-        if item: bed = bool(ent.tile.item.name == 'bed')
-        else:    bed = False
-        if not item and not bed:
-            
-            # Prepare movements
-            motions_log = []
-            
-            # Look for a bed
-            for y in range(len(ent.env.map[0])):
-                for x in range(len(ent.env.map)):
-                    if ent.env.map[x][y].item:
-                        if ent.env.map[x][y].item.name == 'bed':
-                            if not ent.env.map[x][y].item.occupied:
-                                ent.env.map[x][y].item.occupied = True
-                                
-                                # Construct a path
-                                dX       = int(x*32) - ent.X
-                                dY       = int(y*32) - ent.Y
-                                distance = (dX ** 2 + dY ** 2)**(1/2)
-                                while distance > 0:
-                                    
-                                    if dX and not dY:
-                                        dX = round(dX/distance) * pyg.tile_width
-                                        dY = 0
-                                    
-                                    elif dY and not dX:
-                                        dX = 0
-                                        dY = round(dX/distance) * pyg.tile_width
-                                    
-                                    elif dX and dY:
-                                        if random.randint(0, 1):
-                                            dX = round(dX/distance) * pyg.tile_width
-                                            dY = 0
-                                        else:
-                                            dX = 0
-                                            dY = round(dY/distance) * pyg.tile_width
-                                    
-                                    motions_log.append([dX, dY])
-                                    motions_log.append([dX, dY])
-                                    distance -= 32
-            
-            # Send directions to entity
-            ent.motions_log = motions_log
-            image = session.img.dict['bubbles']['question bubble']
-
-        # Sleep
-        else:
-            image = session.img.dict['bubbles']['dots bubble']
-            
-        session.img.flash_above(ent, image)
-
-    # Entity interactions
-    def entity_eat(self, ent):
-        """ Dropped item effect. """
-        
-        session.stats_obj.pet_moods['happiness'] += 1
-        session.stats_obj.pet_moods['boredom']   -= 1
-        image = session.img.dict['bubbles']['heart bubble']
-        session.img.flash_above(ent, image)
-        ent.tile.item = None
-
-    def entity_scare(self, ent=None):
-        """ Combo effect. """
-
-        pyg = session.pyg
-
-        # Find entities in vicinity
-        ent_list = []
-        for tile in get_vicinity(session.player_obj.ent).values():
-            if tile.entity:
-                ent_list.append(tile.entity)
-        
-        # Activate effect if entities are found
-        if ent_list:
-            
-            if session.player_obj.ent.env.name == 'garden':
-                session.stats_obj.pet_moods['lethargy'] -= 1
-                session.stats_obj.pet_moods['boredom']  -= 1
-            
-            image = session.img.dict['bubbles']['exclamation bubble']
-            for ent in ent_list:
-                for tile in get_vicinity(ent).values():
-                    if not tile.blocked:
-                        self.move_towards(ent, tile.X, tile.Y)
-                session.img.flash_above(ent, image)
-        
-        else:
-            pyg.update_gui("There are no entities in your vicinity.", pyg.dark_gray)
-
-    def entity_capture(self, ent=None):
-        """ Combo effect. """
-
-        pyg = session.pyg
-
-        # Find entities in vicinity
-        ent = None
-        for tile in get_vicinity(session.player_obj.ent).values():
-            if tile.entity:
-                if tile.entity.role != 'NPC':
-                    ent = tile.entity
-                    break
-        
-        # Activate effect if entities are found
-        if ent:
-            image = session.img.dict['bubbles']['heart bubble']
-            session.img.flash_above(ent, image)
-            session.img.flash_on(ent, session.img.dict[ent.img_names[0]][ent.img_names[1]])
-            
-            if session.player_obj.ent.discoveries['entities'].values():
-                for names in session.player_obj.ent.discoveries['entities'].values():
-                    if ent.name not in names:
-                        session.effects.capture(ent)
-                        break
-                    else:
-                        pyg.update_gui("The " + ent.name + " has already been logged.", pyg.dark_gray)
-            else:
-                session.effects.capture(ent)
-        else:
-            pyg.update_gui("There are no entities in your vicinity.", pyg.dark_gray)
-
-    def entity_comfort(self, ent=None):
-        """ Combo effect. """
-
-        # Find pets in vicinity
-        ent_list = []
-        for tile in get_vicinity(session.player_obj.ent).values():
-            if tile.entity:
-                ent_list.append(tile.entity)
-        
-        # Activate effect if entities are found
-        if ent_list:
-            session.stats_obj.pet_moods['sadness'] -= 1
-            if session.stats_obj.pet_moods['sadness'] <= 0: session.stats_obj.pet_moods['boredom'] += 1
-            image = session.img.dict['bubbles'][' bubble']
-            for ent in ent_list:
-                session.img.flash_above(ent, image)
-                self.spin(ent)
-
-    def entity_clean(self, ent=None):
-        """ Combo effect. """
-        
-        # Find pets in vicinity
-        ent_list = []
-        for tile in get_vicinity(session.player_obj.ent).values():
-            if tile.entity:
-                ent_list.append(tile.entity)
-        
-        # Activate effect if entities are found
-        if ent_list:
-            for ent in ent_list:
-                self.find_water(ent)
 
     # Item interactions
     def skeleton(self, ent=None):
