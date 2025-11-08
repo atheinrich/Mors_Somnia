@@ -1,181 +1,165 @@
 {
-    "Kyrio": {
-        "name": "Kyrio",
-        "model": "black",
-        "reach": 1000,
-        "hair": "bald",
-        "chest": "flat",
-        "clothes": "exotic clothes",
-        "beard": "white beard",
-        "weapon": "blood dagger",
-        "armor": null,
-        "trade_times": null,
-        "inv": null
+"Kyrio": {
+    "name":        "Kyrio",
+    "model":       "black",
+    "reach":       1000,
+    "hair":        "bald",
+    "chest":       "flat",
+    "clothes":     "exotic clothes",
+    "beard":       "white beard",
+    "weapon":      "blood dagger",
+    "armor":       null,
+    "trade_times": null,
+    "inv":         null
     },
-    "Kapno": {
-        "name": "Kapno",
-        "model": "black",
-        "reach": 2,
-        "hair": "bald",
-        "chest": "flat",
-        "clothes": "exotic clothes",
-        "beard": "white beard",
-        "weapon": "blood dagger",
-        "armor": null,
-        "trade_times": [
-            3,
-            4,
-            5,
-            6
-        ],
-        "inv": [
-            "shovel",
-            "sword",
-            "iron shield",
-            "orange clothes",
-            "exotic clothes",
-            "jug of blood",
-            "jug of grapes",
-            "jug of water",
-            "jug of cement",
-            "boxes",
-            "fire",
-            "shrooms",
-            "cup shroom"
-        ]
+
+"Kapno": {
+    "name":        "Kapno",
+    "model":       "black",
+    "reach":       2,
+    "hair":        "bald",
+    "chest":       "flat",
+    "clothes":     "exotic clothes",
+    "beard":       "white beard",
+    "weapon":      "blood dagger",
+    "armor":       null,
+    "trade_times": [3, 4, 5, 6],
+    "inv":         [
+        "shovel",
+        "sword",
+        "iron shield",
+        "orange clothes",
+        "exotic clothes",
+        "jug of blood",
+        "jug of grapes",
+        "jug of water",
+        "jug of cement",
+        "boxes",
+        "fire",
+        "shrooms",
+        "cup shroom"]
     },
-    "Blodo": {
-        "name": "Blodo",
-        "model": "black",
-        "reach": 2,
-        "hair": "bald",
-        "chest": "flat",
-        "clothes": "exotic clothes",
-        "beard": "white beard",
-        "weapon": "blood dagger",
-        "armor": null,
-        "trade_times": [
-            3,
-            4,
-            5,
-            6
-        ],
-        "inv": [
-            "shovel",
-            "sword",
-            "iron shield",
-            "orange clothes",
-            "exotic clothes",
-            "jug of blood",
-            "jug of grapes",
-            "jug of water",
-            "jug of cement",
-            "boxes",
-            "fire",
-            "shrooms",
-            "cup shroom"
-        ]
+
+"Blodo": {
+    "name":        "Blodo",
+    "model":       "black",
+    "reach":       2,
+    "hair":        "bald",
+    "chest":       "flat",
+    "clothes":     "exotic clothes",
+    "beard":       "white beard",
+    "weapon":      "blood dagger",
+    "armor":       null,
+    "trade_times": [3, 4, 5, 6],
+    "inv":         [
+        "shovel",
+        "sword",
+        "iron shield",
+        "orange clothes",
+        "exotic clothes",
+        "jug of blood",
+        "jug of grapes",
+        "jug of water",
+        "jug of cement",
+        "boxes",
+        "fire",
+        "shrooms",
+        "cup shroom"]
     },
-    "Erasti": {
-        "name": "Erasti",
-        "model": "black",
-        "reach": 10,
-        "hair": "brown hair",
-        "chest": "bra",
-        "clothes": "yellow dress",
-        "beard": null,
-        "weapon": "shovel",
-        "armor": null,
-        "trade_times": null,
-        "inv": null
+
+"Erasti": {
+    "name":        "Erasti",
+    "model":       "black",
+    "reach":       10,
+    "hair":        "brown hair",
+    "chest":       "bra",
+    "clothes":     "yellow dress",
+    "beard":       null,
+    "weapon":      "shovel",
+    "armor":       null,
+    "trade_times": null,
+    "inv":         null
     },
-    "Merci": {
-        "name": "Merci",
-        "model": "white",
-        "reach": 4,
-        "hair": "blue hair",
-        "chest": "bra",
-        "clothes": "chain dress",
-        "beard": null,
-        "weapon": "shovel",
-        "armor": null,
-        "trade_times": [
-            3,
-            4,
-            5,
-            6
-        ],
-        "inv": [
-            "shovel",
-            "chain dress",
-            "green clothes",
-            "yellow dress",
-            "bubbles",
-            "plant"
-        ]
+
+"Merci": {
+    "name":        "Merci",
+    "model":       "white",
+    "reach":       4,
+    "hair":        "blue hair",
+    "chest":       "bra",
+    "clothes":     "chain dress",
+    "beard":       null,
+    "weapon":      "shovel",
+    "armor":       null,
+    "trade_times": [3, 4, 5, 6],
+    "inv":         [
+        "shovel",
+        "chain dress",
+        "green clothes",
+        "yellow dress",
+        "bubbles",
+        "plant"]
     },
-    "Oxi": {
-        "name": "Oxi",
-        "model": "white",
-        "reach": 25,
-        "hair": "blue hair",
-        "chest": "flat",
-        "clothes": "orange clothes",
-        "beard": "blue beard",
-        "weapon": null,
-        "armor": null,
-        "trade_times": [
-            1,
-            2,
-            7,
-            8
-        ],
-        "inv": [
-            "needle",
-            "skin",
-            "teeth",
-            "bowl",
-            "plant",
-            "bubbles"
-        ]
+
+"Oxi": {
+    "name":        "Oxi",
+    "model":       "white",
+    "reach":       25,
+    "hair":        "blue hair",
+    "chest":       "flat",
+    "clothes":     "orange clothes",
+    "beard":       "blue beard",
+    "weapon":      null,
+    "armor":       null,
+    "trade_times": [1, 2, 7, 8],
+    "inv":         [
+        "needle",
+        "skin",
+        "teeth",
+        "bowl",
+        "plant",
+        "bubbles"]
     },
-    "Aya": {
-        "name": "Aya",
-        "model": "white",
-        "reach": 50,
-        "hair": "brown hair",
-        "chest": "bra",
-        "clothes": "chain dress",
-        "beard": null,
-        "weapon": "sword",
-        "armor": "iron shield",
-        "trade_times": null,
-        "inv": null
+
+"Aya": {
+    "name":        "Aya",
+    "model":       "white",
+    "reach":       50,
+    "hair":        "brown hair",
+    "chest":       "bra",
+    "clothes":     "chain dress",
+    "beard":       null,
+    "weapon":      "sword",
+    "armor":       "iron shield",
+    "trade_times": null,
+    "inv":         null
     },
-    "Zung": {
-        "name": "Zung",
-        "model": "white",
-        "reach": 6,
-        "hair": "bald",
-        "chest": "flat",
-        "clothes": "green clothes",
-        "beard": null,
-        "weapon": null,
-        "armor": null,
-        "trade_times": null,
-        "inv": null
+
+"Zung": {
+    "name":        "Zung",
+    "model":       "white",
+    "reach":       6,
+    "hair":        "bald",
+    "chest":       "flat",
+    "clothes":     "green clothes",
+    "beard":       null,
+    "weapon":      null,
+    "armor":       null,
+    "trade_times": null,
+    "inv":         null
     },
-    "Lilao": {
-        "name": "Lilao",
-        "model": "black",
-        "reach": 6,
-        "hair": "blue hair",
-        "chest": "bra",
-        "clothes": "yellow dress",
-        "beard": null,
-        "weapon": null,
-        "armor": null,
-        "trade_times": null,
-        "inv": null
+
+"Lilao": {
+    "name":        "Lilao",
+    "model":       "black",
+    "reach":       6,
+    "hair":        "blue hair",
+    "chest":       "bra",
+    "clothes":     "yellow dress",
+    "beard":       null,
+    "weapon":      null,
+    "armor":       null,
+    "trade_times": null,
+    "inv":         null
     }
 }

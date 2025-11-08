@@ -1,0 +1,37 @@
+{
+"needle": {
+    "name":      "needle",
+    "img_names": ["drugs", "needle"],
+    "cost":      25
+    },
+
+"skin": {
+    "name":      "skin",
+    "img_names": ["drugs", "skin"],
+    "cost":      10
+    },
+
+"teeth": {
+    "name":      "teeth",
+    "img_names": ["drugs", "teeth"],
+    "cost":      10
+    },
+
+"bowl": {
+    "name":      "bowl",
+    "img_names": ["drugs", "bowl"],
+    "cost":      30
+    },
+
+"plant": {
+    "name":      "plant",
+    "img_names": ["drugs", "plant"],
+    "cost":      10
+    },
+
+"bubbles": {
+    "name":      "bubbles",
+    "img_names": ["drugs", "bubbles"],
+    "cost":      50
+    }
+}

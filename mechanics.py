@@ -1102,11 +1102,11 @@ class ItemSystem:
             item.Y     = ent.Y
 
             if item.effect:
-                if item.effect in ent.active_effects:
-                    ent.active_effects.remove(item.effect)
+                if item.effect.name in ent.active_effects.keys():
+                    del ent.active_effects[item.effect.name]
             if item.ability:
-                if item.ability in ent.active_abilities:
-                    ent.active_abilities.remove(item.ability)
+                if item.ability.name in ent.active_abilities.keys():
+                    del ent.active_abilities[item.ability.name]
             
             ent.inventory[item.role].remove(item)
             ent.tile.item = item
@@ -1181,9 +1181,12 @@ class ItemSystem:
         
         pyg = session.pyg
 
-        # Check if anything is already equipped
-        if ent.equipment[item.slot] is not None:
-            self.dequip(ent.equipment[item.slot], ent)
+        try:
+            # Check if anything is already equipped
+            if ent.equipment[item.slot] is not None:
+                self.dequip(ent.equipment[item.slot], ent)
+        except:
+            print(item.name, item.slot)
         
         # Apply stat adjustments
         ent.equipment[item.slot] = item
@@ -1192,11 +1195,11 @@ class ItemSystem:
         ent.defense += item.defense_bonus
 
         if item.effect:
-            if item.effect not in ent.active_effects:
-                ent.active_effects.append(item.effect)
+            if item.effect.name in ent.active_effects.keys():
+                ent.active_effects[item.effect.name] = item.effect
         if item.ability:
-            if item.ability not in ent.active_abilities:
-                ent.active_abilities.append(item.ability)
+            if item.ability.name in ent.active_abilities.keys():
+                ent.active_abilities[item.ability.name] = item.ability
 
         item.equipped = True
 
@@ -1220,411 +1223,18 @@ class ItemSystem:
             ent.hp = ent.max_hp
 
         if item.effect:
-            if item.effect in ent.active_effects:
-                ent.active_effects.remove(item.effect)
+            if item.effect.name in ent.active_effects.keys():
+                del ent.active_effects[item.effect.name]
         if item.ability:
-            if item.ability in ent.active_abilities:
-                ent.active_abilities.remove(item.ability)
-
+            if item.ability.name in ent.active_abilities.keys():
+                del ent.active_abilities[item.ability.name]
+        
         #########################################################
         # Notify change of status
         item.equipped = False
         if ent.role == 'player':
             if not item.hidden and not silent:
                 pyg.update_gui("Dequipped " + item.name + " from " + item.slot + ".", pyg.dark_gray)
-
-class EffectsSystem:
-
-    def __init__(self):
-        
-        #########################################################
-        # Set parameters
-        ## Utility
-        self.last_press_time   = 0
-        self.cooldown_time     = 1
-
-        ## Combat
-        self.heal_amount       = 4
-        self.lightning_damage  = 20
-        self.lightning_range   = 5 * 32
-        self.confuse_range     = 8 * 32
-        self.confuse_num_turns = 10
-        self.fireball_radius   = 3 * 32
-        self.fireball_damage   = 12
-
-        self.level_up_base     = 200
-        self.level_up_factor   = 150
-        
-        self.torch_radius      = 10
-        
-        self.movement_speed_toggle = 0
-        self.speed_list = [
-            ['Default', (250, 200)],
-            ['Fast',    (1,   150)],
-            ['Fixed',   (0,   0)]]
-        self.slow_list = [
-            ['Fixed',   (0,   0)],
-            ['Default', (250, 200)]]
-
-    def check_tile(self, ent):
-        if ent.tile.item:
-            if ent.tile.item.effect:
-                ent.tile.item.effect.effect_fn(ent)
-
-    def heal(self, ent, amount):
-        """ Heals player by the given amount without going over the maximum. """
-        
-        ent.hp += amount
-        if ent.hp > ent.max_hp:
-            ent.hp = ent.max_hp
-
-    def jug_of_blood(self, ent, amount):
-        """ Heals player by the given amount without going over the maximum. """
-        
-        ent.hp -= amount
-        if ent.hp <= 0:
-            ent.hp = 0
-            ent.dead = True
-        else:
-            ent.attack += 1
-
-    def toggle_effects(self, ent):
-        """ Switches between different sets of effects. """
-        
-        if ent.env.name == 'garden': ent.active_abilities = ent.garden_abilities
-        else:                        ent.active_abilities = ent.game_abilities
-
-    # Environments
-    def enter_dungeon(self, text, lvl_num=0):
-        pyg = session.pyg
-
-        pyg.add_intertitle(text)
-        pyg.fn_queue.append([self.enter_dungeon_queue, {'lvl_num': lvl_num}])
-        pyg.fade_state = 'out'
-
-    def enter_dungeon_queue(self, lvl_num):
-        """ Advances player to the next level. """
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-            
-            #########################################################
-            # Create and/or enter
-            ## Enter the first dungeon
-            if session.player_obj.ent.env.name != 'dungeon':
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.areas['dungeon'][0],
-                    loc = session.player_obj.envs.areas['dungeon'][0].center)
-            
-            ## Enter the next saved dungeon
-            elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.areas['dungeon'].levels):
-                lvl_num = session.player_obj.ent.env.lvl_num
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.areas['dungeon'][lvl_num],
-                    loc = session.player_obj.envs.areas['dungeon'][lvl_num].center)
-            
-            ## Enter a new dungeon
-            else:
-                session.player_obj.envs.build_dungeon_level(lvl_num)
-                place_player(
-                    ent = session.player_obj.ent,
-                    env = session.player_obj.envs.areas['dungeon'][-1],
-                    loc = session.player_obj.envs.areas['dungeon'][-1].center)
-
-    def enter_home(self):
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-            
-            place_player(
-                ent = session.player_obj.ent,
-                env = session.player_obj.envs.areas['overworld']['home'],
-                loc = session.player_obj.envs.areas['overworld']['home'].player_coordinates)
-
-    def enter_overworld(self):
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-
-            place_player(
-                ent = session.player_obj.ent,
-                env = session.player_obj.envs.areas['overworld']['overworld'],
-                loc = session.player_obj.envs.areas['overworld']['overworld'].center)
-
-    def enter_cave(self):
-        pyg = session.pyg
-
-        pyg.add_intertitle("The ground breaks beneath you and reveals a cave.")
-        pyg.fn_queue.append([self.enter_cave_queue,  {}])
-        pyg.fade_state = 'out'
-
-    def enter_cave_queue(self):
-        """ Advances player to the next level. """
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-
-            ## Shorthand
-            envs = session.player_obj.envs
-            ent  = session.player_obj.ent
-            pyg  = session.pyg
-            
-            #########################################################
-            # Create and/or enter
-            ## Create
-            if 'cave' not in envs.areas.keys():
-                envs.add_area('cave')
-                envs.areas['cave'].add_level('cave')
-            
-            ## Enter the first cave
-            if ent.env.name != 'cave':
-                pyg.update_gui("The ground breaks beneath you and reveals a cave.", pyg.dark_gray)
-                place_player(
-                    ent = ent,
-                    env = envs.areas['cave'][0],
-                    loc = envs.areas['cave'][0].center)
-            
-            ## Enter the next saved cave
-            elif ent.env.lvl_num < len(envs.areas['cave'].levels):
-                pyg.update_gui("You descend deeper into the cave.", pyg.dark_gray)
-                lvl_num = ent.env.lvl_num
-                place_player(
-                    ent = ent,
-                    env = envs.areas['cave'][lvl_num],
-                    loc = envs.areas['cave'][lvl_num].center)
-            
-            ## Enter a new cave
-            else:
-                envs.areas['cave'].add_level('cave')
-                place_player(
-                    ent = ent,
-                    env = envs.areas['cave'][-1],
-                    loc = envs.areas['cave'][-1].center)
-
-    def enter_hallucination(self):
-        pyg = session.pyg
-
-        pyg.add_intertitle(". . . ! Your vision blurs as the substance seeps through your veins.")
-        pyg.fn_queue.append([self.enter_hallucination_queue,  {}])
-        pyg.fade_state = 'out'
-
-    def enter_hallucination_queue(self):
-        """ Advances player to the next level. """
-        
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-            
-            ## Shorthand
-            envs = session.player_obj.envs
-            ent  = session.player_obj.ent
-            pyg  = session.pyg
-            
-            #########################################################
-            # Create and/or enter
-            ## Create environment
-            if 'hallucination' not in envs.areas.keys():
-                envs.add_area('hallucination')
-                envs.areas['hallucination'].add_level('hallucination')
-                pyg.overlay_state = None
-                envs.build_hallucination_level()
-
-            ## Enter the first hallucination
-            if ent.env.name != 'hallucination':
-                place_player(
-                    ent = ent,
-                    env = envs.areas['hallucination'][0],
-                    loc = envs.areas['hallucination'][0].center)
-            
-            ## Enter the next saved hallucination
-            elif ent.env.lvl_num < len(envs.areas['hallucination'].levels):
-                lvl_num = ent.env.lvl_num
-                place_player(
-                    ent = ent,
-                    env = envs.areas['hallucination'][lvl_num],
-                    loc = envs.areas['hallucination'][lvl_num].center)
-            
-            ## Enter a new hallucination
-            else:
-                envs['hallucination'].add_level('hallucination')
-                place_player(
-                    ent = ent,
-                    env = envs.areas['hallucination'][-1],
-                    loc = envs.areas['hallucination'][-1].center)
-
-    def enter_bitworld(self, text=None):
-        """ Advances player to bitworld. """
-        
-        if text == None: text = '. . . ! Your vision blurs as the substance seeps through your veins.'
-
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = time.time()
-            pygame.event.clear()
-            
-            ## Shorthand
-            envs = session.player_obj.envs
-            ent  = session.player_obj.ent
-            pyg  = session.pyg
-
-            #########################################################
-            # Create and/or enter
-            ## Create
-            if 'bitworld' not in envs.areas.keys():
-                envs.add_area('bitworld')
-                envs['bitworld'].add_level['overworld']
-                
-                pyg.overlay_state = None
-                envs.build_bitworld()
-
-            ## Enter
-            if ent.env.name != 'bitworld':
-                session.img.render_fx = 'bw_binary'
-                place_player(
-                    ent = ent,
-                    env = envs.areas['bitworld']['overworld'],
-                    loc = envs.areas['bitworld']['overworld'].center)
-
-    # Item effects
-    def boost_stamina(self, ent):
-        ent.stamina += 50
-        if ent.stamina > 100: ent.stamina = 100
-        session.pyg.update_gui()
-
-    def lamp(self, item):
-        """ Adds or removes a light to be rendered under the following conditions.
-            1. The object is not owned by an entity.
-            2. The object is equipped by an entity. """
-        
-        if hasattr(item, 'env'):
-            lamp_list = item.env.weather.lamp_list
-        else:
-            lamp_list = session.player_obj.ent.env.weather.lamp_list
-        
-        if item.owner:
-            if item.equipped:
-                if item not in lamp_list: lamp_list.append(item)
-            else:
-                if item in lamp_list:     lamp_list.remove(item)
-        
-        else:
-            if item not in lamp_list: lamp_list.append(item)
-            else:                     lamp_list.remove(item)
-
-    def entity_eat(self, ent):
-        """ Dropped item effect. """
-        
-        session.stats_obj.pet_moods['happiness'] += 1
-        session.stats_obj.pet_moods['boredom']   -= 1
-        image = session.img.dict['bubbles']['heart bubble']
-        session.img.flash_above(ent, image)
-        ent.tile.item = None
-
-    # Gameplay
-    def movement_speed(self, toggle=True, custom=None):
-        """ Toggles and sets movement speed. """
-        
-        pyg = session.pyg
-
-        # Check stamina
-        if session.player_obj.ent.stamina > 0:
-        
-            # Change speed
-            if toggle:
-                if self.movement_speed_toggle == len(self.speed_list)-1: 
-                    self.movement_speed_toggle = 0
-                else:
-                    self.movement_speed_toggle += 1
-                pyg.update_gui(f"Movement speed: {self.speed_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
-                (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
-                pygame.key.set_repeat(hold_time, repeat_time)
-            
-            # Set custom speed
-            elif custom is not None:
-                (hold_time, repeat_time) = self.speed_list[custom][1]
-                pygame.key.set_repeat(hold_time, repeat_time)
-            
-            # Restore previous speed
-            else:
-                (hold_time, repeat_time) = self.speed_list[self.movement_speed_toggle][1]
-                pygame.key.set_repeat(hold_time, repeat_time)
-            
-        else:            
-            
-            # Change speed
-            if toggle:
-                if self.movement_speed_toggle == len(self.slow_list)-1: 
-                    self.movement_speed_toggle = 0
-                else:
-                    self.movement_speed_toggle += 1
-                pyg.update_gui(f"Movement speed: {self.slow_list[self.movement_speed_toggle][0]}", pyg.dark_gray)
-                (hold_time, repeat_time) = self.slow_list[self.movement_speed_toggle][1]
-                pygame.key.set_repeat(hold_time, repeat_time)
-            
-            # Set custom speed
-            elif custom is not None:
-                custom = custom % 2
-                (hold_time, repeat_time) = self.slow_list[custom][1]
-                pygame.key.set_repeat(hold_time, repeat_time)
-            
-            # Restore previous speed
-            else:
-                (hold_time, repeat_time) = self.slow_list[self.movement_speed_toggle][1]
-                pygame.key.set_repeat(hold_time, repeat_time)
-
-    # Item interactions
-    def skeleton(self, ent=None):
-        
-        # Find location
-        loc = session.player_obj.ent.env
-        locs = ['garden', 'womb', 'home', 'dungeon', 'hallucination', 'overworld', 'bitworld', 'cave']
-        
-        # Define notification bank
-        dead_log = {
-            'garden': [
-                "... this must be a dream."],
-            
-            'womb': [
-                "... this must be a dream."],
-            
-            'home': [
-                "A skeleton... in your home."],
-            
-            'dungeon': [
-                "Skeleton. Looks like a Greg.",
-                "Ow! Shouldn't poke around with bones.",
-                "Wait... is this Jerry?",
-                "The pile of bones lay motionless, thankfully.",
-                "Decay is swift.",
-                "..."],
-            
-            'hallucination': [
-                "Bones? I must be seeing things.",
-                "..."],
-            
-            'overworld': [
-                "Should I be concerned about this?",
-                "Looks human. Something bad happened here.",
-                "..."],
-            
-            'bitworld': [
-                "Are these dots inside of me too?",
-                "What is...?",
-                "..."
-                ],
-            
-            'cave': [
-                "Typical.",
-                "Caves can kill in mysterious ways."]}
-        
-        if random.randint(0, 4): image = session.img.dict['bubbles']['skull bubble']
-        else:                    image = session.img.dict['bubbles']['exclamation bubble']
-        session.img.flash_above(session.player_obj.ent, image)
 
 ########################################################################################################################################################
 # Environments
@@ -1661,7 +1271,7 @@ def place_player(ent, env, loc):
         ent.X0   = loc[0] * pyg.tile_width
         ent.Y    = loc[1] * pyg.tile_height
         ent.Y0   = loc[1] * pyg.tile_height
-        session.effects.toggle_effects(ent)
+        session.abilities.toggle_abilities(ent)
 
         # Set time and date
         if ent.env.name in ['home', 'overworld', 'cave']:
@@ -1783,7 +1393,7 @@ def is_blocked(env, loc):
 ########################################################################################################################################################
 # Other
 def active_effects():
-    """ Applies effects from items and equipment. Runs constantly. """
+    """ Applies effects from items and equipment. Runs constantly. 
     
     ent = session.player_obj.ent
 
@@ -1801,7 +1411,8 @@ def active_effects():
     # Apply non-dominant hand function
     if hand_2:
         if hand_2.effect.name == 'lamp':
-            hand_2.effect.effect_fn(hand_2)
+            hand_2.effect.effect_fn(hand_2) """
+    pass
 
 def check_level_up():
     """ Checks if the player's experience is enough to level-up. """

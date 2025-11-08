@@ -1,0 +1,93 @@
+{
+"lights": {
+    "name":          "lamp",
+    "effect_fn":     "lamp",
+    "img_names":     ["lights", "dropped"],
+    "cooldown_time": "0",
+    "trigger":       "on_idle"
+    },
+
+
+
+
+"bubbles": {
+    "name":          "food",
+    "effect_fn":     "entity_eat",
+    "img_names":     ["drugs", "bubbles"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_hover"
+    },
+
+
+
+
+"lamp": {
+    "name":          "lamp",
+    "effect_fn":     "lamp",
+    "img_names":     ["lamp", "dropped"],
+    "cooldown_time": "0",
+    "trigger":       "on_hold"
+    },
+
+
+
+
+"eye": {
+    "name":          "swing",
+    "effect_fn":     "swing",
+    "img_names":     ["null", "null"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_wield"
+    },
+
+
+
+
+"death_note": {
+    "name":          "death_note",
+    "effect_fn":     "death_note",
+    "img_names":     ["bubbles", "exclamation"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_use"
+    },
+
+"needle": {
+    "name":          "bowl",
+    "effect_fn":     "enter_hallucination",
+    "img_names":     ["drugs", "needle"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_use"
+    },
+
+"skin": {
+    "name":          "bowl",
+    "effect_fn":     "enter_hallucination",
+    "img_names":     ["drugs", "skin"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_use"
+    },
+
+"teeth": {
+    "name":          "bowl",
+    "effect_fn":     "enter_bitworld",
+    "img_names":     ["drugs", "bowl"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_use"
+    },
+
+"bowl": {
+    "name":          "bowl",
+    "effect_fn":     "enter_hallucination",
+    "img_names":     ["drugs", "bowl"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_use"
+    },
+
+"plant": {
+    "name":          "food",
+    "effect_fn":     "boost_stamina",
+    "img_names":     ["drugs", "plant"],
+    "cooldown_time": "0.1",
+    "trigger":       "on_use"
+    }
+}

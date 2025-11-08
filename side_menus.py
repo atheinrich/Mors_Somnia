@@ -763,9 +763,9 @@ class AbilitiesMenu:
         inventory_dics      = {'effects': {}}
         self.dic_categories = ['effects']
         self.sequences      = {}
-        for ability in session.player_obj.ent.active_abilities:
-            inventory_dics['effects'][ability.name] = session.img.dict[ability.img_names[0]][ability.img_names[1]]
-            self.sequences[ability.name] = ability.sequence
+        for name, ability in session.player_obj.ent.active_abilities.items():
+            inventory_dics['effects'][name] = session.img.dict[ability.img_names[0]][ability.img_names[1]]
+            self.sequences[name]            = ability.sequence
         
         # Restore last selection
         if len(self.dic_indices) != len(self.dic_categories):
@@ -775,7 +775,7 @@ class AbilitiesMenu:
     def check_sequence(self, sequence_string):
         
         # Look through item effects
-        for ability in session.player_obj.ent.active_abilities:
+        for _, ability in session.player_obj.ent.active_abilities.items():
             if ability.sequence == sequence_string:
                 if time.time() - ability.last_press_time > ability.cooldown_time:
                     ability.last_press_time = float(time.time())

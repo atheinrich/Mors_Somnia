@@ -1,0 +1,67 @@
+{
+"bald": {
+    "name":      "bald",
+    "slot":      "head",
+    "img_names": ["bald", "front"]
+    },
+
+"brown_hair": {
+    "name":      "brown hair",
+    "slot":      "head",
+    "img_names": ["brown hair", "dropped"]
+    },
+
+"blue_hair": {
+    "name":      "blue hair",
+    "slot":      "head",
+    "img_names": ["blue hair", "dropped"]
+    },
+
+"short_brown_hair": {
+    "name":      "short brown hair",
+    "slot":      "head",
+    "img_names": ["short brown hair", "dropped"]
+    },
+
+"clean": {
+    "name":      "clean",
+    "slot":      "face",
+    "img_names": ["clean", "dropped"]
+    },
+
+"brown_beard": {
+    "name":      "brown beard",
+    "slot":      "face",
+    "img_names": ["brown beard", "dropped"]
+    },
+
+"blue_beard": {
+    "name":      "blue beard",
+    "slot":      "face",
+    "img_names": ["blue beard", "dropped"]
+    },
+
+"white_beard": {
+    "name":      "white beard",
+    "slot":      "face",
+    "img_names": ["white beard", "dropped"]
+    },
+
+"glasses": {
+    "name":      "glasses",
+    "slot":      "face",
+    "img_names": ["glasses", "dropped"]
+    },
+
+"flat": {
+    "name":      "flat",
+    "slot":      "chest",
+    "img_names": ["flat", "dropped"]
+    },
+
+"bra": {
+    "name":      "bra",
+    "slot":      "chest",
+    "img_names": ["bra", "dropped"]
+    }
+}

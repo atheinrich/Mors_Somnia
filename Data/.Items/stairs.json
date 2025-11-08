@@ -1,0 +1,16 @@
+{
+"door": {
+    "name":      "door",
+    "img_names": ["stairs", "door"]
+    },
+
+"portal": {
+    "name":      "portal",
+    "img_names": ["stairs", "portal"]
+    },
+
+"cave": {
+    "name":      "cave",
+    "img_names": ["floors", "sand2"]
+    }
+}

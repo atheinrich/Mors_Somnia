@@ -1,0 +1,15 @@
+{
+"lamp": {
+    "name":          "lamp",
+    "img_names":     ["lamp", "dropped"],
+    "cost":          100,
+    "defense_bonus": 0
+    },
+
+"iron_shield": {
+    "name":          "iron shield",
+    "img_names":     ["iron shield", "dropped"],
+    "cost":          50,
+    "defense_bonus": 10
+    }
+}

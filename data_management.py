@@ -6,6 +6,7 @@ import json
 import os
 import time
 import json
+import copy
 
 ########################################################################################################################################################
 # Backend tools
@@ -185,16 +186,36 @@ def rebuild_databases(filename_list):
     print("Databases rebuilt!")
 
 ########################################################################################################################################################
+# Startup
+def load_items(items):
+    _defaults = load_json(f'Data/.Items/_defaults.json')
+
+    item_dicts = {}
+
+    for category in items:
+        category_dict  = load_json(f'Data/.Items/{category}.json')
+        _defaults_dict = _defaults[category]
+
+        for item_id, attrs in category_dict.items():
+            full_attrs = copy.deepcopy(_defaults_dict)
+            full_attrs.update(attrs)
+            item_dicts[item_id] = full_attrs
+
+    return item_dicts
+
+########################################################################################################################################################
 # Initializations
 ## Group database files
 img_names   = ['img_ents', 'img_equipment', 'img_other']
-obj_names   = ['items', 'item_effects', 'ents', 'NPCs']
+obj_names   = ['item_effects', 'ents', 'NPCs']
 other_names = ['biomes']
+items       = ['accessories', 'armor', 'decor', 'drugs', 'furniture', 'offhands', 'potions', 'scrolls', 'stairs', 'structures', 'weapons']
 
 ## Build JSON files
 #rebuild_databases(['img_ents']) # img_names + obj_names + other_names
 
 ## Load JSON files
+item_dicts  = load_items(items)
 obj_dicts   = {name: load_json(f'Data/.Databases/{name}.json') for name in obj_names}
 other_dicts = {name: load_json(f'Data/.Databases/{name}.json') for name in other_names}
 img_dicts   = {name: load_json(f'Data/.Databases/{name}.json') for name in img_names}

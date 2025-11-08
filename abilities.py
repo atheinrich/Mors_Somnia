@@ -44,39 +44,15 @@ class AbilitiesSystem:
     def __init__(self, registry):
         self._data     = load_json(f'Data/.Databases/abilities.json')
         self._registry = registry
-        print(self._data)
-
-        #########################################################
-        # Set parameters
-        ## Utility
-        self.last_press_time   = 0
-        self.cooldown_time     = 1
-
-        ## Combat
-        self.heal_amount       = 4
-        self.lightning_damage  = 20
-        self.lightning_range   = 5 * 32
-        self.confuse_range     = 8 * 32
-        self.confuse_num_turns = 10
-        self.fireball_radius   = 3 * 32
-        self.fireball_damage   = 12
-
-        self.level_up_base     = 200
-        self.level_up_factor   = 150
-        
-        self.torch_radius      = 10
-        
-        self.movement_speed_toggle = 0
-        self.speed_list = [
-            ['Default', (250, 200)],
-            ['Fast',    (1,   150)],
-            ['Fixed',   (0,   0)]]
-        self.slow_list = [
-            ['Fixed',   (0,   0)],
-            ['Default', (250, 200)]]
 
     def add_ability(self, owner, ability_id):
         return Ability(owner, ability_id)
+
+    def toggle_abilities(self, ent):
+        """ Switches between different sets of effects. """
+        
+        if ent.env.name == 'garden': ent.active_abilities = ent.garden_abilities
+        else:                        ent.active_abilities = ent.game_abilities
 
     # Entity interactions
     @register("entity_scare")

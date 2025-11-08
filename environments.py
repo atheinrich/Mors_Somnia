@@ -121,7 +121,7 @@ class Environments:
         
         x = center[0] + random.randint(1, 5)
         y = center[1] + random.randint(1, 5)
-        item = create_item('jug of water')
+        item = create_item('jug_of_water')
         place_object(item, (x, y), env)
 
         # Place player in first room
@@ -272,15 +272,15 @@ class Environments:
         ###############################################################
         # Hidden objects
         x, y = center[0]+10, center[1]+9
-        item = create_item('blood sword')
+        item = create_item('blood_sword')
         place_object(item, [x, y], env)
         x, y = center[0]+5, center[1]+10
-        item = create_item('iron shield')
+        item = create_item('iron_shield')
         place_object(item, [x, y], env)
         
         # Bug fix
         x, y = 0, 0
-        item = create_item('scroll of fireball')
+        item = create_item('scroll_of_fireball')
         place_object(item, [x, y], env)
         
         # Door
@@ -779,7 +779,7 @@ class Environments:
         
         entities = [
             ['land', 'plant',          300,   [None]],
-            ['land', 'eye',            15,    ['eye']],
+            ['land', 'eye',            15,    [None]],
             ['land', 'red radish',     1000,  [None]],
             ['land', 'round1',         30,    [None]]]
         
@@ -1753,16 +1753,16 @@ class Room:
                         tile.blocked   = False
                     
                     # Place furniture
-                    elif self.plan[y][x] == '=': place_object(create_item('red bed'),         [tile_x, tile_y], self.env)                    
-                    elif self.plan[y][x] == 'b': place_object(create_item('red chair left'),  [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == '=': place_object(create_item('red_bed'),         [tile_x, tile_y], self.env)                    
+                    elif self.plan[y][x] == 'b': place_object(create_item('red_chair_left'),  [tile_x, tile_y], self.env)
                     elif self.plan[y][x] == 'T': place_object(create_item('table'),           [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'd': place_object(create_item('red chair right'), [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == '[': place_object(create_item('shelf left'),      [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == ']': place_object(create_item('shelf right'),     [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'd': place_object(create_item('red_chair_right'), [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == '[': place_object(create_item('shelf_left'),      [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == ']': place_object(create_item('shelf_right'),     [tile_x, tile_y], self.env)
                     
                     # Place items
-                    elif self.plan[y][x] == 'g': place_object(create_item('jug of grapes'),   [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'c': place_object(create_item('jug of cement'),   [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'g': place_object(create_item('jug_of_grapes'),   [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'c': place_object(create_item('jug_of_cement'),   [tile_x, tile_y], self.env)
                     
                 # Place things outside
                 else:
@@ -2368,26 +2368,26 @@ def place_objects(env, items, entities):
             if not is_blocked(env, [x, y]):
 
                 ## Randomly select and place an item
-                selection = random.choice(items)
+                item_selection = random.choice(items)
                 
                 # Check that the object matches the biome
-                if env.map[x][y].biome in session.img.biomes[selection[0]]:
-                    if not random.randint(0, selection[2]) and not env.map[x][y].item:
+                if env.map[x][y].biome in session.img.biomes[item_selection[0]]:
+                    if not random.randint(0, item_selection[2]) and not env.map[x][y].item:
                         
                         ## Place object
-                        item = create_item(selection[1])
+                        item = create_item(item_selection[1])
                         place_object(item, [x, y], env)
                 
                 ## Randomly select and place an entity
-                selection = random.choice(entities)
+                ent_selection = random.choice(entities)
                 
                 # Check that the entity matches the biome
-                if env.map[x][y].biome in session.img.biomes[selection[0]]:
-                    if not random.randint(0, selection[2]) and not env.map[x][y].item:
+                if env.map[x][y].biome in session.img.biomes[ent_selection[0]]:
+                    if not random.randint(0, ent_selection[2]) and not env.map[x][y].item:
                         
                         ## Create and place entity
-                        entity = create_entity(selection[1])
-                        for item in selection[3]:
+                        entity = create_entity(ent_selection[1])
+                        for item in ent_selection[3]:
                             if item:
                                 obj = create_item(item)
                                 session.items.pick_up(obj, ent=entity)

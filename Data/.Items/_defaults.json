@@ -1,0 +1,342 @@
+{
+"accessories": {
+
+    "name":          null,
+    "slot":          null,
+    "img_names":     null,
+
+    "role":          "armor",
+    "equippable":    true,
+    "equipped":      false,
+    "hidden":        true,
+    "blocked":       false,
+    "movable":       true,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "durability":    101,
+    "cost":          0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"armor": {
+    
+    "name":          null,
+    "img_names":     null,
+    "cost":          0,
+    "defense_bonus": 0,
+
+    "role":          "armor",
+    "slot":          "body",
+    "equippable":    true,
+    "equipped":      false,
+    "hidden":        false,
+    "blocked":       false,
+    "movable":       true,
+    "durability":    101,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"decor": {
+    
+    "name":          null,
+    "img_names":     null,
+    "hidden":        true,
+    "blocked":       false,
+    "movable":       false,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "cost":          0,
+
+    "role":          "other",
+    "slot":          null,
+    "equippable":    false,
+    "equipped":      false,
+    "durability":    101,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"drugs": {
+    
+    "name":          null,
+    "img_names":     null,
+    "cost":          0,
+
+    "role":          "drugs",
+    "slot":          null,
+    "equippable":    false,
+    "equipped":      false,
+    "hidden":        false,
+    "blocked":       false,
+    "movable":       true,
+    "durability":    101,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"furniture": {
+    
+    "name":          null,
+    "img_names":     null,
+    "blocked":       false,
+
+    "role":          "other",
+    "slot":          null,
+    "equippable":    false,
+    "equipped":      false,
+    "hidden":        true,
+    "movable":       false,
+    "durability":    101,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "cost":          0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"offhands": {
+
+    "name":          null,
+    "img_names":     null,
+    "cost":          0,
+    "defense_bonus": 0,
+
+    "role":          "armor",
+    "slot":          "non-dominant hand",
+    "equippable":    true,
+    "equipped":      false,
+    "hidden":        false,
+    "blocked":       false,
+    "movable":       true,
+    "durability":    101,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"potions": {
+    
+    "name":          null,
+    "img_names":     null,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "cost":          0,
+
+    "role":          "potions",
+    "slot":          null,
+    "equippable":    false,
+    "equipped":      false,
+    "hidden":        false,
+    "blocked":       false,
+    "movable":       true,
+    "durability":    101,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+    
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"scrolls": {
+    
+    "name":          null,
+    "img_names":     null,
+    "cost":          0,
+
+    "role":          "scrolls",
+    "slot":          null,
+    "equippable":    false,
+    "equipped":      false,
+    "hidden":        false,
+    "blocked":       false,
+    "movable":       true,
+    "durability":    101,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+    
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"stairs": {
+
+    "name":          null,
+    "img_names":     null,
+
+    "role":          "other",
+    "slot":          null,
+    "equippable":    false,
+    "equipped":      false,
+    "hidden":        true,
+    "blocked":       false,
+    "movable":       false,
+    "durability":    101,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "cost":          0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+    
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"structures": {
+    
+    "name":          null,
+    "img_names":     null,
+    "blocked":       false,
+
+    "role":          "other",
+    "slot":          null,
+    "equippable":    false,
+    "equipped":      false,
+    "hidden":        true,
+    "movable":       false,
+    "durability":    101,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "cost":          0,
+    "hp_bonus":      0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+    
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    },
+
+"weapons": {
+    
+    "name":          null,
+    "img_names":     null,
+    "durability":    101,
+    "cost":          0,
+    "attack_bonus":  0,
+    "defense_bonus": 0,
+
+    "role":          "weapons",
+    "slot":          "dominant hand",
+    "equippable":    true,
+    "equipped":      false,
+    "hidden":        false,
+    "blocked":       false,
+    "movable":       true,
+    "rand_X":        0,
+    "rand_Y":        0,
+    "hp_bonus":      0,
+    
+    "tile":          null,
+    "X":             null,
+    "Y":             null,
+
+    "owner":         null,
+    "ability":       null,
+    "effect":        null,
+
+    "big":           false
+    }
+}

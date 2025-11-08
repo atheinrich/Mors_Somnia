@@ -31,6 +31,9 @@
     "cooldown_time": "1"
     },
 
+
+
+
 "swing": {
     "name":          "swing",
     "function_id":   "swing",
@@ -51,5 +54,6 @@
     "img_names":     ["green blob", "right"],
     "function_id":   "propagate",
     "sequence":      "⮞⮜⮞",
-    "cooldown_time": "1"}
+    "cooldown_time": "1"
+    }
 }

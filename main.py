@@ -94,7 +94,8 @@ import session
 from pygame_utilities import Pygame, Images, Audio, EventBus
 from items_entities import PlayerData
 from abilities import _abilities
-from mechanics import MovementSystem, InteractionSystem, ItemSystem, EffectsSystem
+from effects import _effects
+from mechanics import MovementSystem, InteractionSystem, ItemSystem
 from mechanics import PlayGame, PlayGarden
 from big_menus import MainMenu, NewGameMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
@@ -134,7 +135,7 @@ def init():
     session.movement         = MovementSystem()
     session.interact         = InteractionSystem()
     session.items            = ItemSystem()
-    session.effects          = EffectsSystem()
+    session.effects          = _effects
     session.abilities        = _abilities
 
     ## Primary

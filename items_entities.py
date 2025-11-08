@@ -14,7 +14,7 @@ import pygame
 
 ## Local
 import session
-from data_management import obj_dicts, load_json
+from data_management import obj_dicts, load_json, item_dicts
 
 ########################################################################################################################################################
 
@@ -180,18 +180,18 @@ class Entity:
 
         #########################################################
         # Initialize reactions and abilities
-        self.garden_abilities = [
-            session.abilities.add_ability(self, 'entity_scare'),
-            session.abilities.add_ability(self, 'entity_comfort'),
-            session.abilities.add_ability(self, 'entity_clean')]
+        self.garden_abilities = {
+            'entity_scare':   session.abilities.add_ability(self, 'entity_scare'),
+            'entity_comfort': session.abilities.add_ability(self, 'entity_comfort'),
+            'entity_clean':   session.abilities.add_ability(self, 'entity_clean')}
         
-        self.game_abilities = [
-            session.abilities.add_ability(self, 'entity_scare'),
-            session.abilities.add_ability(self, 'entity_capture'),
-            session.abilities.add_ability(self, 'suicide')]
+        self.game_abilities = {
+            'entity_scare':   session.abilities.add_ability(self, 'entity_scare'),
+            'entity_capture': session.abilities.add_ability(self, 'entity_capture'),
+            'suicide':        session.abilities.add_ability(self, 'suicide')}
         
-        self.active_effects   = []
-        self.active_abilities = []
+        self.active_effects   = {}
+        self.active_abilities = {}
 
     # Utility
     def quest_active(self):
@@ -453,18 +453,6 @@ class Item:
             defense_bonus : int
             effects       : """
         
-        #########################################################
-        # Set parameters
-        ## Prepare for later setting
-        self.tile    = None
-        self.X       = None
-        self.Y       = None
-        self.owner   = None
-        self.effect  = None
-        self.ability = None
-        
-        self.big     = False
-        
         ## Import parameters
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -531,25 +519,9 @@ class Item:
 
         return surface, pos
 
-class Effect:
-
-    def __init__(self, name, img_names, effect_fn, trigger, sequence, cooldown_time, other):
-        
-        self.name            = name
-        self.img_names       = img_names
-        self.effect_fn       = effect_fn
-        
-        self.trigger         = trigger
-        self.sequence        = sequence
-        
-        self.cooldown_time   = cooldown_time
-        self.last_press_time = 0
-        
-        self.other           = other
-
 ########################################################################################################################################################
 # Tools
-def create_item(names, effect=False):
+def create_item(item_id, effect=False):
     """ Creates and returns an object.
     
         Parameters
@@ -557,40 +529,31 @@ def create_item(names, effect=False):
         names  : string or list of strings; name of object
         effect : bool or Effect object; True=default, False=None, effect=custom """
     
-    # Look for item
-    item      = None
-    item_dict = obj_dicts['items']
-
-    if type(names) in [tuple, list]:
-        for val in item_dict.values():
-            if val['img_names'] == names:
-                item = Item(**val)
-    else:       item = Item(**item_dict[names])
+    # Create object
+    item_id = item_id.replace(" ", "_")
+    item = Item(**item_dicts[item_id])
     
     # Add effect
-    if item:
-        effect_dict = obj_dicts['item_effects']
+    #effect_dict = obj_dicts['item_effects']
 
-        if effect:
-            item.effect = effect
+    #if effect:
+    #    item.effect = effect
 
-        elif item.name in effect_dict:
-            effect = effect_dict[item.name]
-            item.effect = Effect(
-                name          = effect['name'],
-                img_names     = effect['img_names'],
-                effect_fn     = eval(effect['effect_fn']),
-                trigger       = effect['trigger'],
-                sequence      = effect['sequence'],
-                cooldown_time = effect['cooldown_time'],
-                other         = effect['other'])
-            
-        else:
-            item.effect = None
-    
-    # Return if found
-    if not item: raise Exception(names)
-    else:        return item
+    #elif item.name in effect_dict:
+    #    effect = effect_dict[item.name]
+    #    item.effect = session.effects.add_effect(
+    #        name          = effect['name'],
+    #        img_names     = effect['img_names'],
+    #        effect_fn     = eval(effect['effect_fn']),
+    #        trigger       = effect['trigger'],
+    #        sequence      = effect['sequence'],
+    #        cooldown_time = effect['cooldown_time'],
+    #        other         = effect['other'])
+        
+    #else:
+    #    item.effect = None
+
+    return item
 
 def create_entity(names):
     """ Creates and returns an object.
