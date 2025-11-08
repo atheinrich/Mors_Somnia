@@ -1,5 +1,5 @@
 ########################################################################################################################################################
-# Item creation and management
+# Entity creation and management
 #
 ########################################################################################################################################################
 
@@ -14,7 +14,7 @@ import pygame
 
 ## Local
 import session
-from data_management import obj_dicts, load_json, item_dicts
+from data_management import obj_dicts, load_json
 
 ########################################################################################################################################################
 
@@ -367,7 +367,9 @@ class Entity:
             pyg.display_queue.append([session.img.dict['bubbles'][bubble], (X, Y - pyg.tile_height + shift)])
 
 class Dialogue:
-    """ Imports and stores dialogue from JSON files, and returns a random piece of accessible dialogue. """
+    """ Imports and stores dialogue from JSON files, and returns a random piece of accessible dialogue.
+        Handled automatically in the InteractionSystem and in Quest objects via event subscription.
+    """
 
     # Core
     def __init__(self):
@@ -383,17 +385,9 @@ class Dialogue:
         self.dialogue_cache = {}
         self.npc_states     = {}
 
-        self.subscribe_events()
+        self._subscribe_events()
 
-    def subscribe_events(self):
-        session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
-        session.bus.subscribe('emit_dialogue',   self.emit_dialogue)
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.subscribe_events()
-
-    def load_npc(self, ent_id):
+    def _load_npc(self, ent_id):
         """ Sends all dialogue to dialogue_cache. """
 
         if ent_id not in self.dialogue_cache:
@@ -401,19 +395,27 @@ class Dialogue:
             self.dialogue_cache[ent_id] = load_json(f'Data/.Dialogue/{ent_id}.json')
             self.npc_states[ent_id]     = "default"
 
-    def get_dialogue(self, ent_id):
+    def _get_dialogue(self, ent_id):
         """ Return a random dialogue string from the character's current set of available options. """
 
-        self.load_npc(ent_id)
+        self._load_npc(ent_id)
         key   = self.npc_states.get(ent_id)
         lines = self.dialogue_cache[ent_id].get(key)
         return random.choice(lines)
+
+    def _subscribe_events(self):
+        session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
+        session.bus.subscribe('emit_dialogue',   self.emit_dialogue)
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._subscribe_events()
 
     # Actions
     def unlock_dialogue(self, ent_id, dialogue_id):
         """ Changes current set of available options. """
 
-        self.load_npc(ent_id)
+        self._load_npc(ent_id)
         self.npc_states[ent_id] = dialogue_id
 
     def emit_dialogue(self, ent_id, dialogue_id=None):
@@ -422,139 +424,14 @@ class Dialogue:
         if dialogue_id:
             self.unlock_dialogue(ent_id, dialogue_id)
 
-        dialogue = self.get_dialogue(ent_id)
+        dialogue = self._get_dialogue(ent_id)
         session.pyg.update_gui(dialogue)
         if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
             session.aud.last_press_time_speech = time.time()
             session.aud.play_speech(dialogue)
 
-class Item:
-    
-    def __init__(self, **kwargs):
-        """ Parameters
-            ----------
-            name          : string
-            role          : string in ['weapons', 'armor', 'potions', 'scrolls', 'other']
-            slot          : string in ['non-dominant hand', 'dominant hand', 'body', 'head', 'face']
-            
-            X             :
-            Y             : 
-            
-            img_names[0]  : string
-            img_names[1]  : string
-            
-            durability    : int; item breaks at 0
-            equippable    : Boolean; lets item be equipped by entity
-            equipped      : Boolean; notes if the item is equipped
-            hidden        : Boolean; hides from inventory menu
-            
-            hp_bonus      : int
-            attack_bonus  : int
-            defense_bonus : int
-            effects       : """
-        
-        ## Import parameters
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-        # Seed a seed for individual adjustments
-        self.rand_X  = random.randint(-self.rand_X, self.rand_X)
-        self.rand_Y  = random.randint(0,            self.rand_Y)
-        self.flipped = random.choice([0, self.rand_Y])
-        
-        #########################################################
-        # Initialize effect if passive
-        if self.effect:
-            if self.effect.trigger == 'passive':
-                if self.role != 'weapons':
-                    self.effect.effect_fn(self)
-
-    def draw(self):
-        """ Constructs (but does not render) surfaces for items and their positions. """
-        
-        #########################################################
-        # Shorthand
-        cam = session.player_obj.ent.env.camera
-        pyg = session.pyg
-        img = session.img
-
-        #########################################################
-        # Blit a tile
-        if not self.big:
-            
-            # Set position
-            X = self.X - cam.X
-            Y = self.Y - cam.Y
-
-            if self.img_names[0] == 'decor':
-                X -= self.rand_X
-                Y -= self.rand_Y
-        
-            # Add effects and draw
-            if (self.img_names[1] in ['leafy']) and not self.rand_Y:
-                surface = img.dict[self.img_names[0]][self.img_names[1]]
-                X       -= 32
-                Y       -= 32
-            else:
-                if self.flipped: surface = img.flipped.dict[self.img_names[0]][self.img_names[1]]
-                else:            surface = img.dict[self.img_names[0]][self.img_names[1]]
-
-            pos = (X, Y)
-                
-        #########################################################
-        # Blit multiple tiles
-        else:
-            
-            # Blit every tile in the image
-            surface, pos = [], []
-            for i in range(len(img.big)):
-                for j in range(len(img.big[0])):
-
-                    img = img.big[len(img.big)-j-1][len(img.big[0])-i-1]
-                    X   = self.X - cam.X - pyg.tile_width * i
-                    Y   = self.Y - cam.Y - pyg.tile_height * j
-
-                    surface.append(img)
-                    pos.append((X, Y))
-
-        return surface, pos
-
 ########################################################################################################################################################
 # Tools
-def create_item(item_id, effect=False):
-    """ Creates and returns an object.
-    
-        Parameters
-        ----------
-        names  : string or list of strings; name of object
-        effect : bool or Effect object; True=default, False=None, effect=custom """
-    
-    # Create object
-    item_id = item_id.replace(" ", "_")
-    item = Item(**item_dicts[item_id])
-    
-    # Add effect
-    #effect_dict = obj_dicts['item_effects']
-
-    #if effect:
-    #    item.effect = effect
-
-    #elif item.name in effect_dict:
-    #    effect = effect_dict[item.name]
-    #    item.effect = session.effects.add_effect(
-    #        name          = effect['name'],
-    #        img_names     = effect['img_names'],
-    #        effect_fn     = eval(effect['effect_fn']),
-    #        trigger       = effect['trigger'],
-    #        sequence      = effect['sequence'],
-    #        cooldown_time = effect['cooldown_time'],
-    #        other         = effect['other'])
-        
-    #else:
-    #    item.effect = None
-
-    return item
-
 def create_entity(names):
     """ Creates and returns an object.
     
@@ -596,7 +473,7 @@ def create_NPC(name):
         # Equipment
         for item_type in ['clothes', 'chest', 'hair', 'beard', 'weapon', 'armor']:
             if NPC[item_type]: 
-                item = create_item(NPC[item_type])
+                item = session.items.create_item(NPC[item_type])
                 session.items.pick_up(item, ent, silent=True)
                 session.items.toggle_equip(item, ent, silent=True)
                 if NPC['trade_times']: item.hidden = True
@@ -605,7 +482,7 @@ def create_NPC(name):
         ent.trade_times = NPC['trade_times']
         if NPC['trade_times']:
             for item in NPC['inv']:
-                item = create_item(item)
+                item = session.items.create_item(item)
                 session.items.pick_up(item, ent, silent=True)
     
     #########################################################
@@ -624,12 +501,12 @@ def create_NPC(name):
             'armor': str(random.choice(session.img.armor_names))}
         
         for name in items.values():
-            item = create_item(name)
+            item = session.items.create_item(name)
             session.items.pick_up(item, ent, silent=True)
             session.items.toggle_equip(item, ent, silent=True)
         
         if items['chest'] == 'flat':
-            face = create_item(str(random.choice(session.img.face_options)))
+            face = session.items.create_item(str(random.choice(session.img.face_options)))
             session.items.pick_up(face, ent, silent=True)
             session.items.toggle_equip(face, ent, silent=True)
         

@@ -1,5 +1,6 @@
 ########################################################################################################################################################
-# Abilities
+# Ability creation and management
+# No items are managed here -- only functions for predefined abilities.
 #
 ########################################################################################################################################################
 
@@ -197,7 +198,7 @@ class AbilitiesSystem:
         pyg   = session.pyg
         owner = ability_obj.owner
 
-        from items_entities import create_entity
+        from entities import create_entity
         from environments import place_object
 
         # Note location and image names
@@ -209,16 +210,16 @@ class AbilitiesSystem:
         elif owner.direction == 'right': img_x += 1
         elif owner.direction == 'left':  img_x -= 1
         
-        # Place item
-        item = create_entity('green blob')
-        item.lethargy = 0
-        item.cooldown = 0.1
-        item.direction = None
+        # Place blob
+        blob = create_entity('green blob')
+        blob.lethargy = 0
+        blob.cooldown = 0.1
+        blob.direction = None
         place_object(
-            obj   = item,
+            obj   = blob,
             loc   = [img_x, img_y],
             env   = owner.env,
-            names = item.img_names)
+            names = blob.img_names)
         
         # Prepare movements
         motions_log = []
@@ -232,7 +233,7 @@ class AbilitiesSystem:
             motions_log.append(directions[owner.direction])
         
         # Send directions to entity
-        item.motions_log = motions_log
+        blob.motions_log = motions_log
 
     @register("suicide")
     def suicide(self, ability_obj):

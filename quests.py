@@ -387,9 +387,9 @@ class Questlog:
         """
 
         self.active_quests = []
-        self.subscribe_events()
+        self._subscribe_events()
 
-    def subscribe_events(self):
+    def _subscribe_events(self):
         session.bus.subscribe('entity_interacted', self.on_interact)
         session.bus.subscribe('item_picked_up',    self.on_item_pickup)
         session.bus.subscribe('item_placed',       self.on_item_placed)
@@ -466,7 +466,7 @@ class Questlog:
 
     def __setstate__(self, state):
         self.__dict__.update(state) 
-        self.subscribe_events()
+        self._subscribe_events()
 
 class Quest:
 
@@ -614,7 +614,7 @@ class Bloodkin:
 
         pyg = session.pyg
 
-        from items_entities import create_item, Effect
+        from entities import Effect
         from mechanics import place_object
 
         # Initialization
@@ -655,7 +655,7 @@ class Bloodkin:
                     if not session.player_obj.ent.env.map[x_test][y_test].entity:
                         session.player_obj.cache = False
                         
-                        obj = create_item('scroll of death')
+                        obj = session.items.create_item('scroll of death')
                         obj.name = 'mysterious note'
                         obj.effect = Effect(
                             name          = 'mysterious note',

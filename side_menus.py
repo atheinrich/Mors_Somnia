@@ -541,7 +541,7 @@ class CatalogMenu:
         pyg = session.pyg
 
         from environments import place_object
-        from items_entities import create_item, create_entity
+        from entities import create_item, create_entity
 
         # Note location and image names
         self.img_x, self.img_y = int(session.player_obj.ent.X/pyg.tile_width), int(session.player_obj.ent.Y/pyg.tile_height)

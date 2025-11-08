@@ -55,7 +55,7 @@ class Pygame:
 
         #########################################################
         # Utility
-        self.subscribe_events()
+        self._subscribe_events()
         self.pause = False
         self.startup_toggle  = True
         self.cooldown_time   = 0.2
@@ -355,7 +355,7 @@ class Pygame:
             'stamina':  self.minifont.render(stamina, True, self.green),
             'location': self.minifont.render(env,     True, bottom_color)}
 
-    def subscribe_events(self):
+    def _subscribe_events(self):
         session.bus.subscribe('emit_message', self.update_gui)
 
     # Fade tools

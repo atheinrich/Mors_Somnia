@@ -448,8 +448,7 @@ class NewGameMenu:
 
         #########################################################
         # Imports
-        from items_entities import create_item
-        from items_entities import PlayerData, Entity, Dialogue
+        from entities import PlayerData, Entity, Dialogue
         from environments import Environments
         from mechanics import place_player
 
@@ -489,7 +488,7 @@ class NewGameMenu:
         #########################################################
         # Set default items
         for item_name in ['bald', 'clean', 'flat', 'dagger']:
-            item = create_item(item_name)
+            item = session.items.create_item(item_name)
             session.items.pick_up(item, player_obj.ent, silent=True)
             session.items.toggle_equip(item, player_obj.ent, silent=True)
         
@@ -538,11 +537,7 @@ class NewGameMenu:
         return session.player_obj
 
     def apply_option(self):
-        
-        #########################################################
-        # Imports
-        from items_entities import create_item
-        
+
         if self.choice in [0, 1, 2]:
         
             #########################################################
@@ -572,7 +567,7 @@ class NewGameMenu:
             
             ## Generate option before equip
             else:
-                item = create_item(img_name)
+                item = session.items.create_item(img_name)
                 self.temp.ent.inventory['armor'].append(item)
                 session.items.toggle_equip(item, self.temp.ent, silent=True)
         
@@ -606,9 +601,7 @@ class NewGameMenu:
 
         #########################################################
         # Import
-        from items_entities import create_item
         from mechanics import place_player
-        from mechanics import sort_inventory
 
         #########################################################
         # Make object permanent
@@ -642,11 +635,11 @@ class NewGameMenu:
         else:                                            items.append('green clothes')
 
         for name in items:
-            item = create_item(name)
+            item = session.items.create_item(name)
             session.items.pick_up(item, ent=ent, silent=True)
             session.items.toggle_equip(item, ent=ent, silent=True)
         
-        sort_inventory()
+        session.items.sort_inventory()
 
         #########################################################
         # Switch game state

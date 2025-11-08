@@ -1,5 +1,6 @@
 ########################################################################################################################################################
-# Effects
+# Effects creation and management
+# No items are managed here -- only mechanics for predefined effects.
 #
 # Like abilities, effects are owned by entities and items.
 # Unlike abilities, effects can be also be owned by tiles.

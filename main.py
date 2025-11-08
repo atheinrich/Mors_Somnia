@@ -92,10 +92,11 @@ from pypresence import Presence
 ## Local
 import session
 from pygame_utilities import Pygame, Images, Audio, EventBus
-from items_entities import PlayerData
+from entities import PlayerData
 from abilities import _abilities
 from effects import _effects
-from mechanics import MovementSystem, InteractionSystem, ItemSystem
+from items import ItemSystem
+from mechanics import MovementSystem, InteractionSystem
 from mechanics import PlayGame, PlayGarden
 from big_menus import MainMenu, NewGameMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
