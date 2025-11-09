@@ -188,8 +188,9 @@ def rebuild_databases(filename_list):
 ########################################################################################################################################################
 # Startup
 def load_items(items):
-    _defaults = load_json(f'Data/.Items/_defaults.json')
+    """ Imports all category-specific json data, then fills in the gaps with default parameters. """
 
+    _defaults = load_json(f'Data/.Items/_defaults.json')
     item_dicts = {}
 
     for category in items:

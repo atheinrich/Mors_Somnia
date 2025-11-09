@@ -181,26 +181,32 @@ class Entity:
         #########################################################
         # Initialize reactions and abilities
         self.garden_abilities = {
-            'entity_scare':   session.abilities.add_ability(self, 'entity_scare'),
-            'entity_comfort': session.abilities.add_ability(self, 'entity_comfort'),
-            'entity_clean':   session.abilities.add_ability(self, 'entity_clean')}
+            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
+            'entity_comfort': session.abilities.create_ability(self, 'entity_comfort'),
+            'entity_clean':   session.abilities.create_ability(self, 'entity_clean')}
         
         self.game_abilities = {
-            'entity_scare':   session.abilities.add_ability(self, 'entity_scare'),
-            'entity_capture': session.abilities.add_ability(self, 'entity_capture'),
-            'suicide':        session.abilities.add_ability(self, 'suicide')}
+            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
+            'entity_capture': session.abilities.create_ability(self, 'entity_capture'),
+            'suicide':        session.abilities.create_ability(self, 'suicide')}
         
         self.active_effects   = {}
         self.active_abilities = {}
 
     # Utility
     def quest_active(self):
+        """ Returns True if the current dialogue set is related to a quest.
+            For this to work, set quest_ as a prefix for all quest IDs.    
+        """
+
         if self.name in session.player_obj.dialogue.npc_states.keys():
-            if session.player_obj.dialogue.npc_states[self.name][:5] == 'quest':
+            if session.player_obj.dialogue.npc_states[self.name][:5] == 'quest_':
                 return True
         return False
 
     def trade_active(self):
+        """ Returns True if the entity is a trader and if the current time matches their shop hours. """
+
         if self.trade_times:
             if session.player_obj.ent.env.env_time in self.trade_times:
                 return True
@@ -474,8 +480,8 @@ def create_NPC(name):
         for item_type in ['clothes', 'chest', 'hair', 'beard', 'weapon', 'armor']:
             if NPC[item_type]: 
                 item = session.items.create_item(NPC[item_type])
-                session.items.pick_up(item, ent, silent=True)
-                session.items.toggle_equip(item, ent, silent=True)
+                session.items.pick_up(ent, item, silent=True)
+                session.items.toggle_equip(item, silent=True)
                 if NPC['trade_times']: item.hidden = True
 
         # Trading
@@ -483,7 +489,7 @@ def create_NPC(name):
         if NPC['trade_times']:
             for item in NPC['inv']:
                 item = session.items.create_item(item)
-                session.items.pick_up(item, ent, silent=True)
+                session.items.pick_up(ent, item, silent=True)
     
     #########################################################
     # Randomly generated
@@ -502,13 +508,13 @@ def create_NPC(name):
         
         for name in items.values():
             item = session.items.create_item(name)
-            session.items.pick_up(item, ent, silent=True)
-            session.items.toggle_equip(item, ent, silent=True)
+            session.items.pick_up(ent, item, silent=True)
+            session.items.toggle_equip(item, silent=True)
         
         if items['chest'] == 'flat':
             face = session.items.create_item(str(random.choice(session.img.face_options)))
-            session.items.pick_up(face, ent, silent=True)
-            session.items.toggle_equip(face, ent, silent=True)
+            session.items.pick_up(ent, face, silent=True)
+            session.items.toggle_equip(face, silent=True)
         
         ent.lethargy = random.randint(1, 10)
     

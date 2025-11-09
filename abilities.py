@@ -2,6 +2,8 @@
 # Ability creation and management
 # No items are managed here -- only functions for predefined abilities.
 #
+# Abilities may be added to an entity directly, or they may be available upon equipping an item.
+# Abilities are can be assigned to anything, but they are only owned by entities and tiles.
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -46,8 +48,18 @@ class AbilitiesSystem:
         self._data     = load_json(f'Data/.Databases/abilities.json')
         self._registry = registry
 
-    def add_ability(self, owner, ability_id):
+    def create_ability(self, owner, ability_id):
         return Ability(owner, ability_id)
+
+    def toggle_ability(self, ent, ability):
+        """ Adds or removes ability for a given entity. """
+
+        if ability.name in ent.game_abilities.keys():
+            del ent.game_abilities[ability.name]
+            ability.owner = None
+        else:
+            ent.game_abilities[ability.name] = ability
+            ability.owner = ent
 
     def toggle_abilities(self, ent):
         """ Switches between different sets of effects. """

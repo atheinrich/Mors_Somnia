@@ -173,14 +173,15 @@ class PlayGame:
     # Action
     def key_ENTER(self):
         pyg = session.pyg
+        ent = session.player_obj.ent
 
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
             pygame.event.clear()
             
             # Check if an item is under the player
-            if session.player_obj.ent.tile.item:
-                tile = session.player_obj.ent.tile
+            if ent.tile.item:
+                tile = ent.tile
                 
                 #########################################################
                 # Entryway
@@ -200,8 +201,8 @@ class PlayGame:
                         if tile.room.name == 'home room':
                             
                             # Go to sleep if it's not daytime
-                            if session.player_obj.ent.env.env_time in [1, 2, 7, 8]:
-                                session.player_obj.ent.env.env_time = (session.player_obj.ent.env.env_time + 3) % 8
+                            if ent.env.env_time in [1, 2, 7, 8]:
+                                ent.env.env_time = (ent.env.env_time + 3) % 8
                                 session.effects.enter_dungeon(text="The evening dims to night... sleep trustly follows.")
                             else: pyg.update_gui("Time to face the day.", pyg.dark_gray)
                         
@@ -212,12 +213,12 @@ class PlayGame:
                 
                 ## Chair
                 elif tile.item.name in ['red chair left', 'red chair right']:
-                    session.player_obj.ent.env.weather.set_day_and_time(increment=True)
+                    ent.env.weather.set_day_and_time(increment=True)
                     pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 
                 #########################################################
                 # Items
-                else: session.items.pick_up(session.player_obj.ent.tile.item)
+                else: session.items.pick_up(ent, ent.tile.item)
 
     def key_PERIOD(self):
         
@@ -489,8 +490,10 @@ class PlayGarden:
 
     # Action
     def key_ENTER(self):
-        if session.player_obj.ent.tile.item:
-            session.items.pick_up(session.player_obj.ent.tile.item)
+        ent = session.player_obj.ent
+
+        if ent.tile.item:
+            session.items.pick_up(ent, ent.tile.item)
 
     def key_BACK(self):
         pyg = session.pyg

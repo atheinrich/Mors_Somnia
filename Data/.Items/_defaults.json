@@ -26,6 +26,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -57,6 +59,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -88,6 +92,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -119,6 +125,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -150,6 +158,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -181,6 +191,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -212,6 +224,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -243,6 +257,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -274,6 +290,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -305,6 +323,8 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "big":           false
     },
@@ -317,6 +337,8 @@
     "cost":          0,
     "attack_bonus":  0,
     "defense_bonus": 0,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "role":          "weapons",
     "slot":          "dominant hand",
@@ -336,7 +358,7 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
-
+    
     "big":           false
     }
 }

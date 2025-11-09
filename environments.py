@@ -2374,9 +2374,9 @@ def place_objects(env, items, entities):
                         for item in ent_selection[3]:
                             if item:
                                 obj = session.items.create_item(item)
-                                session.items.pick_up(obj, ent=entity)
+                                session.items.pick_up(entity, obj)
                                 if obj.equippable:
-                                    session.items.toggle_equip(obj, entity)
+                                    session.items.toggle_equip(obj)
                                     if obj.effect:
                                         obj.effect.trigger = 'passive'
                         

@@ -31,9 +31,6 @@
     "cooldown_time": "1"
     },
 
-
-
-
 "swing": {
     "name":          "swing",
     "function_id":   "swing",

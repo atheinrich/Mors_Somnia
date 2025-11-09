@@ -17,6 +17,96 @@ from data_management import item_dicts
 
 ########################################################################################################################################################
 # Classes
+class Item:
+    
+    def __init__(self, **kwargs):
+        """ Parameters
+            ----------
+            name          : string
+            role          : string in ['weapons', 'armor', 'potions', 'scrolls', 'other']
+            slot          : string in ['non-dominant hand', 'dominant hand', 'body', 'head', 'face']
+            
+            X             :
+            Y             : 
+            
+            img_names[0]  : string
+            img_names[1]  : string
+            
+            durability    : int; item breaks at 0
+            equippable    : Boolean; lets item be equipped by entity
+            equipped      : Boolean; notes if the item is equipped
+            hidden        : Boolean; hides from inventory menu
+            
+            hp_bonus      : int
+            attack_bonus  : int
+            defense_bonus : int
+            effects       : """
+        
+        # Import parameters
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        # Set abilities and effects
+        if self.ability_id:
+            self.ability = session.abilities.create_ability(None, self.ability_id)
+        if self.effect_id:
+            self.effect = session.abilities.add_effect(None, self.effect_id)
+
+        # Seed a seed for individual adjustments
+        self.rand_X  = random.randint(-self.rand_X, self.rand_X)
+        self.rand_Y  = random.randint(0,            self.rand_Y)
+        self.flipped = random.choice([0, self.rand_Y])
+
+    def draw(self):
+        """ Constructs (but does not render) surfaces for items and their positions. """
+
+        #########################################################
+        # Shorthand
+        cam = session.player_obj.ent.env.camera
+        pyg = session.pyg
+        img = session.img
+
+        #########################################################
+        # Blit a tile
+        if not self.big:
+            
+            # Set position
+            X = self.X - cam.X
+            Y = self.Y - cam.Y
+
+            if self.img_names[0] == 'decor':
+                X -= self.rand_X
+                Y -= self.rand_Y
+        
+            # Add effects and draw
+            if (self.img_names[1] in ['leafy']) and not self.rand_Y:
+                surface = img.dict[self.img_names[0]][self.img_names[1]]
+                X       -= 32
+                Y       -= 32
+            else:
+                if self.flipped: surface = img.flipped.dict[self.img_names[0]][self.img_names[1]]
+                else:            surface = img.dict[self.img_names[0]][self.img_names[1]]
+
+            pos = (X, Y)
+                
+        #########################################################
+        # Blit multiple tiles
+        else:
+            
+            # Blit every tile in the image
+            surface, pos = [], []
+            for i in range(len(img.big)):
+                for j in range(len(img.big[0])):
+
+                    img = img.big[len(img.big)-j-1][len(img.big[0])-i-1]
+                    X   = self.X - cam.X - pyg.tile_width * i
+                    Y   = self.Y - cam.Y - pyg.tile_height * j
+
+                    surface.append(img)
+                    pos.append((X, Y))
+
+        return surface, pos
+
 class ItemSystem:
 
     # Core
@@ -77,99 +167,90 @@ class ItemSystem:
         ent.inventory = inventory_cache
 
     # Mechanics
-    def pick_up(self, item, ent=None, silent=False):
-        """ Adds an item to the player's inventory and removes it from the map.
+    def pick_up(self, ent, item, silent=False):
+        """ Adds an item to the player's inventory and removes it from the map. Assigns owner to item.
         
             Parameters
             ----------
-            ent    : Entity object; owner of the item
+            ent    : Entity object; new owner of the item
+            item   : Item object; item picked up
             silent : bool; updates GUI if False
         """
 
         pyg = session.pyg
-
-        if not ent: ent = session.player_obj.ent
         
-        #########################################################
-        # Pick up if possible
-        ## Do not pick up item if inventory is full
-        if (len(ent.inventory) >= 26) and not silent:
+        # Do not pick up item if inventory is full
+        if (ent.role == 'player') and (len(ent.inventory) >= 26) and (not silent):
             pyg.update_gui("Your inventory is full, cannot pick up " + item.name + ".", pyg.dark_gray)
         
-        ## Check if movable
-        else:
-            if item.movable:
-                
-                # Add to inventory
-                item.owner = ent
-                if item.effect and (item.effect.trigger == 'passive'):
-                    ent.active_effects.append(item.effect)
-                
-                ent.inventory[item.role].append(item)
-                self.sort_inventory(ent)
-                
-                # Remove from environment
-                if ent.tile:
-                    if ent.tile.item:
-                        ent.tile.item = None
-                        item.tile     = ent.tile
-                
-                if (ent.role == 'player') and not silent:
-                    pyg.update_gui("Picked up " + item.name + ".", pyg.dark_gray)
+        # Pick up if movable
+        elif item.movable:
+            
+            # Update owner
+            ent.inventory[item.role].append(item)
+            self.sort_inventory(ent)
 
-    def drop(self, item, ent=None):
+            if item.effect and (item.effect.trigger == 'passive'):
+                ent.active_effects.append(item.effect)
+            
+            # Update item
+            item.owner = ent
+            item.tile  = ent.tile
+
+            # Update tile (if needed)
+            if ent.tile:
+                if ent.tile.item:
+                    ent.tile.item = None
+            
+            # Notify GUI
+            if (ent.role == 'player') and (not silent):
+                pyg.update_gui("Picked up " + item.name + ".", pyg.dark_gray)
+
+    def drop(self, item):
         """ Unequips item before dropping if the object has the Equipment component, then adds it to the map at
             the player's coordinates and removes it from their inventory.
             Dropped items are only saved if dropped in home. """
         
-        # Allow for NPC actions
-        if not ent: ent = session.player_obj.ent
-        
+        ent = item.owner
+
         # Prevent dropping items over other items
-        if not ent.tile.item:
+        if not item.owner.tile.item:
         
-            # Dequip before dropping
-            if item in ent.equipment.values():
-                self.toggle_equip(item, ent)
+            # Update tile
+            ent.tile.item = item
             
-            item.owner = None
+            # Update owner
+            if item in ent.equipment.values():
+                self.toggle_equip(item)
+            ent.inventory[item.role].remove(item)
+
+            if item.effect and (item.effect.trigger == 'passive'):
+                ent.active_effects.remove(item.effect)
+
+            # Update item
             item.X     = ent.X
             item.Y     = ent.Y
+            item.tile  = ent.tile
+            item.owner = None
 
-            if item.effect:
-                if item.effect.name in ent.active_effects.keys():
-                    del ent.active_effects[item.effect.name]
-            if item.ability:
-                if item.ability.name in ent.active_abilities.keys():
-                    del ent.active_abilities[item.ability.name]
-            
-            ent.inventory[item.role].remove(item)
-            ent.tile.item = item
-
-    def toggle_equip(self, item, ent, silent=False):
+    def toggle_equip(self, item, silent=False):
         """ Toggles the equip/unequip status. """
         
-        # Assign entity
-        if not ent:        ent = session.player_obj.ent
-        if not item.owner: item.owner = ent
-        
-        # Equip or dequip
-        if item.equipped: self._dequip(item, ent, silent)
-        else:             self._equip(item, ent, silent)
+        if item.equipped: self._dequip(item, silent)
+        else:             self._equip(item, silent)
 
-    def _equip(self, item, ent, silent=False):
+    def _equip(self, item, silent=False):
         """ Unequips object if the slot is already being used. """
         
         pyg = session.pyg
+        ent = item.owner
 
-        try:
-            # Check if anything is already equipped
-            if ent.equipment[item.slot] is not None:
-                self.dequip(ent.equipment[item.slot], ent)
-        except:
-            print(item.name, item.slot)
+        # Check if anything is already equipped
+        if ent.equipment[item.slot] is not None:
+            self._dequip(ent.equipment[item.slot], ent)
         
-        # Apply stat adjustments
+        # Effects and abilities
+        ## Apply stat adjustments
         ent.equipment[item.slot] = item
         ent.max_hp  += item.hp_bonus
         ent.attack  += item.attack_bonus
@@ -179,8 +260,7 @@ class ItemSystem:
             if item.effect.name in ent.active_effects.keys():
                 ent.active_effects[item.effect.name] = item.effect
         if item.ability:
-            if item.ability.name in ent.active_abilities.keys():
-                ent.active_abilities[item.ability.name] = item.ability
+            session.abilities.toggle_ability(ent, item.ability)
 
         item.equipped = True
 
@@ -188,10 +268,11 @@ class ItemSystem:
             if not item.hidden and not silent:
                 pyg.update_gui("Equipped " + item.name + " on " + item.slot + ".", pyg.dark_gray)
 
-    def _dequip(self, item, ent, silent=False):
+    def _dequip(self, item, silent=False):
         """ Unequips an object and shows a message about it. """
         
         pyg = session.pyg
+        ent = item.owner
 
         #########################################################
         # Update stats
@@ -207,8 +288,8 @@ class ItemSystem:
             if item.effect.name in ent.active_effects.keys():
                 del ent.active_effects[item.effect.name]
         if item.ability:
-            if item.ability.name in ent.active_abilities.keys():
-                del ent.active_abilities[item.ability.name]
+            print(item.name, 'dequipped')
+            session.abilities.toggle_ability(ent, item.ability)
         
         #########################################################
         # Notify change of status
@@ -233,7 +314,7 @@ class ItemSystem:
         
         # Handle equipment
         if item.equippable:
-            self.toggle_equip(item, ent)
+            self.toggle_equip(item)
         
         # Handle items
         elif item.effect:
@@ -255,7 +336,7 @@ class ItemSystem:
 
         # Dequip before trading
         if item in owner.equipment.values():
-            self.toggle_equip(item, owner)
+            self.toggle_equip(item)
         
         # Check wallet for cash
         if (owner.wallet - item.cost) >= 0:
@@ -265,96 +346,10 @@ class ItemSystem:
             owner.wallet += item.cost
             
             # Give to recipient
-            self.pick_up(item, ent=recipient)
+            self.pick_up(recipient, item)
             recipient.wallet -= item.cost
         
         else:
             pyg.update_gui("Not enough cash!", color=pyg.red)
 
-class Item:
-    
-    def __init__(self, **kwargs):
-        """ Parameters
-            ----------
-            name          : string
-            role          : string in ['weapons', 'armor', 'potions', 'scrolls', 'other']
-            slot          : string in ['non-dominant hand', 'dominant hand', 'body', 'head', 'face']
-            
-            X             :
-            Y             : 
-            
-            img_names[0]  : string
-            img_names[1]  : string
-            
-            durability    : int; item breaks at 0
-            equippable    : Boolean; lets item be equipped by entity
-            equipped      : Boolean; notes if the item is equipped
-            hidden        : Boolean; hides from inventory menu
-            
-            hp_bonus      : int
-            attack_bonus  : int
-            defense_bonus : int
-            effects       : """
-        
-        ## Import parameters
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-        # Seed a seed for individual adjustments
-        self.rand_X  = random.randint(-self.rand_X, self.rand_X)
-        self.rand_Y  = random.randint(0,            self.rand_Y)
-        self.flipped = random.choice([0, self.rand_Y])
-
-    def draw(self):
-        """ Constructs (but does not render) surfaces for items and their positions. """
-
-        #########################################################
-        # Shorthand
-        cam = session.player_obj.ent.env.camera
-        pyg = session.pyg
-        img = session.img
-
-        #########################################################
-        # Blit a tile
-        if not self.big:
-            
-            # Set position
-            X = self.X - cam.X
-            Y = self.Y - cam.Y
-
-            if self.img_names[0] == 'decor':
-                X -= self.rand_X
-                Y -= self.rand_Y
-        
-            # Add effects and draw
-            if (self.img_names[1] in ['leafy']) and not self.rand_Y:
-                surface = img.dict[self.img_names[0]][self.img_names[1]]
-                X       -= 32
-                Y       -= 32
-            else:
-                if self.flipped: surface = img.flipped.dict[self.img_names[0]][self.img_names[1]]
-                else:            surface = img.dict[self.img_names[0]][self.img_names[1]]
-
-            pos = (X, Y)
-                
-        #########################################################
-        # Blit multiple tiles
-        else:
-            
-            # Blit every tile in the image
-            surface, pos = [], []
-            for i in range(len(img.big)):
-                for j in range(len(img.big[0])):
-
-                    img = img.big[len(img.big)-j-1][len(img.big[0])-i-1]
-                    X   = self.X - cam.X - pyg.tile_width * i
-                    Y   = self.Y - cam.Y - pyg.tile_height * j
-
-                    surface.append(img)
-                    pos.append((X, Y))
-
-        return surface, pos
-
-########################################################################################################################################################
-# Tools
 ########################################################################################################################################################

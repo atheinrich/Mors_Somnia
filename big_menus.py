@@ -489,8 +489,8 @@ class NewGameMenu:
         # Set default items
         for item_name in ['bald', 'clean', 'flat', 'dagger']:
             item = session.items.create_item(item_name)
-            session.items.pick_up(item, player_obj.ent, silent=True)
-            session.items.toggle_equip(item, player_obj.ent, silent=True)
+            session.items.pick_up(player_obj.ent, item, silent=True)
+            session.items.toggle_equip(item, silent=True)
         
         #########################################################
         # Initialize environments
@@ -555,21 +555,21 @@ class NewGameMenu:
                 img_dict = session.img.chest_options
             
             #########################################################
-            # Find next option and dequip last option
+            # Find next option
             index    = (img_dict.index(self.temp.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
             img_name = img_dict[index]
-            session.items.toggle_equip(self.temp.ent.equipment[role], self.temp.ent, silent=True)
+            #session.items.toggle_equip(self.temp.ent.equipment[role], silent=True)
             
             #########################################################
             # Equip next option if already generated
             if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp.ent.inventory.values()]:
-                session.items.toggle_equip(self.temp.ent.inventory[img_name][0], self.temp.ent, silent=True)
+                session.items.toggle_equip(self.temp.ent.inventory[img_name][0], silent=True)
             
             ## Generate option before equip
             else:
                 item = session.items.create_item(img_name)
-                self.temp.ent.inventory['armor'].append(item)
-                session.items.toggle_equip(item, self.temp.ent, silent=True)
+                session.items.pick_up(self.temp.ent, item, silent=True)
+                session.items.toggle_equip(item, silent=True)
         
         #########################################################
         # Apply skin option
@@ -607,6 +607,10 @@ class NewGameMenu:
         # Make object permanent
         ## Copy player and womb environment
         session.player_obj = copy.deepcopy(self.temp)
+        print()
+        print(self.temp.ent.game_abilities.keys())
+        print(session.player_obj.ent.game_abilities.keys())
+        print()
         session.player_obj.ent.role = 'player'
         session.dev.update_dict()
 
@@ -636,11 +640,10 @@ class NewGameMenu:
 
         for name in items:
             item = session.items.create_item(name)
-            session.items.pick_up(item, ent=ent, silent=True)
-            session.items.toggle_equip(item, ent=ent, silent=True)
+            session.items.pick_up(ent, item, silent=True)
+            print(item.name, 'new')
+            session.items.toggle_equip(item, silent=True)
         
-        session.items.sort_inventory()
-
         #########################################################
         # Switch game state
         self.temp          = self.init_player()

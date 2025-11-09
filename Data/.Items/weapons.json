@@ -5,7 +5,8 @@
     "durability":    100,
     "cost":          15,
     "attack_bonus":  2,
-    "defense_bonus": 10
+    "defense_bonus": 10,
+    "ability_id":    null
     },
 
 "super_shovel": {
@@ -14,7 +15,8 @@
     "durability":    1000,
     "cost":          10,
     "attack_bonus":  100,
-    "defense_bonus": 0
+    "defense_bonus": 0,
+    "ability_id":    null
     },
 
 "dagger": {
@@ -23,7 +25,8 @@
     "durability":    101,
     "cost":          25,
     "attack_bonus":  2,
-    "defense_bonus": 0
+    "defense_bonus": 0,
+    "ability_id":    "swing"
     },
 
 "sword": {
@@ -32,7 +35,8 @@
     "durability":    101,
     "cost":          75,
     "attack_bonus":  5,
-    "defense_bonus": 0
+    "defense_bonus": 0,
+    "ability_id":    null
     },
 
 "blood_dagger": {
@@ -41,7 +45,8 @@
     "durability":    101,
     "cost":          500,
     "attack_bonus":  10,
-    "defense_bonus": 0
+    "defense_bonus": 0,
+    "ability_id":    null
     },
 
 "blood_sword": {
@@ -50,6 +55,7 @@
     "durability":    101,
     "cost":          1000,
     "attack_bonus":  15,
-    "defense_bonus": 0
+    "defense_bonus": 0,
+    "ability_id":    null
     }
 }
