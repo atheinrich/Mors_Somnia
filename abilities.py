@@ -54,18 +54,28 @@ class AbilitiesSystem:
     def toggle_ability(self, ent, ability):
         """ Adds or removes ability for a given entity. """
 
-        if ability.name in ent.game_abilities.keys():
-            del ent.game_abilities[ability.name]
-            ability.owner = None
+        if session.pyg.game_state == 'garden':
+            abilities = ent.garden_abilities
         else:
-            ent.game_abilities[ability.name] = ability
+            abilities = ent.active_abilities
+
+        # Add ability
+        if ability.name not in abilities.keys():
+            abilities[ability.name] = ability
             ability.owner = ent
+        
+        # Remove ability
+        else:
+            del abilities[ability.name]
+            ability.owner = None
 
     def toggle_abilities(self, ent):
         """ Switches between different sets of effects. """
         
-        if ent.env.name == 'garden': ent.active_abilities = ent.garden_abilities
-        else:                        ent.active_abilities = ent.game_abilities
+        if session.pyg.game_state == 'garden':
+            ent.active_abilities = ent.garden_abilities
+        else:
+            ent.active_abilities = ent.game_abilities
 
     # Entity interactions
     @register("entity_scare")
@@ -198,7 +208,7 @@ class AbilitiesSystem:
             for tile in get_vicinity(owner).values():
                 if tile.entity:
                     owner.attack += 5
-                    session.interact.attack_target(owner, tile.entity, effect_check=False)
+                    session.interact.attack_target(owner, tile.entity)
                     owner.attack -= 5
             
             # Decrease stamina

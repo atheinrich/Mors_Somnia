@@ -187,38 +187,41 @@ def rebuild_databases(filename_list):
 
 ########################################################################################################################################################
 # Startup
-def load_items(items):
+def merge_json(group, names):
     """ Imports all category-specific json data, then fills in the gaps with default parameters. """
 
-    _defaults = load_json(f'Data/.Items/_defaults.json')
-    item_dicts = {}
+    _defaults = load_json(f'Data/.{group}/_defaults.json')
+    dicts     = {}
 
-    for category in items:
-        category_dict  = load_json(f'Data/.Items/{category}.json')
+    for category in names:
+        category_dict  = load_json(f'Data/.{group}/{category}.json')
         _defaults_dict = _defaults[category]
 
         for item_id, attrs in category_dict.items():
             full_attrs = copy.deepcopy(_defaults_dict)
             full_attrs.update(attrs)
-            item_dicts[item_id] = full_attrs
+            dicts[item_id] = full_attrs
 
-    return item_dicts
+    return dicts
 
 ########################################################################################################################################################
 # Initializations
 ## Group database files
 img_names   = ['img_ents', 'img_equipment', 'img_other']
-obj_names   = ['item_effects', 'ents', 'NPCs']
+obj_names   = ['item_effects', 'NPCs']
 other_names = ['biomes']
 items       = ['accessories', 'armor', 'decor', 'drugs', 'furniture', 'offhands', 'potions', 'scrolls', 'stairs', 'structures', 'weapons']
+entities    = ['humanoids', 'monsters']
 
 ## Build JSON files
-#rebuild_databases(['img_ents']) # img_names + obj_names + other_names
+#rebuild_databases(['ents']) # img_names + obj_names + other_names
 
 ## Load JSON files
-item_dicts  = load_items(items)
-obj_dicts   = {name: load_json(f'Data/.Databases/{name}.json') for name in obj_names}
-other_dicts = {name: load_json(f'Data/.Databases/{name}.json') for name in other_names}
-img_dicts   = {name: load_json(f'Data/.Databases/{name}.json') for name in img_names}
+item_dicts   = merge_json('Items', items)
+ent_dicts    = merge_json('Entities', entities)
+effect_dicts = load_json(f'Data/.Databases/item_effects.json')
+NPC_dicts    = load_json(f'Data/.Databases/NPCs.json')
+biome_dicts  = load_json(f'Data/.Databases/biomes.json')
+img_dicts    = {name: load_json(f'Data/.Databases/{name}.json') for name in img_names}
 
 ########################################################################################################################################################

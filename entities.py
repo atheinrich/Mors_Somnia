@@ -14,7 +14,7 @@ import pygame
 
 ## Local
 import session
-from data_management import obj_dicts, load_json
+from data_management import ent_dicts, NPC_dicts, load_json
 
 ########################################################################################################################################################
 
@@ -51,55 +51,133 @@ class PlayerData:
         # Utility
         self.file_num   = 0
 
-        # Entity attributes
-        self.default_values()
+    # Startup
+    def init_player(self):
+        from mechanics import place_player
 
-    def default_values(self):
+        self.ent      = self._create_entity()
+        self.envs     = self._create_environments()
+        self.dialogue = Dialogue()
 
-        self.name       = "player"
-        self.role       = 'player'
-        self.img_names  = ['white', 'front']
+        self._add_items()
+        session.stats_obj.pet_startup(self.envs.areas['underworld']['garden'])
 
-        self.exp        = 0
-        self.rank       = 1
+        self.ent.last_env = self.envs.areas['underworld']['womb']
+        place_player(
+            ent = self.ent,
+            env = self.envs.areas['underworld']['womb'],
+            loc = self.envs.areas['underworld']['womb'].center)
 
-        self.hp         = 10
-        self.max_hp     = 10
-        self.attack     = 0
-        self.defense    = 1
-        self.sanity     = 1
-        self.stamina    = 100
+    def _create_entity(self):
+        
+        # Default parameters
+        ent = create_entity('white')
 
-        self.X          = 0
-        self.Y          = 0
+        ent.name        = "player"
+        ent.role        = 'player'
 
-        self.habitat    = 'any'
-        self.follow     = False
-        self.lethargy   = 5
-        self.miss_rate  = 10
-        self.aggression = 0
-        self.fear       = None
-        self.reach      = 1000
+        ent.hp          = 10
+        ent.max_hp      = 10
+        ent.attack      = 0
+        ent.defense     = 1
+            
+        # Player-specific attributes
+        ent.player_id   = random.randint(100_000_000, 999_999_999)
+        ent.discoveries = {
 
-        self.discoveries = {
-            'walls': {
+            'walls':     {
                 'gray':            ['walls',     'gray'],
                 'green':           ['walls',     'green']},
-            'floors': {
+
+            'floors':    {
                 'grass4':          ['floors',    'grass4'],
                 'wood':            ['floors',    'wood'],
                 'water':           ['floors',    'water']},
-            'stairs': {
+
+            'stairs':    {
                 'door':            ['stairs',    'door']},
-            'decor': {
+
+            'decor':     {
                 'blades':          ['decor',     'blades'],
                 'lights':          ['decor',     'lights']},
+
             'furniture': {
                 'table':           ['furniture', 'table'],
                 'red chair left':  ['furniture', 'red chair left'],
                 'red chair right': ['furniture', 'red chair right']},
-            'paths': {},
-            'entities': {}}
+
+            'paths':     {},
+            'entities' : {}}
+
+        ent.garden_abilities = {
+            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
+            'entity_comfort': session.abilities.create_ability(self, 'entity_comfort'),
+            'entity_clean':   session.abilities.create_ability(self, 'entity_clean')}
+        
+        ent.game_abilities = {
+            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
+            'entity_capture': session.abilities.create_ability(self, 'entity_capture'),
+            'suicide':        session.abilities.create_ability(self, 'suicide')}
+
+        return ent
+
+    def _create_environments(self):
+        from environments import Environments
+
+        envs = Environments(self)
+
+        # Womb and garden
+        envs.add_area('underworld', permadeath=True)
+        envs.areas['underworld'].add_level('womb')
+        envs.areas['underworld'].add_level('garden')
+        
+        # Quests
+        envs.areas['underworld'].questlog.load_quest('garden_build_a_shed')
+        envs.areas['underworld'].questlog.load_quest('garden_provide_water')
+
+        return envs
+
+    def _add_items(self):
+        for item_name in ['bald', 'clean', 'flat', 'dagger']:
+            item = session.items.create_item(item_name)
+            session.items.pick_up(self.ent, item, silent=True)
+            session.items.toggle_equip(item, silent=True)
+
+    def finalize_player(self):
+        from mechanics import place_player
+
+        #########################################################
+        # Make object permanent
+        ## Copy player and womb environment
+        self.ent.role = 'player'
+        session.dev.update_dict()
+
+        ## Add additional environments
+        self.envs.add_area('overworld', permadeath=True)
+        self.envs.areas['overworld'].add_level('home')
+        self.envs.areas['overworld'].add_level('overworld')
+
+        self.envs.add_area('dungeon')
+        self.envs.areas['dungeon'].add_level('dungeon')
+
+        place_player(
+            ent = self.ent,
+            env = self.envs.areas['overworld']['home'],
+            loc = self.envs.areas['overworld']['home'].center)
+
+        #########################################################
+        # Create and equip items
+        items = ['shovel', 'lamp']
+
+        if self.ent.equipment['chest'].img_names[0] == 'bra':
+            items.append('yellow dress')
+        else:
+            items.append('green clothes')
+
+        for name in items:
+            item = session.items.create_item(name)
+            session.items.pick_up(self.ent, item, silent=True)
+            session.items.toggle_equip(item, silent=True)
 
 class Entity:
     """ Player, enemies, and NPCs. Manages stats, inventory, and basic mechanics. """
@@ -179,19 +257,13 @@ class Entity:
         self.rand_Y = random.randint(-pyg.tile_height, pyg.tile_height)
 
         #########################################################
-        # Initialize reactions and abilities
-        self.garden_abilities = {
-            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
-            'entity_comfort': session.abilities.create_ability(self, 'entity_comfort'),
-            'entity_clean':   session.abilities.create_ability(self, 'entity_clean')}
-        
-        self.game_abilities = {
-            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
-            'entity_capture': session.abilities.create_ability(self, 'entity_capture'),
-            'suicide':        session.abilities.create_ability(self, 'suicide')}
-        
+        # Initialize effects and abilities
+        self.game_abilities = {}
+        for ability_id in self.ability_ids:
+            self.game_abilities[ability_id] = session.abilities.create_ability(self, ability_id)
+        self.active_abilities = self.game_abilities
+
         self.active_effects   = {}
-        self.active_abilities = {}
 
     # Utility
     def quest_active(self):
@@ -445,36 +517,33 @@ def create_entity(names):
         ----------
         names : str; name of object """
 
-    # Look for entity
-    ent_dict = obj_dicts['ents']
-
     if type(names) in [tuple, list]:
-        for val in ent_dict.values():
+        for val in ent_dicts.values():
             if val.img_names == names:
                 ent            = Entity(**val)
                 ent.handedness = random.choice(['left', 'right'])
-    else:       ent            = Entity(**ent_dict[names])
+    else:
+        ent = Entity(**ent_dicts[names])
     
     # Return if found
     if not ent: raise Exception(names)
-    else:        return ent
+    else:       return ent
 
 def create_NPC(name):
     """ A more specific version of create_entity. """
     
-    # Look for entity
-    ent      = None
-    NPC_dict = obj_dicts['NPCs']
+    ent = None
 
     #########################################################
     # Custom
-    if name in NPC_dict.keys():
-        NPC = NPC_dict[name]
+    if name in NPC_dicts.keys():
+        NPC = NPC_dicts[name]
 
         # Basics
-        ent                  = create_entity(NPC['model'])
-        ent.name             = NPC['name']
-        ent.reach            = NPC['reach']
+        ent       = create_entity(NPC['model'])
+        ent.role  = 'NPC'
+        ent.name  = NPC['name']
+        ent.reach = NPC['reach']
         
         # Equipment
         for item_type in ['clothes', 'chest', 'hair', 'beard', 'weapon', 'armor']:

@@ -936,11 +936,11 @@ class InteractionSystem:
             else:
                 self.attack_target(ent, target)
     
-    def attack_target(self, ent, target, effect_check=True):
-        """ Calculates and applies attack damage. """
+    def attack_target(self, ent, target):
+        """ Calculates and applies attack damage. Used for player and entities. """
         
         pyg = session.pyg
-        gui = ""
+        msg = None
 
         # Only attack living targets
         if not target.dead:
@@ -954,28 +954,28 @@ class InteractionSystem:
                 # Deal damage
                 if damage > 0:
                     
-                    # Apply an effect
-                    if effect_check and not random.randint(0, 1):
-                        if ent.equipment['dominant hand']:
-                            if ent.equipment['dominant hand'].effect:
-                                if ent.equipment['dominant hand'].effect.trigger == 'passive':
-                                    ent.equipment['dominant hand'].effect.effect_fn(ent)
+                    # Apply an ability for non-player entities
+                    if (ent.role != 'player') and ent.active_abilities:
                         
+                        # Use ability
+                        if not random.randint(0, 1):
+                            random.choice(list(ent.active_abilities.values())).activate()
+                            
                         # Regular attack
                         else:
-                            gui = ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points."
+                            msg = ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points."
                             self.take_damage(target, damage)
                     
                     # Regular attack
                     else:
-                        gui = ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points."
+                        msg = ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points."
                         self.take_damage(target, damage)
                 else:
-                    gui = ent.name.capitalize() + " strikes " + target.name + " but it has no effect!"
+                    msg = ent.name.capitalize() + " strikes " + target.name + " but it has no effect!"
         
         # Update gui
-        if gui and (ent.role == 'player') or (target.role == 'player'):
-            pyg.update_gui(gui, pyg.red)
+        if msg and (ent.role == 'player') or (target.role == 'player'):
+            pyg.update_gui(msg, pyg.red)
 
         return
 

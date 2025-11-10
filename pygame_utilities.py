@@ -17,7 +17,7 @@ from   PIL import Image, ImageFilter, ImageOps
 
 ## Local
 import session
-from data_management import img_dicts, other_dicts, find_path
+from data_management import img_dicts, biome_dicts, find_path
 
 ########################################################################################################################################################
 # Classes
@@ -707,9 +707,8 @@ class Images:
     def load_biomes(self):
         
         biomes = {}
-        biomes_dict = other_dicts['biomes']
 
-        for key, dict in biomes_dict.items():
+        for key, dict in biome_dicts.items():
             if dict['habitats'] is not None:
                 biomes[key] = dict['habitats']
         
@@ -1219,7 +1218,7 @@ def render_display():
     # Initialize
     ## Select entity to focus on
     if pyg.overlay_state == 'new_game':
-        ent = session.new_game_obj.temp.ent
+        ent = session.new_game_obj.temp_obj.ent
         session.player_obj.ent.env.camera.zoom_in(custom=1)
     
     else:

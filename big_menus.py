@@ -346,7 +346,7 @@ class NewGameMenu:
         # Initialize
         ## Return to garden at startup
         if not session.player_obj.ent:
-            self.temp          = self.init_player()
+            self.temp_obj      = self.init_player()
             session.player_obj = self.startup()
             return
         
@@ -405,7 +405,8 @@ class NewGameMenu:
         ## Rotate character
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time())
-            self.temp.img_names[1] = self.orientations[self.orientations.index(self.temp.img_names[1]) - 1]
+            self.temp_obj.ent.img_names[1] = self.orientations[
+                self.orientations.index(self.temp_obj.ent.img_names[1]) - 1]
         
         #########################################################
         # Render menu
@@ -445,73 +446,12 @@ class NewGameMenu:
     # Tools
     def init_player(self):
         """ Creates a temporary player and womb environment. """
+        
+        from entities import PlayerData
 
-        #########################################################
-        # Imports
-        from entities import PlayerData, Entity, Dialogue
-        from environments import Environments
-        from mechanics import place_player
-
-        #########################################################
-        # Create player and entity
-        player_obj          = PlayerData()
-        player_obj.dialogue = Dialogue()
-        player_obj.ent  = Entity(
-            name        = player_obj.name,
-            role        = player_obj.role,
-            img_names   = player_obj.img_names,
-
-            exp         = player_obj.exp,
-            rank        = player_obj.rank,
-            hp          = player_obj.hp,
-            max_hp      = player_obj.max_hp,
-            attack      = player_obj.attack,
-            defense     = player_obj.defense,
-            sanity      = player_obj.sanity,
-            stamina     = player_obj.stamina,
-            
-            X           = player_obj.X,
-            Y           = player_obj.Y,
-            habitat     = player_obj.habitat,
-
-            follow      = player_obj.follow,
-            lethargy    = player_obj.lethargy,
-            miss_rate   = player_obj.miss_rate,
-            aggression  = player_obj.aggression,
-            fear        = player_obj.fear,
-            reach       = player_obj.reach)
-        
-        ## Player-specific attributes
-        player_obj.ent.discoveries = player_obj.discoveries
-        player_obj.ent.player_id   = random.randint(100_000_000, 999_999_999)
-        
-        #########################################################
-        # Set default items
-        for item_name in ['bald', 'clean', 'flat', 'dagger']:
-            item = session.items.create_item(item_name)
-            session.items.pick_up(player_obj.ent, item, silent=True)
-            session.items.toggle_equip(item, silent=True)
-        
-        #########################################################
-        # Initialize environments
-        player_obj.envs = Environments(player_obj)
-        player_obj.envs.add_area('underworld', permadeath=True)
-        player_obj.envs.areas['underworld'].add_level('womb')
-        player_obj.envs.areas['underworld'].add_level('garden')
-        
-        player_obj.envs.areas['underworld'].questlog.load_quest('garden_build_a_shed')
-        player_obj.envs.areas['underworld'].questlog.load_quest('garden_provide_water')
-
-        session.stats_obj.pet_startup(player_obj.envs.areas['underworld']['garden'])
-        
-        ## Place temporary player in character creator
-        player_obj.ent.last_env = player_obj.envs.areas['underworld']['womb']
-        place_player(
-            ent = player_obj.ent,
-            env = player_obj.envs.areas['underworld']['womb'],
-            loc = player_obj.envs.areas['underworld']['womb'].center)
-        
-        return player_obj
+        temp_obj = PlayerData()
+        temp_obj.init_player()
+        return temp_obj
 
     def startup(self):
         """ Creates a second temporary player. This is meant to be a placeholder for the actual
@@ -556,32 +496,31 @@ class NewGameMenu:
             
             #########################################################
             # Find next option
-            index    = (img_dict.index(self.temp.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
+            index    = (img_dict.index(self.temp_obj.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
             img_name = img_dict[index]
-            #session.items.toggle_equip(self.temp.ent.equipment[role], silent=True)
             
             #########################################################
             # Equip next option if already generated
-            if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp.ent.inventory.values()]:
-                session.items.toggle_equip(self.temp.ent.inventory[img_name][0], silent=True)
+            if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp_obj.ent.inventory.values()]:
+                session.items.toggle_equip(self.temp_obj.ent.inventory[img_name][0], silent=True)
             
             ## Generate option before equip
             else:
                 item = session.items.create_item(img_name)
-                session.items.pick_up(self.temp.ent, item, silent=True)
+                session.items.pick_up(self.temp_obj.ent, item, silent=True)
                 session.items.toggle_equip(item, silent=True)
         
         #########################################################
         # Apply skin option
         elif self.choice == 3:
-            if self.temp.ent.img_names[0] == 'white':   self.temp.ent.img_names[0] = 'black'
-            elif self.temp.ent.img_names[0] == 'black': self.temp.ent.img_names[0] = 'white'
+            if self.temp_obj.ent.img_names[0] == 'white':   self.temp_obj.ent.img_names[0] = 'black'
+            elif self.temp_obj.ent.img_names[0] == 'black': self.temp_obj.ent.img_names[0] = 'white'
         
         #########################################################
         # Apply handedness option
         elif self.choice == 4:
-            if self.temp.ent.handedness == 'left':      self.temp.ent.handedness = 'right'
-            elif self.temp.ent.handedness == 'right':   self.temp.ent.handedness = 'left'
+            if self.temp_obj.ent.handedness == 'left':      self.temp_obj.ent.handedness = 'right'
+            elif self.temp_obj.ent.handedness == 'right':   self.temp_obj.ent.handedness = 'left'
 
     def fade_to_game(self):
         pyg = session.pyg
@@ -599,54 +538,10 @@ class NewGameMenu:
         
         pyg = session.pyg
 
-        #########################################################
-        # Import
-        from mechanics import place_player
-
-        #########################################################
-        # Make object permanent
-        ## Copy player and womb environment
-        session.player_obj = copy.deepcopy(self.temp)
-        print()
-        print(self.temp.ent.game_abilities.keys())
-        print(session.player_obj.ent.game_abilities.keys())
-        print()
-        session.player_obj.ent.role = 'player'
-        session.dev.update_dict()
-
-        ## Shorthand
-        envs = session.player_obj.envs
-        ent  = session.player_obj.ent
-
-        ## Add additional environments
-        envs.add_area('overworld', permadeath=True)
-        envs.areas['overworld'].add_level('home')
-        envs.areas['overworld'].add_level('overworld')
-
-        envs.add_area('dungeon')
-        envs.areas['dungeon'].add_level('dungeon')
-
-        place_player(
-            ent = ent,
-            env = envs.areas['overworld']['home'],
-            loc = envs.areas['overworld']['home'].center)
-
-        #########################################################
-        # Create and equip items
-        items = ['shovel', 'lamp']
-
-        if ent.equipment['chest'].img_names[0] == 'bra': items.append('yellow dress')
-        else:                                            items.append('green clothes')
-
-        for name in items:
-            item = session.items.create_item(name)
-            session.items.pick_up(ent, item, silent=True)
-            print(item.name, 'new')
-            session.items.toggle_equip(item, silent=True)
+        session.player_obj = copy.deepcopy(self.temp_obj)
+        session.player_obj.finalize_player()
         
-        #########################################################
-        # Switch game state
-        self.temp          = self.init_player()
+        self.temp_obj      = self.init_player()
         pyg.pause          = False
         pyg.startup_toggle = False
         pyg.game_state     = 'play_game'

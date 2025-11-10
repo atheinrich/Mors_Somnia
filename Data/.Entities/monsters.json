@@ -1,0 +1,461 @@
+{
+"friend": {
+    "name":        "friend",
+    "img_names":   ["friend", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          100,
+    "max_hp":      0,
+    "attack":      100,
+    "defense":     100,
+
+    "follow":      false,
+    "lethargy":    5,
+    "miss_rate":   10,
+    "aggression":  0,
+    "reach":       640
+    },
+
+"eye": {
+    "name":        "eye",
+    "img_names":   ["eye", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         35,
+    "hp":          100,
+    "max_hp":      20,
+    "attack":      20,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    5,
+    "miss_rate":   20,
+    "aggression":  50,
+    "reach":       1000
+    },
+
+"eyes": {
+    "name":        "eyes",
+    "img_names":   ["eyes", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         35,
+    "hp":          20,
+    "max_hp":      4,
+    "attack":      0,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    5,
+    "miss_rate":   10,
+    "aggression":  10,
+    "reach":       1000
+    },
+
+"troll": {
+    "name":        "troll",
+    "img_names":   ["troll", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         100,
+    "hp":          30,
+    "max_hp":      8,
+    "attack":      2,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    5,
+    "miss_rate":   10,
+    "aggression":  10,
+    "reach":       1000
+    },
+
+"triangle": {
+    "name":        "triangle",
+    "img_names":   ["triangle", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         100,
+    "hp":          25,
+    "max_hp":      15,
+    "attack":      10,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    1,
+    "miss_rate":   5,
+    "aggression":  100,
+    "reach":       1000
+    },
+
+"purple": {
+    "name":        "purple",
+    "img_names":   ["purple", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         500,
+    "hp":          50,
+    "max_hp":      15,
+    "attack":      5,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    5,
+    "miss_rate":   10,
+    "aggression":  10,
+    "reach":       1000
+    },
+
+"tentacles": {
+    "name":        "tentacles",
+    "img_names":   ["tentacles", "front"],
+    "habitat":     "any",
+    "ability_ids": [],
+
+    "exp":         50,
+    "hp":          35,
+    "max_hp":      10,
+    "attack":      10,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    2,
+    "miss_rate":   1,
+    "aggression":  100,
+    "reach":       1000
+    },
+
+"round1": {
+    "name":        "round1",
+    "img_names":   ["round1", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         50,
+    "hp":          50,
+    "max_hp":      15,
+    "attack":      5,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    0,
+    "miss_rate":   5,
+    "aggression":  100,
+    "reach":       1000
+    },
+
+"round2": {
+    "name":        "round2",
+    "img_names":   ["round2", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         500,
+    "hp":          50,
+    "max_hp":      15,
+    "attack":      5,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    5,
+    "miss_rate":   10,
+    "aggression": 10,
+    "reach":       1000
+    },
+
+"grass": {
+    "name":        "grass",
+    "img_names":   ["grass", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         500,
+    "hp":          50,
+    "max_hp":      15,
+    "attack":      5,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    5,
+    "miss_rate":   40,
+    "aggression":  20,
+    "reach":       1000
+    },
+
+"round3": {
+    "name":        "round3",
+    "img_names":   ["round3", "front"],
+    "habitat":     "any",
+    "ability_ids": [],
+
+    "exp":         500,
+    "hp":          1,
+    "max_hp":      0,
+    "attack":      0,
+    "defense":     100,
+
+    "follow":      false,
+    "lethargy":    10,
+    "miss_rate":   10,
+    "aggression":  0,
+    "reach":       64
+    },
+
+"lizard": {
+    "name":        "lizard",
+    "img_names":   ["lizard", "front"],
+    "habitat":     "desert",
+    "ability_ids": [],
+
+    "exp":         500,
+    "hp":          50,
+    "max_hp":      15,
+    "attack":      5,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    5,
+    "miss_rate":   10,
+    "aggression":  10,
+    "reach":       1000
+    },
+
+"red": {
+    "name":        "red",
+    "img_names":   ["red", "front"],
+    "habitat":     "land",
+    "ability_ids": [],
+
+    "exp":         500,
+    "hp":          50,
+    "max_hp":      15,
+    "attack":      5,
+    "defense":     100,
+
+    "follow":      false,
+    "lethargy":    100,
+    "miss_rate":   10,
+    "aggression":  1,
+    "reach":       0
+    },
+
+"rock": {
+    "name":        "rock",
+    "img_names":   ["rock", "front"],
+    "habitat":     "desert",
+    "ability_ids": [],
+
+    "exp":         500,
+    "hp":          10,
+    "max_hp":      0,
+    "attack":      500,
+    "defense":     100,
+
+    "follow":      false,
+    "lethargy":    2,
+    "miss_rate":   0,
+    "aggression":  0,
+    "reach":       0
+    },
+
+"frog": {
+    "name":        "frog",
+    "img_names":   ["frog", "front"],
+    "habitat":     "any",
+    "ability_ids": [],
+
+    "exp":         15,
+    "hp":          50,
+    "max_hp":      1,
+    "attack":      5,
+    "defense":     100,
+
+    "follow":      false,
+    "lethargy":    10,
+    "miss_rate":   10,
+    "aggression":  10,
+    "reach":       32
+    },
+
+"red radish": {
+    "name":        "red radish",
+    "img_names":   ["red radish", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression":  0,
+    "fear":        0,
+    "reach":       1000
+    },
+
+"orange radish": {
+    "name":        "orange radish",
+    "img_names":   ["orange radish", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression":  0,
+    "fear":        0,
+    "reach":       1000
+    },
+
+"purple radish": {
+    "name":        "purple radish",
+    "img_names":   ["purple radish", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression":  0,
+    "fear":        0,
+    "reach":       1000
+    },
+
+"snake": {
+    "name":        "snake",
+    "img_names":   ["snake", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression": 0,
+    "reach":       1000
+    },
+
+"buzz": {
+    "name":        "buzz",
+    "img_names":   ["buzz", "front"],
+    "habitat":     "city",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression":  0,
+    "reach":       1000
+    },
+
+"egg": {
+    "name":        "egg",
+    "img_names":   ["egg", "front"],
+    "habitat":     "any",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression":  0,
+    "reach":       1000
+    },
+
+"star": {
+    "name":        "star",
+    "img_names":   ["star", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    20,
+    "miss_rate":   20,
+    "aggression":  10,
+    "reach":       1000
+    },
+
+"plant": {
+    "name":        "plant",
+    "img_names":   ["plant", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression":  0,
+    "reach":       1000
+    },
+
+"green blob": {
+    "name":        "green blob",
+    "role":        "projectile",
+    "img_names":   ["green blob", "front"],
+    "habitat":     "forest",
+    "ability_ids": [],
+
+    "exp":         0,
+    "hp":          25,
+    "max_hp":      0,
+    "attack":      25,
+    "defense":     100,
+
+    "follow":      true,
+    "lethargy":    6,
+    "miss_rate":   6,
+    "aggression":  0,
+    "reach":       1000
+    }
+}

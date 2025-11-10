@@ -7,9 +7,6 @@
     "trigger":       "on_idle"
     },
 
-
-
-
 "bubbles": {
     "name":          "food",
     "effect_fn":     "entity_eat",
@@ -17,9 +14,6 @@
     "cooldown_time": "0.1",
     "trigger":       "on_hover"
     },
-
-
-
 
 "lamp": {
     "name":          "lamp",
@@ -29,9 +23,6 @@
     "trigger":       "on_hold"
     },
 
-
-
-
 "eye": {
     "name":          "swing",
     "effect_fn":     "swing",
@@ -39,9 +30,6 @@
     "cooldown_time": "0.1",
     "trigger":       "on_wield"
     },
-
-
-
 
 "death_note": {
     "name":          "death_note",

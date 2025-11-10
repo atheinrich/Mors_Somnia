@@ -1,0 +1,52 @@
+{
+"humanoids": {
+    "name":        null,
+    "img_names":   null,
+
+    "role":        "enemy",
+    "habitat":     "any",
+    "ability_ids": [],
+
+    "exp":         1,
+    "rank":        1,
+    "hp":          100,
+    "max_hp":      100,
+    "attack":      15,
+    "defense":     15,
+
+    "stamina":     100,
+    "sanity":      100,
+    "aggression":  0,
+    "lethargy":    5,
+    "miss_rate":   10,
+    "reach":       1000,
+
+    "follow":      false,
+    "fear":        null
+    },
+
+"monsters": {
+    "name":        null,
+    "img_names":   null,
+    "habitat":     "any",
+    "ability_ids": [],
+
+    "exp":         1,
+    "hp":          100,
+    "max_hp":      100,
+    "attack":      15,
+    "defense":     15,
+
+    "lethargy":    5,
+    "miss_rate":   10,
+    "aggression":  0,
+    "reach":       1000,
+    "follow":      false,
+
+    "role":        "enemy",
+    "rank":        1,
+    "sanity":      100,
+    "stamina":     100,
+    "fear":        null
+    }
+}
