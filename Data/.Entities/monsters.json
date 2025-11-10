@@ -22,7 +22,7 @@
     "name":        "eye",
     "img_names":   ["eye", "front"],
     "habitat":     "land",
-    "ability_ids": [],
+    "ability_ids": ["swing"],
 
     "exp":         35,
     "hp":          100,

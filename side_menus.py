@@ -142,9 +142,11 @@ class InventoryMenu:
                     self.key_DEV()
                     return
                 
-                #########################################################
-                # Return to game
-                else:
+            #########################################################
+            # Return to game
+            elif event.type == KEYUP:
+
+                if event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
 
@@ -401,6 +403,7 @@ class CatalogMenu:
 
         ## Wait for input
         for event in pygame.event.get():
+
             if event.type == KEYDOWN:
             
                 #########################################################
@@ -433,9 +436,10 @@ class CatalogMenu:
                     self.key_INV()
                     return
 
-                #########################################################
-                # Return to game
-                else:
+            #########################################################
+            # Return to game
+            elif event.type == KEYUP:
+                if event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
 

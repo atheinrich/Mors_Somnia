@@ -1508,11 +1508,6 @@ class Environment:
             if room.delete:
                 self.rooms.remove(room)
 
-    def create_tunnel(self, x, y):
-        """ Creates vertical tunnel. min() and max() are used if y1 is greater than y2. """
-        
-        self.map[x][y].img_names = self.floors
-
     def __getstate__(self):
         state = self.__dict__.copy()
         if "weather" in state:

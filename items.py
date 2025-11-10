@@ -50,7 +50,7 @@ class Item:
         if self.ability_id:
             self.ability = session.abilities.create_ability(None, self.ability_id)
         if self.effect_id:
-            self.effect = session.abilities.add_effect(None, self.effect_id)
+            self.effect = session.effects.create_effect(None, self.effect_id)
 
         # Seed a seed for individual adjustments
         self.rand_X  = random.randint(-self.rand_X, self.rand_X)
@@ -130,7 +130,7 @@ class ItemSystem:
 
         #elif item.name in effect_dict:
         #    effect = effect_dict[item.name]
-        #    item.effect = session.effects.add_effect(
+        #    item.effect = session.effects.create_effect(
         #        name          = effect['name'],
         #        img_names     = effect['img_names'],
         #        effect_fn     = eval(effect['effect_fn']),
@@ -257,8 +257,7 @@ class ItemSystem:
         ent.defense += item.defense_bonus
 
         if item.effect:
-            if item.effect.name in ent.active_effects.keys():
-                ent.active_effects[item.effect.name] = item.effect
+            session.effects.toggle_effect(ent, item.effect)
         if item.ability:
             session.abilities.toggle_ability(ent, item.ability)
 
@@ -285,10 +284,8 @@ class ItemSystem:
             ent.hp = ent.max_hp
 
         if item.effect:
-            if item.effect.name in ent.active_effects.keys():
-                del ent.active_effects[item.effect.name]
+            session.effects.toggle_effect(ent, item.effect)
         if item.ability:
-            print(item.name, 'dequipped')
             session.abilities.toggle_ability(ent, item.ability)
         
         #########################################################

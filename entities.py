@@ -110,14 +110,14 @@ class PlayerData:
             'entities' : {}}
 
         ent.garden_abilities = {
-            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
-            'entity_comfort': session.abilities.create_ability(self, 'entity_comfort'),
-            'entity_clean':   session.abilities.create_ability(self, 'entity_clean')}
+            'entity_scare':   session.abilities.create_ability(ent, 'entity_scare'),
+            'entity_comfort': session.abilities.create_ability(ent, 'entity_comfort'),
+            'entity_clean':   session.abilities.create_ability(ent, 'entity_clean')}
         
         ent.game_abilities = {
-            'entity_scare':   session.abilities.create_ability(self, 'entity_scare'),
-            'entity_capture': session.abilities.create_ability(self, 'entity_capture'),
-            'suicide':        session.abilities.create_ability(self, 'suicide')}
+            'entity_scare':   session.abilities.create_ability(ent, 'entity_scare'),
+            'entity_capture': session.abilities.create_ability(ent, 'entity_capture'),
+            'suicide':        session.abilities.create_ability(ent, 'suicide')}
 
         return ent
 

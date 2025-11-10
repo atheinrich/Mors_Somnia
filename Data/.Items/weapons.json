@@ -6,7 +6,8 @@
     "cost":          15,
     "attack_bonus":  2,
     "defense_bonus": 10,
-    "ability_id":    null
+    "ability_id":    null,
+    "effect_id":    "dig_tunnel"
     },
 
 "super_shovel": {
@@ -16,7 +17,8 @@
     "cost":          10,
     "attack_bonus":  100,
     "defense_bonus": 0,
-    "ability_id":    null
+    "ability_id":    null,
+    "effect_id":     null
     },
 
 "dagger": {
@@ -26,7 +28,8 @@
     "cost":          25,
     "attack_bonus":  2,
     "defense_bonus": 0,
-    "ability_id":    "swing"
+    "ability_id":    "swing",
+    "effect_id":     null
     },
 
 "sword": {
@@ -36,7 +39,8 @@
     "cost":          75,
     "attack_bonus":  5,
     "defense_bonus": 0,
-    "ability_id":    null
+    "ability_id":    null,
+    "effect_id":     null
     },
 
 "blood_dagger": {
@@ -46,7 +50,8 @@
     "cost":          500,
     "attack_bonus":  10,
     "defense_bonus": 0,
-    "ability_id":    null
+    "ability_id":    null,
+    "effect_id":     null
     },
 
 "blood_sword": {
@@ -56,6 +61,7 @@
     "cost":          1000,
     "attack_bonus":  15,
     "defense_bonus": 0,
-    "ability_id":    null
+    "ability_id":    null,
+    "effect_id":     null
     }
 }

@@ -51,28 +51,24 @@ class AbilitiesSystem:
     def create_ability(self, owner, ability_id):
         return Ability(owner, ability_id)
 
-    def toggle_ability(self, ent, ability):
+    def toggle_ability(self, ent, ability_obj):
         """ Adds or removes ability for a given entity. """
 
-        if session.pyg.game_state == 'garden':
-            abilities = ent.garden_abilities
-        else:
-            abilities = ent.active_abilities
+        if session.pyg.game_state not in ['startup', 'play_garden']:
 
-        # Add ability
-        if ability.name not in abilities.keys():
-            abilities[ability.name] = ability
-            ability.owner = ent
-        
-        # Remove ability
-        else:
-            del abilities[ability.name]
-            ability.owner = None
+            if ability_obj.name not in ent.game_abilities.keys():
+                ent.game_abilities[ability_obj.name] = ability_obj
+                ability_obj.owner = ent
+            
+            # Remove ability
+            else:
+                del ent.game_abilities[ability_obj.name]
+                ability_obj.owner = None
 
     def toggle_abilities(self, ent):
         """ Switches between different sets of effects. """
         
-        if session.pyg.game_state == 'garden':
+        if session.pyg.game_state == 'play_garden':
             ent.active_abilities = ent.garden_abilities
         else:
             ent.active_abilities = ent.game_abilities
@@ -201,7 +197,10 @@ class AbilitiesSystem:
         if owner.stamina:
             
             # Send animation to queue
-            image = session.img.dict[owner.equipment['dominant hand'].img_names[0]]['dropped']
+            if owner.equipment['dominant hand']:
+                image = session.img.dict[owner.equipment['dominant hand'].img_names[0]]['dropped']
+            else:
+                image = session.img.dict[ability_obj.img_names[0]][ability_obj.img_names[1]]
             session.img.vicinity_flash(owner, image)
             
             # Apply attack to enemies
@@ -259,7 +258,6 @@ class AbilitiesSystem:
 
     @register("suicide")
     def suicide(self, ability_obj):
-        
         owner = ability_obj.owner
 
         # Activate animation

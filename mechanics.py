@@ -591,8 +591,8 @@ class MovementSystem:
             elif ent.env.map[x][y].entity:
                 session.interact.interact(ent, ent.env.map[x][y].entity)
             
-            elif ent.equipment['dominant hand'] is not None:
-                self.dig_tunnel(ent, x, y, dX, dY)
+            elif 'dig_tunnel' in ent.active_effects.keys():
+                ent.active_effects['dig_tunnel'].activate(x=x, y=y, dX=dX, dY=dY)
                 session.effects.check_tile(ent)
 
         ent.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
@@ -842,42 +842,6 @@ class MovementSystem:
         
         # Send directions to entity
         ent.motions_log = motions_log
-
-    # Special motions
-    def dig_tunnel(self, ent, x, y, dX, dY):
-
-        #########################################################
-        # Dig a tunnel
-        pyg = session.pyg
-        if ent.equipment['dominant hand'].name in ['shovel', 'super shovel']:
-            
-            # Move player and reveal tiles
-            if ent.X >= 64 and ent.Y >= 64:
-                """
-                if ent.super_dig or not ent.env.map[x][y].unbreakable:
-                    ent.env.create_tunnel(x, y)
-                    ent.prev_tile                 = ent.env.map[int(ent.X/pyg.tile_width)][int(ent.Y/pyg.tile_height)]
-                    ent.X                         += dX
-                    ent.Y                         += dY
-                    ent.tile.entity               = None
-                    ent.env.map[x][y].blocked     = False
-                    ent.env.map[x][y].unbreakable = False
-                    ent.env.map[x][y].img_names   = ent.env.floors
-                    ent.env.map[x][y].entity      = ent
-                    ent.tile                      = ent.env.map[x][y]
-                    ent.env.player_coordinates    = [x, y]
-                    check_tile(x, y)
-                else:
-                    pyg.update_gui("The shovel strikes the barrier but does not break it.", pyg.dark_gray)
-                """
-
-                # Update durability
-                if ent.equipment['dominant hand'].durability <= 100:
-                    ent.equipment['dominant hand'].durability -= 1
-                if ent.equipment['dominant hand'].durability <= 0:
-                    pyg.update_gui(f"Broken {ent.equipment['dominant hand'].name}!", color=pyg.dark_gray)
-                    session.items.drop(ent.equipment['dominant hand'])
-                    ent.tile.item = None # removes item from world
 
     # Utility
     def distance_to(self, ent, other):

@@ -17,7 +17,7 @@ import pygame
 import random
 
 import session
-from mechanics import get_vicinity, place_player
+from mechanics import place_player
 from data_management import load_json
 
 ########################################################################################################################################################
@@ -46,8 +46,8 @@ class Effect:
         self.owner           = owner
         self.last_press_time = 0
 
-    def activate(self):
-        self.effect_fn(self, self)
+    def activate(self, **kwargs):
+        self.effect_fn(self, self, **kwargs)
 
 class EffectsSystem:
 
@@ -64,8 +64,21 @@ class EffectsSystem:
             ['Default', (250, 200)]]
         self.movement_speed_toggle = 0
 
-    def add_effect(self, owner, effect_id):
+    def create_effect(self, owner, effect_id):
         return Effect(owner, effect_id)
+
+    def toggle_effect(self, ent, effect_obj):
+        """ Adds or removes ability for a given entity. """
+
+        # Add effect
+        if effect_obj.name not in ent.active_effects.keys():
+            ent.active_effects[effect_obj.name] = effect_obj
+            effect_obj.owner = ent
+        
+        # Remove effect
+        else:
+            del ent.active_effects[effect_obj.name]
+            effect_obj.owner = None
 
     def check_tile(self, ent):
         if ent.tile.item:
@@ -276,6 +289,37 @@ class EffectsSystem:
                 loc = envs.areas['bitworld']['overworld'].center)
 
     # Item effects
+    @register("dig_tunnel")
+    def dig_tunnel(self, effect_obj, x, y, dX, dY):
+        pyg = session.pyg
+        ent = effect_obj.owner
+
+        if ent.X >= 64 and ent.Y >= 64:
+
+            # Dig
+            if not ent.env.map[x][y].unbreakable:
+                ent.env.map[x][y].blocked     = False
+                ent.env.map[x][y].unbreakable = False
+                ent.env.map[x][y].img_names   = ent.env.floors
+                session.movement.move(ent, dX, dY)
+            
+            # Update durability
+            if ent.equipment['dominant hand'].effect == 'dig_tunnel':
+
+                # Decrease condition
+                if ent.equipment['dominant hand'].durability <= 100:
+                    ent.equipment['dominant hand'].durability -= 1
+
+                # Break item
+                if ent.equipment['dominant hand'].durability <= 0:
+                    pyg.update_gui(f"Broken {ent.equipment['dominant hand'].name}!", color=pyg.dark_gray)
+                    session.items.drop(ent.equipment['dominant hand'])
+                    ent.tile.item = None # removes item from world
+            
+            # Do not dig
+            else:
+                pyg.update_gui("You strike the barrier but cannot break it.", pyg.dark_gray)
+
     @register("boost_stamina")
     def boost_stamina(self, effect_obj):
         owner = effect_obj.owner

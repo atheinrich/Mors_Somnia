@@ -542,6 +542,7 @@ class NewGameMenu:
         session.player_obj.finalize_player()
         
         self.temp_obj      = self.init_player()
+        pyg.msg_history    = {}
         pyg.pause          = False
         pyg.startup_toggle = False
         pyg.game_state     = 'play_game'
@@ -734,6 +735,7 @@ class FileMenu:
         session.player_obj.ent.env.camera.zoom_in(factor=0)
 
         ## Update gamestate
+        pyg.msg_history    = {}
         pyg.gui_toggle     = True
         pyg.msg_toggle     = True
         pyg.startup_toggle = False
