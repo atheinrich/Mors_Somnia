@@ -219,7 +219,6 @@ entities    = ['humanoids', 'monsters']
 ## Load JSON files
 item_dicts   = merge_json('Items', items)
 ent_dicts    = merge_json('Entities', entities)
-effect_dicts = load_json(f'Data/.Databases/item_effects.json')
 NPC_dicts    = load_json(f'Data/.Databases/NPCs.json')
 biome_dicts  = load_json(f'Data/.Databases/biomes.json')
 img_dicts    = {name: load_json(f'Data/.Databases/{name}.json') for name in img_names}

@@ -291,6 +291,7 @@ class Environments:
         # Friend
         x, y = center[0]+1, center[1]
         ent = create_entity('friend')
+        ent.role = 'NPC'
         place_object(ent, [x, y], env)
         
         ###############################################################
@@ -1883,6 +1884,8 @@ class Tile:
         # Import parameters
         for key, value in kwargs.items():
             setattr(self, key, value)
+        
+        self.active_effects = {}
 
     def draw(self):
         
@@ -1927,7 +1930,7 @@ class Weather:
         self.last_hour = time.localtime().tm_hour + 1
         self.last_min  = time.localtime().tm_min + 1
 
-        self.lamp_list = []
+        self.light_list = []
         
         self.light_set = light_set
         self.cloudy = clouds
@@ -2065,40 +2068,36 @@ class Weather:
 
         return data
 
-    def update_lamps(self):
+    def update_lighting(self):
         pyg = session.pyg
 
-        for lamp in self.lamp_list:
+        for effect_obj in self.light_list:
             
             # Center light on entity
-            if lamp.owner and lamp.equipped:
-                X = lamp.owner.X - self.env.camera.X
-                Y = lamp.owner.Y - self.env.camera.Y
-                failed = False
+            X = effect_obj.owner.X - self.env.camera.X
+            Y = effect_obj.owner.Y - self.env.camera.Y
             
-            # Or center light on item
-            elif not lamp.owner:
-                X = lamp.X - self.env.camera.X
-                Y = lamp.Y - self.env.camera.Y
-                failed = False
+            # Render
+            size   = effect_obj.size
+            width  = pyg.tile_width * size
+            height = pyg.tile_height * size
+            alpha  = 255 // size
+            left   = X - size * pyg.tile_width//2 + pyg.tile_width//2
+            top    = Y - size * pyg.tile_height//2 + pyg.tile_width//2
+
+            light_surface = pygame.Surface((width, height), pygame.SRCALPHA)
+            for i in range(size + 1):
+                a = max(0, 255 - alpha * i)
+                transparent_rect = pygame.Rect(
+                    (i) * 16,
+                    (i) * 16,
+                    width - i * 32,
+                    height - i * 32
+                )
+                pygame.draw.rect(light_surface, (0, 0, 0, a), transparent_rect)
             
-            else:  failed = True
-            if not failed:
-                
-                # Render
-                size   = lamp.effect.other
-                width  = pyg.tile_width * size
-                height = pyg.tile_height * size
-                alpha  = 255//size
-                left   = X - size*pyg.tile_width//2
-                top    = Y - size*pyg.tile_height//2
-                for i in range(size+1):
-                    transparent_rect = pygame.Rect(
-                        left   + (i+1) * 16,
-                        top    + (i+1) * 16,
-                        width  - i * 32,
-                        height - i * 32)
-                    self.sky.fill((0, 0, 0, 255-alpha*i), transparent_rect)
+            # Blend this light onto the main sky surface with "brightest wins"
+            self.sky.blit(light_surface, (left, top), special_flags=pygame.BLEND_RGBA_MIN)
 
     def render(self):
         """ Creates a black overlay and cuts out regions for lighting.
@@ -2107,7 +2106,7 @@ class Weather:
                 2. The object has self.lamp as an effect and is equipped by an entity. """
 
         # Check for lights
-        self.update_lamps()
+        self.update_lighting()
 
         # Check for clouds
         if self.cloudy: self.update_clouds()
@@ -2418,6 +2417,8 @@ def place_object(obj, loc, env, names=None):
         obj.tile = env.map[loc[0]][loc[1]]
         env.map[loc[0]][loc[1]].item    = obj
         env.map[loc[0]][loc[1]].blocked = obj.blocked
+        if obj.effect:
+            session.effects.toggle_effect(obj.tile, obj.effect)
     
     # Place entity
     elif type(obj) == Entity:

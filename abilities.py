@@ -23,18 +23,14 @@ def register(function_id):
 
 class Ability:
 
-    def __init__(self, owner, ability_id):
+    def __init__(self, owner, **kwargs):
 
         # Load general details from JSON
-        self.data       = session.abilities._data[ability_id]
-        self.ability_fn = session.abilities._registry[self.data['function_id']]
-
-        self.name          = self.data['name']
-        self.img_names     = self.data['img_names']
-        self.sequence      = self.data['sequence']
-        self.cooldown_time = float(self.data['cooldown_time'])
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
         # Other
+        self.ability_fn      = session.abilities._registry[self.function_id]
         self.owner           = owner
         self.last_press_time = 0
 
@@ -49,7 +45,7 @@ class AbilitiesSystem:
         self._registry = registry
 
     def create_ability(self, owner, ability_id):
-        return Ability(owner, ability_id)
+        return Ability(owner, **self._data[ability_id])
 
     def toggle_ability(self, ent, ability_obj):
         """ Adds or removes ability for a given entity. """

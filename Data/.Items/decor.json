@@ -150,6 +150,7 @@
     "movable":   false,
     "rand_X":    5,
     "rand_Y":    5,
-    "cost":      0
+    "cost":      0,
+    "effect_id": "lamp"
     }
 }

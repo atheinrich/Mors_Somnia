@@ -988,7 +988,7 @@ class StatsMenu:
                 while len(self.ent_stats['defense']) < 5:
                     self.ent_stats['defense'] += '☆'
 
-            self.ent_stats['sanity']   = '★' * int(session.player_obj.ent.sanity // 10)
+            self.ent_stats['sanity']   = '★' * int(session.player_obj.ent.sanity // 100)
             if len(self.ent_stats['sanity']) < 5:
                 while len(self.ent_stats['sanity']) < 5:
                     self.ent_stats['sanity'] += '☆'

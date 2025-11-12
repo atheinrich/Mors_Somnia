@@ -170,6 +170,8 @@
     "img_names":     null,
     "cost":          0,
     "defense_bonus": 0,
+    "ability_id":    null,
+    "effect_id":     null,
 
     "role":          "armor",
     "slot":          "non-dominant hand",
@@ -191,8 +193,6 @@
     "owner":         null,
     "ability":       null,
     "effect":        null,
-    "ability_id":    null,
-    "effect_id":     null,
 
     "big":           false
     },

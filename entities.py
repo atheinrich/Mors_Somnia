@@ -167,17 +167,21 @@ class PlayerData:
 
         #########################################################
         # Create and equip items
-        items = ['shovel', 'lamp']
+        item = session.items.create_item('shovel')
+        item.durability = 25
+        session.items.pick_up(self.ent, item, silent=True)
+        session.items.toggle_equip(item, silent=True)
 
-        if self.ent.equipment['chest'].img_names[0] == 'bra':
-            items.append('yellow dress')
-        else:
-            items.append('green clothes')
+        item = session.items.create_item('lamp')
+        session.items.pick_up(self.ent, item, silent=True)
+        session.items.toggle_equip(item, silent=True)
 
-        for name in items:
-            item = session.items.create_item(name)
-            session.items.pick_up(self.ent, item, silent=True)
-            session.items.toggle_equip(item, silent=True)
+        clothes = None
+        if self.ent.equipment['chest'].img_names[0] == 'bra': clothes = 'yellow dress'
+        else:                                                 clothes = 'green clothes'
+        item = session.items.create_item(clothes)
+        session.items.pick_up(self.ent, item, silent=True)
+        session.items.toggle_equip(item, silent=True)
 
 class Entity:
     """ Player, enemies, and NPCs. Manages stats, inventory, and basic mechanics. """
@@ -272,7 +276,7 @@ class Entity:
         """
 
         if self.name in session.player_obj.dialogue.npc_states.keys():
-            if session.player_obj.dialogue.npc_states[self.name][:5] == 'quest_':
+            if session.player_obj.dialogue.npc_states[self.name][:6] == 'quest_':
                 return True
         return False
 

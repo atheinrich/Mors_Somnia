@@ -110,7 +110,7 @@ class Item:
 class ItemSystem:
 
     # Core
-    def create_item(self, item_id, effect=False):
+    def create_item(self, item_id):
         """ Creates and returns an object.
         
             Parameters
@@ -120,27 +120,7 @@ class ItemSystem:
         
         # Create object
         item_id = item_id.replace(" ", "_")
-        item = Item(**item_dicts[item_id])
-        
-        # Add effect
-        #effect_dict = obj_dicts['item_effects']
-
-        #if effect:
-        #    item.effect = effect
-
-        #elif item.name in effect_dict:
-        #    effect = effect_dict[item.name]
-        #    item.effect = session.effects.create_effect(
-        #        name          = effect['name'],
-        #        img_names     = effect['img_names'],
-        #        effect_fn     = eval(effect['effect_fn']),
-        #        trigger       = effect['trigger'],
-        #        sequence      = effect['sequence'],
-        #        cooldown_time = effect['cooldown_time'],
-        #        other         = effect['other'])
-            
-        #else:
-        #    item.effect = None
+        item    = Item(**item_dicts[item_id])
 
         return item
 
@@ -231,7 +211,11 @@ class ItemSystem:
             item.X     = ent.X
             item.Y     = ent.Y
             item.tile  = ent.tile
-            item.owner = None
+            item.owner = ent.tile
+
+    def destroy(self, item):
+        self.drop(item)
+        item.tile.item = None
 
     def toggle_equip(self, item, silent=False):
         """ Toggles the equip/unequip status. """
@@ -295,36 +279,26 @@ class ItemSystem:
             if not item.hidden and not silent:
                 pyg.update_gui("Dequipped " + item.name + " from " + item.slot + ".", pyg.dark_gray)
 
-    def use(self, item, ent=None):
+    def use(self, item, silent=False):
         """ Equips of unequips an item if the object has the Equipment component. """
         
         pyg = session.pyg
+        ent = item.owner
 
-        # Allow for NPC actions
-        if not ent: ent = session.player_obj.ent
-
-        # Declare event
         session.bus.emit(
             event_id = 'item_used',
             ent_id   = ent.name,
             item_id  = item.name)
         
-        # Handle equipment
+        # Equip
         if item.equippable:
             self.toggle_equip(item)
         
-        # Handle items
+        # Effects
         elif item.effect:
-            
-            # Add active effect
-            if (ent.role == 'player') and (item.role in ['potions', 'weapons', 'armor']):
-                ent.active_effects.append(item.effect)
-                print(1234567, item.name, item.effect)
-            
-            # Activate the item
-            else: item.effect.effect_fn(ent)
+            session.effects.toggle_effect(ent, item.effect)
         
-        elif ent.role == 'player':
+        elif (ent.role == 'player') and not silent:
             pyg.update_gui("The " + item.name + " cannot be used.", pyg.dark_gray)
 
     def trade(self, item, owner, recipient):

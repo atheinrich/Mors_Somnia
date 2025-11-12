@@ -1235,7 +1235,7 @@ def render_display():
             except: continue
             if not tile.hidden:
                 
-                # Lowest tier (floor or walls)
+                # First tier (floor or walls)
                 image, (X, Y) = tile.draw()
                 pyg.display_queue.append([image, (X, Y)])
 
@@ -1255,12 +1255,25 @@ def render_display():
                 # Third tier (entity)
                 if tile.entity:
                     tile.entity.draw()
+                    
+                    # Effects
+                    if tile.entity.active_effects:
+                        for effect in tile.entity.active_effects.values():
+                            if effect.trigger == 'on_render':
+                                effect.activate()
                 
-                # Fourth tier (roof)
+                # Fourth tier (effects)
+                if tile.active_effects:
+                    for effect in tile.active_effects.values():
+                        if effect.trigger == 'on_render':
+                            effect.activate()
+                
+                # Fifth tier (roof)
                 if tile.room:
                     if tile.room.roof == tile.img_names:
                         image, (X, Y) = tile.draw()
                         pyg.display_queue.append([image, (X, Y)])
+
     
     ent.env.weather.render()
 
