@@ -48,9 +48,14 @@ class Item:
 
         # Set abilities and effects
         if self.ability_id:
-            self.ability = session.abilities.create_ability(None, self.ability_id)
+            self.ability = session.abilities.create_ability(
+                owner      = None,
+                ability_id = self.ability_id)
         if self.effect_id:
-            self.effect = session.effects.create_effect(None, self.effect_id)
+            self.effect = session.effects.create_effect(
+                owner     = None,
+                effect_id = self.effect_id,
+                item      = self)
 
         # Seed a seed for individual adjustments
         self.rand_X  = random.randint(-self.rand_X, self.rand_X)
@@ -176,6 +181,8 @@ class ItemSystem:
             # Update item
             item.owner = ent
             item.tile  = ent.tile
+            if item.effect:
+                item.effect.owner = ent
 
             # Update tile (if needed)
             if ent.tile:
@@ -212,6 +219,8 @@ class ItemSystem:
             item.Y     = ent.Y
             item.tile  = ent.tile
             item.owner = ent.tile
+            if item.effect:
+                item.effect.owner = ent.tile
 
     def destroy(self, item):
         self.drop(item)
@@ -296,7 +305,10 @@ class ItemSystem:
         
         # Effects
         elif item.effect:
-            session.effects.toggle_effect(ent, item.effect)
+            
+            # Use item
+            if item.effect.trigger == 'on_use':
+                item.effect.activate()
         
         elif (ent.role == 'player') and not silent:
             pyg.update_gui("The " + item.name + " cannot be used.", pyg.dark_gray)

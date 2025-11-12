@@ -64,7 +64,7 @@ class AbilitiesSystem:
     def toggle_abilities(self, ent):
         """ Switches between different sets of effects. """
         
-        if session.pyg.game_state == 'play_garden':
+        if session.pyg.game_state in ['startup', 'play_garden']:
             ent.active_abilities = ent.garden_abilities
         else:
             ent.active_abilities = ent.game_abilities

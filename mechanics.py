@@ -583,6 +583,11 @@ class MovementSystem:
                     ent.env.map[x][y].entity   = ent
                     ent.tile                   = ent.env.map[x][y]
 
+                    session.bus.emit(
+                        event_id = 'tile_occupied',
+                        ent_id   = ent.name,
+                        tile_id  = ent.tile.img_names[1])
+        
                     # Activate effects
                     session.effects.check_tile(ent)
                 
@@ -713,48 +718,73 @@ class MovementSystem:
         pyg = session.pyg
 
         # Look for water
-        if ent.tile.img_names[1] != 'water':
+        nearby_tiles = [tile.img_names[1] for tile in get_vicinity(ent).values()]
+        if ('water' not in nearby_tiles) and ('water' not in ent.tile.img_names[1]):
             
             # Prepare movements
             motions_log = []
             
             # Look for water
+            distance_list = []
             for y in range(len(ent.env.map[0])):
                 for x in range(len(ent.env.map)):
                     if ent.env.map[x][y].img_names[1] == 'water':
                         
-                        # Construct a path
-                        dX       = int(x*32) - ent.X
-                        dY       = int(y*32) - ent.Y
-                        distance = (dX ** 2 + dY ** 2)**(1/2)
-                        while distance > 0:
-                            
-                            if dX and not dY:
-                                dX = round(dX/distance) * pyg.tile_width
-                                dY = 0
-                            
-                            elif dY and not dX:
-                                dX = 0
-                                dY = round(dX/distance) * pyg.tile_width
-                            
-                            elif dX and dY:
-                                if random.randint(0, 1):
-                                    dX = round(dX/distance) * pyg.tile_width
-                                    dY = 0
-                                else:
-                                    dX = 0
-                                    dY = round(dY/distance) * pyg.tile_width
-                            
-                            motions_log.append([dX, dY])
-                            motions_log.append([dX, dY])
-                            distance -= 32
+                        # Find distance
+                        dX_total = int(x*32) - ent.X
+                        dY_total = int(y*32) - ent.Y
+
+                        distance_list.append([dX_total, dY_total])
             
+            # Move to the nearest location
+            if distance_list:
+                dX_total, dY_total = min(distance_list, key=lambda p: p[0]**2 + p[1]**2)
+
+                if dX_total: sign_dX = int(dX_total / abs(dX_total))
+                if dY_total: sign_dY = int(dY_total / abs(dY_total))
+
+                # Construct a path
+                while dX_total or dY_total:
+                    
+                    # Move left or right
+                    if dX_total and not dY_total:
+                        dX = 32 * sign_dX
+                        dY = 0
+                    
+                    # Move up or down
+                    elif dY_total and not dX_total:
+                        dX = 0
+                        dY = 32 * sign_dY
+                    
+                    # Pick a random direction
+                    else:
+
+                        # Move left or right
+                        if random.randint(0, 1):
+                            dX = 32 * sign_dX
+                            dY = 0
+
+                        # Move up or down
+                        else:
+                            dX = 0
+                            dY = 32 * sign_dY
+                    
+                    motions_log.append([dX, dY])
+                    dX_total -= dX
+                    dY_total -= dY
+                                        
             # Send directions to entity
             ent.motions_log = motions_log
             image = session.img.dict['bubbles']['question bubble']
 
         # Bathe
         else:
+
+            session.bus.emit(
+                event_id = 'tile_occupied',
+                ent_id   = ent.name,
+                tile_id  = 'water')
+        
             if session.stats_obj.pet_moods['anger']:
                 session.stats_obj.pet_moods['anger'] -= 1
                 image = session.img.dict['bubbles']['water bubble']

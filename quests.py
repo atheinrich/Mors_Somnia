@@ -391,6 +391,7 @@ class Questlog:
         session.bus.subscribe('item_picked_up',    self.on_item_pickup)
         session.bus.subscribe('item_placed',       self.on_item_placed)
         session.bus.subscribe('item_used',         self.on_item_used)
+        session.bus.subscribe('tile_occupied',     self.on_tile_occupied)
 
     def load_quest(self, filename):
 
@@ -460,6 +461,13 @@ class Questlog:
                 event_id = 'item_used',
                 ent_id   = ent_id,
                 item_id  = item_id)
+
+    def on_tile_occupied(self, ent_id, tile_id):
+        for quest in self.active_quests:
+            quest.notify(
+                event_id = 'tile_occupied',
+                ent_id   = ent_id,
+                tile_id  = tile_id)
 
     def __setstate__(self, state):
         self.__dict__.update(state) 

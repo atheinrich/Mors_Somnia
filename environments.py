@@ -1260,55 +1260,37 @@ class Environment:
                 if (X in X_range) or (Y in Y_range):
                     tile = Tile(
                         env         = self,
-
                         number      = number,
-                        room        = None,
-                        entity      = None,
-                        item        = None,
                         
                         img_names   = img_names,
                         walls       = walls,
                         floor       = floors,
                         roof        = roofs,
-                        timer       = random.randint(0, 3) * 2,
 
                         X           = X,
                         Y           = Y,
-                        rand_X      = random.randint(-pyg.tile_width, pyg.tile_width),
-                        rand_Y      = random.randint(-pyg.tile_height, pyg.tile_height),
                         
-                        biome       = None,
                         blocked     = True,
                         hidden      = hidden,
-                        unbreakable = True,
-                        placed      = False)
+                        unbreakable = True)
                 
                 # Handle bulk
                 else:
                     tile = Tile(
                         env         = self,
-
                         number      = number,
-                        room        = None,
-                        entity      = None,
-                        item        = None,
                         
                         img_names   = img_names,
                         walls       = walls,
                         floor       = floors,
                         roof        = roofs,
-                        timer       = random.randint(0, 3) * 2,
 
                         X           = X,
                         Y           = Y,
-                        rand_X      = random.randint(-pyg.tile_width, pyg.tile_width),
-                        rand_Y      = random.randint(-pyg.tile_height, pyg.tile_height),
                         
-                        biome       = None,
                         blocked     = blocked,
                         hidden      = hidden,
-                        unbreakable = False,
-                        placed      = False)
+                        unbreakable = False)
                 
                 row.append(tile)
             self.map.append(row)
@@ -1881,11 +1863,33 @@ class Tile:
             unbreakable : bool; prevents player from changing the tile
             placed      : bool; notifies custom placement via CatalogMenu """
         
-        # Import parameters
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        pyg = session.pyg
+
+        self.env         = kwargs.get('env')
+
+        self.number      = kwargs.get('number')
+        self.room        = kwargs.get('room',   None)
+        self.entity      = kwargs.get('entity', None)
+        self.item        = kwargs.get('item',   None)
         
-        self.active_effects = {}
+        self.img_names   = kwargs.get('img_names')
+        self.walls       = kwargs.get('walls')
+        self.floor       = kwargs.get('floors')
+        self.roof        = kwargs.get('roofs')
+        self.timer       = kwargs.get('timer',  random.randint(0, 3) * 2)
+
+        self.X           = kwargs.get('X')
+        self.Y           = kwargs.get('Y')
+        self.rand_X      = kwargs.get('rand_X', random.randint(-pyg.tile_width, pyg.tile_width))
+        self.rand_Y      = kwargs.get('rand_Y', random.randint(-pyg.tile_height, pyg.tile_height))
+        
+        self.biome       = kwargs.get('biome',  None)
+        self.blocked     = kwargs.get('blocked')
+        self.hidden      = kwargs.get('hidden')
+        self.unbreakable = kwargs.get('unbreakable')
+        self.placed      = kwargs.get('placed', False)
+        
+        self.active_effects = kwargs.get('active_effects', {})
 
     def draw(self):
         
@@ -2393,7 +2397,7 @@ def place_object(obj, loc, env, names=None):
     from environments import Tile
     from entities import Entity
     from items import Item
-
+    
     # Place tile
     if type(obj) == Tile:
         env.map[loc[0]][loc[1]].img_names = names

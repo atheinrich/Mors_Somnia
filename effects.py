@@ -31,7 +31,7 @@ def register(function_id):
 
 class Effect:
 
-    def __init__(self, owner, **kwargs):
+    def __init__(self, owner, item, **kwargs):
 
         # Load general details from JSON
         for key, value in kwargs.items():
@@ -40,6 +40,7 @@ class Effect:
         # Other
         self.effect_fn       = session.effects._registry[self.function_id]
         self.owner           = owner
+        self.item            = item
         self.last_press_time = 0
 
     def activate(self, **kwargs):
@@ -60,23 +61,25 @@ class EffectsSystem:
             ['Default', (250, 200)]]
         self.movement_speed_toggle = 0
 
-    def create_effect(self, owner, effect_id):
-        return Effect(owner, **self._data[effect_id])
+    def create_effect(self, owner, effect_id, item=None):
+        return Effect(owner, item, **self._data[effect_id])
 
     def toggle_effect(self, ent, effect_obj):
         """ Adds or removes ability for a given entity. """
 
-        # Add effect
-        if effect_obj.name not in ent.active_effects.keys():
-            ent.active_effects[effect_obj.name] = effect_obj
-            effect_obj.owner = ent
+        if effect_obj.trigger != 'on_use':
+
+            # Add effect
+            if effect_obj.name not in ent.active_effects.keys():
+                ent.active_effects[effect_obj.name] = effect_obj
+                effect_obj.owner = ent
+            
+            # Remove effect
+            else:
+                del ent.active_effects[effect_obj.name]
+                effect_obj.owner = None
         
-        # Remove effect
-        else:
-            del ent.active_effects[effect_obj.name]
-            effect_obj.owner = None
-        
-        effect_obj.activate(on_toggle=True)
+            effect_obj.activate(on_toggle=True)
 
     def check_tile(self, ent):
         #if ent.tile.item:
@@ -90,7 +93,7 @@ class EffectsSystem:
         pyg = session.pyg
         ent = effect_obj.owner
 
-        if kwargs.get('on_toggle') is None:
+        if not kwargs.get('on_toggle'):
             x  = kwargs.get('x')
             y  = kwargs.get('y')
             dX = kwargs.get('dX')
@@ -125,18 +128,30 @@ class EffectsSystem:
         light_list = session.player_obj.ent.env.weather.light_list
 
         if kwargs.get('on_toggle'):
-            if effect_obj not in light_list:
-                light_list.append(effect_obj)
-            else:
-                light_list.remove(effect_obj)
-
-        else:
             if effect_obj not in light_list: light_list.append(effect_obj)
+            else:                            light_list.remove(effect_obj)
+
+        elif effect_obj not in light_list:   light_list.append(effect_obj)
 
     # Queue
     @register("jug_of_water")
-    def jug_of_water(self):
-        pass
+    def jug_of_water(self, effect_obj, **kwargs):
+
+        if not kwargs.get('on_toggle'):
+
+            # Update tile
+            tile            = effect_obj.owner.tile
+            tile.img_names  = ['floors', 'water']
+            tile.biome      = 'water'
+
+            # Update effect
+            effect_obj.uses -= 1
+
+            # Destroy if no more uses
+            if effect_obj.uses:
+                effect_obj.item.img_names = ['potions', 'red potion']
+            else:
+                session.items.destroy(effect_obj.item)
 
     # Potions
     @register("heal")

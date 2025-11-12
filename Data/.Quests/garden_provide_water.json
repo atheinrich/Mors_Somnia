@@ -15,7 +15,7 @@
     "conditions": {
 
         "item_id": "jug of water",
-        "ent_id":  "Player"}},
+        "ent_id":  "player"}},
 
 
    {"event_id":    "tile_occupied",
@@ -24,6 +24,7 @@
 
         "tile_id": "water",
         "ent_id":  [
+            "radish",
             "red radish",
             "orange radish",
             "purple radish"]}}

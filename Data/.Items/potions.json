@@ -20,7 +20,8 @@
     "img_names":  ["potions", "blue potion"],
     "rand_X":     0,
     "rand_Y":     0,
-    "cost":       10
+    "cost":       10,
+    "effect_id":  "jug_of_water"
     },
 
 "jug_of_cement": {

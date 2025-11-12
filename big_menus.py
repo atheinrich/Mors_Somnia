@@ -910,7 +910,7 @@ class StatsMenu:
         self.pet_moods = {
             'happiness': 5,
             'sadness':   0,
-            'anger':     0,
+            'anger':     1,
             'boredom':   0,
             'lethargy':  0,
             'confusion': 0}
