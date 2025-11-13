@@ -17,7 +17,7 @@
 
 "jug_of_water": {
     "name":       "jug of water",
-    "img_names":  ["potions", "blue potion"],
+    "img_names":  ["potions", "blue potion 1"],
     "rand_X":     0,
     "rand_Y":     0,
     "cost":       10,

@@ -167,13 +167,19 @@
     "red potion": {
         "group": "potions"
     },
-    "blue potion": {
-        "group": "potions"
-    },
     "gray potion": {
         "group": "potions"
     },
     "purple potion": {
+        "group": "potions"
+    },
+    "blue potion 1": {
+        "group": "potions"
+    },
+    "blue potion 2": {
+        "group": "potions"
+    },
+    "blue potion 3": {
         "group": "potions"
     },
     "closed": {

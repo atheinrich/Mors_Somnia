@@ -690,10 +690,8 @@ class Images:
             null_options]
         
         # Create image dictionary
-        index = 0
-        for _ in other_names:
-            other[other_names[index]] = {option: image for (option, image) in zip(other_options[index], other_matrix[index])}
-            index += 1
+        for i in range(len(other_names)):
+            other[other_names[i]] = {option: image for (option, image) in zip(other_options[i], other_matrix[i])}
 
         return other, other_names
 

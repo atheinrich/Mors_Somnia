@@ -149,7 +149,7 @@ class EffectsSystem:
 
             # Destroy if no more uses
             if effect_obj.uses:
-                effect_obj.item.img_names = ['potions', 'red potion']
+                effect_obj.item.img_names = ['potions', f'blue potion {4-effect_obj.uses}']
             else:
                 session.items.destroy(effect_obj.item)
 
