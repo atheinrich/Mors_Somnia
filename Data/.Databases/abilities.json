@@ -3,54 +3,48 @@
     "name":          "scare",
     "function_id":   "entity_scare",
     "img_names":     ["bubbles", "exclamation bubble"],
-    "sequence":      "⮟⮜⮟",
-    "cooldown_time": 1
+    "sequence":      "⮟⮜⮟"
     },
 
 "entity_comfort": {
     "name":          "comfort",
     "function_id":   "entity_comfort",
     "img_names":     ["bubbles", "heart bubble"],
-    "sequence":      "⮟⮞⮜",
-    "cooldown_time": 1
+    "sequence":      "⮟⮞⮜"
     },
 
 "entity_clean": {
     "name":          "clean",
     "function_id":   "entity_clean",
     "img_names":     ["bubbles", "dots bubble"],
-    "sequence":      "⮟⮟⮟",
-    "cooldown_time": 1
+    "sequence":      "⮟⮟⮟"
     },
 
 "entity_capture": {
     "name":          "capture",
     "function_id":   "entity_capture",
     "img_names":     ["bubbles", "heart bubble"],
-    "sequence":      "⮟⮞⮟",
-    "cooldown_time": 1
+    "sequence":      "⮟⮞⮟"
     },
 
 "swing": {
     "name":          "swing",
     "function_id":   "swing",
     "img_names":     ["dagger", "dropped"],
-    "sequence":      "⮜⮟⮞",
-    "cooldown_time": 0.1
+    "sequence":      "⮜⮟⮞"
     },
 
 "suicide": {
     "name":          "suicide",
     "function_id":   "suicide",
     "img_names":     ["decor", "bones"],
-    "sequence":      "⮟⮟⮟",
-    "cooldown_time": 1
+    "sequence":      "⮟⮟⮟"
     },
 
 "dirtball": {
-    "img_names":     ["green blob", "right"],
+    "name":          "dirtball",
     "function_id":   "propagate",
-    "sequence":      "⮞⮜⮞",
-    "cooldown_time": 1
+    "img_names":     ["green blob", "right"],
+    "sequence":      "⮞⮜⮞"
     }
 }

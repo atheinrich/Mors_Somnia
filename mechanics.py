@@ -587,18 +587,18 @@ class MovementSystem:
                         event_id = 'tile_occupied',
                         ent_id   = ent.name,
                         tile_id  = ent.tile.img_names[1])
-        
-                    # Activate effects
-                    session.effects.check_tile(ent)
                 
             #########################################################
             # Interact with an entity
             elif ent.env.map[x][y].entity:
                 session.interact.interact(ent, ent.env.map[x][y].entity)
             
-            elif 'dig_tunnel' in ent.active_effects.keys():
-                ent.active_effects['dig_tunnel'].activate(x=x, y=y, dX=dX, dY=dY)
-                session.effects.check_tile(ent)
+            # Activate an effect
+            else:
+                for effect in ent.active_effects.values():
+                    if effect.trigger == 'on_blocked':
+                        effect.activate(x=x, y=y, dX=dX, dY=dY)
+                        break
 
         ent.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
 

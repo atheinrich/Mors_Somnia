@@ -2,66 +2,46 @@
 "shovel": {
     "name":          "shovel",
     "img_names":     ["shovel", "dropped"],
-    "durability":    100,
+    "uses":          100,
     "cost":          15,
     "attack_bonus":  2,
     "defense_bonus": 10,
-    "ability_id":    null,
     "effect_id":    "dig_tunnel"
     },
 
 "super_shovel": {
     "name":          "super shovel",
     "img_names":     ["super shovel", "dropped"],
-    "durability":    1000,
     "cost":          10,
-    "attack_bonus":  100,
-    "defense_bonus": 0,
-    "ability_id":    null,
-    "effect_id":     null
+    "attack_bonus":  100
     },
 
 "dagger": {
     "name":          "dagger",
     "img_names":     ["dagger", "dropped"],
-    "durability":    101,
     "cost":          25,
     "attack_bonus":  2,
-    "defense_bonus": 0,
-    "ability_id":    "swing",
-    "effect_id":     null
+    "ability_id":    "swing"
     },
 
 "sword": {
     "name":          "sword",
     "img_names":     ["sword", "dropped"],
-    "durability":    101,
     "cost":          75,
-    "attack_bonus":  5,
-    "defense_bonus": 0,
-    "ability_id":    null,
-    "effect_id":     null
+    "attack_bonus":  5
     },
 
 "blood_dagger": {
     "name":          "blood dagger",
     "img_names":     ["blood dagger", "dropped"],
-    "durability":    101,
     "cost":          500,
-    "attack_bonus":  10,
-    "defense_bonus": 0,
-    "ability_id":    null,
-    "effect_id":     null
+    "attack_bonus":  10
     },
 
 "blood_sword": {
     "name":          "blood sword",
     "img_names":     ["blood sword", "dropped"],
-    "durability":    101,
     "cost":          1000,
-    "attack_bonus":  15,
-    "defense_bonus": 0,
-    "ability_id":    null,
-    "effect_id":     null
+    "attack_bonus":  15
     }
 }

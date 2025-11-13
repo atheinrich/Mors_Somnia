@@ -32,7 +32,6 @@ class Ability:
         # Other
         self.ability_fn      = session.abilities._registry[self.function_id]
         self.owner           = owner
-        self.last_press_time = 0
 
     def activate(self):
         self.ability_fn(self, self)

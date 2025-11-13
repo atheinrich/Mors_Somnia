@@ -698,7 +698,7 @@ class Images:
     def big_img(self):
     
         # Import tiles
-        path = find_path(f'Data/.Images/decor_1_m_logo.png')
+        path = find_path(f'Data/.Images/logo.png')
         big  = self.import_tiles(path, flipped=False, effects=['posterize'])
         return big
 

@@ -26,7 +26,8 @@
 "plant": {
     "name":      "plant",
     "img_names": ["drugs", "plant"],
-    "cost":      10
+    "cost":      10,
+    "effect_id": "boost_stamina"
     },
 
 "bubbles": {

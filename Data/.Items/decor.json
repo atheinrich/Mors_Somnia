@@ -2,51 +2,35 @@
 "tree": {
     "name":      "tree",
     "img_names": ["decor", "tree"],
-    "hidden":    false,
     "blocked":   true,
     "movable":   true,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      20
     },
 
 "bones": {
     "name":      "bones",
     "img_names": ["decor", "bones"],
-    "hidden":    false,
-    "blocked":   false,
     "movable":   true,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      5
     },
 
 "boxes": {
     "name":      "boxes",
     "img_names": ["decor", "boxes"],
-    "hidden":    false,
     "blocked":   true,
-    "movable":   false,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      5
     },
 
 "fire": {
     "name":      "fire",
     "img_names": ["decor", "fire"],
-    "hidden":    false,
     "blocked":   true,
-    "movable":   false,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      20
     },
 
 "leafy": {
     "name":      "leafy tree",
     "img_names": ["decor", "leafy"],
-    "hidden":    false,
     "blocked":   true,
     "movable":   true,
     "rand_X":    0,
@@ -58,19 +42,12 @@
     "name":      "skeleton",
     "img_names": ["decor", "skeleton"],
     "hidden":    true,
-    "blocked":   false,
-    "movable":   false,
-    "rand_X":    0,
-    "rand_Y":    0,
-    "cost":      0
+    "movable":   false
     },
 
 "shrooms": {
     "name":      "shrooms",
     "img_names": ["decor", "shrooms"],
-    "hidden":    false,
-    "blocked":   false,
-    "movable":   false,
     "rand_X":    10,
     "rand_Y":    10,
     "cost":      15
@@ -79,44 +56,24 @@
 "red_plant_left": {
     "name":      "red plant left",
     "img_names": ["decor", "red plant left"],
-    "hidden":    false,
-    "blocked":   false,
-    "movable":   false,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      15
     },
 
 "red_plant_right": {
     "name":      "red plant right",
     "img_names": ["decor", "red plant right"],
-    "hidden":    false,
-    "blocked":   false,
-    "movable":   false,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      15
     },
 
 "cup_shroom": {
     "name":      "cup shroom",
     "img_names": ["decor", "cup shroom"],
-    "hidden":    false,
-    "blocked":   false,
-    "movable":   false,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      15
     },
 
 "frond": {
     "name":      "frond",
     "img_names": ["decor", "frond"],
-    "hidden":    false,
-    "blocked":   false,
-    "movable":   false,
-    "rand_X":    0,
-    "rand_Y":    0,
     "cost":      15
     },
 
@@ -124,33 +81,26 @@
     "name":      "blades",
     "img_names": ["decor", "blades"],
     "hidden":    true,
-    "blocked":   false,
     "movable":   true,
     "rand_X":    10,
-    "rand_Y":    10,
-    "cost":      0
+    "rand_Y":    10
     },
 
 "purple_bulbs": {
     "name":      "purple bulbs",
     "img_names": ["decor", "purple bulbs"],
     "hidden":    true,
-    "blocked":   false,
     "movable":   true,
     "rand_X":    10,
-    "rand_Y":    10,
-    "cost":      0
+    "rand_Y":    10
     },
 
 "lights": {
     "name":      "lights",
     "img_names": ["decor", "lights"],
     "hidden":    true,
-    "blocked":   false,
-    "movable":   false,
     "rand_X":    5,
     "rand_Y":    5,
-    "cost":      0,
     "effect_id": "lamp"
     }
 }

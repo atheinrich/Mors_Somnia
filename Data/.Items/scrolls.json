@@ -1,21 +1,18 @@
 {
 "scroll_of_lightning_bolt": {
     "name":      "scroll of lightning bolt",
-    "img_names": ["scrolls", "closed"],
-    "cost":      20
+    "img_names": ["scrolls", "closed"]
     },
 
 
 "scroll_of_fireball": {
     "name":      "scroll of fireball",
-    "img_names": ["scrolls", "closed"],
-    "cost":      20
+    "img_names": ["scrolls", "closed"]
     },
 
 "scroll_of_confusion": {
     "name":      "scroll of confusion",
-    "img_names": ["scrolls", "closed"],
-    "cost":      20
+    "img_names": ["scrolls", "closed"]
     },
 
 "scroll_of_death": {

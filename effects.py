@@ -38,10 +38,9 @@ class Effect:
             setattr(self, key, value)
         
         # Other
-        self.effect_fn       = session.effects._registry[self.function_id]
-        self.owner           = owner
-        self.item            = item
-        self.last_press_time = 0
+        self.effect_fn = session.effects._registry[self.function_id]
+        self.owner     = owner
+        self.item      = item
 
     def activate(self, **kwargs):
         self.effect_fn(self, self, **kwargs)
@@ -87,7 +86,7 @@ class EffectsSystem:
         #        ent.tile.item.effect.effect_fn(ent)
         pass
 
-    # Working
+    # On barrier
     @register("dig_tunnel")
     def dig_tunnel(self, effect_obj, **kwargs):
         pyg = session.pyg
@@ -109,18 +108,19 @@ class EffectsSystem:
                     session.movement.move(ent, dX, dY)
                 
                     # Decrease condition
-                    if ent.equipment['dominant hand'].durability <= 100:
-                        ent.equipment['dominant hand'].durability -= 1
+                    if effect_obj.item.uses <= 100:
+                        effect_obj.item.uses -= 1
 
                     # Break item
-                    if ent.equipment['dominant hand'].durability <= 0:
-                        pyg.update_gui(f"Broken {ent.equipment['dominant hand'].name}!", color=pyg.dark_gray)
-                        session.items.destroy(ent.equipment['dominant hand'])
+                    if effect_obj.item.uses <= 0:
+                        pyg.update_gui(f"Broken {effect_obj.item.name}!", color=pyg.dark_gray)
+                        session.items.destroy(effect_obj.item)
                 
                 # Do not dig
                 else:
                     pyg.update_gui("You strike the barrier but cannot break it.", pyg.dark_gray)
 
+    # On render
     @register("lamp")
     def lamp(self, effect_obj, **kwargs):
         """ Adds or removes a light to be rendered. """
@@ -133,49 +133,110 @@ class EffectsSystem:
 
         elif effect_obj not in light_list:   light_list.append(effect_obj)
 
-    # Queue
+    # On use (potions)
     @register("jug_of_water")
     def jug_of_water(self, effect_obj, **kwargs):
+        """ Dumps water on the ground. """
+
+        pyg = session.pyg
 
         if not kwargs.get('on_toggle'):
 
             # Update tile
-            tile            = effect_obj.owner.tile
-            tile.img_names  = ['floors', 'water']
-            tile.biome      = 'water'
+            tile           = effect_obj.owner.tile
+            tile.img_names = ['floors', 'water']
+            tile.biome     = 'water'
 
             # Update effect
-            effect_obj.uses -= 1
+            effect_obj.item.uses -= 1
 
             # Destroy if no more uses
-            if effect_obj.uses:
-                effect_obj.item.img_names = ['potions', f'blue potion {4-effect_obj.uses}']
+            if effect_obj.item.uses:
+                effect_obj.item.img_names = ['potions', f'blue potion {4-effect_obj.item.uses}']
+                pyg.update_gui("You pour out some water.", pyg.blue)
+            
             else:
+                pyg.update_gui("You pour out some water then discard the empty vessel.", pyg.blue)
                 session.items.destroy(effect_obj.item)
 
-    # Potions
     @register("heal")
-    def heal(self, effect_obj):
+    def heal(self, effect_obj, **kwargs):
         """ Heals player by the given amount without going over the maximum. """
         
+        pyg   = session.pyg
         owner = effect_obj.owner
 
+        # Gain health
         owner.hp += 5
+
+        # Update effect
+        effect_obj.item.uses -= 1
         if owner.hp > owner.max_hp:
             owner.hp = owner.max_hp
 
+        # Destroy if no more uses
+        if effect_obj.item.uses == 2:
+            pyg.update_gui("You tend to your wounds and feel better.", pyg.red)
+        
+        elif effect_obj.item.uses == 1:
+            pyg.update_gui("You tend to your wounds and feel better.", pyg.red)
+        
+        else:
+            pyg.update_gui("You gain some health... looks like the last drop.", pyg.red)
+            session.items.destroy(effect_obj.item)
+
     @register("jug_of_blood")
-    def jug_of_blood(self, effect_obj):
+    def jug_of_blood(self, effect_obj, **kwargs):
+        pyg   = session.pyg
         owner = effect_obj.owner
         
-        owner.hp -= 5
+        # Lose health
+        owner.hp -= 2
+
+        # Die
         if owner.hp <= 0:
             owner.hp = 0
             owner.dead = True
+            pyg.update_gui("You drink the blood, but your body cannot take the strain.", pyg.red)
+        
+        # Gain attack
         else:
-            owner.attack += 1
+            owner.attack += 2
+        
+            # Update effect
+            effect_obj.item.uses -= 1
 
-    # Environments
+            # Destroy if no more uses
+            if effect_obj.item.uses == 2:
+                pyg.update_gui("You drink... blood? It makes you feel sick yet stronger.", pyg.red)
+            
+            elif effect_obj.item.uses == 1:
+                pyg.update_gui("You drink some more blood. No pain, no gain.", pyg.red)
+            
+            else:
+                pyg.update_gui("You pour out some water then discard the empty vessel.", pyg.blue)
+                session.items.destroy(effect_obj.item)
+
+    @register("boost_stamina")
+    def boost_stamina(self, effect_obj, **kwargs):
+        pyg   = session.pyg
+        owner = effect_obj.owner
+
+        # Gain stamina
+        owner.stamina += 25
+
+        # Update effect
+        effect_obj.item.uses -= 1
+        if owner.stamina > 100:
+            owner.stamina = 100
+
+        # Destroy if no more uses
+        if not effect_obj.item.uses:
+            session.items.destroy(effect_obj.item)
+
+        pyg.update_gui("You regain some stamina.", pyg.red)
+
+    # On use (environments)
     @register("enter_home")
     def enter_home(self, effect_obj=None):
         if effect_obj: owner = effect_obj.owner
@@ -357,16 +418,6 @@ class EffectsSystem:
                 loc = envs.areas['bitworld']['overworld'].center)
 
     # Item effects
-    @register("boost_stamina")
-    def boost_stamina(self, effect_obj):
-        owner = effect_obj.owner
-
-        owner.stamina += 50
-        if owner.stamina > 100:
-            owner.stamina = 100
-
-        session.pyg.update_gui()
-
     @register("entity_eat")
     def entity_eat(self, effect_obj=None, target=None):
         """ Dropped item effect. """

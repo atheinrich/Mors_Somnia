@@ -168,7 +168,7 @@ class PlayerData:
         #########################################################
         # Create and equip items
         item = session.items.create_item('shovel')
-        item.durability = 25
+        item.uses = 25
         session.items.pick_up(self.ent, item, silent=True)
         session.items.toggle_equip(item, silent=True)
 

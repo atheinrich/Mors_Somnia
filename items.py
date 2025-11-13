@@ -32,7 +32,7 @@ class Item:
             img_names[0]  : string
             img_names[1]  : string
             
-            durability    : int; item breaks at 0
+            uses          : int; item breaks at 0
             equippable    : Boolean; lets item be equipped by entity
             equipped      : Boolean; notes if the item is equipped
             hidden        : Boolean; hides from inventory menu
@@ -51,6 +51,7 @@ class Item:
             self.ability = session.abilities.create_ability(
                 owner      = None,
                 ability_id = self.ability_id)
+        
         if self.effect_id:
             self.effect = session.effects.create_effect(
                 owner     = None,
