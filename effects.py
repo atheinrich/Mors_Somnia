@@ -43,7 +43,7 @@ class Effect:
         self.item      = item
 
     def activate(self, **kwargs):
-        self.effect_fn(self, self, **kwargs)
+        self.effect_fn(session.effects, self, **kwargs)
 
 class EffectsSystem:
 
@@ -248,97 +248,171 @@ class EffectsSystem:
 
     @register("enter_overworld")
     def enter_overworld(self, effect_obj=None):
+        area = session.player_obj.envs.areas['overworld']
         
         place_player(
             ent = session.player_obj.ent,
-            env = session.player_obj.envs.areas['overworld']['overworld'],
-            loc = session.player_obj.envs.areas['overworld']['overworld'].center)
+            env = area['overworld'],
+            loc = area['overworld'].player_coordinates)
 
-    @register("enter_dungeon")
-    def enter_dungeon(self, effect_obj=None, text=None, lvl_num=0):
-        pyg = session.pyg
+    @register("descend_dungeon")
+    def descend_dungeon(self, effect_obj, **kwargs):
+        """ Assumes the area is called 'dungeon'.  """
 
-        pyg.add_intertitle(text)
-        pyg.fn_queue.append([self.enter_dungeon_queue, {'lvl_num': lvl_num}])
-        pyg.fade_state = 'out'
+        pyg  = session.pyg
+        area = session.player_obj.envs.areas['dungeon']
 
-    def enter_dungeon_queue(self, effect_obj=None, lvl_num=0):
-        """ Advances player to the next level. """
-
-
+        # Set level
+        ## Use a door to go down one level
+        if effect_obj:
+            if effect_obj.item:
+                lvl_num = effect_obj.item.env.lvl_num + 1
         
-        #########################################################
-        # Create and/or enter
-        ## Enter the first dungeon
-        if session.player_obj.ent.env.name != 'dungeon':
-            place_player(
-                ent = session.player_obj.ent,
-                env = session.player_obj.envs.areas['dungeon'][0],
-                loc = session.player_obj.envs.areas['dungeon'][0].center)
-        
-        ## Enter the next saved dungeon
-        elif session.player_obj.ent.env.lvl_num < len(session.player_obj.envs.areas['dungeon'].levels):
-            lvl_num = session.player_obj.ent.env.lvl_num
-            place_player(
-                ent = session.player_obj.ent,
-                env = session.player_obj.envs.areas['dungeon'][lvl_num],
-                loc = session.player_obj.envs.areas['dungeon'][lvl_num].center)
-        
-        ## Enter a new dungeon
+        ## Set manually
         else:
-            session.player_obj.envs.build_dungeon_level(lvl_num)
+            lvl_num = kwargs.get('lvl_num', 0)
+
+        # Find or build level
+        ## Enter previously constructed level
+        for env in area.levels.values():
+            if env.lvl_num == lvl_num:
+                place_player(
+                    ent = session.player_obj.ent,
+                    env = area[lvl_num],
+                    loc = area[lvl_num].center)
+                return
+
+        ## Create a new level
+        area.envs.build_env('dungeon', area)
+        place_player(
+            ent = session.player_obj.ent,
+            env = area[lvl_num],
+            loc = area[lvl_num].center)
+
+    @register("ascend_dungeon")
+    def ascend_dungeon(self, effect_obj, **kwargs):
+        pyg  = session.pyg
+        area = session.player_obj.envs.areas['dungeon']
+
+        # Use a door
+        if effect_obj:
+            if effect_obj.item:
+                lvl_num = effect_obj.item.env.lvl_num - 1
+        
+        # Set manually
+        else:
+            lvl_num = kwargs.get('lvl_num', 0)
+
+        # Enter previously constructed environment
+        create_new = True
+        for env in area.levels.values():
+            if env.lvl_num == lvl_num:
+                place_player(
+                    ent = session.player_obj.ent,
+                    env = area[lvl_num],
+                    loc = area[lvl_num].center)
+                create_new = False
+                break
+
+        # Create a new level
+        if create_new:            
+            area.envs.build_env('dungeon', area)
             place_player(
                 ent = session.player_obj.ent,
-                env = session.player_obj.envs.areas['dungeon'][-1],
-                loc = session.player_obj.envs.areas['dungeon'][-1].center)
+                env = area[lvl_num],
+                loc = area[lvl_num].center)
+
+    def _name_generator(self):
+               
+        con = "bcdfghjklmnpqrstvwxyz"
+        vow = "aeiou"
+
+        length = random.randint(2, 8)
+
+        name = [random.choice(con)]
+
+        for i in range(length - 1):
+            if name[-1] in con:
+                name.append(random.choice(vow))
+            else:
+                name.append(random.choice(con))
+        
+        return "".join(name).capitalize()
 
     @register("enter_cave")
-    def enter_cave(self, effect_obj=None):
-        pyg = session.pyg
-
-        pyg.add_intertitle("The ground breaks beneath you and reveals a cave.")
-        pyg.fn_queue.append([self.enter_cave_queue,  {}])
-        pyg.fade_state = 'out'
-
-    def enter_cave_queue(self, effect_obj=None):
-        """ Advances player to the next level. """
-    
-        ## Shorthand
+    def enter_cave(self, effect_obj, **kwargs):
         envs = session.player_obj.envs
-        ent  = session.player_obj.ent
+
+        # Create new cave system and assign to entrance
+        if not hasattr(effect_obj, 'area'):
+            name = self._name_generator() + 'Cave'
+            envs.add_area(name)
+            effect_obj.area = envs.areas[name]
+        
+        # Enter cave system
+        self.descend_cave(effect_obj, **kwargs)
+
+    @register("descend_cave")
+    def descend_cave(self, effect_obj, **kwargs):
         pyg  = session.pyg
-        
-        #########################################################
-        # Create and/or enter
-        ## Create
-        if 'cave' not in envs.areas.keys():
-            envs.add_area('cave')
-            envs.areas['cave'].add_level('cave')
-        
-        ## Enter the first cave
-        if ent.env.name != 'cave':
+        envs = session.player_obj.envs
+
+        # Find area and level
+        ## Enter from overworld
+        if hasattr(effect_obj, 'area'):
+            area = effect_obj.area
             pyg.update_gui("The ground breaks beneath you and reveals a cave.", pyg.dark_gray)
-            place_player(
-                ent = ent,
-                env = envs.areas['cave'][0],
-                loc = envs.areas['cave'][0].center)
-        
-        ## Enter the next saved cave
-        elif ent.env.lvl_num < len(envs.areas['cave'].levels):
-            pyg.update_gui("You descend deeper into the cave.", pyg.dark_gray)
-            lvl_num = ent.env.lvl_num
-            place_player(
-                ent = ent,
-                env = envs.areas['cave'][lvl_num],
-                loc = envs.areas['cave'][lvl_num].center)
-        
-        ## Enter a new cave
+            lvl_num = 1
+
+        ## Enter from cave system
         else:
-            envs.areas['cave'].add_level('cave')
-            place_player(
-                ent = ent,
-                env = envs.areas['cave'][-1],
-                loc = envs.areas['cave'][-1].center)
+            area = session.player_obj.ent.env.area
+            pyg.update_gui("You descend deeper into the cave.", pyg.dark_gray)
+            lvl_num = effect_obj.item.env.lvl_num + 1
+
+        # Find or build level
+        ## Enter previously constructed level
+        for env in area.levels.values():
+            if env.lvl_num == lvl_num:
+                place_player(
+                    ent = session.player_obj.ent,
+                    env = area[lvl_num-1],
+                    loc = area[lvl_num-1].center)
+                return
+
+        ## Create a new level
+        area.add_level('cave '+str(len(area.levels)), lvl_num)
+        place_player(
+            ent = session.player_obj.ent,
+            env = area[lvl_num-1],
+            loc = area[lvl_num-1].center)
+
+    @register("ascend_cave")
+    def ascend_cave(self, effect_obj, **kwargs):
+        pyg  = session.pyg
+        envs = session.player_obj.envs
+
+        # Find area and level
+        area = session.player_obj.ent.env.area
+        pyg.update_gui("You climb closer to the surface.", pyg.dark_gray)
+        lvl_num = effect_obj.item.env.lvl_num - 1
+
+        # Find or build level
+        ## Enter previously constructed level
+        for env in area.levels.values():
+            if env.lvl_num == lvl_num:
+                place_player(
+                    ent = session.player_obj.ent,
+                    env = area[lvl_num-1],
+                    loc = area[lvl_num-1].player_coordinates)
+                return
+
+        ## Create a new level
+        area.add_level('cave '+str(len(area.levels)), lvl_num)
+        place_player(
+            ent = session.player_obj.ent,
+            env = area[lvl_num-1],
+            loc = area[lvl_num-1].center)
 
     @register("enter_hallucination")
     def enter_hallucination(self, effect_obj=None):

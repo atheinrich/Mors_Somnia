@@ -182,19 +182,18 @@ class PlayGame:
             # Check if an item is under the player
             if ent.tile.item:
                 tile = ent.tile
+                item = tile.item
                 
                 #########################################################
-                # Entryway
-                if tile.item.name == 'dungeon':     session.effects.enter_dungeon()
-                elif tile.item.name == 'cave':      session.effects.enter_cave()
-                elif tile.item.name == 'overworld': session.effects.enter_overworld()
-                elif tile.item.name == 'home':      session.effects.enter_home()
-                
-                
+                # Effects (doors)
+                if item.effect:
+                    if (item.effect.trigger == 'on_use') and (not item.movable):
+                        item.effect.activate()
+
                 #########################################################
                 # Furniture
                 ## Bed
-                elif tile.item.name in ['red bed', 'purple bed']:
+                if tile.item.name in ['red bed', 'purple bed']:
                     
                     # Check if it is the player's bed
                     if tile.room:
@@ -203,7 +202,7 @@ class PlayGame:
                             # Go to sleep if it's not daytime
                             if ent.env.env_time in [1, 2, 7, 8]:
                                 ent.env.env_time = (ent.env.env_time + 3) % 8
-                                session.effects.enter_dungeon(text="The evening dims to night... sleep trustly follows.")
+                                session.effects.descend_dungeon(text="The evening dims to night... sleep trustly follows.")
                             else: pyg.update_gui("Time to face the day.", pyg.dark_gray)
                         
                         # No sleeping in owned beds
@@ -595,10 +594,11 @@ class MovementSystem:
             
             # Activate an effect
             else:
-                for effect in ent.active_effects.values():
-                    if effect.trigger == 'on_blocked':
-                        effect.activate(x=x, y=y, dX=dX, dY=dY)
-                        break
+                if ent.active_effects:
+                    for effect in ent.active_effects.values():
+                        if effect.trigger == 'on_blocked':
+                            effect.activate(x=x, y=y, dX=dX, dY=dY)
+                            break
 
         ent.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
 

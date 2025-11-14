@@ -47,13 +47,13 @@ class Environments:
     def add_area(self, name, permadeath=False):
         self.areas[name] = Area(name, self, permadeath)
 
-    def build_env(self, name, area):
+    def build_env(self, name, area, lvl_num=None):
         if name == 'womb':        return self.build_womb(area)
         elif name == 'garden':    return self.build_garden(area)
         elif name == 'home':      return self.build_home(area)
         elif name == 'overworld': return self.build_overworld(area)
-        elif name == 'dungeon':   return self.build_dungeon(area)
-        elif name == 'cave':      return self.build_cave(area)
+        elif name[:7] == 'dungeon':   return self.build_dungeon(area, lvl_num)
+        elif name[:4] == 'cave':      return self.build_cave(area, lvl_num)
 
     # Underworld
     def build_garden(self, area):
@@ -282,11 +282,8 @@ class Environments:
         
         # Door
         x, y = center[0]-3, center[1]+1
-        item = session.items.create_item('door')
-        item.name = 'overworld'
-        place_object(item, [x, y], env)
-        env.map[x][y].blocked = False
-        env.map[x][y].unbreakable = False
+        stairs = session.items.create_item('overworld_entrance')
+        place_object(stairs, [x, y], env)
         
         # Friend
         x, y = center[0]+1, center[1]
@@ -447,11 +444,8 @@ class Environments:
                 
                 # Door
                 door_x, door_y = x+1, y+5
-                item = session.items.create_item('door')
-                item.name = 'home'
-                place_object(item, [door_x, door_y], env)
-                env.map[door_x][door_y].blocked = False
-                env.map[door_x][door_y].unbreakable = False
+                stairs = session.items.create_item('home_entrance')
+                place_object(stairs, [door_x, door_y], env)
                 
                 room_counter += 1
             
@@ -497,7 +491,7 @@ class Environments:
             ['forest', 'leafy',  10],
             ['forest', 'blades', 1],
             ['desert', 'plant',  1000],
-            ['desert', 'cave',  100]]
+            ['desert', 'enter_cave',  100]]
         entities = [
             ['forest', 'red radish', 50,   [None]],
             ['wet',    'frog',       500,  [None]],
@@ -558,20 +552,14 @@ class Environments:
         ###############################################################
         # Quests
         area.questlog.load_quest('greet_the_town')
-        #self.player_obj.ent.questlines['Friendly Faces'] = FriendlyFaces()
-        #self.player_obj.ent.questlines['Friendly Faces'].making_an_introduction()
             
         return env
 
-    def build_cave(self, area, lvl_num=0):
+    def build_cave(self, area, lvl_num):
         """ Generates a cave environment. """
         
         ###############################################################
         # Initialize environment
-        if not lvl_num:
-            if not self.areas['cave'].levels: lvl_num = 1
-            else:                             lvl_num = 1 + self.areas['cave'][-1].lvl_num
-                
         env = Environment(
             envs       = self,
             name       = 'cave',
@@ -665,10 +653,16 @@ class Environments:
         env.center = new_room.center()
         self.player_obj.ent.tile = env.map[x][y]
         
+        # Generate acending stairs under player
+        stairs = session.items.create_item('descend_cave')
+        place_object(stairs, [x, y], env)
+
         # Generate stairs in the last room
         (x, y) = env.rooms[-1].center()
-        stairs = session.items.create_item('cave')
-        stairs.img_names = ['floors', 'dirt2']
+        if lvl_num == 1:
+            stairs = session.items.create_item('overworld_entrance')
+        else:
+            stairs = session.items.create_item('ascend_cave')
         place_object(stairs, [x, y], env)
 
         return env
@@ -784,10 +778,14 @@ class Environments:
         env.center = new_room.center()
         self.player_obj.ent.tile = env.map[x][y]
         
+        # Generate acending stairs under player
+        if lvl_num != 0:
+            stairs = session.items.create_item('ascend_dungeon')
+            place_object(stairs, [x, y], env)
+
         # Generate stairs in the last room
         (x, y) = env.rooms[-2].center()
-        stairs = session.items.create_item('door')
-        stairs.name = 'dungeon'
+        stairs = session.items.create_item('descend_dungeon')
         place_object(stairs, [x, y], env)
         
         return env
@@ -1186,8 +1184,8 @@ class Area:
 
         self.questlog   = Questlog()
 
-    def add_level(self, name):
-        self.levels[name] = self.envs.build_env(name, self)
+    def add_level(self, name, lvl_num=None):
+        self.levels[name] = self.envs.build_env(name, self, lvl_num)
 
     def __getitem__(self, key):
         if isinstance(key, int):   return list(self.levels.values())[key]

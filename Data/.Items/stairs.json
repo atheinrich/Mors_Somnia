@@ -4,13 +4,51 @@
     "img_names": ["stairs", "door"]
     },
 
+"descend_dungeon": {
+    "name":      "door",
+    "img_names": ["stairs", "door"],
+    "effect_id": "descend_dungeon"
+    },
+
+"ascend_dungeon": {
+    "name":      "door",
+    "img_names": ["stairs", "door"],
+    "effect_id": "ascend_dungeon"
+    },
+
+"overworld_entrance": {
+    "name":      "door",
+    "img_names": ["stairs", "door"],
+    "effect_id": "enter_overworld"
+    },
+
+"home_entrance": {
+    "name":      "door",
+    "img_names": ["stairs", "door"],
+    "effect_id": "enter_home"
+    },
+
+"enter_cave": {
+    "name":      "door",
+    "img_names": ["floors", "sand2"],
+    "effect_id": "enter_cave"
+    },
+
+"descend_cave": {
+    "name":      "door",
+    "img_names": ["floors", "dirt2"],
+    "effect_id": "descend_cave"
+    },
+
+"ascend_cave": {
+    "name":      "door",
+    "img_names": ["floors", "dirt2"],
+    "effect_id": "ascend_cave"
+    },
+
 "portal": {
     "name":      "portal",
     "img_names": ["stairs", "portal"]
-    },
-
-"cave": {
-    "name":      "cave",
-    "img_names": ["floors", "sand2"]
     }
+
 }

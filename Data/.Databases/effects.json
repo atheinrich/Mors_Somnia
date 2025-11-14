@@ -24,6 +24,54 @@
     "size":          5
     },
 
+"boost_stamina": {
+    "name":          "boost stamina",
+    "function_id":   "boost_stamina",
+    "trigger":       "on_use"
+    },
+
+"descend_dungeon": {
+    "name":          "descend dungeon",
+    "function_id":   "descend_dungeon",
+    "trigger":       "on_use"
+    },
+
+"ascend_dungeon": {
+    "name":          "ascend dungeon",
+    "function_id":   "ascend_dungeon",
+    "trigger":       "on_use"
+    },
+
+"enter_overworld": {
+    "name":          "enter overworld",
+    "function_id":   "enter_overworld",
+    "trigger":       "on_use"
+    },
+
+"enter_home": {
+    "name":          "enter home",
+    "function_id":   "enter_home",
+    "trigger":       "on_use"
+    },
+
+"enter_cave": {
+    "name":          "enter cave",
+    "function_id":   "enter_cave",
+    "trigger":       "on_use"
+    },
+
+"descend_cave": {
+    "name":          "descend cave",
+    "function_id":   "descend_cave",
+    "trigger":       "on_use"
+    },
+
+"ascend_cave": {
+    "name":          "ascend cave",
+    "function_id":   "ascend_cave",
+    "trigger":       "on_use"
+    },
+
 "bubbles": {
     "name":          "feed entity",
     "function_id":   "entity_eat",
