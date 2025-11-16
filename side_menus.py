@@ -27,25 +27,22 @@ class InventoryMenu:
 
         #########################################################
         # Parameters
+        ## Item management
+        self.categories = []         # cache of category names with visible items
+        self.items      = []         # cache of actual item objects in current category
+
+        ## Choice management
+        self.category_index = 0      # which category is active
+        self.item_index     = 0      # index of highlighted item corresponding to self.items
+        self.offset         = 0      # difference of first item in category and first currently shown
+
         ## Positions
-        self.cursor_pos  = [0, 32]
-        self.img_x       = 0
-        self.img_y       = 0
+        self.cursor_pos    = [0, 32] # second value is altered
+        self.index_history = {}      # position memory; category_name: [item_index, offset]
 
         ## Other
-        self.dic_index   = 0
-        self.dic_indices = [[0, 0]]
-        self.img_names   = ['null', 'null']
-        self.locked      = False
-        self.detail      = True
-
-        self.category_index = 0 # which category is active
-        self.item_index     = 0 # which item (in that category) is active
-
-        self.categories = []
-        self.items      = []
-        self.offset     = 0
-        self.choice     = 0
+        self.locked = False          # allows the player to active highlighted item while moving
+        self.detail = True           # toggles item names
 
         #########################################################
         # Surface initialization
@@ -95,7 +92,7 @@ class InventoryMenu:
         self.update_data()
 
         ## Set navigation speed
-        session.effects.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=0)
         
         ## Define shorthand
         pyg = session.pyg
@@ -128,8 +125,8 @@ class InventoryMenu:
                 
                 #########################################################
                 # Toggle details
-                elif event.key in pyg.key_QUEST:
-                    self.key_QUEST()
+                elif event.key in pyg.key_GUI:
+                    self.key_GUI()
                 
                 #########################################################
                 # Toggle selection lock
@@ -149,11 +146,6 @@ class InventoryMenu:
                 if event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
-
-            # Save for later reference
-            index = self.dic_index%len(self.dic_indices)
-            self.dic_indices[index][0] = self.offset
-            self.dic_indices[index][1] = self.choice
         
         pyg.overlay_state = 'inv'
         return
@@ -214,40 +206,30 @@ class InventoryMenu:
 
     # Keys
     def key_UP(self):
-
         if not self.locked:
             self.item_index = (self.item_index - 1) % len(self.items)
-            self.update_cursor()
-
+            self.update_data()
         else:
             session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
     def key_DOWN(self):
-
         if not self.locked:
             self.item_index = (self.item_index + 1) % len(self.items)
-            self.update_cursor()
-
+            self.update_data()
         else:
             session.movement.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
     def key_LEFT(self):
-
         if (not self.locked) and (self.categories):
-            self.category_index = (self.category_index - 1) % len(self.categories)
-            self.item_index     = 0
-            self.rebuild_inventory_snapshot()
-
+            self.update_category(-1)
+            self.update_data()
         else:
             session.movement.move(session.player_obj.ent, -session.pyg.tile_height, 0)
 
     def key_RIGHT(self):
-        
-        if (not self.locked) and (self.categories):            
-            self.category_index = (self.category_index + 1) % len(self.categories)
-            self.item_index = 0
-            self.rebuild_inventory_snapshot()
-        
+        if (not self.locked) and (self.categories):
+            self.update_category(1)
+            self.update_data()
         else:
             session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
@@ -257,7 +239,7 @@ class InventoryMenu:
         pyg.last_press_time = float(time.time())
         pyg.overlay_state   = None
 
-    def key_QUEST(self):
+    def key_GUI(self):
         if not self.detail: self.detail = True
         else:               self.detail = False
 
@@ -285,84 +267,100 @@ class InventoryMenu:
         pygame.event.clear()
 
     def key_ENTER(self):
-        session.items.use(self.find_item())
+        session.items.use(self.items[self.item_index])
         self.update_data()
 
     def key_PERIOD(self):
-        session.items.drop(self.find_item())
+        session.items.drop(self.items[self.item_index])
         self.update_data()
 
     # Tools
     def update_data(self):
-        self.inventory_dics = self.rebuild_inventory_snapshot()
-
-        self.categories = list(self.inventory_dics.keys())
-
+        """ Updates current category and its items. """
+        
+        # Update inventory cache
+        inventory_dicts = self._find_visible()
+        self.categories = list(inventory_dicts.keys())
+        
+        # Close the menu if no items are visible
         if not self.categories:
             session.pyg.overlay_state = None
             return
 
+        # Normalize the current category to the number of categories with visible items
         self.category_index %= len(self.categories)
 
-        # 4. Update current item list
-        self.items = self.inventory_dics[self.categories[self.category_index]]
+        # Update item cache for selected category
+        self.items = inventory_dicts[self.categories[self.category_index]]
 
-        if self.items:
-            self.item_index %= len(self.items)
-        else:
-            self.item_index = 0
+        self._update_offset()
 
-        # 5. Derive offset/cursor (no manual tweaking here)
-        self.update_cursor()
-
-    def rebuild_inventory_snapshot(self):
-        """Rebuilds a cleaned dictionary of visible inventory items, grouped by category."""
+    def _find_visible(self):
+        """ Rebuilds a dictionary of visible inventory items, grouped by category. """
 
         inv = session.player_obj.ent.inventory
 
-        inventory_dics = {}
+        inventory_dicts = {}
 
         for category, items in inv.items():
             visible_items = [item for item in items if not item.hidden]
             if visible_items:
-                inventory_dics[category] = visible_items
+                inventory_dicts[category] = visible_items
 
-        return inventory_dics
+        return inventory_dicts
 
-    def update_cursor(self):
+    def _update_offset(self):
+        """ Updates which items are currently shown. """
+
         max_visible = 12
 
+        # Show all visible items
         if len(self.items) <= max_visible:
             self.offset = 0
         
+        # Show current 12 items, set by offset
         else:
-            # Keep the selected item visible
+
+            # Shift current 12 items up by one; cursor is at the top (not the ultimate top)
             if self.item_index < self.offset:
-                self.offset = self.item_index
+                self.offset -= 1 #= self.item_index
+
+            # Shift current 12 items down by one; cursor is at the bottom (not the ultimate bottom)
             elif self.item_index >= self.offset + max_visible:
-                self.offset = self.item_index - max_visible + 1
+                self.offset += 1 # self.item_index - max_visible + 1
 
-        # Cursor Y position is derived — not tracked separately
-        self.cursor_pos[1] = 32 + (self.item_index - self.offset) * 32
+        # Update cursor
+        self.cursor_pos[1] = (self.item_index - self.offset + 1) * 32
+
+        # Keep cursor in the desired bounds
+        if self.cursor_pos[1] == 0:
+            self.cursor_pos[1] = 32
+        elif self.cursor_pos[1] == (max_visible + 1) * 32:
+            self.cursor_pos[1] += 64
+        elif self.cursor_pos[1] == (max_visible + 2) * 32:
+            self.cursor_pos[1] += 64
+
+    def update_category(self, direction):
+        """ Manages history for cursor position in each category. """
+        
+        # Check for new categories
+        for filled_category in self.categories:
+            if filled_category not in self.index_history.keys():
+                self.index_history[filled_category] = [0, 0]
     
-    def find_item(self):
-        """
-        Return the currently selected item in the active category,
-        or the item at a relative offset (with cycling wrap-around).
-        """
-        if not self.categories:
-            return None
+        # Remove old categories
+        for saved_category in self.index_history.keys():
+            if saved_category not in self.categories:
+                del self.index_history[saved_category]
 
-        # Active category and item list
-        category = self.categories[self.category_index]
-        items = self.inventory_dics.get(category, [])
+        # Save last
+        last_category = self.categories[self.category_index]
+        self.index_history[last_category] = [self.item_index, self.offset]
 
-        if not items:
-            return None
-
-        # Compute wrapped index
-        index = (self.item_index + self.item_index - self.offset) % len(items)
-        return items[index]
+        # Load new
+        self.category_index = (self.category_index + direction) % len(self.categories)
+        new_category        = self.categories[self.category_index]
+        self.item_index, self.offset = self.index_history[new_category]
 
 class CatalogMenu:
     
@@ -734,7 +732,7 @@ class AbilitiesMenu:
                 
                 #########################################################
                 # Toggle details
-                elif event.key in pyg.key_QUEST:
+                elif event.key in pyg.key_GUI:
                     if not self.detail: self.detail = True
                     else:               self.detail = False
             
@@ -764,17 +762,17 @@ class AbilitiesMenu:
         """ Sets dictionary for icons and restores location. """
         
         # Finds images and sequences of player effects, then saves them in a dictionary
-        inventory_dics      = {'effects': {}}
+        inventory_dicts      = {'effects': {}}
         self.dic_categories = ['effects']
         self.sequences      = {}
         for name, ability in session.player_obj.ent.active_abilities.items():
-            inventory_dics['effects'][name] = session.img.dict[ability.img_names[0]][ability.img_names[1]]
+            inventory_dicts['effects'][name] = session.img.dict[ability.img_names[0]][ability.img_names[1]]
             self.sequences[name]            = ability.sequence
         
         # Restore last selection
         if len(self.dic_indices) != len(self.dic_categories):
             self.dic_indices = [[0, 0] for _ in self.dic_categories]
-        self.dic = inventory_dics[self.dic_categories[0]]
+        self.dic = inventory_dicts[self.dic_categories[0]]
 
     def check_sequence(self, sequence_string):
         
@@ -1002,7 +1000,7 @@ class ExchangeMenu:
                             return
                 
                 ## >>DETAILS<<
-                elif event.key in pyg.key_QUEST:
+                elif event.key in pyg.key_GUI:
                     if not self.detail: self.detail = True
                     else:               self.detail = False
                 
@@ -1038,13 +1036,13 @@ class ExchangeMenu:
         
         ## Dictionaries
         # Left dictionary
-        self.inventory_dics = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
+        self.inventory_dicts = {'weapons': {}, 'armor': {}, 'potions': {}, 'scrolls': {}, 'drugs': {}, 'other': {}}
         for key, value in session.player_obj.ent.inventory.items():
             for item in value:
                 if not item.hidden:
-                    self.inventory_dics[key][item.name] = [session.img.dict[item.img_names[0]][item.img_names[1]], item]
+                    self.inventory_dicts[key][item.name] = [session.img.dict[item.img_names[0]][item.img_names[1]], item]
         self.inv_dics = {}
-        for key, value in self.inventory_dics.items():
+        for key, value in self.inventory_dicts.items():
             if value: self.inv_dics[key] = value
         
         # Right dictionary

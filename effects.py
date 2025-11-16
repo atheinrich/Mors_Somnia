@@ -341,6 +341,8 @@ class EffectsSystem:
 
     @register("enter_cave")
     def enter_cave(self, effect_obj, **kwargs):
+        """ Creates and assigns a new cave system to the entrance if needed. """
+
         envs = session.player_obj.envs
 
         # Create new cave system and assign to entrance
@@ -355,7 +357,6 @@ class EffectsSystem:
     @register("descend_cave")
     def descend_cave(self, effect_obj, **kwargs):
         pyg  = session.pyg
-        envs = session.player_obj.envs
 
         # Find area and level
         ## Enter from overworld
@@ -390,7 +391,6 @@ class EffectsSystem:
     @register("ascend_cave")
     def ascend_cave(self, effect_obj, **kwargs):
         pyg  = session.pyg
-        envs = session.player_obj.envs
 
         # Find area and level
         area = session.player_obj.ent.env.area
