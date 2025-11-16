@@ -900,7 +900,7 @@ class InteractionSystem:
 
                 # Trading
                 if target.trade_active() and not target.quest_active():
-                    session.trade_obj.ent     = target
+                    session.trade_obj.trader  = target
                     session.pyg.overlay_state = 'trade'
             
                 # Dialogue

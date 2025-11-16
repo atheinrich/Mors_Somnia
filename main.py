@@ -245,7 +245,7 @@ def rendering():
     pyg = session.pyg
 
     #########################################################
-    # Render display
+    # Render display (tiles, items, entities, weather)
     render_display()
     session.img.render()
     for (surface, pos) in pyg.display_queue:
@@ -255,7 +255,7 @@ def rendering():
     pyg.screen.blit(display, (0, 0))
     
     #########################################################
-    # Render HUD
+    # Render HUD (messages, time, health, stamina)
     render_hud()
     for (surface, pos) in pyg.hud_queue:
         pyg.overlays.blit(surface, pos)
@@ -264,7 +264,7 @@ def rendering():
     pyg.screen.blit(hud, (0, 0))
 
     #########################################################
-    # Render overlays
+    # Render overlays (menus)
     for (surface, pos) in pyg.overlay_queue:
         pyg.overlays.blit(surface, pos)
     overlays = pygame.transform.scale(
@@ -272,7 +272,7 @@ def rendering():
     pyg.screen.blit(overlays, (0, 0))
 
     #########################################################
-    # Render fade
+    # Render fade (intertitles)
     for (surface, pos) in pyg.fade_queue:
         pyg.fade.blit(surface, pos)
     fade = pygame.transform.scale(
