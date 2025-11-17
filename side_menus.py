@@ -190,15 +190,10 @@ class InventoryMenu:
                 else:                 detail = ''
                 
                 # Create text surfaces
-                menu_choices          = [item.name, detail]
-                menu_choices_surfaces = []
-                for j in range(len(menu_choices)):
-                    menu_choices_surfaces.append(
-                        pyg.minifont.render(menu_choices[j], True, color))
-                
-                # Send to queue
-                for menu_choice_surface in menu_choices_surfaces:
-                    pyg.overlay_queue.append([menu_choice_surface, (40, Y_detail)])
+                text_lines = [item.name, detail]
+                for text in text_lines:
+                    surface = pyg.minifont.render(text, True, color)
+                    pyg.overlay_queue.append([surface, (40, Y_detail)])
                     Y_detail += 12
             
             # Send to queue
@@ -335,7 +330,7 @@ class InventoryMenu:
                 self.index_history[filled_category] = [0, 0]
     
         # Remove old categories
-        for saved_category in self.index_history.keys():
+        for saved_category in list(self.index_history.keys()):
             if saved_category not in self.categories:
                 del self.index_history[saved_category]
 
@@ -651,35 +646,27 @@ class CatalogMenu:
 
 class AbilitiesMenu:
     
+    # Core
     def __init__(self):
         """ Shows a sidebar menu when a key is held down, then processes input as a combo.
             Options are based on the player's effects, which are managed in PlayerData. 
             
             Parameters
-            ----------
-            cursor_pos      : list of two ints; top left corner of the cursor; first value changed by self.run() in multiples of 32
-            dic_indices     : list of lists of two ints; offset from wraparound, and choice index from cursor; one for each dictionary
-            
-            sequence_toggle : bool; True when the botton is held down
+            ----------            
             keys            : list of key codes; sets which keys count as a combo
-            key_sequence    : three csv strings in [⮜, ⮟, ⮞, ⮝]; combo set in self.run() and cleared after some time
+            key_sequence    : list; three strings in [⮜, ⮟, ⮞, ⮝]
             cooldown_time   : float; the time before the sequence is automatically cleared
-            last_press_time : float; the last time the sequence was cleared
+            last_combo_time : float; the last time the sequence was cleared
             
             detail          : bool; toggles descriptions; altered in self.run() """
         
         pyg = session.pyg
 
-        # Cursor and position saving
-        self.dic_indices = [[0, 0]]
-        
         # Combo sequences
-        self.sequence_toggle = True
         self.keys            = pyg.key_LEFT + pyg.key_DOWN + pyg.key_RIGHT
         self.key_sequence    = []
-        self.last_press_time = 0
-        self.cooldown_time   = 0.5
         self.last_combo_time = 0
+        self.cooldown_time   = 0.5
         
         # GUI
         self.detail = True
@@ -687,23 +674,14 @@ class AbilitiesMenu:
     def run(self):
         """ Processes input sequences while a key is held down. """
         
-        #########################################################
-        # Initialize
-        ## Update dictionaries and create cursors
-        self.update_data()
-
-        ## Set navigation speed
-        session.effects.movement_speed(toggle=False, custom=2)
-        
-        ## Define shorthand
         pyg = session.pyg
 
         ## Wait for input
         for event in pygame.event.get():
             
             # Clear sequence after some time
-            if time.time()-self.last_press_time > self.cooldown_time:
-                self.last_press_time = time.time()
+            if time.time() - self.last_combo_time > self.cooldown_time:
+                self.last_combo_time = time.time()
                 self.key_sequence    = []
             
             if event.type == pygame.KEYDOWN:
@@ -711,16 +689,12 @@ class AbilitiesMenu:
                 #########################################################
                 # Add arrow keys to the current sequence
                 if event.key in self.keys:
-                    self.key_sequence.append(event.key)
-                    
-                    # Keep three most recent keys
-                    if len(self.key_sequence) > 3: self.key_sequence.pop(0)
+                    self.add_key(event.key)
                 
                 #########################################################
                 # Toggle details
                 elif event.key in pyg.key_GUI:
-                    if not self.detail: self.detail = True
-                    else:               self.detail = False
+                    self.key_GUI()
             
             #########################################################
             # Return to game
@@ -730,45 +704,12 @@ class AbilitiesMenu:
                     return
             
             #########################################################
-            # Trigger an event
+            # Activate ability
             if len(self.key_sequence) == 3:
-                sequence_string = ''
-                for key in self.key_sequence:
-                    if key in pyg.key_LEFT:    sequence_string += '⮜'
-                    elif key in pyg.key_DOWN:  sequence_string += '⮟'
-                    elif key in pyg.key_RIGHT: sequence_string += '⮞'
-                    elif key in pyg.key_UP:    sequence_string += '⮝'
-                self.check_sequence(sequence_string)
-                self.key_sequence = []
+                self.check_sequence()
         
         pyg.overlay_state = 'hold'
         return
-
-    def update_data(self):
-        """ Sets dictionary for icons and restores location. """
-        
-        # Finds images and sequences of player effects, then saves them in a dictionary
-        inventory_dicts      = {'effects': {}}
-        self.dic_categories = ['effects']
-        self.sequences      = {}
-        for name, ability in session.player_obj.ent.active_abilities.items():
-            inventory_dicts['effects'][name] = session.img.dict[ability.img_names[0]][ability.img_names[1]]
-            self.sequences[name]            = ability.sequence
-        
-        # Restore last selection
-        if len(self.dic_indices) != len(self.dic_categories):
-            self.dic_indices = [[0, 0] for _ in self.dic_categories]
-        self.dic = inventory_dicts[self.dic_categories[0]]
-
-    def check_sequence(self, sequence_string):
-        
-        # Look through item effects
-        for _, ability in session.player_obj.ent.active_abilities.items():
-            if ability.sequence == sequence_string:
-                if time.time() - ability.last_press_time > ability.cooldown_time:
-                    ability.last_press_time = float(time.time())
-                    ability.activate()
-                    return
 
     def render(self):
         pyg = session.pyg
@@ -781,36 +722,61 @@ class AbilitiesMenu:
         
         # Renders menu to update cursor location
         Y = 32
-        counter = 0
-        for i in range(len(list(self.dic))):
-            
-            # Stop at the 12th image, starting with respect to the offset 
-            if counter <= 12:
-                
-                # Extract image details
-                effects_list = list(self.dic.keys())
-                effect_name  = effects_list[i%len(self.dic)]
-                
-                # Render details
-                if self.detail:
-                    Y_cache = int(Y)
+        for name, ability in session.player_obj.ent.active_abilities.items():
+        
+            # Render details
+            if self.detail:
+                Y_cache = int(Y)
 
-                    self.menu_choices = [effect_name, self.sequences[effect_name]]
-                    self.menu_choices_surfaces = []
-                    for i in range(len(self.menu_choices)):
-                        self.menu_choices_surfaces.append(
-                            pyg.minifont.render(self.menu_choices[i], True, color))
-                    
-                    for menu_choice_surface in self.menu_choices_surfaces:
-                        pyg.overlay_queue.append([menu_choice_surface, (40, Y_cache)])
-                        Y_cache += 12
-                
-                # Render image
-                pyg.overlay_queue.append([self.dic[effect_name], (0, Y)])
-                Y += pyg.tile_height
-                counter += 1
+                sequence   = session.player_obj.ent.active_abilities[name].sequence
+                text_lines = [name, sequence]
+                for text in text_lines:
+                    surface = pyg.minifont.render(text, True, color)
+                    pyg.overlay_queue.append([surface, (40, Y_cache)])
+                    Y_cache += 12
             
-            else: break
+            # Render image
+            img = session.img.dict[ability.img_names[0]][ability.img_names[1]]
+            pyg.overlay_queue.append([img, (0, Y)])
+            Y += pyg.tile_height
+
+    # Keys
+    def key_GUI(self):
+        if not self.detail: self.detail = True
+        else:               self.detail = False
+
+    # Tools
+    def add_key(self, key):
+
+        # Add to current sequence
+        self.key_sequence.append(key)
+        
+        # Keep three most recent keys
+        if len(self.key_sequence) > 3: self.key_sequence.pop(0)
+
+    def check_sequence(self):
+        """ Matches the current sequence to active abilities, then activates the ability if it matches. """
+
+        pyg = session.pyg
+
+        # Convert to arrow notation
+        sequence_string = ''
+        for key in self.key_sequence:
+            if key in pyg.key_LEFT:    sequence_string += '⮜'
+            elif key in pyg.key_DOWN:  sequence_string += '⮟'
+            elif key in pyg.key_RIGHT: sequence_string += '⮞'
+            elif key in pyg.key_UP:    sequence_string += '⮝'
+        self.key_sequence = []
+    
+        # Check for a match
+        for ability in session.player_obj.ent.active_abilities.values():
+            if ability.sequence == sequence_string:
+
+                # Check for cooldown
+                if time.time() - ability.last_press_time > ability.cooldown_time:
+                    ability.last_press_time = float(time.time())
+                    ability.activate()
+                    return
 
 class ExchangeMenu:
     
@@ -982,17 +948,12 @@ class ExchangeMenu:
                     else:    detail = ''
                     
                     # Create text surfaces
-                    menu_choices = [item.name, detail]
-                    menu_choices_surfaces = []
-                    for k in range(len(menu_choices)):
-                        menu_choices_surfaces.append(
-                            pyg.minifont.render(menu_choices[k], True, colors[i]))
-                    
-                    # Send to queue
-                    for menu_choice_surface in menu_choices_surfaces:
+                    text_lines = [item.name, detail]
+                    for text in text_lines:
+                        surface = pyg.minifont.render(text, True, colors[i])
                         pyg.overlay_queue.append([
-                            menu_choice_surface,
-                            (self.X_details(menu_choice_surface)[i], Y_detail)])
+                            surface,
+                            (self.X_details(surface)[i], Y_detail)])
                         Y_detail += 12
                 
                 # Send to queue
@@ -1131,7 +1092,7 @@ class ExchangeMenu:
                 self.index_histories[i][filled_category] = [0, 0]
     
         # Remove old categories
-        for saved_category in self.index_histories[i].keys():
+        for saved_category in list(self.index_histories[i].keys()):
             if saved_category not in self.categories[i]:
                 del self.index_histories[i][saved_category]
 

@@ -693,9 +693,9 @@ class Environments:
         
         # Set weather
         env.weather_backup = {
-            'light_set': None,
+            'light_set': 0,
             'clouds':    False}
-        env.weather = Weather(env, clouds=False)
+        env.weather = Weather(env, clouds=False, light_set=0)
         
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
@@ -1926,12 +1926,18 @@ class Weather:
         # Global mechanisms
         self.env = env
 
-        # Dark blue background
+        # Dark background
         self.sky = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
         
         self.last_hour = time.localtime().tm_hour + 1
         self.last_min  = time.localtime().tm_min + 1
 
+        self.hours = [
+            0,    10,  37,  79, 127, 176, 218, 245,
+            255, 245, 218, 176, 128,  79,  37,  10]
+        self.symbols = [
+            "🌑", "🌑", "🌒", "🌒", "🌓", "🌓", "🌔", "🌔",
+            "🌕", "🌕", "🌖", "🌖", "🌗", "🌗", "🌘", "🌘"]
         self.light_list = []
         
         self.light_set = light_set
@@ -1941,15 +1947,15 @@ class Weather:
     def run(self):
         self.sky.fill((0, 0, 0, 255))
         
-        # Set day
+        # Set day (1 in-game day per 8 hours)
         if (time.localtime().tm_hour + 1) != self.last_hour:
             self.last_hour = time.localtime().tm_hour + 1
             self.env.env_date = ((self.env.env_date+1) % 8) + 1
         
-        # Set time of day
+        # Set time of day (1 in-game hour per 10 minutes; 8 in-game hours per in-game day)
         if int(time.localtime().tm_min / 10) != self.last_min:
             self.last_min = int(time.localtime().tm_min / 10)
-            self.env.env_time = (self.env.env_time + 1) % 8
+            self.env.env_time = (self.env.env_time + 1) % 16
         
         # Change the weather
         if self.light_set is None:
@@ -1971,21 +1977,14 @@ class Weather:
         # Set a specific day and time
         if not increment:
             if day is not None:  self.env.env_date = (day % 8) + 1
-            if time is not None: self.env.env_time = time % 8
+            if time is not None: self.env.env_time = time % 16
         
         # Move forwards in time by one step
-        else: self.env.env_time = (self.env.env_time + 1) % 8
+        else: self.env.env_time = (self.env.env_time + 1) % 16
 
     def update_brightness(self):
-        if self.env.env_time == 0:   alpha = 170 # 🌖
-        elif self.env.env_time == 1: alpha = 85  # 🌗
-        elif self.env.env_time == 2: alpha = 34  # 🌘
-        elif self.env.env_time == 3: alpha = 0   # 🌑
-        elif self.env.env_time == 4: alpha = 34  # 🌒
-        elif self.env.env_time == 5: alpha = 85  # 🌓
-        elif self.env.env_time == 6: alpha = 170 # 🌔
-        elif self.env.env_time == 7: alpha = 255 # 🌕
-        self.sky.set_alpha(alpha)
+        self.alpha = self.hours[self.env.env_time]
+        self.sky.set_alpha(self.alpha)
 
     def create_cloud(self):
 
@@ -2058,9 +2057,10 @@ class Weather:
                                         image = session.img.shift(session.img.dict['concrete']['gray floor'], [int((x_char+y_char)*13)%32, int(abs(x_char-y_char)*10)%32])
                                         
                                         # Set transparency
-                                        if char == '-':   image.set_alpha(64)
-                                        elif char == '.': image.set_alpha(128)
-                                        else:             image.set_alpha(96)
+                                        ratio = (1 - self.alpha / 255)
+                                        if char == '-':   image.set_alpha(int(64 * ratio))
+                                        elif char == '.': image.set_alpha(int(128 * ratio))
+                                        else:             image.set_alpha(int(96 * ratio))
                                         
                                         # Set the corresponding map tile
                                         X = x * pyg.tile_width - self.env.camera.X

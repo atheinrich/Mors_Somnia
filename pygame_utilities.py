@@ -334,7 +334,7 @@ class Pygame:
         stamina          = '⚫' * current_stamina + '⚪' * leftover_stamina
         
         ## Time text
-        time = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'][ent.env.env_time-1]
+        time = ent.env.weather.symbols[ent.env.env_time]
         
         ## Construct dictionary for display
         if pyg.overlay_state:
