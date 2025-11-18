@@ -104,7 +104,7 @@ class EffectsSystem:
                 if not ent.env.map[x][y].unbreakable:
                     ent.env.map[x][y].blocked     = False
                     ent.env.map[x][y].unbreakable = False
-                    ent.env.map[x][y].img_names   = ent.env.floors
+                    ent.env.map[x][y].img_IDs   = ent.env.floor_img_IDs
                     session.movement.move(ent, dX, dY)
                 
                     # Decrease condition
@@ -144,7 +144,7 @@ class EffectsSystem:
 
             # Update tile
             tile           = effect_obj.owner.tile
-            tile.img_names = ['floors', 'water']
+            tile.img_IDs = ['floors', 'water']
             tile.biome     = 'water'
 
             # Update effect
@@ -152,7 +152,7 @@ class EffectsSystem:
 
             # Destroy if no more uses
             if effect_obj.item.uses:
-                effect_obj.item.img_names = ['potions', f'blue potion {4-effect_obj.item.uses}']
+                effect_obj.item.img_IDs = ['potions', f'blue potion {4-effect_obj.item.uses}']
                 pyg.update_gui("You pour out some water.", pyg.blue)
             
             else:

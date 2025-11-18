@@ -1,4 +1,4 @@
-category	key	name	img_names	effect_fn	trigger	sequence	cooldown_time	other
+category	key	name	img_IDs	effect_fn	trigger	sequence	cooldown_time	other
 other	skeleton	info	[bubbles; exclamation]	session.effects.skeleton	active	None	0.1	None
 env	lights	lamp	[lights; dropped]	session.effects.lamp	passive	None	0	5
 drugs	needle	bowl	[drugs; bowl]	session.effects.enter_hallucination	active	None	0.1	None

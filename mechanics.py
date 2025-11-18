@@ -544,8 +544,8 @@ class MovementSystem:
         elif dX > 0: ent.direction = 'right'
         
         ## Change orientation before moving
-        if ent.img_names[1] != ent.direction:
-            ent.img_names[1] = ent.direction
+        if ent.img_IDs[1] != ent.direction:
+            ent.img_IDs[1] = ent.direction
 
         #########################################################
         # Move to new position
@@ -561,7 +561,7 @@ class MovementSystem:
                     
                     # Prevent non-player entities from standing in entryways
                     if (ent.name != "player") and (ent.env.map[x][y].item):
-                        if ent.env.map[x][y].item.img_names[0] in session.img.other['stairs']:
+                        if ent.env.map[x][y].item.img_IDs[0] in session.img.other['stairs']:
                             return
                     
                     # Player-specific
@@ -585,7 +585,7 @@ class MovementSystem:
                     session.bus.emit(
                         event_id = 'tile_occupied',
                         ent_id   = ent.name,
-                        tile_id  = ent.tile.img_names[1])
+                        tile_id  = ent.tile.img_IDs[1])
                 
             #########################################################
             # Interact with an entity
@@ -676,10 +676,10 @@ class MovementSystem:
         
         # Move
         if self.distance_new(ent, [ent.X+dX, ent.Y+dY], [ent.X0, ent.Y0]) <= ent.reach:
-            if   (dX < 0) and (ent.img_names[1] == 'left'):  chance = 5
-            elif (dX > 0) and (ent.img_names[1] == 'right'): chance = 5
-            elif (dY < 0) and (ent.img_names[1] == 'back'):  chance = 5
-            elif (dY > 0) and (ent.img_names[1] == 'front'): chance = 5
+            if   (dX < 0) and (ent.img_IDs[1] == 'left'):  chance = 5
+            elif (dX > 0) and (ent.img_IDs[1] == 'right'): chance = 5
+            elif (dY < 0) and (ent.img_IDs[1] == 'back'):  chance = 5
+            elif (dY > 0) and (ent.img_IDs[1] == 'front'): chance = 5
             else:                                             chance = 1
             if not random.randint(0, ent.lethargy//chance):
                 self.move(ent, dX, dY)
@@ -718,8 +718,8 @@ class MovementSystem:
         pyg = session.pyg
 
         # Look for water
-        nearby_tiles = [tile.img_names[1] for tile in get_vicinity(ent).values()]
-        if ('water' not in nearby_tiles) and ('water' not in ent.tile.img_names[1]):
+        nearby_tiles = [tile.img_IDs[1] for tile in get_vicinity(ent).values()]
+        if ('water' not in nearby_tiles) and ('water' not in ent.tile.img_IDs[1]):
             
             # Prepare movements
             motions_log = []
@@ -728,7 +728,7 @@ class MovementSystem:
             distance_list = []
             for y in range(len(ent.env.map[0])):
                 for x in range(len(ent.env.map)):
-                    if ent.env.map[x][y].img_names[1] == 'water':
+                    if ent.env.map[x][y].img_IDs[1] == 'water':
                         
                         # Find distance
                         dX_total = int(x*32) - ent.X
@@ -861,7 +861,7 @@ class MovementSystem:
         motions_log = []
         
         # Look forward first
-        if ent.img_names[0] != 'front':
+        if ent.img_IDs[0] != 'front':
             motions_log.append([0, pyg.tile_height])
         motions_log.append([-pyg.tile_width, 0])
         
@@ -1010,7 +1010,7 @@ class InteractionSystem:
             pyg.update_gui("You died!", pyg.red)
             session.player_obj.ent.dead        = True
             session.player_obj.ent.tile.entity = None
-            session.player_obj.ent.img_names   = session.player_obj.ent.img_names_backup
+            session.player_obj.ent.img_IDs   = session.player_obj.ent.img_names_backup
             
             item = session.items.create_item('skeleton')
             item.name = f"the corpse of {ent.name}"
@@ -1113,7 +1113,7 @@ def get_vicinity(obj):
     
         Returns
         -------
-        obj.vicinity : dict of Tile objects
+        obj.vicinity : dict of tile objects
     """
 
     pyg = session.pyg
@@ -1157,19 +1157,19 @@ def check_tile(x, y, ent=None, startup=False):
             if (tile.room != ent.prev_tile.room) or (startup == True):
                 
                 # Hide the roof if the player enters a room
-                if tile.room and tile.room.roof:
+                if tile.room and tile.room.roof_img_IDs:
                     for spot in tile.room.tiles_list:
                         if spot not in tile.room.walls_list:
-                            spot.img_names = tile.room.floor
+                            spot.img_IDs = tile.room.floor
     
     # Reveal the roof if the player leaves the room
     if ent.prev_tile:
         prev_tile = ent.prev_tile
         if prev_tile.room and not tile.room:
-            if prev_tile.room.roof:
+            if prev_tile.room.roof_img_IDs:
                 for spot in prev_tile.room.tiles_list:
                     if spot not in prev_tile.room.walls_list:
-                        spot.img_names = prev_tile.room.roof
+                        spot.img_IDs = prev_tile.room.roof_img_IDs
 
 def is_blocked(env, loc):
     """ Checks for barriers. """

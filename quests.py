@@ -664,7 +664,7 @@ class Bloodkin:
                         obj.name = 'mysterious note'
                         obj.effect = Effect(
                             name          = 'mysterious note',
-                            img_names     = ['scrolls', 'open'],
+                            img_IDs     = ['scrolls', 'open'],
                             function      = self.mysterious_note,
                             trigger       = 'active',
                             sequence      = None,

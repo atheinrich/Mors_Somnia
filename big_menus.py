@@ -405,8 +405,8 @@ class NewGameMenu:
         ## Rotate character
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = float(time.time())
-            self.temp_obj.ent.img_names[1] = self.orientations[
-                self.orientations.index(self.temp_obj.ent.img_names[1]) - 1]
+            self.temp_obj.ent.img_IDs[1] = self.orientations[
+                self.orientations.index(self.temp_obj.ent.img_IDs[1]) - 1]
         
         #########################################################
         # Render menu
@@ -496,12 +496,12 @@ class NewGameMenu:
             
             #########################################################
             # Find next option
-            index    = (img_dict.index(self.temp_obj.ent.equipment[role].img_names[0]) + 1) % len(img_dict)
+            index    = (img_dict.index(self.temp_obj.ent.equipment[role].img_IDs[0]) + 1) % len(img_dict)
             img_name = img_dict[index]
             
             #########################################################
             # Equip next option if already generated
-            if img_name in [[x[i].img_names[0] for i in range(len(x))] for x in self.temp_obj.ent.inventory.values()]:
+            if img_name in [[x[i].img_IDs[0] for i in range(len(x))] for x in self.temp_obj.ent.inventory.values()]:
                 session.items.toggle_equip(self.temp_obj.ent.inventory[img_name][0], silent=True)
             
             ## Generate option before equip
@@ -513,8 +513,8 @@ class NewGameMenu:
         #########################################################
         # Apply skin option
         elif self.choice == 3:
-            if self.temp_obj.ent.img_names[0] == 'white':   self.temp_obj.ent.img_names[0] = 'black'
-            elif self.temp_obj.ent.img_names[0] == 'black': self.temp_obj.ent.img_names[0] = 'white'
+            if self.temp_obj.ent.img_IDs[0] == 'white':   self.temp_obj.ent.img_IDs[0] = 'black'
+            elif self.temp_obj.ent.img_IDs[0] == 'black': self.temp_obj.ent.img_IDs[0] = 'white'
         
         #########################################################
         # Apply handedness option
@@ -1077,23 +1077,23 @@ class StatsMenu:
         
         ## Apply mood effects
         if self.pet_moods['happiness'] <= 2:
-            if self.ents[-1].img_names[0] != 'purple radish':
+            if self.ents[-1].img_IDs[0] != 'purple radish':
                 for ent in self.ents:
                     if ent != session.player_obj.ent:
-                        if ent.img_names[0] != 'purple radish':
-                            ent.img_names[0] = 'purple radish'
+                        if ent.img_IDs[0] != 'purple radish':
+                            ent.img_IDs[0] = 'purple radish'
         elif self.pet_moods['happiness'] >= 8:
-            if self.ents[-1].img_names[0] != 'orange radish':
+            if self.ents[-1].img_IDs[0] != 'orange radish':
                 for ent in self.ents:
                     if ent != session.player_obj.ent:
-                        if ent.img_names[0] != 'orange radish':
-                            ent.img_names[0] = 'orange radish'
+                        if ent.img_IDs[0] != 'orange radish':
+                            ent.img_IDs[0] = 'orange radish'
         else:
-            if self.ents[-1].img_names[0] != 'red radish':
+            if self.ents[-1].img_IDs[0] != 'red radish':
                 for ent in self.ents:
                     if ent != session.player_obj.ent:
-                        if ent.img_names[0] != 'red radish':
-                            ent.img_names[0] = 'red radish'
+                        if ent.img_IDs[0] != 'red radish':
+                            ent.img_IDs[0] = 'red radish'
         
         # Set levels
         self.pet_stats['stamina']  = '★' * self.pet_levels['stamina']

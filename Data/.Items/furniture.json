@@ -1,142 +1,142 @@
 {
 "purple_bed": {
     "name":      "purple bed",
-    "img_names": ["furniture", "purple bed"]
+    "img_IDs": ["furniture", "purple bed"]
     },
 
 "red_bed": {
     "name":      "red bed",
-    "img_names": ["furniture", "red bed"]
+    "img_IDs": ["furniture", "red bed"]
     },
 
 "shelf_left": {
     "name":      "shelf left",
-    "img_names": ["furniture", "shelf left"],
+    "img_IDs": ["furniture", "shelf left"],
     "blocked":   true
     },
 
 "shelf_right": {
     "name":      "shelf right",
-    "img_names": ["furniture", "shelf right"],
+    "img_IDs": ["furniture", "shelf right"],
     "blocked":   true
     },
 
 "long_table_left": {
     "name":      "long table left",
-    "img_names": ["furniture", "long table left"],
+    "img_IDs": ["furniture", "long table left"],
     "blocked":   true
     },
 
 "long_table_right": {
     "name":      "long table right",
-    "img_names": ["furniture", "long table right"],
+    "img_IDs": ["furniture", "long table right"],
     "blocked":   true
     },
 
 "table": {
     "name":      "table",
-    "img_names": ["furniture", "table"],
+    "img_IDs": ["furniture", "table"],
     "blocked":   true
     },
 
 "red_chair_left": {
     "name":      "red chair left",
-    "img_names": ["furniture", "red chair left"]
+    "img_IDs": ["furniture", "red chair left"]
     },
 
 "red_chair_right": {
     "name":      "red chair right",
-    "img_names": ["furniture", "red chair right"]
+    "img_IDs": ["furniture", "red chair right"]
     },
 
 "red_rug_bottom_left": {
     "name":      "red rug bottom left",
-    "img_names": ["furniture", "red rug bottom left"]
+    "img_IDs": ["furniture", "red rug bottom left"]
     },
 
 "red_rug_bottom_middle": {
     "name":      "red rug bottom middle",
-    "img_names": ["furniture", "red rug bottom middle"]
+    "img_IDs": ["furniture", "red rug bottom middle"]
     },
 
 "red_rug_bottom_right": {
     "name":      "red rug bottom right",
-    "img_names": ["furniture", "red rug bottom right"]
+    "img_IDs": ["furniture", "red rug bottom right"]
     },
 
 "red_rug_middle_left": {
     "name":      "red rug middle left",
-    "img_names": ["furniture", "red rug middle left"]
+    "img_IDs": ["furniture", "red rug middle left"]
     },
 
 "red_rug_middle_middle": {
     "name":      "red rug middle middle",
-    "img_names": ["furniture", "red rug middle middle"]
+    "img_IDs": ["furniture", "red rug middle middle"]
     },
 
 "red_rug_middle_right": {
     "name":      "red rug middle right",
-    "img_names": ["furniture", "red rug middle right"]
+    "img_IDs": ["furniture", "red rug middle right"]
     },
 
 "red_rug_top_left": {
     "name":      "red rug top left",
-    "img_names": ["furniture", "red rug top left"]
+    "img_IDs": ["furniture", "red rug top left"]
     },
 
 "red_rug_top_middle": {
     "name":      "red rug top middle",
-    "img_names": ["furniture", "red rug top middle"]
+    "img_IDs": ["furniture", "red rug top middle"]
     },
 
 "red_rug_top_right": {
     "name":      "red rug top right",
-    "img_names": ["furniture", "red rug top right"]
+    "img_IDs": ["furniture", "red rug top right"]
     },
 
 "green_rug_bottom_left": {
     "name":      "green rug bottom left",
-    "img_names": ["furniture", "green rug bottom left"]
+    "img_IDs": ["furniture", "green rug bottom left"]
     },
 
 "green_rug_bottom_middle": {
     "name":      "green rug bottom middle",
-    "img_names": ["furniture", "green rug bottom middle"]
+    "img_IDs": ["furniture", "green rug bottom middle"]
     },
 
 "green_rug_bottom_right": {
     "name":      "green rug bottom right",
-    "img_names": ["furniture", "green rug bottom right"]
+    "img_IDs": ["furniture", "green rug bottom right"]
     },
 
 "green_rug_middle_left": {
     "name":      "green rug middle left",
-    "img_names": ["furniture", "green rug middle left"]
+    "img_IDs": ["furniture", "green rug middle left"]
     },
 
 "green_rug_middle_middle": {
     "name":      "green rug middle middle",
-    "img_names": ["furniture", "green rug middle middle"]
+    "img_IDs": ["furniture", "green rug middle middle"]
     },
 
 "green_rug_middle_right": {
     "name":      "green rug middle right",
-    "img_names": ["furniture", "green rug middle right"]
+    "img_IDs": ["furniture", "green rug middle right"]
     },
 
 "green_rug_top_left": {
     "name":      "green rug top left",
-    "img_names": ["furniture", "green rug top left"]
+    "img_IDs": ["furniture", "green rug top left"]
     },
 
 "green_rug_top_middle": {
     "name":      "green rug top middle",
-    "img_names": ["furniture", "green rug top middle"]
+    "img_IDs": ["furniture", "green rug top middle"]
     },
 
 
 "green_rug_top_right": {
     "name":      "green rug top right",
-    "img_names": ["furniture", "green rug top right"]
+    "img_IDs": ["furniture", "green rug top right"]
     }
 }

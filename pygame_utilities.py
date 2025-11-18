@@ -799,10 +799,10 @@ class Images:
         shifted.blit(image, (X_offset - image.get_width(), Y_offset - image.get_height())) # wraps corners
         return shifted
 
-    def halved(self, img_names, flipped=False):
+    def halved(self, img_IDs, flipped=False):
         
-        if flipped: image = self.flipped.dict[img_names[0]][img_names[1]]
-        else:       image = self.dict[img_names[0]][img_names[1]]
+        if flipped: image = self.flipped.dict[img_IDs[0]][img_IDs[1]]
+        else:       image = self.dict[img_IDs[0]][img_IDs[1]]
         
         # Create a new surface with the same dimensions as the original image
         half = pygame.Surface((image.get_width(), image.get_height()), pygame.SRCALPHA)
@@ -890,7 +890,7 @@ class Images:
         
         pyg = session.pyg
 
-        shift = 32 - self.ent_data[ent.img_names[0]]['height']
+        shift = 32 - self.ent_data[ent.img_IDs[0]]['height']
         
         self.impact = True
         
@@ -1268,7 +1268,7 @@ def render_display():
                 
                 # Fifth tier (roof)
                 if tile.room:
-                    if tile.room.roof == tile.img_names:
+                    if tile.room.roof_img_IDs == tile.img_IDs:
                         image, (X, Y) = tile.draw()
                         pyg.display_queue.append([image, (X, Y)])
 

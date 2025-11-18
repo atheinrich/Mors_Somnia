@@ -1,4 +1,4 @@
-category	key	name	role	img_names	habitat	exp	rank	sanity	hp	max_hp	attack	defense	stamina	follow	lethargy	miss_rate	aggression	fear	reach	ability_ids
+category	key	name	role	img_IDs	habitat	exp	rank	sanity	hp	max_hp	attack	defense	stamina	follow	lethargy	miss_rate	aggression	fear	reach	ability_ids
 NPC	white	white NPC	NPC	[white; front]	any	0	1	100	50	50	15	5	100	FALSE	5	10	0	None	1000	[]
 NPC	black	black NPC	NPC	[black; front]	any	0	1	50	50	15	5	100	100	FALSE	5	10	0	None	1000	[]
 NPC	fat	fat NPC	NPC	[fat; front]	any	0	1	50	50	15	5	100	100	FALSE	5	10	0	None	1000	[]

@@ -119,7 +119,7 @@ class AbilitiesSystem:
         if target:
             image = session.img.dict['bubbles']['heart bubble']
             session.img.flash_above(target, image)
-            session.img.flash_on(target, session.img.dict[target.img_names[0]][target.img_names[1]])
+            session.img.flash_on(target, session.img.dict[target.img_IDs[0]][target.img_IDs[1]])
             
             if owner.discoveries['entities'].values():
                 for names in owner.discoveries['entities'].values():
@@ -143,7 +143,7 @@ class AbilitiesSystem:
         target.tile.entity = None
         target.env.entities.remove(target)
         
-        owner.discoveries['entities'][target.name] = target.img_names
+        owner.discoveries['entities'][target.name] = target.img_IDs
 
     @register("entity_comfort")
     def entity_comfort(self, ability_obj):
@@ -194,9 +194,9 @@ class AbilitiesSystem:
             
             # Send animation to queue
             if owner.equipment['dominant hand']:
-                image = session.img.dict[owner.equipment['dominant hand'].img_names[0]]['dropped']
+                image = session.img.dict[owner.equipment['dominant hand'].img_IDs[0]]['dropped']
             else:
-                image = session.img.dict[ability_obj.img_names[0]][ability_obj.img_names[1]]
+                image = session.img.dict[ability_obj.img_IDs[0]][ability_obj.img_IDs[1]]
             session.img.vicinity_flash(owner, image)
             
             # Apply attack to enemies
@@ -236,7 +236,7 @@ class AbilitiesSystem:
             obj   = blob,
             loc   = [img_x, img_y],
             env   = owner.env,
-            names = blob.img_names)
+            names = blob.img_IDs)
         
         # Prepare movements
         motions_log = []

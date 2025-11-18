@@ -197,7 +197,7 @@ class InventoryMenu:
                     Y_detail += 12
             
             # Send to queue
-            img = session.img.dict[item.img_names[0]][item.img_names[1]]
+            img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
             pyg.overlay_queue.append([img, (0, Y)])
         
         ## Cursor border
@@ -359,7 +359,7 @@ class CatalogMenu:
         self.img_y      = 0
 
         ## Other
-        self.img_names = ['null', 'null']
+        self.img_IDs = ['null', 'null']
         self.locked    = False
 
         #########################################################
@@ -447,8 +447,8 @@ class CatalogMenu:
             
             # Stop at the 12th image, starting with respect to the offset 
             if counter <= 12:
-                img_names = self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]]
-                pyg.overlay_queue.append([session.img.dict[img_names[0]][img_names[1]], (pyg.screen_width-pyg.tile_width, Y)])
+                img_IDs = self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]]
+                pyg.overlay_queue.append([session.img.dict[img_IDs[0]][img_IDs[1]], (pyg.screen_width-pyg.tile_width, Y)])
                 Y += pyg.tile_height
                 counter += 1
             else: break
@@ -528,8 +528,8 @@ class CatalogMenu:
 
         # Note location and image names
         self.img_x, self.img_y = int(session.player_obj.ent.X/pyg.tile_width), int(session.player_obj.ent.Y/pyg.tile_height)
-        self.img_names[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
-        self.img_names[1] = list(self.dic.keys())[(self.choice)%len(self.dic)]
+        self.img_IDs[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
+        self.img_IDs[1] = list(self.dic.keys())[(self.choice)%len(self.dic)]
         
         # Set location for drop
         if session.player_obj.ent.direction == 'front':   self.img_y += 1
@@ -538,49 +538,49 @@ class CatalogMenu:
         elif session.player_obj.ent.direction == 'left':  self.img_x -= 1
         
         # Place tile
-        if self.img_names[0] in ['floors', 'walls', 'roofs']:
+        if self.img_IDs[0] in ['floors', 'walls', 'roofs']:
             obj = session.player_obj.ent.env.map[self.img_x][self.img_y]
             obj.placed = True
             place_object(
                 obj = obj,
                 loc = [self.img_x, self.img_y],
                 env = session.player_obj.ent.env,
-                names = self.img_names.copy())
+                names = self.img_IDs.copy())
 
             # Check if it completes a room
-            if self.img_names[0] == 'walls':
+            if self.img_IDs[0] == 'walls':
                 session.player_obj.ent.env.build_room(obj)
         
         # Place entity
-        elif self.img_names[0] in session.img.ent_data.keys():
+        elif self.img_IDs[0] in session.img.ent_data.keys():
             item = create_entity(
-                names = self.img_names.copy())
+                names = self.img_IDs.copy())
             place_object(
                 obj   = item,
                 loc   = [self.img_x, self.img_y],
                 env   = session.player_obj.ent.env,
-                names = self.img_names.copy())
+                names = self.img_IDs.copy())
         
         # Place item
-        elif self.img_names[1] not in session.img.ent_data.keys():
+        elif self.img_IDs[1] not in session.img.ent_data.keys():
             item = create_item(
-                names = self.img_names)
+                names = self.img_IDs)
             place_object(
                 obj   = item,
                 loc   = [self.img_x, self.img_y],
                 env   = session.player_obj.ent.env,
-                names = self.img_names.copy())
-            if item.img_names[0] == 'stairs':
+                names = self.img_IDs.copy())
+            if item.img_IDs[0] == 'stairs':
                 item.tile.blocked = False
         
         else:
             ent = create_entity(
-                names = self.img_names[1])
+                names = self.img_IDs[1])
             place_object(
                 obj   = ent,
                 loc   = [self.img_x, self.img_y],
                 env   = session.player_obj.ent.env,
-                names = self.img_names.copy())
+                names = self.img_IDs.copy())
         
         self.img_x, self.img_y = None, None
         pyg.overlay_state = None
@@ -736,7 +736,7 @@ class AbilitiesMenu:
                     Y_cache += 12
             
             # Render image
-            img = session.img.dict[ability.img_names[0]][ability.img_names[1]]
+            img = session.img.dict[ability.img_IDs[0]][ability.img_IDs[1]]
             pyg.overlay_queue.append([img, (0, Y)])
             Y += pyg.tile_height
 
@@ -957,7 +957,7 @@ class ExchangeMenu:
                         Y_detail += 12
                 
                 # Send to queue
-                img = session.img.dict[item.img_names[0]][item.img_names[1]]
+                img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
                 pyg.overlay_queue.append([img, (self.X_img[i], Y)])
             
         ## Cursor border

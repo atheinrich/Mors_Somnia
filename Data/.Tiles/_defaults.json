@@ -1,0 +1,85 @@
+{
+"walls": {
+    "env":            null,
+    "biome":          null,
+    "placed":         false,
+
+    "number":         null,
+    "room":           null,
+    "entity":         null,
+    "item ":          null,
+    
+    "img_IDs":        null,
+    "wall_img_IDs":   null,
+    "floor_img_IDs":  null,
+    "roof_img_IDs":   null,
+    "timer":          null,
+
+    "X":              null,
+    "Y":              null,
+    "rand_X":         null,
+    "rand_Y":         null,
+    
+    "blocked":        false,
+    "hidden":         false,
+    "unbreakable":    false,
+    
+    "active_effects": {}
+    },
+
+"floors": {
+    "env":            null,
+
+    "number":         null,
+    "room":           null,
+    "entity":         null,
+    "item ":          null,
+    
+    "img_IDs":      null,
+    "walls":          null,
+    "floor":          null,
+    "roof":           null,
+    "timer":          null,
+
+    "X":              null,
+    "Y":              null,
+    "rand_X":         null,
+    "rand_Y":         null,
+    
+    "biome":          null,
+    "blocked":        null,
+    "hidden":         null,
+    "unbreakable":    null,
+    "placed":         null,
+    
+    "active_effects": null
+    },
+
+"roofs": {
+    "env":            null,
+
+    "number":         null,
+    "room":           null,
+    "entity":         null,
+    "item ":          null,
+    
+    "img_IDs":      null,
+    "walls":          null,
+    "floor":          null,
+    "roof":           null,
+    "timer":          null,
+
+    "X":              null,
+    "Y":              null,
+    "rand_X":         null,
+    "rand_Y":         null,
+    
+    "biome":          null,
+    "blocked":        null,
+    "hidden":         null,
+    "unbreakable":    null,
+    "placed":         null,
+    
+    "active_effects": null
+    }
+}

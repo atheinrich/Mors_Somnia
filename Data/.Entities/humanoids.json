@@ -1,16 +1,16 @@
 {
 "white": {
     "name":      "white",
-    "img_names": ["white", "front"]
+    "img_IDs": ["white", "front"]
     },
 
 "black": {
     "name":      "black",
-    "img_names": ["black", "front"]
+    "img_IDs": ["black", "front"]
     },
 
 "fat": {
     "name":      "fat",
-    "img_names": ["fat", "front"]
+    "img_IDs": ["fat", "front"]
     }
 }

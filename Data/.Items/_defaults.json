@@ -3,7 +3,7 @@
 
     "name":          null,
     "slot":          null,
-    "img_names":     null,
+    "img_IDs":     null,
 
     "role":          "armor",
     "equippable":    true,
@@ -35,7 +35,7 @@
 "armor": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "cost":          0,
     "defense_bonus": 0,
 
@@ -68,7 +68,7 @@
 "decor": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "hidden":        false,
     "blocked":       false,
     "movable":       true,
@@ -101,7 +101,7 @@
 "drugs": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "cost":          0,
 
     "role":          "drugs",
@@ -134,7 +134,7 @@
 "furniture": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "blocked":       false,
 
     "role":          "other",
@@ -167,7 +167,7 @@
 "offhands": {
 
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "cost":          0,
     "defense_bonus": 0,
     "ability_id":    null,
@@ -200,7 +200,7 @@
 "potions": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "rand_X":        0,
     "rand_Y":        0,
     "cost":          10,
@@ -233,7 +233,7 @@
 "scrolls": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "cost":          20,
 
     "role":          "scrolls",
@@ -266,7 +266,7 @@
 "stairs": {
 
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
 
     "role":          "other",
     "slot":          null,
@@ -299,7 +299,7 @@
 "structures": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "blocked":       false,
 
     "role":          "other",
@@ -332,7 +332,7 @@
 "weapons": {
     
     "name":          null,
-    "img_names":     null,
+    "img_IDs":     null,
     "uses":          101,
     "cost":          0,
     "attack_bonus":  0,

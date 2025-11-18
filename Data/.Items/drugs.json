@@ -1,38 +1,38 @@
 {
 "needle": {
     "name":      "needle",
-    "img_names": ["drugs", "needle"],
+    "img_IDs": ["drugs", "needle"],
     "cost":      25
     },
 
 "skin": {
     "name":      "skin",
-    "img_names": ["drugs", "skin"],
+    "img_IDs": ["drugs", "skin"],
     "cost":      10
     },
 
 "teeth": {
     "name":      "teeth",
-    "img_names": ["drugs", "teeth"],
+    "img_IDs": ["drugs", "teeth"],
     "cost":      10
     },
 
 "bowl": {
     "name":      "bowl",
-    "img_names": ["drugs", "bowl"],
+    "img_IDs": ["drugs", "bowl"],
     "cost":      30
     },
 
 "plant": {
     "name":      "plant",
-    "img_names": ["drugs", "plant"],
+    "img_IDs": ["drugs", "plant"],
     "cost":      10,
     "effect_id": "boost_stamina"
     },
 
 "bubbles": {
     "name":      "bubbles",
-    "img_names": ["drugs", "bubbles"],
+    "img_IDs": ["drugs", "bubbles"],
     "cost":      50
     }
 }

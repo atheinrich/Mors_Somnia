@@ -29,8 +29,8 @@ class Item:
             X             :
             Y             : 
             
-            img_names[0]  : string
-            img_names[1]  : string
+            img_IDs[0]  : string
+            img_IDs[1]  : string
             
             uses          : int; item breaks at 0
             equippable    : Boolean; lets item be equipped by entity
@@ -80,18 +80,18 @@ class Item:
             X = self.X - cam.X
             Y = self.Y - cam.Y
 
-            if self.img_names[0] == 'decor':
+            if self.img_IDs[0] == 'decor':
                 X -= self.rand_X
                 Y -= self.rand_Y
         
             # Add effects and draw
-            if (self.img_names[1] in ['leafy']) and not self.rand_Y:
-                surface = img.dict[self.img_names[0]][self.img_names[1]]
+            if (self.img_IDs[1] in ['leafy']) and not self.rand_Y:
+                surface = img.dict[self.img_IDs[0]][self.img_IDs[1]]
                 X       -= 32
                 Y       -= 32
             else:
-                if self.flipped: surface = img.flipped.dict[self.img_names[0]][self.img_names[1]]
-                else:            surface = img.dict[self.img_names[0]][self.img_names[1]]
+                if self.flipped: surface = img.flipped.dict[self.img_IDs[0]][self.img_IDs[1]]
+                else:            surface = img.dict[self.img_IDs[0]][self.img_IDs[1]]
 
             pos = (X, Y)
                 

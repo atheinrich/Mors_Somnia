@@ -1,4 +1,4 @@
-category	key	name	role	slot	img_names	durability	equippable	equipped	hidden	blocked	movable	rand_X	rand_Y	cost	hp_bonus	attack_bonus	defense_bonus	effect
+category	key	name	role	slot	img_IDs	durability	equippable	equipped	hidden	blocked	movable	rand_X	rand_Y	cost	hp_bonus	attack_bonus	defense_bonus	effect
 decor	tree	tree	other	None	[decor; tree]	101	FALSE	FALSE	FALSE	TRUE	TRUE	0	0	20	0	0	0	None
 decor	bones	bones	other	None	[decor; bones]	101	FALSE	FALSE	FALSE	FALSE	TRUE	0	0	5	0	0	0	None
 decor	boxes	boxes	other	None	[decor; boxes]	101	FALSE	FALSE	FALSE	TRUE	FALSE	0	0	5	0	0	0	None

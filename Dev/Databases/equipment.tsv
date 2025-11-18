@@ -1,4 +1,4 @@
-category	item_id	role	slot	img_names	durability	equippable	equipped	hidden	blocked	movable	rand_X	rand_Y	cost	hp_bonus	attack_bonus	defense_bonus	effect
+category	item_id	role	slot	img_IDs	durability	equippable	equipped	hidden	blocked	movable	rand_X	rand_Y	cost	hp_bonus	attack_bonus	defense_bonus	effect
 weapon	shovel	weapon	dominant hand	[shovel; dropped]	100	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	15	0	2	10	None
 weapon	super_shovel	weapon	dominant hand	[super shovel; dropped]	1000	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	10	0	100	0	None
 weapon	dagger	weapon	dominant hand	[dagger; dropped]	101	TRUE	FALSE	FALSE	FALSE	TRUE	0	0	25	0	2	0	None

@@ -193,7 +193,7 @@ class PlayerData:
             session.items.pick_up(self.ent, item, silent=True)
 
         clothes = None
-        if self.ent.equipment['chest'].img_names[0] == 'bra': clothes = 'yellow dress'
+        if self.ent.equipment['chest'].img_IDs[0] == 'bra': clothes = 'yellow dress'
         else:                                                 clothes = 'green clothes'
         item = session.items.create_item(clothes)
         session.items.pick_up(self.ent, item, silent=True)
@@ -210,7 +210,7 @@ class Entity:
 
             name           : string
             role           : string in ['player', 'enemy', 'NPC']
-            img_names      : list of strings
+            img_IDs      : list of strings
             handedness     : string in ['left', 'right']
 
             exp            : int; experience accumulated by player or given from enemy
@@ -245,8 +245,8 @@ class Entity:
             setattr(self, key, value)
         
         ## Images
-        self.img_names_backup = self.img_names
-        self.direction        = self.img_names[1]
+        self.img_names_backup = self.img_IDs
+        self.direction        = self.img_IDs[1]
         self.handedness       = 'left'
 
         ## Location
@@ -310,14 +310,14 @@ class Entity:
         ## Left handed
         if self.handedness == 'left': 
 
-            if swimming: img = session.img.halved([self.img_names[0], self.img_names[1]])
-            else:        img = session.img.dict[self.img_names[0]][self.img_names[1]]
+            if swimming: img = session.img.halved([self.img_IDs[0], self.img_IDs[1]])
+            else:        img = session.img.dict[self.img_IDs[0]][self.img_IDs[1]]
         
         ## Right handed
         else:
 
-            if swimming: img = session.img.halved([self.img_names[0], self.img_names[1]], flipped=True)
-            else:        img = session.img.flipped.dict[self.img_names[0]][self.img_names[1]]
+            if swimming: img = session.img.halved([self.img_IDs[0], self.img_IDs[1]], flipped=True)
+            else:        img = session.img.flipped.dict[self.img_IDs[0]][self.img_IDs[1]]
 
         return img
     
@@ -328,12 +328,12 @@ class Entity:
                 if item.slot == 'chest':
 
                     if self.handedness == 'left':
-                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]])
-                        else:        img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming: img = session.img.halved([item.img_IDs[0], self.img_IDs[1]])
+                        else:        img = session.img.dict[item.img_IDs[0]][self.img_IDs[1]]
 
                     else:
-                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
-                        else:        img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming: img = session.img.halved([item.img_IDs[0], self.img_IDs[1]], flipped=True)
+                        else:        img = session.img.flipped.dict[item.img_IDs[0]][self.img_IDs[1]]
                     
                     return img
 
@@ -344,14 +344,14 @@ class Entity:
                 if item.slot == 'body':
 
                     if self.handedness == 'left':
-                        if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]])
-                        elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
-                        else:                 img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming:          img = session.img.halved([item.img_IDs[0], self.img_IDs[1]])
+                        elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_IDs[0]][self.img_IDs[1]])
+                        else:                 img = session.img.dict[item.img_IDs[0]][self.img_IDs[1]]
                     
                     else:
-                        if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
-                        elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
-                        else:                 img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming:          img = session.img.halved([item.img_IDs[0], self.img_IDs[1]], flipped=True)
+                        elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_IDs[0]][self.img_IDs[1]])
+                        else:                 img = session.img.flipped.dict[item.img_IDs[0]][self.img_IDs[1]]
                     
                     return img
 
@@ -362,12 +362,12 @@ class Entity:
                 if item.slot == 'face':
 
                     if self.handedness == 'left':
-                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]])
-                        else:        img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming: img = session.img.halved([item.img_IDs[0], self.img_IDs[1]])
+                        else:        img = session.img.dict[item.img_IDs[0]][self.img_IDs[1]]
                     
                     else:
-                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
-                        else:        img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming: img = session.img.halved([item.img_IDs[0], self.img_IDs[1]], flipped=True)
+                        else:        img = session.img.flipped.dict[item.img_IDs[0]][self.img_IDs[1]]
                     
                     return img
         
@@ -378,12 +378,12 @@ class Entity:
                 if item.slot == 'head':
                     
                     if self.handedness == 'left':
-                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]])
-                        else:        img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming: img = session.img.halved([item.img_IDs[0], self.img_IDs[1]])
+                        else:        img = session.img.dict[item.img_IDs[0]][self.img_IDs[1]]
                     
                     else:
-                        if swimming: img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
-                        else:        img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                        if swimming: img = session.img.halved([item.img_IDs[0], self.img_IDs[1]], flipped=True)
+                        else:        img = session.img.flipped.dict[item.img_IDs[0]][self.img_IDs[1]]
                     
                     return img
         
@@ -397,14 +397,14 @@ class Entity:
                         if item.slot in ['dominant hand', 'non-dominant hand']:
                             
                             if self.handedness == 'left':
-                                if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]])
-                                elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
-                                else:                 img = session.img.dict[item.img_names[0]][self.img_names[1]]
+                                if swimming:          img = session.img.halved([item.img_IDs[0], self.img_IDs[1]])
+                                elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_IDs[0]][self.img_IDs[1]])
+                                else:                 img = session.img.dict[item.img_IDs[0]][self.img_IDs[1]]
                             
                             else:
-                                if swimming:          img = session.img.halved([item.img_names[0], self.img_names[1]], flipped=True)
-                                elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_names[0]][self.img_names[1]])
-                                else:                 img = session.img.flipped.dict[item.img_names[0]][self.img_names[1]]
+                                if swimming:          img = session.img.halved([item.img_IDs[0], self.img_IDs[1]], flipped=True)
+                                elif not self.rand_Y: img = session.img.scale(session.img.dict[self.img_IDs[0]][self.img_IDs[1]])
+                                else:                 img = session.img.flipped.dict[item.img_IDs[0]][self.img_IDs[1]]
                             
                             img_list.append(img)
         return img_list
@@ -441,7 +441,7 @@ class Entity:
         surface.blit(img, (0, 0))
     
         ## Equipment for humanoids
-        if self.img_names[0] in session.img.skin_options:
+        if self.img_IDs[0] in session.img.skin_options:
             img_finders = [
                 self._find_chest,
                 self._find_armor,
@@ -463,7 +463,7 @@ class Entity:
         #########################################################
         # Bubbles
         bubble = None
-        shift = 32 - session.img.ent_data[self.img_names[0]]['height']
+        shift = 32 - session.img.ent_data[self.img_IDs[0]]['height']
 
         if self.quest_active():                bubble = 'dots bubble'
         if self.trade_active() and not bubble: bubble = 'cart bubble'
@@ -546,7 +546,7 @@ def create_entity(names):
 
     if type(names) in [tuple, list]:
         for val in ent_dicts.values():
-            if val.img_names == names:
+            if val.img_IDs == names:
                 ent            = Entity(**val)
                 ent.handedness = random.choice(['left', 'right'])
     else:
