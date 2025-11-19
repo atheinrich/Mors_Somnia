@@ -1,0 +1,36 @@
+{
+"dark_green": {
+    "name":    "dark green wall",
+    "img_IDs": ["walls", "dark green"]
+    },
+
+"dark_red": {
+    "name":    "dark red wall",
+    "img_IDs": ["walls", "dark red"]
+    },
+
+"dark_blue": {
+    "name":    "dark blue wall",
+    "img_IDs": ["walls", "dark blue"]
+    },
+
+"gray": {
+    "name":    "gray wall",
+    "img_IDs": ["walls", "gray"]
+    },
+
+"red": {
+    "name":    "red wall",
+    "img_IDs": ["walls", "red"]
+    },
+
+"green": {
+    "name":    "green wall",
+    "img_IDs": ["walls", "green"]
+    },
+
+"gold": {
+    "name":    "gold wall",
+    "img_IDs": ["walls", "gold"]
+    }
+}

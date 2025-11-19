@@ -1,19 +1,45 @@
 {
 "walls": {
+    "name":           null,
+
     "env":            null,
     "biome":          null,
+    "room":           null,
     "placed":         false,
 
-    "number":         null,
-    "room":           null,
-    "entity":         null,
-    "item ":          null,
-    
     "img_IDs":        null,
     "wall_img_IDs":   null,
     "floor_img_IDs":  null,
     "roof_img_IDs":   null,
-    "timer":          null,
+    "img_ID_timer":   null,
+
+    "X":              null,
+    "Y":              null,
+    "rand_X":         null,
+    "rand_Y":         null,
+    
+    "blocked":        true,
+    "hidden":         false,
+    "unbreakable":    false,
+    "active_effects": {},
+    
+    "ent":            null,
+    "item":           null
+    },
+
+"floors": {
+    "name":           null,
+    
+    "env":            null,
+    "biome":          null,
+    "room":           null,
+    "placed":         false,
+
+    "img_IDs":        null,
+    "wall_img_IDs":   null,
+    "floor_img_IDs":  null,
+    "roof_img_IDs":   null,
+    "img_ID_timer":   null,
 
     "X":              null,
     "Y":              null,
@@ -23,63 +49,9 @@
     "blocked":        false,
     "hidden":         false,
     "unbreakable":    false,
+    "active_effects": {},
     
-    "active_effects": {}
-    },
-
-"floors": {
-    "env":            null,
-
-    "number":         null,
-    "room":           null,
-    "entity":         null,
-    "item ":          null,
-    
-    "img_IDs":      null,
-    "walls":          null,
-    "floor":          null,
-    "roof":           null,
-    "timer":          null,
-
-    "X":              null,
-    "Y":              null,
-    "rand_X":         null,
-    "rand_Y":         null,
-    
-    "biome":          null,
-    "blocked":        null,
-    "hidden":         null,
-    "unbreakable":    null,
-    "placed":         null,
-    
-    "active_effects": null
-    },
-
-"roofs": {
-    "env":            null,
-
-    "number":         null,
-    "room":           null,
-    "entity":         null,
-    "item ":          null,
-    
-    "img_IDs":      null,
-    "walls":          null,
-    "floor":          null,
-    "roof":           null,
-    "timer":          null,
-
-    "X":              null,
-    "Y":              null,
-    "rand_X":         null,
-    "rand_Y":         null,
-    
-    "biome":          null,
-    "blocked":        null,
-    "hidden":         null,
-    "unbreakable":    null,
-    "placed":         null,
-    
-    "active_effects": null
+    "ent":            null,
+    "item":           null
     }
 }

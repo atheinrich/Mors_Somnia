@@ -657,7 +657,7 @@ class Bloodkin:
                 x_test = x(pyg.tile_width*(i-1))
                 for j in range(3):
                     y_test = y(pyg.tile_height*(j-1))
-                    if not session.player_obj.ent.env.map[x_test][y_test].entity:
+                    if not session.player_obj.ent.env.map[x_test][y_test].ent:
                         session.player_obj.cache = False
                         
                         obj = session.items.create_item('scroll of death')

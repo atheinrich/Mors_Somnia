@@ -207,18 +207,21 @@ def merge_json(group, names):
 ########################################################################################################################################################
 # Initializations
 ## Group database files
-img_IDs   = ['img_ents', 'img_equipment', 'img_other']
+img_IDs     = ['img_ents', 'img_equipment', 'img_other']
 obj_names   = ['item_effects', 'NPCs']
 other_names = ['biomes']
-items       = ['accessories', 'armor', 'decor', 'drugs', 'furniture', 'offhands', 'potions', 'scrolls', 'stairs', 'structures', 'weapons']
+
 entities    = ['humanoids', 'monsters']
+items       = ['accessories', 'armor', 'decor', 'drugs', 'furniture', 'offhands', 'potions', 'scrolls', 'stairs', 'structures', 'weapons']
+tiles       = ['walls', 'floors']
 
 ## Build JSON files
 #rebuild_databases(['ents']) # img_IDs + obj_names + other_names
 
 ## Load JSON files
-item_dicts   = merge_json('Items', items)
+item_dicts   = merge_json('Items',    items)
 ent_dicts    = merge_json('Entities', entities)
+tile_dicts   = merge_json('Tiles',    tiles)
 NPC_dicts    = load_json(f'Data/.Databases/NPCs.json')
 biome_dicts  = load_json(f'Data/.Databases/biomes.json')
 img_dicts    = {name: load_json(f'Data/.Databases/{name}.json') for name in img_IDs}

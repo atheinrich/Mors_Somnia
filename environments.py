@@ -16,6 +16,7 @@ import pygame
 import session
 from quests import Questlog
 from entities import create_entity, create_NPC
+from data_management import tile_dicts
 
 ########################################################################################################################################################
 # Classes
@@ -62,18 +63,18 @@ class Environments:
         ###############################################################
         ## Initialize environment
         env = Environment(
-            envs       = self,
-            name       = 'garden',
-            lvl_num    = 0,
-            size       = 1,
-            soundtrack = ['menu'],
-            img_IDs  = ['floors', 'grass4'],
-            floor_img_IDs     = ['floors', 'grass4'],
-            wall_img_IDs      = ['walls', 'gray'],
-            roof_img_IDs      = ['roofs', 'tiled'],
-            blocked    = False,
-            hidden     = False,
-            area       = area)
+            envs          = self,
+            name          = 'garden',
+            lvl_num       = 0,
+            size          = 1,
+            soundtrack    = ['menu'],
+            img_IDs       = ['floors', 'grass4'],
+            floor_img_IDs = ['floors', 'grass4'],
+            wall_img_IDs  = ['walls', 'gray'],
+            roof_img_IDs  = ['roofs', 'tiled'],
+            blocked       = False,
+            hidden        = False,
+            area          = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = True
         env.camera.zoom_in(custom=1)
@@ -106,7 +107,7 @@ class Environments:
             biome   = 'forest',
             hidden  = False,
             objects = False,
-            floor   = env.floor_img_IDs,
+            floor_img_IDs   = env.floor_img_IDs,
             wall_img_IDs   = env.wall_img_IDs,
             roof_img_IDs    = None,
             unbreakable = True)
@@ -127,7 +128,6 @@ class Environments:
         x, y = center
         env.player_coordinates   = center
         env.map[x][y].item       = None
-        env.entity               = self.player_obj.ent
         self.player_obj.ent.tile = env.map[x][y]
         env.center = center
         
@@ -139,18 +139,18 @@ class Environments:
         ###############################################################
         ## Initialize environment
         env = Environment(
-            envs       = self,
-            name       = 'womb',
-            lvl_num    = 0,
-            size       = 1,
-            soundtrack = ['menu'],
-            img_IDs  = ['floors', 'dark green floor'],
-            floor_img_IDs     = ['floors', 'dark green floor'],
-            wall_img_IDs      = ['walls', 'gray'],
-            roof_img_IDs      = ['roofs', 'tiled'],
-            blocked    = False,
-            hidden     = True,
-            area       = area)
+            envs          = self,
+            name          = 'womb',
+            lvl_num       = 0,
+            size          = 1,
+            soundtrack    = ['menu'],
+            img_IDs       = ['floors', 'dark green floor'],
+            floor_img_IDs = ['floors', 'dark green floor'],
+            wall_img_IDs  = ['walls', 'gray'],
+            roof_img_IDs  = ['roofs', 'tiled'],
+            blocked       = False,
+            hidden        = True,
+            area          = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = True
         env.camera.zoom_in(custom=1)
@@ -183,7 +183,7 @@ class Environments:
             biome   = 'forest',
             hidden  = True,
             objects = False,
-            floor   = env.floor_img_IDs,
+            floor_img_IDs   = env.floor_img_IDs,
             wall_img_IDs   = env.wall_img_IDs,
             roof_img_IDs    = None)
         x, y = new_room.center()[0], new_room.center()[1]
@@ -192,7 +192,6 @@ class Environments:
         # Place player in first room
         env.player_coordinates = [x, y]
         env.map[x][y].item     = None
-        env.entity = self.player_obj.ent
         self.player_obj.ent.tile = env.map[x][y]
         env.center = new_room.center()
         
@@ -205,16 +204,16 @@ class Environments:
         ###############################################################
         ## Initialize environment
         env = Environment(
-            envs       = self,
-            name       = 'home',
-            lvl_num    = 0,
-            size       = 5,
-            soundtrack = ['home'],
-            img_IDs  = ['walls', 'gray'],
-            floor_img_IDs     = ['floors', 'green floor'],
-            wall_img_IDs      = ['walls', 'gray'],
-            roof_img_IDs      = ['roofs', 'tiled'],
-            area       = area)
+            envs          = self,
+            name          = 'home',
+            lvl_num       = 0,
+            size          = 5,
+            soundtrack    = ['home'],
+            img_IDs       = ['walls', 'gray'],
+            floor_img_IDs = ['floors', 'green floor'],
+            wall_img_IDs  = ['walls', 'gray'],
+            roof_img_IDs  = ['roofs', 'tiled'],
+            area          = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -238,7 +237,7 @@ class Environments:
             biome   = 'any',
             hidden  = False,
             objects = False,
-            floor   = env.floor_img_IDs,
+            floor_img_IDs   = env.floor_img_IDs,
             wall_img_IDs   = env.wall_img_IDs,
             roof_img_IDs    = None,
             plan = ['  -----     ',
@@ -262,7 +261,7 @@ class Environments:
             biome   = 'any',
             hidden  = True,
             objects = False,
-            floor   = env.floor_img_IDs,
+            floor_img_IDs   = env.floor_img_IDs,
             wall_img_IDs   = env.wall_img_IDs,
             roof_img_IDs    = None)
         
@@ -306,22 +305,22 @@ class Environments:
         ###############################################################
         ## Initialize environment
         env = Environment(
-            envs       = self,
-            name       = 'overworld',
-            lvl_num    = 0,
-            size       = 10,
-            soundtrack = [
+            envs          = self,
+            name          = 'overworld',
+            lvl_num       = 0,
+            size          = 10,
+            soundtrack    = [
                 'overworld 1',
                 'overworld 2',
                 'overworld 3',
                 'overworld 4'],
-            img_IDs  = ['floors', 'grass3'],
-            floor_img_IDs     = ['floors', 'grass3'],
-            wall_img_IDs      = ['walls', 'gray'],
-            roof_img_IDs      = ['roofs', 'tiled'],
-            blocked    = False,
-            hidden     = False,
-            area       = area)
+            img_IDs       = ['floors', 'grass3'],
+            floor_img_IDs = ['floors', 'grass3'],
+            wall_img_IDs  = ['walls', 'gray'],
+            roof_img_IDs  = ['roofs', 'tiled'],
+            blocked       = False,
+            hidden        = False,
+            area          = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -383,7 +382,7 @@ class Environments:
                     biome   = 'city',
                     hidden = False,
                     objects = False,
-                    floor  = ['floors', 'dark green floor'],
+                    floor_img_IDs  = ['floors', 'dark green floor'],
                     wall_img_IDs  = env.wall_img_IDs,
                     roof_img_IDs   = env.roof_img_IDs,
                     plan = create_text_room(width, height))
@@ -429,7 +428,7 @@ class Environments:
                     biome   = 'city',
                     hidden  = False,
                     objects = False,
-                    floor   = ['floors', 'dark green floor'],
+                    floor_img_IDs   = ['floors', 'dark green floor'],
                     wall_img_IDs   = env.wall_img_IDs,
                     roof_img_IDs    = env.roof_img_IDs,
                     plan = ['  -----     ',
@@ -466,7 +465,7 @@ class Environments:
             biome   = 'any',
             hidden  = False,
             objects = False,
-            floor   = ['floors', 'red floor'],
+            floor_img_IDs   = ['floors', 'red floor'],
             wall_img_IDs   = env.wall_img_IDs,
             roof_img_IDs    = env.roof_img_IDs,
             plan = ['  --------------           ---------- ',
@@ -501,13 +500,12 @@ class Environments:
         
         env.center             = [door_x, door_y]
         env.player_coordinates = [door_x, door_y]
-        env.entity             = self.player_obj.ent
         self.player_obj.ent.tile    = env.map[door_x][door_y]
         
         ## Place NPCs
         bools = lambda room, i: [
             env.map[room.center()[0]+i][room.center()[1]+i].item,
-            env.map[room.center()[0]+i][room.center()[1]+i].entity]
+            env.map[room.center()[0]+i][room.center()[1]+i].ent]
         
         # Set named characters to spawn
         for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci', 'Oxi', 'Aya', 'Zung', 'Lilao']:
@@ -561,18 +559,18 @@ class Environments:
         ###############################################################
         # Initialize environment
         env = Environment(
-            envs       = self,
-            name       = 'cave',
-            lvl_num    = lvl_num,
-            size       = 1,
-            soundtrack = [f'dungeon {lvl_num}'],
-            img_IDs  = ['walls',  'dark red'],
-            floor_img_IDs     = ['floors', 'dirt1'],
-            wall_img_IDs      = ['walls',  'dark red'],
-            roof_img_IDs      = None,
-            blocked    = True,
-            hidden     = True,
-            area       = area)
+            envs          = self,
+            name          = 'cave',
+            lvl_num       = lvl_num,
+            size          = 1,
+            soundtrack    = [f'dungeon {lvl_num}'],
+            img_IDs       = ['walls',  'dark red'],
+            floor_img_IDs = ['floors', 'dirt1'],
+            wall_img_IDs  = ['walls',  'dark red'],
+            roof_img_IDs  = None,
+            blocked       = True,
+            hidden        = True,
+            area          = area)
         
         # Set weather
         env.weather_backup = {
@@ -609,7 +607,7 @@ class Environments:
                 biome   = 'cave',
                 hidden  = True,
                 objects = True,
-                floor   = env.floor_img_IDs,
+                floor_img_IDs   = env.floor_img_IDs,
                 wall_img_IDs   = env.wall_img_IDs,
                 roof_img_IDs    = env.roof_img_IDs)
         
@@ -628,8 +626,8 @@ class Environments:
                         env.create_v_tunnel(y_1, y_2, x_2)
                     except: raise Exception('Error')
                 else:
-                    env.create_v_tunnel(y_1, y_2, y_1, img_set=new_room.floor)
-                    env.create_h_tunnel(x_1, x_2, y_2, img_set=new_room.floor)
+                    env.create_v_tunnel(y_1, y_2, y_1, img_set=new_room.floor_img_IDs)
+                    env.create_h_tunnel(x_1, x_2, y_2, img_set=new_room.floor_img_IDs)
         
         ###############################################################
         # Generate items and entities
@@ -649,7 +647,6 @@ class Environments:
         # Place player in first room
         (x, y) = env.rooms[0].center()
         env.player_coordinates = [x, y]
-        env.entity = self.player_obj.ent
         env.center = new_room.center()
         self.player_obj.ent.tile = env.map[x][y]
         
@@ -678,18 +675,18 @@ class Environments:
             else:                                lvl_num = 1 + self.areas['dungeon'][-1].lvl_num
         
         env = Environment(
-            envs       = self,
-            name       = 'dungeon',
-            lvl_num    = lvl_num,
-            size       = 2 * (1 + lvl_num//3),
-            soundtrack = [f'dungeon {lvl_num}'],
-            img_IDs  = ['walls', 'gray'],
-            floor_img_IDs     = ['floors', 'dark green floor'],
-            wall_img_IDs      = ['walls', 'gray'],
-            roof_img_IDs      = None,
-            blocked    = True,
-            hidden     = True,
-            area       = area)
+            envs          = self,
+            name          = 'dungeon',
+            lvl_num       = lvl_num,
+            size          = 2 * (1 + lvl_num//3),
+            soundtrack    = [f'dungeon {lvl_num}'],
+            img_IDs       = ['walls', 'gray'],
+            floor_img_IDs = ['floors', 'dark green floor'],
+            wall_img_IDs  = ['walls', 'gray'],
+            roof_img_IDs  = None,
+            blocked       = True,
+            hidden        = True,
+            area          = area)
         
         # Set weather
         env.weather_backup = {
@@ -716,7 +713,7 @@ class Environments:
             x        = random.randint(0, len(env.map)    - width  - 1)
             y        = random.randint(0, len(env.map[0]) - height - 1)
             
-            floor = random.choice([
+            floor_img_IDs = random.choice([
                 ['floors', 'dark green floor'],
                 ['floors', 'dark green floor'],
                 ['floors', 'green floor']])
@@ -731,7 +728,7 @@ class Environments:
                 biome   = 'any',
                 hidden  = True,
                 objects = True,
-                floor   = floor,
+                floor_img_IDs   = floor_img_IDs,
                 wall_img_IDs   = env.wall_img_IDs,
                 roof_img_IDs    = env.roof_img_IDs)
         
@@ -774,7 +771,6 @@ class Environments:
         # Place player in first room
         (x, y) = env.rooms[0].center()
         env.player_coordinates = [x, y]
-        env.entity = self.player_obj.ent
         env.center = new_room.center()
         self.player_obj.ent.tile = env.map[x][y]
         
@@ -801,18 +797,18 @@ class Environments:
             else:                                      lvl_num = 1 + self.areas['hallucination'][-1].lvl_num        
         
         env = Environment(
-            envs       = self,
-            name       = 'hallucination',
-            lvl_num    = lvl_num,
-            size       = 3,
-            soundtrack = [f'hallucination {lvl_num}'],
-            img_IDs  = ['walls',  'gold'],
-            floor_img_IDs     = ['floors', 'green floor'],
-            wall_img_IDs      = ['walls',  'gold'],
-            roof_img_IDs      = None,
-            blocked    = True,
-            hidden     = True,
-            area       = area)
+            envs          = self,
+            name          = 'hallucination',
+            lvl_num       = lvl_num,
+            size          = 3,
+            soundtrack    = [f'hallucination {lvl_num}'],
+            img_IDs       = ['walls',  'gold'],
+            floor_img_IDs = ['floors', 'green floor'],
+            wall_img_IDs  = ['walls',  'gold'],
+            roof_img_IDs  = None,
+            blocked       = True,
+            hidden        = True,
+            area          = area)
         
         # Set weather
         env.weather_backup = {
@@ -853,7 +849,7 @@ class Environments:
                 biome   = 'any',
                 hidden  = True,
                 objects = True,
-                floor   = env.floor_img_IDs,
+                floor_img_IDs   = env.floor_img_IDs,
                 wall_img_IDs   = env.wall_img_IDs,
                 roof_img_IDs    = env.roof_img_IDs)
         
@@ -893,7 +889,7 @@ class Environments:
                     biome   = 'city',
                     hidden = False,
                     objects = False,
-                    floor  = ['floors', 'dark green floor'],
+                    floor_img_IDs  = ['floors', 'dark green floor'],
                     wall_img_IDs  = env.wall_img_IDs,
                     roof_img_IDs   = env.roof_img_IDs,
                     plan = create_text_room(width, height, doors=False))
@@ -948,7 +944,6 @@ class Environments:
         # Place player in first room
         (x, y) = env.rooms[0].center()
         env.player_coordinates = [x, y]
-        env.entity = self.player_obj.ent
         env.center = new_room.center()
         self.player_obj.ent.tile = env.map[x][y]
         
@@ -967,22 +962,22 @@ class Environments:
         ###############################################################
         ## Initialize environment
         env = Environment(
-            envs       = self,
-            name       = 'bitworld',
-            lvl_num    = 0,
-            size       = 7,
-            soundtrack = [
+            envs          = self,
+            name          = 'bitworld',
+            lvl_num       = 0,
+            size          = 7,
+            soundtrack    = [
                 'overworld 1',
                 'overworld 2',
                 'overworld 3',
                 'overworld 4'],
-            img_IDs  = ['floors', 'grass3'],
-            floor_img_IDs     = ['floors', 'grass3'],
-            wall_img_IDs      = ['walls', 'gray'],
-            roof_img_IDs      = ['roofs', 'tiled'],
-            blocked    = False,
-            hidden     = False,
-            area       = area)
+            img_IDs       = ['floors', 'grass3'],
+            floor_img_IDs = ['floors', 'grass3'],
+            wall_img_IDs  = ['walls', 'gray'],
+            roof_img_IDs  = ['roofs', 'tiled'],
+            blocked       = False,
+            hidden        = False,
+            area          = area)
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
         env.camera.zoom_in(custom=1)
@@ -1033,7 +1028,7 @@ class Environments:
                     biome   = 'city',
                     hidden = False,
                     objects = False,
-                    floor  = ['floors', ' floor'],
+                    floor_img_IDs  = ['floors', ' floor'],
                     wall_img_IDs  = env.wall_img_IDs,
                     roof_img_IDs   = env.roof_img_IDs,
                     plan = create_text_room(width, height))
@@ -1058,7 +1053,7 @@ class Environments:
             biome   = 'any',
             hidden  = False,
             objects = False,
-            floor   = ['floors', 'dark green floor'],
+            floor_img_IDs   = ['floors', 'dark green floor'],
             wall_img_IDs   = env.wall_img_IDs,
             roof_img_IDs    = env.roof_img_IDs,
             plan = ['  -----     ',
@@ -1090,7 +1085,7 @@ class Environments:
             biome   = 'any',
             hidden  = False,
             objects = False,
-            floor   = ['floors', 'red floor'],
+            floor_img_IDs   = ['floors', 'red floor'],
             wall_img_IDs   = env.wall_img_IDs,
             roof_img_IDs    = env.roof_img_IDs,
             plan = ['  --------------           ---------- ',
@@ -1123,13 +1118,12 @@ class Environments:
         place_objects(env, items, entities)
         
         env.player_coordinates = env.center # [0, 10]
-        env.entity = self.player_obj.ent
         self.player_obj.ent.tile = env.map[0][10]
         
         ## Place NPCs
         bools = lambda room, i: [
             env.map[room.center()[0]+i][room.center()[1]+i].item,
-            env.map[room.center()[0]+i][room.center()[1]+i].entity]
+            env.map[room.center()[0]+i][room.center()[1]+i].ent]
         
         # Set number of random characters
         for _ in range(15):
@@ -1200,7 +1194,7 @@ class Environment:
             envs        : Environments object; owner
 
             name        : string
-            floor       : int or string
+            floor_img_IDs       : int or string
             size        : string in ['small', 'medium', 'large']
             soundtrack  : list of pygame audio files
             entities    : list of Entity objects
@@ -1242,7 +1236,7 @@ class Environment:
         self.wall_img_IDs  = wall_img_IDs
         self.floor_img_IDs = floor_img_IDs
         self.roof_img_IDs  = roof_img_IDs
-        self.rooms  = []
+        self.rooms         = []
         
         # Generate map tiles
         self.map = []
@@ -1254,37 +1248,29 @@ class Environment:
                 
                 # Handle edges
                 if (X in X_range) or (Y in Y_range):
-                    tile = Tile(
-                        env         = self,
-                        
-                        img_IDs   = img_IDs,
-                        wall_img_IDs       = wall_img_IDs,
-                        floor       = floor_img_IDs,
-                        roof_img_IDs        = roof_img_IDs,
-
-                        X           = X,
-                        Y           = Y,
-                        
-                        blocked     = True,
-                        hidden      = hidden,
-                        unbreakable = True)
+                    tile = self.create_tile(img_IDs[1])
+                    tile.env = self
+                    tile.wall_img_IDs = wall_img_IDs
+                    tile.floor_img_IDs = floor_img_IDs
+                    tile.roof_img_IDs = roof_img_IDs
+                    tile.X = X
+                    tile.Y = Y
+                    tile.blocked = True
+                    tile.hidden = hidden
+                    tile.unbreakable = True
                 
                 # Handle bulk
                 else:
-                    tile = Tile(
-                        env         = self,
-                        
-                        img_IDs   = img_IDs,
-                        wall_img_IDs       = wall_img_IDs,
-                        floor       = floor_img_IDs,
-                        roof_img_IDs        = roof_img_IDs,
-
-                        X           = X,
-                        Y           = Y,
-                        
-                        blocked     = blocked,
-                        hidden      = hidden,
-                        unbreakable = False)
+                    tile = self.create_tile(img_IDs[1])
+                    tile.env = self
+                    tile.wall_img_IDs = wall_img_IDs
+                    tile.floor_img_IDs = floor_img_IDs
+                    tile.roof_img_IDs = roof_img_IDs
+                    tile.X = X
+                    tile.Y = Y
+                    tile.blocked = blocked
+                    tile.hidden = hidden
+                    tile.unbreakable = False
                 
                 row.append(tile)
             self.map.append(row)
@@ -1295,6 +1281,20 @@ class Environment:
         self.camera             = None
         self.center             = [int(len(self.map)/2), int(len(self.map[0])/2)]
 
+    def create_tile(self, tile_ID):
+        """ Creates and returns an object.
+        
+            Parameters
+            ----------
+            names  : string or list of strings; name of object
+            effect : bool or Effect object; True=default, False=None, effect=custom """
+        
+        # Create object
+        tile_ID = tile_ID.replace(" ", "_")
+        tile    = Tile(**tile_dicts[tile_ID])
+
+        return tile
+
     def create_h_tunnel(self, x1, x2, y, img_set=None):
         """ Creates horizontal tunnel. min() and max() are used if x1 is greater than x2. """
         
@@ -1304,15 +1304,15 @@ class Environment:
             
             # Find image
             if not img_set:
-                if tile.room: img_set = tile.room.floor
+                if tile.room: img_set = tile.room.floor_img_IDs
                 else:         img_set = self.floor_img_IDs
             
             # Empty and alter tile
             tile.blocked   = False
             tile.img_IDs = img_set
-            if tile.entity:
-                self.entities.remove(tile.entity)
-                tile.entity = None
+            if tile.ent:
+                self.entities.remove(tile.ent)
+                tile.ent = None
 
     def create_v_tunnel(self, y1, y2, x, img_set=None):
         """ Creates vertical tunnel. min() and max() are used if y1 is greater than y2. """
@@ -1323,15 +1323,15 @@ class Environment:
             
             # Find image
             if not img_set:
-                if tile.room: img_set = tile.room.floor
+                if tile.room: img_set = tile.room.floor_img_IDs
                 else:         img_set = self.floor_img_IDs
             
             # Empty and alter tile
             tile.blocked   = False
             tile.img_IDs = img_set
-            if tile.entity:
-                self.entities.remove(tile.entity)
-                tile.entity = None
+            if tile.ent:
+                self.entities.remove(tile.ent)
+                tile.ent = None
 
     def build_room(self, obj):
         """ Checks if a placed tile has other placed tiles around it.
@@ -1415,7 +1415,7 @@ class Environment:
                 biome    = 'city',
                 hidden   = False,
                 objects  = True,
-                floor    = ['floors', 'wood'],
+                floor_img_IDs    = ['floors', 'wood'],
                 wall_img_IDs    = obj.img_IDs,
                 roof_img_IDs     = self.roof_img_IDs,
                 boundary = boundary)
@@ -1442,14 +1442,14 @@ class Environment:
                         if intersections_1 and intersections_2:
                             self.rooms[i].delete = True
                             
-                            ## Convert internal wall_img_IDs into floor_img_IDs and remove from lists
+                            ## Convert internal wall into floor and remove from lists
                             for tile in intersections_1:
 
                                 # Keep shared wall_img_IDs
                                 if tile not in rooms_copy[j].walls_list:
                                     tile.blocked   = False
                                     tile.item      = None
-                                    tile.img_IDs = tile.room.floor  
+                                    tile.img_IDs = tile.room.floor_img_IDs  
                                     
                                     if tile in rooms_copy[i].walls_list:      self.rooms[j].walls_list.append(tile)
                                     if tile in rooms_copy[i].corners_list:    self.rooms[j].corners_list.append(tile)
@@ -1465,7 +1465,7 @@ class Environment:
                                 if tile not in rooms_copy[i].walls_list:
                                     tile.blocked   = False
                                     tile.item      = None
-                                    tile.img_IDs = tile.room.floor  
+                                    tile.img_IDs = tile.room.floor_img_IDs  
                                     
                                     # Remove from lists
                                     if tile in self.rooms[j].walls_list:      self.rooms[j].walls_list.remove(tile)
@@ -1501,7 +1501,7 @@ class Environment:
 class Room:
     """ Defines rectangles on the map. Used to characterize a room. """
     
-    def __init__(self, name, env, x1, y1, width, height, hidden, floor, wall_img_IDs, roof_img_IDs, objects, biome, plan=None, boundary=None, unbreakable=False):
+    def __init__(self, name, env, x1, y1, width, height, hidden, floor_img_IDs, wall_img_IDs, roof_img_IDs, objects, biome, plan=None, boundary=None, unbreakable=False):
         """ Assigns tiles to a room and adjusts their properties.
 
             Parameters
@@ -1512,7 +1512,7 @@ class Room:
             width              : int; extends rightward from x1
             height             : int; extends downward from y1
             hidden             : bool; black tiles until the room is entered
-            floor              : list of str; img.dict names
+            floor_img_IDs              : list of str; img.dict names
             wall_img_IDs              : list of str; img.dict names
             roof_img_IDs               : list of str; img.dict names
             
@@ -1564,10 +1564,10 @@ class Room:
         env.player_coordinates = self.center()
         
         # Image names and environment
-        self.floor = floor
-        self.wall_img_IDs = wall_img_IDs
+        self.floor_img_IDs = floor_img_IDs
+        self.wall_img_IDs  = wall_img_IDs
         self.roof_img_IDs  = roof_img_IDs
-        self.env   = env
+        self.env           = env
         self.env.rooms.append(self)
 
         # Tiles
@@ -1601,7 +1601,7 @@ class Room:
                 tile.hidden = self.hidden
                 
                 if self.roof_img_IDs: tile.img_IDs = self.roof_img_IDs
-                else:         tile.img_IDs = self.floor
+                else:         tile.img_IDs = self.floor_img_IDs
                 tile.blocked = False
 
                 # Change biome
@@ -1610,9 +1610,9 @@ class Room:
                 # Remove items and entities
                 if not self.objects:
                     tile.item = None
-                    if tile.entity:
-                        self.env.entities.remove(tile.entity)
-                        tile.entity = None
+                    if tile.ent:
+                        self.env.entities.remove(tile.ent)
+                        tile.ent = None
                 
                 # Handle tiles
                 self.tiles_list.append(tile)
@@ -1626,9 +1626,9 @@ class Room:
                     
                     # Remove items and entities
                     tile.item = None
-                    if tile.entity:
-                        self.env.entities.remove(tile.entity)
-                        tile.entity = None
+                    if tile.ent:
+                        self.env.entities.remove(tile.ent)
+                        tile.ent = None
                 
                     # Handle corners
                     if   (x == self.x1) and (y == self.y1): self.corners_list.append(tile)
@@ -1660,7 +1660,7 @@ class Room:
                 tile_x, tile_y = self.x1+x, self.y1+y
                 tile = self.env.map[tile_x][tile_y]
                 tile.item = None
-                tile.entity = None
+                tile.ent = None
                 
                 # Place things indoors
                 if layer[x] not in [' ', 'L']:
@@ -1671,7 +1671,7 @@ class Room:
                     self.tiles_list.append(tile)
 
                     if self.roof_img_IDs: tile.img_IDs = self.roof_img_IDs
-                    else:         tile.img_IDs = self.floor
+                    else:         tile.img_IDs = self.floor_img_IDs
                     tile.blocked = False
 
                     # Change biome
@@ -1680,9 +1680,9 @@ class Room:
                     # Remove items and entities
                     if not self.objects:
                         tile.item = None
-                        if tile.entity:
-                            self.env.entities.remove(tile.entity)
-                            tile.entity = None
+                        if tile.ent:
+                            self.env.entities.remove(tile.ent)
+                            tile.ent = None
                     
                     ## Handle symbols
                     # Place wall_img_IDs and doors
@@ -1695,9 +1695,9 @@ class Room:
                             
                             # Remove items and entities
                             tile.item = None
-                            if tile.entity:
-                                self.env.entities.remove(tile.entity)
-                                tile.entity = None
+                            if tile.ent:
+                                self.env.entities.remove(tile.ent)
+                                tile.ent = None
                         
                         else:
                             
@@ -1771,11 +1771,11 @@ class Room:
                     queue.append((nx, ny))
         
         # Anything inside bounds and not reachable = enclosed
-        floor_img_IDs = []
+        floors = []
         for x in range(min_x + 1, max_x):
             for y in range(min_y + 1, max_y):
                 if (x, y) not in visited and (x, y) not in boundary_coords:
-                    floor_img_IDs.append(self.env.map[x][y])
+                    floors.append(self.env.map[x][y])
         
         # Assign tiles to room
         for wall in wall_img_IDs:
@@ -1784,15 +1784,15 @@ class Room:
             self.tiles_list.append(wall)
             wall.biome = self.biome
             self.walls_list.append(wall)
-        for floor in floor_img_IDs:
-            floor.room = self
-            floor.hidden = self.hidden
-            self.tiles_list.append(floor)
-            floor.biome = self.biome
+        for tile in floors:
+            tile.room = self
+            tile.hidden = self.hidden
+            self.tiles_list.append(tile)
+            tile.biome = self.biome
             if self.roof_img_IDs and (self.env.envs.player_obj.ent.tile not in self.tiles_list):
-                floor.img_IDs = self.roof_img_IDs
+                tile.img_IDs = self.roof_img_IDs
             else:
-                floor.img_IDs = self.floor
+                tile.img_IDs = self.tile
 
     def center(self):
         """ Finds the center of the rectangle. """
@@ -1841,9 +1841,9 @@ class Tile:
             
             img_IDs   : list of str; current image names
             wall_img_IDs       : list of str; default image name for wall
-            floor       : list of str; default image name for floor
-            roof_img_IDs        : list of str; default image name for roof_img_IDs
-            timer       : int; fixed amount of time between animations
+            floor_img_IDs       : list of str; default image name for floor
+            roof_img_IDs        : list of str; default image name for roof
+            img_ID_timer       : int; fixed amount of time between animations
             
             X           : int; location of the tile in screen coordinate
             Y           : int; location of the tile in screen coordinate
@@ -1858,30 +1858,14 @@ class Tile:
         
         pyg = session.pyg
 
-        self.env         = kwargs.get('env')
+        # Import parameters
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-        self.room        = kwargs.get('room',   None)
-        self.entity      = kwargs.get('entity', None)
-        self.item        = kwargs.get('item',   None)
-        
-        self.img_IDs   = kwargs.get('img_IDs')
-        self.wall_img_IDs  = None
-        self.floor_img_IDs = None
-        self.roof_img_IDs        = kwargs.get('roofs')
-        self.timer       = kwargs.get('timer',  random.randint(0, 3) * 2)
-
-        self.X           = kwargs.get('X')
-        self.Y           = kwargs.get('Y')
-        self.rand_X      = kwargs.get('rand_X', random.randint(-pyg.tile_width, pyg.tile_width))
-        self.rand_Y      = kwargs.get('rand_Y', random.randint(-pyg.tile_height, pyg.tile_height))
-        
-        self.biome       = kwargs.get('biome',  None)
-        self.blocked     = kwargs.get('blocked')
-        self.hidden      = kwargs.get('hidden')
-        self.unbreakable = kwargs.get('unbreakable')
-        self.placed      = kwargs.get('placed', False)
-        
-        self.active_effects = kwargs.get('active_effects', {})
+        # Seed a seed for individual adjustments
+        self.img_ID_timer = random.randint(0, 3) * 2
+        self.rand_X       = random.randint(-pyg.tile_width, pyg.tile_width)
+        self.rand_Y       = random.randint(-pyg.tile_height, pyg.tile_height)
 
     def draw(self):
         
@@ -1890,8 +1874,8 @@ class Tile:
         Y = self.Y - self.env.camera.Y
         
         # Load tile
-        if self.timer:
-            if (time.time() // self.timer) % self.timer == 0: image = session.img.other_alt[self.img_IDs[0]][self.img_IDs[1]]
+        if self.img_ID_timer:
+            if (time.time() // self.img_ID_timer) % self.img_ID_timer == 0: image = session.img.other_alt[self.img_IDs[0]][self.img_IDs[1]]
             else:                                             image = session.img.other[self.img_IDs[0]][self.img_IDs[1]]
         else:                                                 image = session.img.other[self.img_IDs[0]][self.img_IDs[1]]
 
@@ -2424,7 +2408,7 @@ def place_object(obj, loc, env, names=None):
         obj.Y0   = loc[1] * pyg.tile_height
         obj.env  = env
         obj.tile = env.map[loc[0]][loc[1]]
-        env.map[loc[0]][loc[1]].entity = obj
+        env.map[loc[0]][loc[1]].ent = obj
         env.map[loc[0]][loc[1]].blocked = False
         env.entities.append(obj)
 
@@ -2552,7 +2536,7 @@ def create_text_room(width=5, height=5, doors=True):
         for j in range(len(plan[0])):
             if random.randint(0, 1):
                 
-                # Look for floor_img_IDs tiles indoors
+                # Look for floor tiles indoors
                 if (plan[i][j] == '.') and ('|' not in neighbors(i, j)):
                     if (plan[i][j+1] == '.') and ('|' not in neighbors(i, j+1)):
                         
@@ -2615,7 +2599,7 @@ def add_doors(room):
         # Add to map
         place_object(session.items.create_item('door'), loc, room.env)
         room.env.map[loc[0]][loc[1]].blocked   = False
-        room.env.map[loc[0]][loc[1]].img_IDs = room.floor
+        room.env.map[loc[0]][loc[1]].img_IDs = room.floor_img_IDs
         try:    room.walls_list.remove(room.env.map[loc[0]][loc[1]])
         except: pass
         
@@ -2625,7 +2609,7 @@ def add_doors(room):
                 for j in range(3):
                     try:
                         
-                        # Make floor_img_IDs
+                        # Make floor
                         if list(room.env.map[x][y].img_IDs) != list(room.wall_img_IDs):
                             x, y = loc[0]+i-1, loc[1]+j-1
                             
@@ -2634,7 +2618,7 @@ def add_doors(room):
                                 room.env.map[x][y].roof_img_IDs      = room.roof_img_IDs
                                 room.env.map[x][y].img_IDs = room.roof_img_IDs
                             else:
-                                room.env.map[x][y].img_IDs = room.floor
+                                room.env.map[x][y].img_IDs = room.floor_img_IDs
                             
                             # Clear items, but keep doors
                             if ((i-1) or (j-1)):
@@ -2652,7 +2636,7 @@ def add_doors(room):
                     if not ((i-1) and (j-1)):
                         try:
                             
-                            # Make floor_img_IDs
+                            # Make floor
                             if list(room.env.map[loc[0]+i-1][loc[1]+j-1].img_IDs) != list(room.wall_img_IDs):
                                 x, y = loc[0]+i-1, loc[1]+j-1
                                 
@@ -2661,7 +2645,7 @@ def add_doors(room):
                                     room.env.map[x][y].roof_img_IDs      = room.roof_img_IDs
                                     room.env.map[x][y].img_IDs = room.roof_img_IDs
                                 else:
-                                    room.env.map[x][y].img_IDs = room.floor
+                                    room.env.map[x][y].img_IDs = room.floor_img_IDs
                                 
                                 # Clear items, but keep doors
                                 if ((i-1) or (j-1)):
@@ -2672,8 +2656,5 @@ def add_doors(room):
                         
                         except:
                             continue
-
-def create_tile(tile_ID):
-    pass
 
 ########################################################################################################################################################

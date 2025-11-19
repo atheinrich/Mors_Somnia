@@ -1,0 +1,106 @@
+{
+"water": {
+    "name":    "water",
+    "img_IDs": ["floors", "water"]
+    },
+
+"dirt1": {
+    "name":    "dirt 1",
+    "img_IDs": ["floors", "dirt1"]
+    },
+
+"dirt2": {
+    "name":    "dirt 2",
+    "img_IDs": ["floors", "dirt2"]
+    },
+
+"sand1": {
+    "name":    "sand 1",
+    "img_IDs": ["floors", "sand1"]
+    },
+
+"sand2": {
+    "name":    "sand 2",
+    "img_IDs": ["floors", "sand2"]
+    },
+
+"grass1": {
+    "name":    "grass 1",
+    "img_IDs": ["floors", "grass1"]
+    },
+
+"grass2": {
+    "name":    "grass 2",
+    "img_IDs": ["floors", "grass2"]
+    },
+
+"grass3": {
+    "name":    "grass 3",
+    "img_IDs": ["floors", "grass3"]
+    },
+
+"grass4": {
+    "name":    "grass 4",
+    "img_IDs": ["floors", "grass4"]
+    },
+
+"dark_green_floor": {
+    "name":    "dark green floor",
+    "img_IDs": ["floors", "dark green floor"]
+    },
+
+"dark_blue_floor": {
+    "name":    "dark blue floor",
+    "img_IDs": ["floors", "dark blue floor"]
+    },
+
+"dark_red_floor": {
+    "name":    "dark red floor",
+    "img_IDs": ["floors", "dark red floor"]
+    },
+
+"green_floor": {
+    "name":    "green floor",
+    "img_IDs": ["floors", "green floor"]
+    },
+
+"red_floor": {
+    "name":    "red floor",
+    "img_IDs": ["floors", "red floor"]
+    },
+
+"blue": {
+    "name":    "blue floor",
+    "img_IDs": ["floors", "blue"]
+    },
+
+"wood": {
+    "name":    "wood floor",
+    "img_IDs": ["floors", "wood"]
+    },
+
+"bubbles1": {
+    "name":    "bubbles 1",
+    "img_IDs": ["floors", "bubbles1"]
+    },
+
+"bubbles2": {
+    "name":    "bubbles 2",
+    "img_IDs": ["floors", "bubbles2"]
+    },
+
+"bubbles3": {
+    "name":    "bubbles 3",
+    "img_IDs": ["floors", "bubbles3"]
+    },
+
+"gray_tile": {
+    "name":    "gray tile",
+    "img_IDs": ["floors", "gray tile"]
+    },
+
+"brown_tile": {
+    "name":    "brown tile",
+    "img_IDs": ["floors", "brown tile"]
+    }
+}

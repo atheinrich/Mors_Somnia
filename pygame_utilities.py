@@ -1251,12 +1251,12 @@ def render_display():
                             pyg.display_queue.append([surface[i], pos])
                 
                 # Third tier (entity)
-                if tile.entity:
-                    tile.entity.draw()
+                if tile.ent:
+                    tile.ent.draw()
                     
                     # Effects
-                    if tile.entity.active_effects:
-                        for effect in tile.entity.active_effects.values():
+                    if tile.ent.active_effects:
+                        for effect in tile.ent.active_effects.values():
                             if effect.trigger == 'on_render':
                                 effect.activate()
                 

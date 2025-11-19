@@ -578,8 +578,8 @@ class MovementSystem:
                     ent.prev_tile              = ent.env.map[int(ent.X/pyg.tile_width)][int(ent.Y/pyg.tile_height)]
                     ent.X                      += dX
                     ent.Y                      += dY
-                    ent.tile.entity            = None
-                    ent.env.map[x][y].entity   = ent
+                    ent.tile.ent               = None
+                    ent.env.map[x][y].ent      = ent
                     ent.tile                   = ent.env.map[x][y]
 
                     session.bus.emit(
@@ -589,8 +589,8 @@ class MovementSystem:
                 
             #########################################################
             # Interact with an entity
-            elif ent.env.map[x][y].entity:
-                session.interact.interact(ent, ent.env.map[x][y].entity)
+            elif ent.env.map[x][y].ent:
+                session.interact.interact(ent, ent.env.map[x][y].ent)
             
             # Activate an effect
             else:
@@ -1009,7 +1009,7 @@ class InteractionSystem:
         if ent.role == 'player':
             pyg.update_gui("You died!", pyg.red)
             session.player_obj.ent.dead        = True
-            session.player_obj.ent.tile.entity = None
+            session.player_obj.ent.tile.ent = None
             session.player_obj.ent.img_IDs   = session.player_obj.ent.img_names_backup
             
             item = session.items.create_item('skeleton')
@@ -1021,7 +1021,7 @@ class InteractionSystem:
         # Entity or projectile death
         else:
             ent.dead        = True
-            ent.tile.entity = None
+            ent.tile.ent = None
             ent.env.entities.remove(ent)
             if ent in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(ent)
             
@@ -1061,7 +1061,7 @@ def place_player(ent, env, loc):
         if ent.env:
             ent.env.player_coordinates = [ent.X//32, ent.Y//32]
             ent.env.entities.remove(ent)
-            ent.tile.entity = None
+            ent.tile.ent = None
             ent.tile        = None
             
             ent.last_env          = ent.env
@@ -1084,7 +1084,7 @@ def place_player(ent, env, loc):
 
         # Notify environment of player position
         ent.env.entities.append(ent)
-        ent.tile.entity = ent
+        ent.tile.ent = ent
         check_tile(loc[0], loc[1], ent=ent, startup=True)
         
         # Update camera
@@ -1160,7 +1160,7 @@ def check_tile(x, y, ent=None, startup=False):
                 if tile.room and tile.room.roof_img_IDs:
                     for spot in tile.room.tiles_list:
                         if spot not in tile.room.walls_list:
-                            spot.img_IDs = tile.room.floor
+                            spot.img_IDs = tile.room.floor_img_IDs
     
     # Reveal the roof if the player leaves the room
     if ent.prev_tile:
@@ -1180,7 +1180,7 @@ def is_blocked(env, loc):
             return True
         
         # Check for monsters
-        if env.map[loc[0]][loc[1]].entity: 
+        if env.map[loc[0]][loc[1]].ent: 
             return True
         
         # Triggers message for hidden passages

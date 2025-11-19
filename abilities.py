@@ -80,8 +80,8 @@ class AbilitiesSystem:
         # Find entities in vicinity
         ent_list = []
         for tile in get_vicinity(owner).values():
-            if tile.entity:
-                ent_list.append(tile.entity)
+            if tile.ent:
+                ent_list.append(tile.ent)
         
         # Activate effect if entities are found
         if ent_list:
@@ -110,9 +110,9 @@ class AbilitiesSystem:
         # Find entities in vicinity
         target = None
         for tile in get_vicinity(owner).values():
-            if tile.entity:
-                if tile.entity.role != 'NPC':
-                    target = tile.entity
+            if tile.ent:
+                if tile.ent.role != 'NPC':
+                    target = tile.ent
                     break
         
         # Activate effect if entities are found
@@ -139,8 +139,8 @@ class AbilitiesSystem:
         pyg.update_gui("The " + target.name + " has been captured!", pyg.red)
 
         # Update entity
-        target.dead        = True
-        target.tile.entity = None
+        target.dead     = True
+        target.tile.ent = None
         target.env.entities.remove(target)
         
         owner.discoveries['entities'][target.name] = target.img_IDs
@@ -154,8 +154,8 @@ class AbilitiesSystem:
         # Find pets in vicinity
         ent_list = []
         for tile in get_vicinity(owner).values():
-            if tile.entity:
-                ent_list.append(tile.entity)
+            if tile.ent:
+                ent_list.append(tile.ent)
         
         # Activate effect if entities are found
         if ent_list:
@@ -175,8 +175,8 @@ class AbilitiesSystem:
         # Find pets in vicinity
         ent_list = []
         for tile in get_vicinity(owner).values():
-            if tile.entity:
-                ent_list.append(tile.entity)
+            if tile.ent:
+                ent_list.append(tile.ent)
         
         # Activate effect if entities are found
         if ent_list:
@@ -201,9 +201,9 @@ class AbilitiesSystem:
             
             # Apply attack to enemies
             for tile in get_vicinity(owner).values():
-                if tile.entity:
+                if tile.ent:
                     owner.attack += 5
-                    session.interact.attack_target(owner, tile.entity)
+                    session.interact.attack_target(owner, tile.ent)
                     owner.attack -= 5
             
             # Decrease stamina
