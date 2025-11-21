@@ -1003,6 +1003,7 @@ class InteractionSystem:
         #########################################################
         # Imports
         from environments import place_object
+        from items import create_item
 
         #########################################################
         # Player death
@@ -1012,7 +1013,7 @@ class InteractionSystem:
             session.player_obj.ent.tile.ent = None
             session.player_obj.ent.img_IDs   = session.player_obj.ent.img_names_backup
             
-            item = session.items.create_item('skeleton')
+            item = create_item('skeleton')
             item.name = f"the corpse of {ent.name}"
             place_object(item, [ent.X//pyg.tile_width, ent.Y//pyg.tile_height], ent.env)
             pygame.event.clear()
@@ -1029,7 +1030,7 @@ class InteractionSystem:
                 pyg.update_gui("The " + ent.name + " is dead! You gain " + str(ent.exp) + " experience points.", pyg.red)
                 
                 if not ent.tile.item:
-                    item = session.items.create_item('bones')
+                    item = create_item('bones')
                     item.name = f"the corpse of {ent.name}"
                     place_object(item, [ent.X//pyg.tile_width, ent.Y//pyg.tile_height], ent.env)
                     ent.role = 'corpse'

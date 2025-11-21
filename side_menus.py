@@ -7,6 +7,7 @@
 # Imports
 ## Standard
 import time
+import copy
 
 ## Specific
 import pygame
@@ -347,42 +348,85 @@ class CatalogMenu:
     
     # Core
     def __init__(self):
-        """ Manages catalog menu on the side of the screen. Allows item placemennt. """
+        """ Manages inventory menu on the side of the screen. Allows item activation. """
         
         pyg = session.pyg
 
         #########################################################
         # Parameters
+        ## Item management
+        self.categories = []         # cache of category names with visible items
+        self.items      = []         # cache of actual item objects in current category
+
+        ## Choice management
+        self.category_index = 0      # which category is active
+        self.item_index     = 0      # index of highlighted item corresponding to self.items
+        self.offset         = 0      # difference of first item in category and first currently shown
+
         ## Positions
-        self.cursor_pos = [pyg.screen_width-pyg.tile_width, 32]
-        self.img_x      = 0
-        self.img_y      = 0
+        self.cursor_pos    = [0, 32] # second value is altered
+        self.index_history = {}      # position memory; category_name: [item_index, offset]
 
         ## Other
-        self.img_IDs = ['null', 'null']
-        self.locked    = False
+        self.locked = False          # allows the player to active highlighted item while moving
+        self.detail = True           # toggles item names
 
         #########################################################
         # Surface initialization
+        ## Background
         self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
         self.background_fade.fill((0, 0, 0, 50))
 
-    def run(self):  
+        ## Cursor
+        self.cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
+        cursor_data = {
+            'size':  31,
+            'width': 1,
+            'alpha': 128}
+        
+        self.locked_cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
+        self.locked_cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
+        locked_cursor_data = {
+            'size':  30,
+            'width': 2,
+            'alpha': 192}
+        
+        cursors = [
+            (self.cursor,        self.cursor_fill,        cursor_data),
+            (self.locked_cursor, self.locked_cursor_fill, locked_cursor_data)]
+        
+        for (cursor, fill, data) in cursors:
+
+            fill.fill((255, 255, 255, data['alpha']))
+
+            pygame.draw.polygon(
+                cursor, 
+                pygame.Color('white'), 
+                [
+                    (0, 0),
+                    (data['size'], 0),
+                    (data['size'], data['size']),
+                    (0, data['size'])
+                ],  
+                data['width'])
+
+    def run(self):
         
         #########################################################
         # Initialize
         ## Update dictionaries and create cursors
         self.update_data()
-        
+
         ## Set navigation speed
-        session.effects.movement_speed(toggle=False, custom=2)
+        session.effects.movement_speed(toggle=False, custom=0)
         
         ## Define shorthand
         pyg = session.pyg
 
         ## Wait for input
         for event in pygame.event.get():
-
+            
             if event.type == KEYDOWN:
             
                 #########################################################
@@ -400,9 +444,16 @@ class CatalogMenu:
                     self.key_RIGHT()
                 
                 #########################################################
-                # Activate item
+                # Activate or drop item
                 elif event.key in pyg.key_ENTER:
                     self.key_ENTER()
+                elif event.key in pyg.key_PERIOD:
+                    self.key_PERIOD()
+                
+                #########################################################
+                # Toggle details
+                elif event.key in pyg.key_GUI:
+                    self.key_GUI()
                 
                 #########################################################
                 # Toggle selection lock
@@ -414,235 +465,221 @@ class CatalogMenu:
                 elif event.key in pyg.key_INV:
                     self.key_INV()
                     return
-
+                
             #########################################################
             # Return to game
             elif event.type == KEYUP:
+
                 if event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
-
-            # Save for later reference
-            index = self.dic_index%len(self.dic_indices)
-            self.dic_indices[index][0] = self.offset
-            self.dic_indices[index][1] = self.choice
         
         pyg.overlay_state = 'dev'
         return
 
     def render(self):
-        pyg = session.pyg
 
-        if not self.locked: pyg.overlay_queue.append([self.background_fade, (0, 0)])
-        
+        #########################################################
+        # Adjust GUI
+        pyg = session.pyg
         pyg.msg_height = 1
         pyg.update_gui()
+
+        #########################################################
+        # Renders
+        ## Background and cursor fill
+        if self.locked:
+            pyg.overlay_queue.append([self.locked_cursor_fill, self.cursor_pos])
+        else:
+            pyg.overlay_queue.append([self.background_fade, (0, 0)])
+            pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
+
+        ## Color
+        session.img.average()
+        c     = session.img.left_correct
+        color = pygame.Color(c, c, c)
         
-        pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
-        
-        # Renders menu to update cursor location
-        Y = 32
-        counter = 0
-        for i in range(len(list(self.dic))):
+        ## Items
+        for i in range(self.offset, min(len(self.items), self.offset + 12)):
+
+            # Select next item and position
+            item = self.items[i]
+            Y    = 32 + (i - self.offset) * 32
             
-            # Stop at the 12th image, starting with respect to the offset 
-            if counter <= 12:
-                img_IDs = self.dic[list(self.dic.keys())[(i+self.offset)%len(self.dic)]]
-                pyg.overlay_queue.append([session.img.dict[img_IDs[0]][img_IDs[1]], (pyg.screen_width-pyg.tile_width, Y)])
-                Y += pyg.tile_height
-                counter += 1
-            else: break
-        pyg.overlay_queue.append([self.cursor_border, self.cursor_pos])
+            # Render details
+            if self.detail:
+                Y_detail = int(Y)
+                
+                # Create text surfaces
+                text_lines = [item.name]
+                for text in text_lines:
+                    surface = pyg.minifont.render(text, True, color)
+                    pyg.overlay_queue.append([surface, (40, Y_detail)])
+                    Y_detail += 12
+            
+            # Send to queue
+            img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
+            pyg.overlay_queue.append([img, (0, Y)])
+        
+        ## Cursor border
+        if self.locked: pyg.overlay_queue.append([self.locked_cursor, self.cursor_pos])
+        else:           pyg.overlay_queue.append([self.cursor,        self.cursor_pos])
 
     # Keys
     def key_UP(self):
-        pyg = session.pyg
-
         if not self.locked:
-            self.choice -= 1
-            if self.cursor_pos[1] == 32: self.offset -= 1
-            else: self.cursor_pos[1] -= pyg.tile_height
-        
+            self.item_index = (self.item_index - 1) % len(self.items)
+            self.update_data()
         else:
-            session.movement.move(session.player_obj.ent, 0, -pyg.tile_height)
-                
+            session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
+
     def key_DOWN(self):
-        pyg = session.pyg
-
         if not self.locked:
-            self.choice += 1
-            if self.cursor_pos[1] >= (min(len(self.dic), 12) * 32): self.offset += 1
-            else: self.cursor_pos[1] += pyg.tile_height
-            
+            self.item_index = (self.item_index + 1) % len(self.items)
+            self.update_data()
         else:
-            session.movement.move(session.player_obj.ent, 0, pyg.tile_height)
+            session.movement.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
     def key_LEFT(self):
-
         if not self.locked:
-            self.dic_index -= 1
-            self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-            while not len(self.dic):
-                self.dic_index -= 1
-                self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        
+            self.update_category(-1)
+            self.update_data()
         else:
             session.movement.move(session.player_obj.ent, -session.pyg.tile_height, 0)
 
-        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-        self.choice = self.cursor_pos[1]//32 + self.offset - 1
-    
-        # Move cursor to the highest spot in the dictionary
-        if self.cursor_pos[1] > 32*len(self.dic):
-            self.cursor_pos[1] = 32*len(self.dic)
-            self.choice = len(self.dic) - self.offset - 1
-
     def key_RIGHT(self):
-
         if not self.locked:
-            self.dic_index += 1
-            self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-            while not len(self.dic):
-                self.dic_index += 1
-                self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        
+            self.update_category(1)
+            self.update_data()
         else:
             session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
-        
-        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]   
-        self.choice = self.cursor_pos[1]//32 + self.offset - 1
-    
-        # Move cursor to the highest spot in the dictionary
-        if self.cursor_pos[1] > 32*len(self.dic):
-            self.cursor_pos[1] = 32*len(self.dic)
-            self.choice = len(self.dic) - self.offset - 1
-
-    def key_ENTER(self):
-        
-        pyg = session.pyg
-
-        from environments import place_object
-        from entities import create_item, create_entity
-
-        # Note location and image names
-        self.img_x, self.img_y = int(session.player_obj.ent.X/pyg.tile_width), int(session.player_obj.ent.Y/pyg.tile_height)
-        self.img_IDs[0] = self.dic_categories[self.dic_index%len(self.dic_categories)]
-        self.img_IDs[1] = list(self.dic.keys())[(self.choice)%len(self.dic)]
-        
-        # Set location for drop
-        if session.player_obj.ent.direction == 'front':   self.img_y += 1
-        elif session.player_obj.ent.direction == 'back':  self.img_y -= 1
-        elif session.player_obj.ent.direction == 'right': self.img_x += 1
-        elif session.player_obj.ent.direction == 'left':  self.img_x -= 1
-        
-        # Place tile
-        if self.img_IDs[0] in ['floors', 'walls', 'roofs']:
-            obj = session.player_obj.ent.env.map[self.img_x][self.img_y]
-            obj.placed = True
-            place_object(
-                obj = obj,
-                loc = [self.img_x, self.img_y],
-                env = session.player_obj.ent.env,
-                names = self.img_IDs.copy())
-
-            # Check if it completes a room
-            if self.img_IDs[0] == 'walls':
-                session.player_obj.ent.env.build_room(obj)
-        
-        # Place entity
-        elif self.img_IDs[0] in session.img.ent_data.keys():
-            item = create_entity(
-                names = self.img_IDs.copy())
-            place_object(
-                obj   = item,
-                loc   = [self.img_x, self.img_y],
-                env   = session.player_obj.ent.env,
-                names = self.img_IDs.copy())
-        
-        # Place item
-        elif self.img_IDs[1] not in session.img.ent_data.keys():
-            item = create_item(
-                names = self.img_IDs)
-            place_object(
-                obj   = item,
-                loc   = [self.img_x, self.img_y],
-                env   = session.player_obj.ent.env,
-                names = self.img_IDs.copy())
-            if item.img_IDs[0] == 'stairs':
-                item.tile.blocked = False
-        
-        else:
-            ent = create_entity(
-                names = self.img_IDs[1])
-            place_object(
-                obj   = ent,
-                loc   = [self.img_x, self.img_y],
-                env   = session.player_obj.ent.env,
-                names = self.img_IDs.copy())
-        
-        self.img_x, self.img_y = None, None
-        pyg.overlay_state = None
-
-    def key_DEV(self):
-        self.last_press_time = float(time.time())
-        self.cursor_border = pygame.Surface((32, 32)).convert()
-        self.cursor_border.set_colorkey(self.cursor_border.get_at((0,0)))
-
-        # Thin cursor
-        if not self.locked:
-            self.locked   = True
-            cursor_points = [(0, 0), (30, 0), (30, 30), (0, 30)]
-            cursor_width  = 2
-        
-        # Thick cursor
-        else:
-            self.locked   = False
-            cursor_points = [(0, 0), (31, 0), (31, 31), (0, 31)]
-            cursor_width  = 1
-        
-        pygame.draw.polygon(self.cursor_border, session.pyg.white, cursor_points, cursor_width)
-
-    def key_INV(self):
-        session.pyg.overlay_state = 'inv'
-        pygame.event.clear()
 
     def key_BACK(self):
+        self.locked = False
+        session.pyg.overlay_state = None
+
+    def key_GUI(self):
+        self.detail = not self.detail
+
+    def key_DEV(self):
+        self.locked = not self.locked
+
+    def key_INV(self):
+        self.locked = False
+        session.pyg.overlay_state = 'inv'
+
+    def key_ENTER(self):
+        from environments import place_object
         pyg = session.pyg
 
-        pyg.last_press_time = float(time.time())
-        pyg.overlay_state         = None
+        item = copy.deepcopy(self.items[self.item_index])
+        
+        # Note location
+        x = int(session.player_obj.ent.X / pyg.tile_width)
+        y = int(session.player_obj.ent.Y / pyg.tile_height)
+        
+        direction = session.player_obj.ent.direction
+        if direction == 'front':   y += 1
+        elif direction == 'back':  y -= 1
+        elif direction == 'right': x += 1
+        elif direction == 'left':  x -= 1
+
+        place_object(
+            obj = item,
+            loc = [x, y],
+            env = session.player_obj.ent.env)        
+
+    def key_PERIOD(self):
+        session.items.drop(self.items[self.item_index])
+        self.update_data()
 
     # Tools
     def update_data(self):
+        """ Updates current category and its items. """
+        
+        # Update inventory cache
+        inventory_dicts = self._find_visible()
+        self.categories = list(inventory_dicts.keys())
+        
+        # Close the menu if no items are visible
+        if not self.categories:
+            session.pyg.overlay_state = None
+            return
+
+        # Normalize the current category to the number of categories with visible items
+        self.category_index %= len(self.categories)
+
+        # Update item cache for selected category
+        self.items = inventory_dicts[self.categories[self.category_index]]
+
+        self._update_offset()
+
+    def _find_visible(self):
+        """ Rebuilds a dictionary of visible inventory items, grouped by category. """
+
+        inv = session.player_obj.ent.discoveries
+
+        inventory_dicts = {}
+
+        for category, items in inv.items():
+            visible_items = [item for item in items if not item.hidden]
+            if visible_items:
+                inventory_dicts[category] = visible_items
+
+        return inventory_dicts
+
+    def _update_offset(self):
+        """ Updates which items are currently shown. """
+
+        max_visible = 12
+
+        # Show all visible items
+        if len(self.items) <= max_visible:
+            self.offset = 0
+        
+        # Show current 12 items, set by offset
+        else:
+
+            # Shift current 12 items up by one; cursor is at the top (not the ultimate top)
+            if self.item_index < self.offset:
+                self.offset -= 1 #= self.item_index
+
+            # Shift current 12 items down by one; cursor is at the bottom (not the ultimate bottom)
+            elif self.item_index >= self.offset + max_visible:
+                self.offset += 1 # self.item_index - max_visible + 1
 
         # Update cursor
-        if bool(self.locked): size, width, alpha = 30, 2, 192
-        else:                 size, width, alpha = 31, 1, 128
-        self.cursor_border = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill   = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill.fill((255, 255, 255, alpha))
-        pygame.draw.polygon(
-            self.cursor_border, 
-            pygame.Color('white'), 
-            [(0, 0), (size, 0), (size, size), (0, size)],  width)
+        self.cursor_pos[1] = (self.item_index - self.offset + 1) * 32
 
-        # Initialize tile selection
-        self.dic    = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        self.offset = self.dic_indices[self.dic_index%len(self.dic_indices)][0]
-        self.choice = self.dic_indices[self.dic_index%len(self.dic_indices)][1]
+        # Keep cursor in the desired bounds
+        if self.cursor_pos[1] == 0:
+            self.cursor_pos[1] = 32
+        elif self.cursor_pos[1] == (max_visible + 1) * 32:
+            self.cursor_pos[1] += 64
+        elif self.cursor_pos[1] == (max_visible + 2) * 32:
+            self.cursor_pos[1] += 64
+
+    def update_category(self, direction):
+        """ Manages history for cursor position in each category. """
         
-    def update_dict(self):
-        
-        # Dictionary management
-        self.dic_categories = list(session.player_obj.ent.discoveries.keys())
-        self.dic_index = 0
-        self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]] # {first name: {second name: surface}}
-        while not len(self.dic):
-            self.dic_index += 1
-            self.dic = session.player_obj.ent.discoveries[self.dic_categories[self.dic_index%len(self.dic_categories)]]
-        self.dic_indices = [[0, 0] for _ in self.dic_categories]
+        # Check for new categories
+        for filled_category in self.categories:
+            if filled_category not in self.index_history.keys():
+                self.index_history[filled_category] = [0, 0]
+    
+        # Remove old categories
+        for saved_category in list(self.index_history.keys()):
+            if saved_category not in self.categories:
+                del self.index_history[saved_category]
+
+        # Save last
+        last_category = self.categories[self.category_index]
+        self.index_history[last_category] = [self.item_index, self.offset]
+
+        # Load new
+        self.category_index = (self.category_index + direction) % len(self.categories)
+        new_category        = self.categories[self.category_index]
+        self.item_index, self.offset = self.index_history[new_category]
 
 class AbilitiesMenu:
     

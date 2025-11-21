@@ -463,7 +463,6 @@ class NewGameMenu:
         #########################################################
         # Make temporary player
         session.player_obj = self.init_player()
-        session.dev.update_dict()
 
         place_player(
             ent = session.player_obj.ent,

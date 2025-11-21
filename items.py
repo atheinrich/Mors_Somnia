@@ -17,6 +17,52 @@ from data_management import item_dicts
 
 ########################################################################################################################################################
 # Classes
+class Discoveries:
+    
+    # Core
+    def __init__(self):
+        self.discoveries = {
+            'walls':     [],
+            'floors':    [],
+            'stairs':    [],
+            'decor':     [],
+            'furniture': [],
+            'paths':     [],
+            'entities':  []}
+
+    def add_discovery(self, object_ID):
+        from environments import create_tile
+        from entities import create_entity
+
+        try:
+            obj = create_item(object_ID)
+            self.discoveries[obj.img_IDs[0]].append(obj)
+        
+        except:
+            try:
+                obj = create_tile(object_ID)
+                self.discoveries[obj.img_IDs[0]].append(obj)
+            
+            except:
+                obj = create_entity(object_ID)
+                self.discoveries['entities'].append(obj)
+
+    # Dictionary methods
+    def __getitem__(self, key):
+        return self.discoveries[key]
+
+    def __setitem__(self, key, value):
+        self.discoveries[key] = value
+
+    def __delitem__(self, key):
+        del self.discoveries[key]
+
+    def __iter__(self):
+        return iter(self.discoveries)
+
+    def items(self):
+        return self.discoveries.items()
+
 class Item:
     
     def __init__(self, **kwargs):
@@ -116,20 +162,6 @@ class Item:
 class ItemSystem:
 
     # Core
-    def create_item(self, item_id):
-        """ Creates and returns an object.
-        
-            Parameters
-            ----------
-            names  : string or list of strings; name of object
-            effect : bool or Effect object; True=default, False=None, effect=custom """
-        
-        # Create object
-        item_id = item_id.replace(" ", "_")
-        item    = Item(**item_dicts[item_id])
-
-        return item
-
     def sort_inventory(self, ent=None):
         
         # Allow for NPC actions
@@ -335,5 +367,19 @@ class ItemSystem:
         
         else:
             pyg.update_gui("Not enough cash!", color=pyg.red)
+
+def create_item(item_id):
+    """ Creates and returns an object.
+    
+        Parameters
+        ----------
+        names  : string or list of strings; name of object
+        effect : bool or Effect object; True=default, False=None, effect=custom """
+    
+    # Create object
+    item_id = item_id.replace(" ", "_")
+    item    = Item(**item_dicts[item_id])
+
+    return item
 
 ########################################################################################################################################################

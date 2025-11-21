@@ -16,6 +16,7 @@ import pygame
 import session
 from quests import Questlog
 from entities import create_entity, create_NPC
+from items import create_item
 from data_management import tile_dicts
 
 ########################################################################################################################################################
@@ -121,7 +122,7 @@ class Environments:
         
         x = center[0] + random.randint(1, 5)
         y = center[1] + random.randint(1, 5)
-        item = session.items.create_item('jug_of_water')
+        item = create_item('jug_of_water')
         place_object(item, (x, y), env)
 
         # Place player in first room
@@ -268,20 +269,20 @@ class Environments:
         ###############################################################
         # Hidden objects
         x, y = center[0]+10, center[1]+9
-        item = session.items.create_item('blood_sword')
+        item = create_item('blood_sword')
         place_object(item, [x, y], env)
         x, y = center[0]+5, center[1]+10
-        item = session.items.create_item('iron_shield')
+        item = create_item('iron_shield')
         place_object(item, [x, y], env)
         
         # Bug fix
         x, y = 0, 0
-        item = session.items.create_item('scroll_of_fireball')
+        item = create_item('scroll_of_fireball')
         place_object(item, [x, y], env)
         
         # Door
         x, y = center[0]-3, center[1]+1
-        stairs = session.items.create_item('overworld_entrance')
+        stairs = create_item('overworld_entrance')
         place_object(stairs, [x, y], env)
         
         # Friend
@@ -443,7 +444,7 @@ class Environments:
                 
                 # Door
                 door_x, door_y = x+1, y+5
-                stairs = session.items.create_item('home_entrance')
+                stairs = create_item('home_entrance')
                 place_object(stairs, [door_x, door_y], env)
                 
                 room_counter += 1
@@ -651,15 +652,15 @@ class Environments:
         self.player_obj.ent.tile = env.map[x][y]
         
         # Generate acending stairs under player
-        stairs = session.items.create_item('descend_cave')
+        stairs = create_item('descend_cave')
         place_object(stairs, [x, y], env)
 
         # Generate stairs in the last room
         (x, y) = env.rooms[-1].center()
         if lvl_num == 1:
-            stairs = session.items.create_item('overworld_entrance')
+            stairs = create_item('overworld_entrance')
         else:
-            stairs = session.items.create_item('ascend_cave')
+            stairs = create_item('ascend_cave')
         place_object(stairs, [x, y], env)
 
         return env
@@ -776,12 +777,12 @@ class Environments:
         
         # Generate acending stairs under player
         if lvl_num != 0:
-            stairs = session.items.create_item('ascend_dungeon')
+            stairs = create_item('ascend_dungeon')
             place_object(stairs, [x, y], env)
 
         # Generate stairs in the last room
         (x, y) = env.rooms[-2].center()
-        stairs = session.items.create_item('descend_dungeon')
+        stairs = create_item('descend_dungeon')
         place_object(stairs, [x, y], env)
         
         return env
@@ -949,7 +950,7 @@ class Environments:
         
         # Generate stairs in the last room
         (x, y) = env.rooms[-2].center()
-        stairs = session.items.create_item('portal')
+        stairs = create_item('portal')
         stairs.name = 'hallucination'
         place_object(stairs, [x, y], env)
 
@@ -1068,7 +1069,7 @@ class Environments:
         
         # Door
         x, y = center[0]+1, center[1]+5
-        item = session.items.create_item('door')
+        item = create_item('door')
         item.name = 'home'
         place_object(item, [x, y], env)
         env.map[x][y].blocked = False
@@ -1245,31 +1246,25 @@ class Environment:
         for X in range(X_range[0], X_range[1]+1, pyg.tile_width):
             row = [] 
             for Y in range(Y_range[0], Y_range[1]+1, pyg.tile_height):
+
+                tile               = create_tile(img_IDs[1])
+                tile.env           = self
+                tile.wall_img_IDs  = wall_img_IDs
+                tile.floor_img_IDs = floor_img_IDs
+                tile.roof_img_IDs  = roof_img_IDs
+                tile.X             = X
+                tile.Y             = Y
                 
                 # Handle edges
                 if (X in X_range) or (Y in Y_range):
-                    tile = self.create_tile(img_IDs[1])
-                    tile.env = self
-                    tile.wall_img_IDs = wall_img_IDs
-                    tile.floor_img_IDs = floor_img_IDs
-                    tile.roof_img_IDs = roof_img_IDs
-                    tile.X = X
-                    tile.Y = Y
-                    tile.blocked = True
-                    tile.hidden = hidden
+                    tile.blocked     = True
+                    tile.hidden      = hidden
                     tile.unbreakable = True
                 
                 # Handle bulk
                 else:
-                    tile = self.create_tile(img_IDs[1])
-                    tile.env = self
-                    tile.wall_img_IDs = wall_img_IDs
-                    tile.floor_img_IDs = floor_img_IDs
-                    tile.roof_img_IDs = roof_img_IDs
-                    tile.X = X
-                    tile.Y = Y
-                    tile.blocked = blocked
-                    tile.hidden = hidden
+                    tile.blocked     = blocked
+                    tile.hidden      = hidden
                     tile.unbreakable = False
                 
                 row.append(tile)
@@ -1280,20 +1275,6 @@ class Environment:
         self.player_coordinates = [0, 0]
         self.camera             = None
         self.center             = [int(len(self.map)/2), int(len(self.map[0])/2)]
-
-    def create_tile(self, tile_ID):
-        """ Creates and returns an object.
-        
-            Parameters
-            ----------
-            names  : string or list of strings; name of object
-            effect : bool or Effect object; True=default, False=None, effect=custom """
-        
-        # Create object
-        tile_ID = tile_ID.replace(" ", "_")
-        tile    = Tile(**tile_dicts[tile_ID])
-
-        return tile
 
     def create_h_tunnel(self, x1, x2, y, img_set=None):
         """ Creates horizontal tunnel. min() and max() are used if x1 is greater than x2. """
@@ -1703,29 +1684,29 @@ class Room:
                             
                             # Place door
                             tile.blocked = False
-                            place_object(session.items.create_item('door'), [tile_x, tile_y], self.env)           
+                            place_object(create_item('door'), [tile_x, tile_y], self.env)           
                     
                     # Place floor
                     if self.plan[y][x] == '.':
                         tile.blocked   = False
                     
                     # Place furniture
-                    elif self.plan[y][x] == '=': place_object(session.items.create_item('red_bed'),         [tile_x, tile_y], self.env)                    
-                    elif self.plan[y][x] == 'b': place_object(session.items.create_item('red_chair_left'),  [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'T': place_object(session.items.create_item('table'),           [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'd': place_object(session.items.create_item('red_chair_right'), [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == '[': place_object(session.items.create_item('shelf_left'),      [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == ']': place_object(session.items.create_item('shelf_right'),     [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == '=': place_object(create_item('red_bed'),         [tile_x, tile_y], self.env)                    
+                    elif self.plan[y][x] == 'b': place_object(create_item('red_chair_left'),  [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'T': place_object(create_item('table'),           [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'd': place_object(create_item('red_chair_right'), [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == '[': place_object(create_item('shelf_left'),      [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == ']': place_object(create_item('shelf_right'),     [tile_x, tile_y], self.env)
                     
                     # Place items
-                    elif self.plan[y][x] == 'g': place_object(session.items.create_item('jug_of_grapes'),   [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'c': place_object(session.items.create_item('jug_of_cement'),   [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'g': place_object(create_item('jug_of_grapes'),   [tile_x, tile_y], self.env)
+                    elif self.plan[y][x] == 'c': place_object(create_item('jug_of_cement'),   [tile_x, tile_y], self.env)
                     
                 # Place things outside
                 else:
                     
                     # Place items
-                    if self.plan[y][x] == 'L':   place_object(session.items.create_item('lights'),          [tile_x, tile_y], self.env)
+                    if self.plan[y][x] == 'L':   place_object(create_item('lights'),          [tile_x, tile_y], self.env)
 
     def from_boundary(self):
         
@@ -2333,7 +2314,7 @@ def place_objects(env, items, entities):
                     if not random.randint(0, item_selection[2]) and not env.map[x][y].item:
                         
                         ## Place object
-                        item = session.items.create_item(item_selection[1])
+                        item = create_item(item_selection[1])
                         place_object(item, [x, y], env)
                 
                 ## Randomly select and place an entity
@@ -2347,7 +2328,7 @@ def place_objects(env, items, entities):
                         entity = create_entity(ent_selection[1])
                         for item in ent_selection[3]:
                             if item:
-                                obj = session.items.create_item(item)
+                                obj = create_item(item)
                                 session.items.pick_up(entity, obj)
                                 if obj.equippable:
                                     session.items.toggle_equip(obj)
@@ -2370,44 +2351,57 @@ def place_object(obj, loc, env, names=None):
       
     pyg = session.pyg
 
-    from environments import Tile
     from entities import Entity
     from items import Item
-    
+
     # Place tile
     if type(obj) == Tile:
-        env.map[loc[0]][loc[1]].img_IDs = names
         
-        # Set properties
-        if names[1] in session.img.biomes['sea']:
-            env.map[loc[0]][loc[1]].biome   = 'water'
-        elif names[0] in ['walls']:
-            env.map[loc[0]][loc[1]].blocked = True
-            env.map[loc[0]][loc[1]].item    = None
-        else:
-            env.map[loc[0]][loc[1]].blocked = False
-    
+        # Update object
+        obj.env    = env
+        obj.placed = True
+        obj.X      = loc[0] * pyg.tile_width
+        obj.Y      = loc[1] * pyg.tile_height
+        obj.item   = env.map[loc[0]][loc[1]].item
+        obj.ent    = env.map[loc[0]][loc[1]].ent
+        
+        # Update environment
+        env.map[loc[0]][loc[1]] = obj
+
+        ## Check structures
+        if obj.img_IDs[0] == 'walls':
+            session.player_obj.ent.env.build_room(obj)
+
     # Place item
     elif type(obj) == Item:
+
+        # Update object
         obj.X    = loc[0] * pyg.tile_width
         obj.X0   = loc[0] * pyg.tile_width
         obj.Y    = loc[1] * pyg.tile_height
         obj.Y0   = loc[1] * pyg.tile_height
         obj.env  = env
         obj.tile = env.map[loc[0]][loc[1]]
+
+        # Update environment
         env.map[loc[0]][loc[1]].item    = obj
         env.map[loc[0]][loc[1]].blocked = obj.blocked
+
         if obj.effect:
             session.effects.toggle_effect(obj.tile, obj.effect)
     
     # Place entity
     elif type(obj) == Entity:
+
+        # Update object
         obj.X    = loc[0] * pyg.tile_width
         obj.X0   = loc[0] * pyg.tile_width
         obj.Y    = loc[1] * pyg.tile_height
         obj.Y0   = loc[1] * pyg.tile_height
         obj.env  = env
         obj.tile = env.map[loc[0]][loc[1]]
+
+        # Update environment
         env.map[loc[0]][loc[1]].ent = obj
         env.map[loc[0]][loc[1]].blocked = False
         env.entities.append(obj)
@@ -2597,7 +2591,7 @@ def add_doors(room):
         loc = [selected_tile.X // 32, selected_tile.Y // 32]
         
         # Add to map
-        place_object(session.items.create_item('door'), loc, room.env)
+        place_object(create_item('door'), loc, room.env)
         room.env.map[loc[0]][loc[1]].blocked   = False
         room.env.map[loc[0]][loc[1]].img_IDs = room.floor_img_IDs
         try:    room.walls_list.remove(room.env.map[loc[0]][loc[1]])
@@ -2656,5 +2650,19 @@ def add_doors(room):
                         
                         except:
                             continue
+
+def create_tile(tile_ID):
+    """ Creates and returns an object.
+    
+        Parameters
+        ----------
+        names  : string or list of strings; name of object
+        effect : bool or Effect object; True=default, False=None, effect=custom """
+    
+    # Create object
+    tile_ID = tile_ID.replace(" ", "_")
+    tile    = Tile(**tile_dicts[tile_ID])
+
+    return tile
 
 ########################################################################################################################################################

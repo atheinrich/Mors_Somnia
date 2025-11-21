@@ -297,10 +297,10 @@ def rendering():
 ########################################################################################################################################################
 # Other
 def API_updating():
-    times = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖']
+    env = session.player_obj.ent.env
     if API_toggle: API(
-        state   = times[session.player_obj.ent.env.env_time-1],
-        details = session.player_obj.ent.env.name.capitalize())
+        state   = env.symbols[env.env_time-1],
+        details = env.name.capitalize())
 
 def API(state, details, init=False):
     global RPC

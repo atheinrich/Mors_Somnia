@@ -15,6 +15,7 @@ import pygame
 ## Local
 import session
 from data_management import ent_dicts, NPC_dicts, load_json
+from items import create_item
 
 ########################################################################################################################################################
 
@@ -60,6 +61,7 @@ class PlayerData:
         self.dialogue = Dialogue()
 
         self._add_items()
+        self._add_discoveries()
         session.stats_obj.pet_startup(self.envs.areas['underworld']['garden'])
 
         self.ent.last_env = self.envs.areas['underworld']['womb']
@@ -83,31 +85,6 @@ class PlayerData:
             
         # Player-specific attributes
         ent.player_id   = random.randint(100_000_000, 999_999_999)
-        ent.discoveries = {
-
-            'walls':     {
-                'gray':            ['walls',     'gray'],
-                'green':           ['walls',     'green']},
-
-            'floors':    {
-                'grass4':          ['floors',    'grass4'],
-                'wood':            ['floors',    'wood'],
-                'water':           ['floors',    'water']},
-
-            'stairs':    {
-                'door':            ['stairs',    'door']},
-
-            'decor':     {
-                'blades':          ['decor',     'blades'],
-                'lights':          ['decor',     'lights']},
-
-            'furniture': {
-                'table':           ['furniture', 'table'],
-                'red chair left':  ['furniture', 'red chair left'],
-                'red chair right': ['furniture', 'red chair right']},
-
-            'paths':     {},
-            'entities' : {}}
 
         ent.garden_abilities = {
             'entity_scare':   session.abilities.create_ability(ent, 'entity_scare'),
@@ -139,9 +116,24 @@ class PlayerData:
 
     def _add_items(self):
         for item_name in ['bald', 'clean', 'flat', 'dagger']:
-            item = session.items.create_item(item_name)
+            item = create_item(item_name)
             session.items.pick_up(self.ent, item, silent=True)
             session.items.toggle_equip(item, silent=True)
+
+    def _add_discoveries(self):
+        from items import Discoveries
+
+        self.ent.discoveries = Discoveries()
+        
+        walls     = ['gray', 'green']
+        floors    = ['grass4', 'wood', 'water']
+        stairs    = ['door']
+        decor     = ['blades', 'lights']
+        furniture = ['table', 'red_chair_left', 'red_chair_right']
+        starter_disc = walls + floors + stairs + decor + furniture
+
+        for object_ID in starter_disc:
+            self.ent.discoveries.add_discovery(object_ID)
 
     def finalize_player(self):
         from mechanics import place_player
@@ -150,7 +142,6 @@ class PlayerData:
         # Make object permanent
         ## Copy player and womb environment
         self.ent.role = 'player'
-        session.dev.update_dict()
 
         ## Add additional environments
         self.envs.add_area('overworld', permadeath=True)
@@ -167,35 +158,35 @@ class PlayerData:
 
         #########################################################
         # Create and equip items
-        item = session.items.create_item('shovel')
+        item = create_item('shovel')
         item.uses = 25
         session.items.pick_up(self.ent, item, silent=True)
         session.items.toggle_equip(item, silent=True)
 
         furniture = ["purple_bed", "red_bed", "shelf_left", "shelf_right", "long_table_left", "long_table_right", "table", "red_chair_left", "red_chair_right", "red_rug_bottom_left", "red_rug_bottom_middle", "red_rug_bottom_right", "red_rug_middle_left", "red_rug_middle_middle", "red_rug_middle_right", "red_rug_top_left", "red_rug_top_middle", "red_rug_top_right", "green_rug_bottom_left", "green_rug_bottom_middle", "green_rug_bottom_right", "green_rug_middle_left", "green_rug_middle_middle", "green_rug_middle_right"]
         for ID in furniture:
-            item = session.items.create_item(ID)
+            item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
 
         decor = ['tree', 'bones', 'boxes', 'fire', 'leafy', 'skeleton', 'shrooms', 'cup_shroom', 'frond', 'blades', 'purple_bulbs', 'lights']
         for ID in decor:
-            item = session.items.create_item(ID)
+            item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
 
         weapons = ['super shovel', 'sword', 'blood sword', 'blood dagger']
         for ID in weapons:
-            item = session.items.create_item(ID)
+            item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
 
         apparel = ['lamp', 'orange clothes', 'exotic clothes', 'yellow dress', 'chain dress', 'iron armor']
         for ID in apparel:
-            item = session.items.create_item(ID)
+            item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
 
         clothes = None
         if self.ent.equipment['chest'].img_IDs[0] == 'bra': clothes = 'yellow dress'
         else:                                                 clothes = 'green clothes'
-        item = session.items.create_item(clothes)
+        item = create_item(clothes)
         session.items.pick_up(self.ent, item, silent=True)
         session.items.toggle_equip(item, silent=True)
 
@@ -575,7 +566,7 @@ def create_NPC(name):
         # Equipment
         for item_type in ['clothes', 'chest', 'hair', 'beard', 'weapon', 'armor']:
             if NPC[item_type]: 
-                item = session.items.create_item(NPC[item_type])
+                item = create_item(NPC[item_type])
                 session.items.pick_up(ent, item, silent=True)
                 session.items.toggle_equip(item, silent=True)
                 if NPC['trade_times']: item.hidden = True
@@ -584,7 +575,7 @@ def create_NPC(name):
         ent.trade_times = NPC['trade_times']
         if NPC['trade_times']:
             for item in NPC['inv']:
-                item = session.items.create_item(item)
+                item = create_item(item)
                 session.items.pick_up(ent, item, silent=True)
     
     #########################################################
@@ -603,12 +594,12 @@ def create_NPC(name):
             'armor': str(random.choice(session.img.armor_names))}
         
         for name in items.values():
-            item = session.items.create_item(name)
+            item = create_item(name)
             session.items.pick_up(ent, item, silent=True)
             session.items.toggle_equip(item, silent=True)
         
         if items['chest'] == 'flat':
-            face = session.items.create_item(str(random.choice(session.img.face_options)))
+            face = create_item(str(random.choice(session.img.face_options)))
             session.items.pick_up(ent, face, silent=True)
             session.items.toggle_equip(face, silent=True)
         

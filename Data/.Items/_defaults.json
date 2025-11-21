@@ -266,7 +266,7 @@
 "stairs": {
 
     "name":          null,
-    "img_IDs":     null,
+    "img_IDs":       null,
 
     "role":          "other",
     "slot":          null,
