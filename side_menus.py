@@ -350,7 +350,7 @@ class CatalogMenu:
     def __init__(self):
         """ Manages inventory menu on the side of the screen. Allows item activation. """
         
-        pyg = session.pyg
+        pyg   = session.pyg
 
         #########################################################
         # Parameters
@@ -364,7 +364,8 @@ class CatalogMenu:
         self.offset         = 0      # difference of first item in category and first currently shown
 
         ## Positions
-        self.cursor_pos    = [0, 32] # second value is altered
+        self.right_pos     = pyg.screen_width - pyg.tile_width
+        self.cursor_pos    = [self.right_pos, 32] # second value is altered
         self.index_history = {}      # position memory; category_name: [item_index, offset]
 
         ## Other
@@ -514,12 +515,13 @@ class CatalogMenu:
                 text_lines = [item.name]
                 for text in text_lines:
                     surface = pyg.minifont.render(text, True, color)
-                    pyg.overlay_queue.append([surface, (40, Y_detail)])
+                    width   = surface.get_width()
+                    pyg.overlay_queue.append([surface, (self.right_pos-width-8, Y_detail)])
                     Y_detail += 12
             
             # Send to queue
             img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
-            pyg.overlay_queue.append([img, (0, Y)])
+            pyg.overlay_queue.append([img, (self.right_pos, Y)])
         
         ## Cursor border
         if self.locked: pyg.overlay_queue.append([self.locked_cursor, self.cursor_pos])
