@@ -239,15 +239,19 @@ class EffectsSystem:
     # On use (environments)
     @register("enter_home")
     def enter_home(self, effect_obj=None):
-        if effect_obj: owner = effect_obj.owner
-        
+        """ Assumes home is already constructed. """
+
+        area = session.player_obj.envs.areas['overworld']
+
         place_player(
             ent = session.player_obj.ent,
-            env = session.player_obj.envs.areas['overworld']['home'],
-            loc = session.player_obj.envs.areas['overworld']['home'].player_coordinates)
+            env = area['home'],
+            loc = area['home'].player_coordinates)
 
     @register("enter_overworld")
     def enter_overworld(self, effect_obj=None):
+        """ Assumes overworld is already created. """
+
         area = session.player_obj.envs.areas['overworld']
         
         place_player(
@@ -255,22 +259,31 @@ class EffectsSystem:
             env = area['overworld'],
             loc = area['overworld'].player_coordinates)
 
+    # new
+    @register("enter_dungeon")
+    def enter_dungeon(self, effect_obj=None, **kwargs):
+        """ Creates a new dungeon system and its first level. Overwrites any previous system. """
+
+        envs = session.player_obj.envs
+
+        envs.add_area('dungeon')
+        area    = envs.areas['dungeon']
+        lvl_num = 1
+        area.add_level(f'dungeon level {lvl_num}', lvl_num)
+
+        place_player(
+            ent = session.player_obj.ent,
+            env = area[lvl_num-1],
+            loc = area[lvl_num-1].center)
+
     @register("descend_dungeon")
     def descend_dungeon(self, effect_obj, **kwargs):
-        """ Assumes the area is called 'dungeon'.  """
-
         pyg  = session.pyg
-        area = session.player_obj.envs.areas['dungeon']
 
         # Set level
-        ## Use a door to go down one level
-        if effect_obj:
-            if effect_obj.item:
-                lvl_num = effect_obj.item.env.lvl_num + 1
-        
-        ## Set manually
-        else:
-            lvl_num = kwargs.get('lvl_num', 0)
+        area = session.player_obj.ent.env.area
+        pyg.update_gui("You descend deeper into the cave.", pyg.dark_gray)
+        lvl_num = effect_obj.item.env.lvl_num + 1
 
         # Find or build level
         ## Enter previously constructed level
@@ -278,49 +291,43 @@ class EffectsSystem:
             if env.lvl_num == lvl_num:
                 place_player(
                     ent = session.player_obj.ent,
-                    env = area[lvl_num],
-                    loc = area[lvl_num].center)
+                    env = area[lvl_num-1],
+                    loc = area[lvl_num-1].center)
                 return
 
         ## Create a new level
-        area.envs.build_env('dungeon', area)
+        area.add_level(f'dungeon level {lvl_num}', lvl_num)
         place_player(
             ent = session.player_obj.ent,
-            env = area[lvl_num],
-            loc = area[lvl_num].center)
+            env = area[lvl_num-1],
+            loc = area[lvl_num-1].center)
 
     @register("ascend_dungeon")
     def ascend_dungeon(self, effect_obj, **kwargs):
         pyg  = session.pyg
-        area = session.player_obj.envs.areas['dungeon']
 
-        # Use a door
-        if effect_obj:
-            if effect_obj.item:
-                lvl_num = effect_obj.item.env.lvl_num - 1
-        
-        # Set manually
-        else:
-            lvl_num = kwargs.get('lvl_num', 0)
+        # Set level
+        area = session.player_obj.ent.env.area
+        pyg.update_gui("You climb closer to the surface.", pyg.dark_gray)
+        lvl_num = effect_obj.item.env.lvl_num - 1
 
-        # Enter previously constructed environment
-        create_new = True
+        # Find or build level
+        ## Enter previously constructed level
         for env in area.levels.values():
             if env.lvl_num == lvl_num:
                 place_player(
                     ent = session.player_obj.ent,
-                    env = area[lvl_num],
-                    loc = area[lvl_num].center)
-                create_new = False
-                break
+                    env = area[lvl_num-1],
+                    loc = area[lvl_num-1].player_coordinates)
+                return
 
-        # Create a new level
-        if create_new:            
-            area.envs.build_env('dungeon', area)
-            place_player(
-                ent = session.player_obj.ent,
-                env = area[lvl_num],
-                loc = area[lvl_num].center)
+        ## Create a new level
+        area.add_level(f'dungeon level {lvl_num}', lvl_num)
+        place_player(
+            ent = session.player_obj.ent,
+            env = area[lvl_num-1],
+            loc = area[lvl_num-1].center)
+    # new
 
     def _name_generator(self):
                
@@ -463,33 +470,37 @@ class EffectsSystem:
                 loc = envs.areas['hallucination'][-1].center)
 
     @register("enter_bitworld")
-    def enter_bitworld(self, effect_obj=None, text=None):
+    def enter_bitworld(self, effect_obj, **kwargs):
         """ Advances player to bitworld. """
         
-        if text == None: text = '. . . ! Your vision blurs as the substance seeps through your veins.'
-
-        ## Shorthand
-        envs = session.player_obj.envs
-        ent  = session.player_obj.ent
         pyg  = session.pyg
-
+        ent  = session.player_obj.ent
+        envs = session.player_obj.envs
+        
         #########################################################
         # Create and/or enter
         ## Create
         if 'bitworld' not in envs.areas.keys():
             envs.add_area('bitworld')
-            envs['bitworld'].add_level['overworld']
-            
-            pyg.overlay_state = None
-            envs.build_bitworld()
+            pyg.fn_queue.append([
+                envs.areas['bitworld'].add_level['overworld'],
+                {'effect_obj': effect_obj}])
+
+        # Prepare fade screen
+        text = ". . . ! Your vision blurs as the substance seeps through your veins."
+        pyg.add_intertitle(text)
+        pyg.fade_state = 'out'
+        pyg.fn_queue.append([self.descend_bitworld, {'effect_obj': effect_obj}])
 
         ## Enter
-        if ent.env.name != 'bitworld':
-            session.img.render_fx = 'bw_binary'
-            place_player(
-                ent = ent,
-                env = envs.areas['bitworld']['overworld'],
-                loc = envs.areas['bitworld']['overworld'].center)
+        session.img.render_fx = 'bw_binary'
+        place_player(
+            ent = ent,
+            env = envs.areas['bitworld']['overworld'],
+            loc = envs.areas['bitworld']['overworld'].center)
+
+    def _enter_bitworld_queue(self, effect_obj, **kwargs):
+        pass
 
     # Item effects
     @register("entity_eat")

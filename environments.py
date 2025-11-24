@@ -50,12 +50,14 @@ class Environments:
         self.areas[name] = Area(name, self, permadeath)
 
     def build_env(self, name, area, lvl_num=None):
-        if name == 'womb':        return self.build_womb(area)
-        elif name == 'garden':    return self.build_garden(area)
-        elif name == 'home':      return self.build_home(area)
-        elif name == 'overworld': return self.build_overworld(area)
-        elif name[:7] == 'dungeon':   return self.build_dungeon(area, lvl_num)
-        elif name[:4] == 'cave':      return self.build_cave(area, lvl_num)
+        """ Do not call this directly! Only use add_level in Area. """
+
+        if name == 'womb':          return self.build_womb(area)
+        elif name == 'garden':      return self.build_garden(area)
+        elif name == 'home':        return self.build_home(area)
+        elif name == 'overworld':   return self.build_overworld(area)
+        elif name[:7] == 'dungeon': return self.build_dungeon(area, lvl_num)
+        elif name[:4] == 'cave':    return self.build_cave(area, lvl_num)
 
     # Underworld
     def build_garden(self, area):
@@ -666,15 +668,11 @@ class Environments:
         return env
 
     # Dungeon
-    def build_dungeon(self, area, lvl_num=0):
+    def build_dungeon(self, area, lvl_num):
         """ Generates the overworld environment. """
         
         ###############################################################
         # Initialize environment
-        if not lvl_num:
-            if not self.areas['dungeon'].levels: lvl_num = 1
-            else:                                lvl_num = 1 + self.areas['dungeon'][-1].lvl_num
-        
         env = Environment(
             envs          = self,
             name          = 'dungeon',
@@ -774,17 +772,17 @@ class Environments:
         env.player_coordinates = [x, y]
         env.center = new_room.center()
         self.player_obj.ent.tile = env.map[x][y]
-        
+
+        # Generate stairs in the last room
+        stairs = create_item('descend_dungeon')
+        place_object(stairs, [x, y], env)
+
         # Generate acending stairs under player
-        if lvl_num != 0:
+        if lvl_num != 1:
+            (x, y) = env.rooms[-1].center()
             stairs = create_item('ascend_dungeon')
             place_object(stairs, [x, y], env)
 
-        # Generate stairs in the last room
-        (x, y) = env.rooms[-2].center()
-        stairs = create_item('descend_dungeon')
-        place_object(stairs, [x, y], env)
-        
         return env
 
     # Hallucination
@@ -1773,7 +1771,7 @@ class Room:
             if self.roof_img_IDs and (self.env.envs.player_obj.ent.tile not in self.tiles_list):
                 tile.img_IDs = self.roof_img_IDs
             else:
-                tile.img_IDs = self.tile
+                tile.img_IDs = self.roof_img_IDs # (?)
 
     def center(self):
         """ Finds the center of the rectangle. """

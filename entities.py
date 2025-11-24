@@ -121,8 +121,6 @@ class PlayerData:
             session.items.toggle_equip(item, silent=True)
 
     def _add_discoveries(self):
-        from items import Discoveries
-
         self.ent.discoveries = Discoveries()
         
         walls     = ['gray', 'green']
@@ -147,9 +145,6 @@ class PlayerData:
         self.envs.add_area('overworld', permadeath=True)
         self.envs.areas['overworld'].add_level('home')
         self.envs.areas['overworld'].add_level('overworld')
-
-        self.envs.add_area('dungeon')
-        self.envs.areas['dungeon'].add_level('dungeon')
 
         place_player(
             ent = self.ent,
@@ -525,6 +520,52 @@ class Dialogue:
         if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
             session.aud.last_press_time_speech = time.time()
             session.aud.play_speech(dialogue)
+
+class Discoveries:
+    
+    # Core
+    def __init__(self):
+        self.discoveries = {
+            'walls':     [],
+            'floors':    [],
+            'stairs':    [],
+            'decor':     [],
+            'furniture': [],
+            'paths':     [],
+            'entities':  []}
+
+    def add_discovery(self, object_ID):
+        from environments import create_tile
+        from entities import create_entity
+
+        try:
+            obj = create_item(object_ID)
+            self.discoveries[obj.img_IDs[0]].append(obj)
+        
+        except:
+            try:
+                obj = create_tile(object_ID)
+                self.discoveries[obj.img_IDs[0]].append(obj)
+            
+            except:
+                obj = create_entity(object_ID)
+                self.discoveries['entities'].append(obj)
+
+    # Dictionary methods
+    def __getitem__(self, key):
+        return self.discoveries[key]
+
+    def __setitem__(self, key, value):
+        self.discoveries[key] = value
+
+    def __delitem__(self, key):
+        del self.discoveries[key]
+
+    def __iter__(self):
+        return iter(self.discoveries)
+
+    def items(self):
+        return self.discoveries.items()
 
 ########################################################################################################################################################
 # Tools

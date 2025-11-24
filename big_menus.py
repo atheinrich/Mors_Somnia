@@ -527,8 +527,8 @@ class NewGameMenu:
         # Prepare fade screen
         text = "Your hands tremble as the ground shudders in tune... something is wrong."
         pyg.add_intertitle(text)
-        pyg.fn_queue.append([self.finalize_player,            {}])
-        pyg.fn_queue.append([session.effects.descend_dungeon, {'effect_obj': None}])
+        pyg.fn_queue.append([self.finalize_player,          {}])
+        pyg.fn_queue.append([session.effects.enter_dungeon, {}])
         pyg.fade_state = 'out'
 
     def finalize_player(self):

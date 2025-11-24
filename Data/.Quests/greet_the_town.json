@@ -117,6 +117,22 @@
     "conditions": {
 
         "ent_id":        "player",
+        "target_ent_id": "Oxi"},
+        
+    "on_complete": [
+
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "Oxi",
+        "dialogue_id": "default"}]},
+
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Talk to Aya.",
+    "conditions": {
+
+        "ent_id":        "player",
         "target_ent_id": "Aya"},
         
     "on_complete": [

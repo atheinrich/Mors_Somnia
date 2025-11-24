@@ -84,25 +84,13 @@
     "trigger":       "on_use"
     },
 
-"needle": {
-    "name":          "enter hallucination",
-    "function_id":   "enter_hallucination",
-    "trigger":       "on_use"
-    },
-
-"skin": {
-    "name":          "enter hallucination",
-    "function_id":   "enter_hallucination",
-    "trigger":       "on_use"
-    },
-
-"teeth": {
+"enter_bitworld": {
     "name":          "enter bitworld",
     "function_id":   "enter_bitworld",
     "trigger":       "on_use"
     },
 
-"bowl": {
+"enter_hallucination": {
     "name":          "enter hallucination",
     "function_id":   "enter_hallucination",
     "trigger":       "on_use"
