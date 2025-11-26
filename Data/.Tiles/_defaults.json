@@ -3,7 +3,7 @@
     "name":           null,
 
     "env":            null,
-    "biome":          null,
+    "biome":          "any",
     "room":           null,
     "placed":         false,
 
@@ -31,7 +31,7 @@
     "name":           null,
     
     "env":            null,
-    "biome":          null,
+    "biome":          "any",
     "room":           null,
     "placed":         false,
 

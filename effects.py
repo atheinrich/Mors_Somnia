@@ -61,7 +61,8 @@ class EffectsSystem:
         self.movement_speed_toggle = 0
 
     def create_effect(self, owner, effect_id, item=None):
-        return Effect(owner, item, **self._data[effect_id])
+        effect = Effect(owner, item, **self._data[effect_id])
+        return effect
 
     def toggle_effect(self, ent, effect_obj):
         """ Adds or removes ability for a given entity. """
@@ -89,6 +90,7 @@ class EffectsSystem:
     # On barrier
     @register("dig_tunnel")
     def dig_tunnel(self, effect_obj, **kwargs):
+
         pyg = session.pyg
         ent = effect_obj.owner
 
@@ -104,7 +106,7 @@ class EffectsSystem:
                 if not ent.env.map[x][y].unbreakable:
                     ent.env.map[x][y].blocked     = False
                     ent.env.map[x][y].unbreakable = False
-                    ent.env.map[x][y].img_IDs   = ent.env.floor_img_IDs
+                    ent.env.map[x][y].img_IDs     = ent.env.floor_img_IDs
                     session.movement.move(ent, dX, dY)
                 
                     # Decrease condition

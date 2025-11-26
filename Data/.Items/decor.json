@@ -1,7 +1,7 @@
 {
 "tree": {
     "name":      "tree",
-    "img_IDs": ["decor", "tree"],
+    "img_IDs":   ["decor", "tree"],
     "blocked":   true,
     "movable":   true,
     "cost":      20
@@ -9,28 +9,28 @@
 
 "bones": {
     "name":      "bones",
-    "img_IDs": ["decor", "bones"],
+    "img_IDs":  ["decor", "bones"],
     "movable":   true,
     "cost":      5
     },
 
 "boxes": {
     "name":      "boxes",
-    "img_IDs": ["decor", "boxes"],
+    "img_IDs":   ["decor", "boxes"],
     "blocked":   true,
     "cost":      5
     },
 
 "fire": {
     "name":      "fire",
-    "img_IDs": ["decor", "fire"],
+    "img_IDs":   ["decor", "fire"],
     "blocked":   true,
     "cost":      20
     },
 
 "leafy": {
     "name":      "leafy tree",
-    "img_IDs": ["decor", "leafy"],
+    "img_IDs":   ["decor", "leafy"],
     "blocked":   true,
     "movable":   true,
     "rand_X":    0,
@@ -40,14 +40,14 @@
 
 "skeleton": {
     "name":      "skeleton",
-    "img_IDs": ["decor", "skeleton"],
+    "img_IDs":   ["decor", "skeleton"],
     "hidden":    true,
     "movable":   false
     },
 
 "shrooms": {
     "name":      "shrooms",
-    "img_IDs": ["decor", "shrooms"],
+    "img_IDs":   ["decor", "shrooms"],
     "rand_X":    10,
     "rand_Y":    10,
     "cost":      15
@@ -55,31 +55,31 @@
 
 "red_plant_left": {
     "name":      "red plant left",
-    "img_IDs": ["decor", "red plant left"],
+    "img_IDs":  ["decor", "red plant left"],
     "cost":      15
     },
 
 "red_plant_right": {
     "name":      "red plant right",
-    "img_IDs": ["decor", "red plant right"],
+    "img_IDs":   ["decor", "red plant right"],
     "cost":      15
     },
 
 "cup_shroom": {
     "name":      "cup shroom",
-    "img_IDs": ["decor", "cup shroom"],
+    "img_IDs":   ["decor", "cup shroom"],
     "cost":      15
     },
 
 "frond": {
     "name":      "frond",
-    "img_IDs": ["decor", "frond"],
+    "img_IDs":   ["decor", "frond"],
     "cost":      15
     },
 
 "blades": {
     "name":      "blades",
-    "img_IDs": ["decor", "blades"],
+    "img_IDs":   ["decor", "blades"],
     "hidden":    true,
     "movable":   true,
     "rand_X":    10,
@@ -88,7 +88,7 @@
 
 "purple_bulbs": {
     "name":      "purple bulbs",
-    "img_IDs": ["decor", "purple bulbs"],
+    "img_IDs":   ["decor", "purple bulbs"],
     "hidden":    true,
     "movable":   true,
     "rand_X":    10,
@@ -97,7 +97,7 @@
 
 "lights": {
     "name":      "lights",
-    "img_IDs": ["decor", "lights"],
+    "img_IDs":   ["decor", "lights"],
     "hidden":    true,
     "rand_X":    5,
     "rand_Y":    5,

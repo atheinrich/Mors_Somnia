@@ -582,7 +582,7 @@ class Images:
         entity_options = ['front', 'back', 'left', 'right']
 
         # Identify character creation options
-        img_ents_dict = img_dicts['img_ents']
+        img_ents_dict = copy.deepcopy(img_dicts['img_ents'])
         ent_data      = {}
         skin_options  = []
 
@@ -619,7 +619,7 @@ class Images:
             'bald':  'null'}
 
         # Identify character creation options
-        img_equipment_dict = img_dicts['img_equipment']
+        img_equipment_dict = copy.deepcopy(img_dicts['img_equipment'])
         equip_names        = []
         equipment_options  = {
             'hair':  ['bald'],
@@ -659,7 +659,7 @@ class Images:
         other_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
 
         # Identify character creation options
-        img_other_dict = img_dicts['img_other']
+        img_other_dict = copy.deepcopy(img_dicts['img_other'])
         other = {}
 
         for key, dict in img_other_dict.items():
@@ -708,7 +708,7 @@ class Images:
 
         for key, dict in biome_dicts.items():
             if dict['habitats'] is not None:
-                biomes[key] = dict['habitats']
+                biomes[key] = copy.deepcopy(dict['habitats'])
         
         return biomes
 

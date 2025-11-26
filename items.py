@@ -8,6 +8,7 @@
 # Imports
 ## Standard
 import random
+import copy
 
 ## Local
 import session
@@ -46,6 +47,9 @@ class Item:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        if self.name == 'lights':
+            print(self.effect_id)
+
         # Set abilities and effects
         if self.ability_id:
             self.ability = session.abilities.create_ability(
@@ -53,10 +57,11 @@ class Item:
                 ability_id = self.ability_id)
         
         if self.effect_id:
-            self.effect = session.effects.create_effect(
+            effect = session.effects.create_effect(
                 owner     = None,
                 effect_id = self.effect_id,
                 item      = self)
+            self.effect = effect
 
         # Seed a seed for individual adjustments
         self.rand_X  = random.randint(-self.rand_X, self.rand_X)
@@ -332,7 +337,8 @@ def create_item(item_id):
     
     # Create object
     item_id = item_id.replace(" ", "_")
-    item    = Item(**item_dicts[item_id])
+    json_data = copy.deepcopy(item_dicts[item_id])
+    item    = Item(**json_data)
 
     return item
 

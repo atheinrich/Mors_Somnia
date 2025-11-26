@@ -8,6 +8,7 @@
 ## Standard
 import time
 import random
+import copy
 
 ## Specific
 import pygame
@@ -93,27 +94,25 @@ class Environments:
         voronoi_biomes(env, biomes)
         
         ###############################################################
-        # Construct rooms
-        width  = 19
-        height = 14
-        x      = 0
-        y      = 0
-        
-        ## Construct room
+        # Construct room
         new_room = Room(
-            name    = 'garden',
-            env     = env,
-            x1      = x,
-            y1      = y,
-            width   = width,
-            height  = height,
-            biome   = 'forest',
-            hidden  = False,
-            objects = False,
-            floor_img_IDs   = env.floor_img_IDs,
-            wall_img_IDs   = env.wall_img_IDs,
-            roof_img_IDs    = None,
-            unbreakable = True)
+            name          = 'garden',
+            env           = env,
+            biome         = 'forest',
+
+            width         = 19,
+            height        = 14,
+            x1            = 0,
+            y1            = 0,
+
+            floor_img_IDs = env.floor_img_IDs,
+            wall_img_IDs  = env.wall_img_IDs,
+            roof_img_IDs  = None,
+
+            hidden        = False,
+            unbreakable   = True,
+            objects       = False)
+        
         center = new_room.center()
         
         ###############################################################
@@ -376,19 +375,20 @@ class Environments:
                 
                 ## Construct room
                 new_room = Room(
-                    name   = 'overworld room',
-                    env    = env,
-                    x1     = x,
-                    y1     = y,
-                    width  = width,
-                    height = height,
-                    biome   = 'city',
-                    hidden = False,
-                    objects = False,
+                    name           = 'overworld room',
+                    env            = env,
+                    x1             = x,
+                    y1             = y,
+                    width          = width,
+                    height         = height,
+                    biome          = 'city',
+                    hidden         = False,
+                    objects        = False,
                     floor_img_IDs  = ['floors', 'dark green floor'],
-                    wall_img_IDs  = env.wall_img_IDs,
+                    wall_img_IDs   = env.wall_img_IDs,
                     roof_img_IDs   = env.roof_img_IDs,
-                    plan = create_text_room(width, height))
+                    unbreakable    = True,
+                    plan           = create_text_room(width, height))
 
                 room_counter += 1
                 x, y = new_room.center()[0], new_room.center()[1]
@@ -422,27 +422,29 @@ class Environments:
             if not failed:
                 
                 main_room = Room(
-                    name    = 'home room',
-                    env     = env,
-                    x1      = x,
-                    y1      = y,
-                    width   = self.room_max_size,
-                    height  = self.room_max_size,
-                    biome   = 'city',
-                    hidden  = False,
-                    objects = False,
-                    floor_img_IDs   = ['floors', 'dark green floor'],
-                    wall_img_IDs   = env.wall_img_IDs,
-                    roof_img_IDs    = env.roof_img_IDs,
-                    plan = ['  -----     ',
-                            ' --...----- ',
-                            ' -........--',
-                            ' -.........-',
-                            '--.........|',
-                            '-.........--',
-                            '--.....---- ',
-                            ' --...--    ',
-                            '  -----     '])
+                    name          = 'home room',
+                    env           = env,
+                    x1            = x,
+                    y1            = y,
+                    width         = self.room_max_size,
+                    height        = self.room_max_size,
+                    biome         = 'city',
+                    hidden        = False,
+                    objects       = False,
+                    floor_img_IDs = ['floors', 'dark green floor'],
+                    wall_img_IDs  = env.wall_img_IDs,
+                    roof_img_IDs  = env.roof_img_IDs,
+                    unbreakable   = True,
+                    plan = [
+                        '  -----     ',
+                        ' --...----- ',
+                        ' -........--',
+                        ' -.........-',
+                        '--.........|',
+                        '-.........--',
+                        '--.....---- ',
+                        ' --...--    ',
+                        '  -----     '])
                 
                 # Door
                 door_x, door_y = x+1, y+5
@@ -459,32 +461,34 @@ class Environments:
         
         ## Create church
         main_room = Room(
-            name    = 'church',
-            env     = env,
-            x1      = 20,
-            y1      = 20,
-            width   = self.room_max_size,
-            height  = self.room_max_size,
-            biome   = 'any',
-            hidden  = False,
-            objects = False,
-            floor_img_IDs   = ['floors', 'red floor'],
-            wall_img_IDs   = env.wall_img_IDs,
-            roof_img_IDs    = env.roof_img_IDs,
-            plan = ['  --------------           ---------- ',
-                    ' --............-----      --........--',
-                    ' -.................-      -..........-',
-                    ' -.................--------..........-',
-                    ' -...................................-',
-                    '--.................---------........--',
-                    '-..................-       -----..--- ',
-                    '--...........-------           -||-   ',
-                    ' --.....------                        ',
-                    '  -.....-                             ',
-                    '  -.....-                             ',
-                    '  --...--                             ',
-                    '   --.--                              ',
-                    '    -|-                               '])
+            name          = 'church',
+            env           = env,
+            x1            = 20,
+            y1            = 20,
+            width         = self.room_max_size,
+            height        = self.room_max_size,
+            biome         = 'any',
+            hidden        = False,
+            objects       = False,
+            floor_img_IDs = ['floors', 'red floor'],
+            wall_img_IDs  = env.wall_img_IDs,
+            roof_img_IDs  = env.roof_img_IDs,
+            unbreakable   = True,
+            plan = [
+                '  --------------           ---------- ',
+                ' --............-----      --........--',
+                ' -.................-      -..........-',
+                ' -.................--------..........-',
+                ' -...................................-',
+                '--.................---------........--',
+                '-..................-       -----..--- ',
+                '--...........-------           -||-   ',
+                ' --.....------                        ',
+                '  -.....-                             ',
+                '  -.....-                             ',
+                '  --...--                             ',
+                '   --.--                              ',
+                '    -|-                               '])
         
         ###############################################################
         # Generate items and entities
@@ -1480,7 +1484,7 @@ class Environment:
 class Room:
     """ Defines rectangles on the map. Used to characterize a room. """
     
-    def __init__(self, name, env, x1, y1, width, height, hidden, floor_img_IDs, wall_img_IDs, roof_img_IDs, objects, biome, plan=None, boundary=None, unbreakable=False):
+    def __init__(self, **kwargs):
         """ Assigns tiles to a room and adjusts their properties.
 
             Parameters
@@ -1530,38 +1534,40 @@ class Room:
             plan     : custom room by floorplan; uses from_plan()
             boundary : custom room by boundary; uses from_boundary() """
         
-        # Name
-        self.name = name
+        # Name and location
+        self.name          = kwargs.get('name',  'room')
+        self.biome         = kwargs.get('biome', 'any')
+        self.env           = kwargs.get('env',   None)
+        self.env.rooms.append(self)
         
-        # Location
-        self.x1        = x1
-        self.y1        = y1
-        self.x2        = x1 + width
-        self.y2        = y1 + height
-        self.endpoints = [self.x1, self.y1, self.x2, self.y2]
-        self.biome     = biome
-        env.player_coordinates = self.center()
+        # Size
+        width              = kwargs.get('width',  1)
+        height             = kwargs.get('height', 1)
+        self.x1            = kwargs.get('x1',     0)
+        self.y1            = kwargs.get('y1',     0)
+        self.x2            = self.x1 + width
+        self.y2            = self.y1 + height
+        self.endpoints     = [self.x1, self.y1, self.x2, self.y2]
+        self.env.player_coordinates = self.center()
         
         # Image names and environment
-        self.floor_img_IDs = floor_img_IDs
-        self.wall_img_IDs  = wall_img_IDs
-        self.roof_img_IDs  = roof_img_IDs
-        self.env           = env
-        self.env.rooms.append(self)
+        self.floor_img_IDs = kwargs.get('floor_img_IDs', None)
+        self.wall_img_IDs  = kwargs.get('wall_img_IDs',  None)
+        self.roof_img_IDs  = kwargs.get('roof_img_IDs',  None)
 
+        # Properties
+        self.plan          = kwargs.get('plan',        None)
+        self.hidden        = kwargs.get('hidden',      False)
+        self.objects       = kwargs.get('objects',     False)
+        self.boundary      = kwargs.get('boundary',    None)
+        self.unbreakable   = kwargs.get('unbreakable', False)
+        self.delete        = False
+        
         # Tiles
         self.tiles_list      = []
         self.walls_list      = []
         self.corners_list    = []
         self.noncorners_list = []
-        
-        # Properties
-        self.hidden      = hidden
-        self.delete      = False
-        self.objects     = objects
-        self.plan        = plan
-        self.boundary    = boundary
-        self.unbreakable = unbreakable
         
         # Create square room or text-based design
         if self.plan:       self.from_plan()
@@ -1618,6 +1624,7 @@ class Room:
         self.noncorners_list = list(set(self.walls_list) - set(self.corners_list))
 
     def from_plan(self):
+        """
         try:
             self.from_plan_fr()
         
@@ -1630,81 +1637,79 @@ class Room:
                 self.x1 += 10
                 self.y1 += 10
                 self.from_plan_fr()
+        """
+        self.from_plan_fr()
 
     def from_plan_fr(self):
+        outside = find_outside_mask(self.plan)
 
         for y in range(len(self.plan)):
-            layer = list(self.plan[y])
-            for x in range(len(layer)):
-                tile_x, tile_y = self.x1+x, self.y1+y
-                tile = self.env.map[tile_x][tile_y]
-                tile.item = None
-                tile.ent = None
-                
-                # Place things indoors
-                if layer[x] not in [' ', 'L']:
+            for x in range(len(self.plan[y])):
+
+                # Skip blank spaces
+                if self.plan[y][x] == ' ':
+                    continue
+
+                # Find position of tile within room
+                tile_x = self.x1 + x
+                tile_y = self.y1 + y
+                tile   = self.env.map[tile_x][tile_y]
+
+                # Clean title properties
+                tile.blocked     = False
+                tile.item        = None
+                tile.unbreakable = False
+
+                # Optionally remove items and entities
+                if not self.objects:
+                    tile.item = None
+                    if tile.ent:
+                        self.env.entities.remove(tile.ent)
+                        tile.ent = None
+
+                # Set tile details
+                if not outside[y][x]:
                     
-                    ## Apply properties
+                    # Room properties
+                    tile.biome  = self.biome
                     tile.room   = self
                     tile.hidden = self.hidden
                     self.tiles_list.append(tile)
 
+                    # Set initial image
                     if self.roof_img_IDs: tile.img_IDs = self.roof_img_IDs
-                    else:         tile.img_IDs = self.floor_img_IDs
-                    tile.blocked = False
+                    else:                 tile.img_IDs = self.floor_img_IDs
 
-                    # Change biome
-                    tile.biome = self.biome
-                    
-                    # Remove items and entities
-                    if not self.objects:
-                        tile.item = None
-                        if tile.ent:
-                            self.env.entities.remove(tile.ent)
-                            tile.ent = None
-                    
-                    ## Handle symbols
-                    # Place wall_img_IDs and doors
-                    if self.plan[y][x] in ['-', '|']:
-                        tile.img_IDs = self.env.wall_img_IDs
-                        tile.blocked   = True
+                    # Walls
+                    if self.plan[y][x] == '-':
+
+                        tile.img_IDs = self.wall_img_IDs
                         self.walls_list.append(tile)
-                        if self.plan[y][x] != '|':
-                            tile.unbreakable = self.unbreakable
-                            
-                            # Remove items and entities
-                            tile.item = None
-                            if tile.ent:
-                                self.env.entities.remove(tile.ent)
-                                tile.ent = None
-                        
-                        else:
-                            
-                            # Place door
-                            tile.blocked = False
-                            place_object(create_item('door'), [tile_x, tile_y], self.env)           
+
+                        tile.blocked = True
+                        tile.unbreakable = self.unbreakable
+
+                    # Doors
+                    elif self.plan[y][x] == '|':
+
+                        tile.img_IDs = self.wall_img_IDs
+                        self.walls_list.append(tile)
+                
+                        tile.blocked = False
+                        place_object(create_item('door'), [tile_x, tile_y], self.env)
                     
-                    # Place floor
-                    if self.plan[y][x] == '.':
-                        tile.blocked   = False
-                    
-                    # Place furniture
-                    elif self.plan[y][x] == '=': place_object(create_item('red_bed'),         [tile_x, tile_y], self.env)                    
-                    elif self.plan[y][x] == 'b': place_object(create_item('red_chair_left'),  [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'T': place_object(create_item('table'),           [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'd': place_object(create_item('red_chair_right'), [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == '[': place_object(create_item('shelf_left'),      [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == ']': place_object(create_item('shelf_right'),     [tile_x, tile_y], self.env)
-                    
-                    # Place items
-                    elif self.plan[y][x] == 'g': place_object(create_item('jug_of_grapes'),   [tile_x, tile_y], self.env)
-                    elif self.plan[y][x] == 'c': place_object(create_item('jug_of_cement'),   [tile_x, tile_y], self.env)
-                    
-                # Place things outside
-                else:
-                    
-                    # Place items
-                    if self.plan[y][x] == 'L':   place_object(create_item('lights'),          [tile_x, tile_y], self.env)
+                # Add furniture
+                if self.plan[y][x] == '=':   place_object(create_item('red_bed'),         [tile_x, tile_y], self.env)                    
+                elif self.plan[y][x] == 'b': place_object(create_item('red_chair_left'),  [tile_x, tile_y], self.env)
+                elif self.plan[y][x] == 'T': place_object(create_item('table'),           [tile_x, tile_y], self.env)
+                elif self.plan[y][x] == 'd': place_object(create_item('red_chair_right'), [tile_x, tile_y], self.env)
+                elif self.plan[y][x] == '[': place_object(create_item('shelf_left'),      [tile_x, tile_y], self.env)
+                elif self.plan[y][x] == ']': place_object(create_item('shelf_right'),     [tile_x, tile_y], self.env)
+                
+                # Add items
+                elif self.plan[y][x] == 'g': place_object(create_item('jug_of_grapes'),   [tile_x, tile_y], self.env)
+                elif self.plan[y][x] == 'c': place_object(create_item('jug_of_cement'),   [tile_x, tile_y], self.env)
+                elif self.plan[y][x] == 'L': place_object(create_item('lights'),          [tile_x, tile_y], self.env)
 
     def from_boundary(self):
         
@@ -1806,6 +1811,190 @@ class Room:
     def __hash__(self):
         return hash((self.x1, self.y1))
 
+class TextRoom:
+    """
+    Generates a text-based room layout with walls, floors, doors, and furniture.
+    This class preserves the exact syntax and styling of the original implementation
+    while modularizing the logic into smaller functions.
+    """
+
+    def __init__(self, width=5, height=5, doors=True):
+        self.width  = width if width else random.randint(5, 7)
+        self.height = height if height else random.randint(5, 7)
+        self.doors  = doors
+        self.plan   = [['' for x in range(self.width)] for y in range(self.height)]
+
+    def neighbors(self, i, j):
+
+        # Return all 8 neighbors of a tile
+        neighbors = [
+            self.plan[i-1][j-1], self.plan[i-1][j], self.plan[i-1][j+1],
+            self.plan[i][j-1],                      self.plan[i][j+1],
+            self.plan[i+1][j-1], self.plan[i+1][j], self.plan[i+1][j+1]]
+        return neighbors
+
+    def create_floor(self):
+        last_left  = 1
+        last_right = self.width - 1
+
+        for i in range(self.height):
+
+            # Randomly decide if row matches last row or new offsets
+            if not random.choice([0, 1]):
+                for j in range(self.width):
+                    if last_left <= j <= last_right: self.plan[i][j] = '.'
+                    else:                            self.plan[i][j] = ' '
+
+            # Generate new left and right bounds
+            left  = random.randint(1, self.width//2-1)
+            right = random.randint(self.width//2+1, self.width-1)
+
+            # If bounds are too close to previous, use them to fill row
+            if (abs(left - last_left) < 2) or (abs(right - last_right) < 2):
+                for j in range(self.width):
+                    if left <= j <= right: self.plan[i][j] = '.'
+                    else:                  self.plan[i][j] = ' '
+
+            # Randomly choose previous bounds
+            elif random.choice([0, 1]):
+                left  = random.choice([left,  last_left])
+                right = random.choice([right, last_right])
+                for j in range(self.width):
+                    if left <= j <= right: self.plan[i][j] = '.'
+                    else:                  self.plan[i][j] = ' '
+
+            # Keep last row's bounds
+            else:
+                for j in range(self.width):
+                    if last_left <= j <= last_right: self.plan[i][j] = '.'
+                    else:                            self.plan[i][j] = ' '
+
+            last_left  = left
+            last_right = right
+
+    def surround_with_walls(self):
+
+        # Add empty rows/columns at borders
+        self.plan[0] = [' ' for _ in range(self.width)]
+        self.plan[1] = [' ' for _ in range(self.width)]
+        self.plan.append([' ' for _ in range(self.width)])
+        for i in range(len(self.plan)): self.plan[i].append(' ')
+
+        # Replace neighboring tiles around floor with walls
+        for i in range(len(self.plan)):
+            for j in range(len(self.plan[0])):
+                for key in self.plan[i][j]:
+                    if key == '.':
+                        if self.plan[i-1][j-1] != key: self.plan[i-1][j-1] = '-'
+                        if self.plan[i-1][j]   != key: self.plan[i-1][j]   = '-'
+                        if self.plan[i-1][j+1] != key: self.plan[i-1][j+1] = '-'
+                        if self.plan[i][j-1]   != key: self.plan[i][j-1]   = '-'
+                        if self.plan[i][j+1]   != key: self.plan[i][j+1]   = '-'
+                        if self.plan[i+1][j-1] != key: self.plan[i+1][j-1] = '-'
+                        if self.plan[i+1][j]   != key: self.plan[i+1][j]   = '-'
+                        if self.plan[i+1][j+1] != key: self.plan[i+1][j+1] = '-'
+
+    def place_doors(self):
+        if not self.doors: return
+
+        # Ensure top/bottom and right borders exist
+        self.plan[0] = [' ' for _ in range(self.width)]
+        self.plan.append([' ' for _ in range(self.width)])
+        for i in range(len(self.plan)): self.plan[i].append(' ')
+
+        # Try to place doors
+        placed = False
+        for i in range(len(self.plan)):
+            for j in range(len(self.plan[0])):
+                if not placed:
+                    if self.plan[i][j] == '-':
+                        vertical = [self.plan[i-1][j], self.plan[i+1][j]]
+                        horizontal = [self.plan[i][j-1], self.plan[i][j+1]]
+
+                        # Skip corners and fully enclosed walls
+                        if ('-' in vertical) and ('-' in horizontal): placed = False
+                        elif (' ' not in vertical) and (' ' not in horizontal): placed = False
+                        else:
+                            if not random.randint(0, 10):
+                                self.plan[i][j] = '|'
+                                if random.randint(0, 1): placed = True
+                    else: placed = False
+
+        # Second pass if no doors placed
+        if not placed:
+            for i in range(len(self.plan)):
+                for j in range(len(self.plan[0])):
+                    if not placed and self.plan[i][j] == '-':
+                        vertical = [self.plan[i-1][j], self.plan[i+1][j]]
+                        horizontal = [self.plan[i][j-1], self.plan[i][j+1]]
+                        if ('-' in vertical) and ('-' in horizontal):           placed = False
+                        elif (' ' not in vertical) and (' ' not in horizontal): placed = False
+                        else:
+                            if not random.randint(0, 10):
+                                self.plan[i][j] = '|'
+                                placed = True
+                    else: placed = False
+
+    def place_furniture(self):
+        bed    = False
+        dining = False
+        shelf  = False
+        lights = False
+
+        for i in range(len(self.plan)):
+            for j in range(len(self.plan[0])):
+                if random.randint(0, 1):
+
+                    # Check for indoor floor tiles for furniture
+                    if (self.plan[i][j] == '.') and ('|' not in self.neighbors(i, j)):
+                        if (self.plan[i][j+1] == '.') and ('|' not in self.neighbors(i, j+1)):
+
+                            # Check for 3 consecutive open floor tiles
+                            if (self.plan[i][j+2] == '.') and ('|' not in self.neighbors(i, j+2)):
+
+                                # Place table and chairs
+                                if not dining and not random.randint(0, 5):
+                                    self.plan[i][j]   = 'b'
+                                    self.plan[i][j+1] = 'T'
+                                    self.plan[i][j+2] = 'd'
+                                    dining = True
+                            else:
+
+                                # Place bed if 2 open spaces
+                                if not bed and not random.randint(0, 3):
+                                    self.plan[i][j] = '='
+                                    if not random.randint(0, 2): bed = True
+                                else:
+
+                                    # Place shelf near wall
+                                    if (not shelf) and (self.plan[i-1][j] == '-') and (self.plan[i-1][j+1] == '-'):
+                                        self.plan[i][j]   = '['
+                                        self.plan[i][j+1] = ']'
+                                        shelf = True
+
+                    # Outdoor tiles for lights
+                    elif self.plan[i][j] == ' ':
+                        try:
+                            if '|' not in self.neighbors(i, j):
+                                if not lights and not random.randint(0, 3):
+                                    self.plan[i][j] = 'L'
+                                    lights = True
+                        except:
+                            continue
+
+    def export(self):
+        export = []
+        for row in self.plan:
+            export.append("".join(row))
+        return export
+
+    def create(self):
+        self.create_floor()
+        self.surround_with_walls()
+        self.place_doors()
+        self.place_furniture()
+        return self.export()
+
 class Tile:
     """ Defines a tile of the map and its parameters. Sight is blocked if a tile is blocked. """
     
@@ -1840,7 +2029,7 @@ class Tile:
         # Import parameters
         for key, value in kwargs.items():
             setattr(self, key, value)
-
+        
         # Seed a seed for individual adjustments
         self.img_ID_timer = random.randint(0, 3) * 2
         self.rand_X       = random.randint(-pyg.tile_width, pyg.tile_width)
@@ -2405,175 +2594,8 @@ def place_object(obj, loc, env, names=None):
         env.entities.append(obj)
 
 def create_text_room(width=5, height=5, doors=True):
-    
-    ## Initialize size
-    if not width:  width = random.randint(5, 7)
-    if not height: height = random.randint(5, 7)
-    plan = [['' for x in range(width)] for y in range(height)]
-
-    ## Create a floor
-    last_left = 1
-    last_right = width - 1
-    for i in range(height):
-        
-        if not random.choice([0, 1]):
-            for j in range(width):
-                if last_left <= j <= last_right: plan[i][j] = '.'
-                else:                            plan[i][j] = ' '
-        
-        left = random.randint(1, width//2-1)
-        right = random.randint(width//2+1, width-1)
-        if (abs(left - last_left) < 2) or (abs(right - last_right) < 2):
-            for j in range(width):
-                if left <= j <= right: plan[i][j] = '.'
-                else:                  plan[i][j] = ' '
-        
-        elif random.choice([0, 1]):
-            left = random.choice([left, last_left])
-            right = random.choice([right, last_right])
-            for j in range(width):
-                if left <= j <= right: plan[i][j] = '.'
-                else:                  plan[i][j] = ' '
-        
-        else:
-            for j in range(width):
-                if last_left <= j <= last_right: plan[i][j] = '.'
-                else:                            plan[i][j] = ' '
-        
-        last_left  = left
-        last_right = right
-
-    ## Surround the floor with wall_img_IDs
-    plan[0] = [' ' for _ in range(width)]
-    plan[1] = [' ' for _ in range(width)]
-    plan.append([' ' for _ in range(width)])
-    for i in range(len(plan)): plan[i].append(' ')
-
-    for i in range(len(plan)):
-        for j in range(len(plan[0])):
-            for key in plan[i][j]:
-                if key == '.':
-                    if plan[i-1][j-1] != key: plan[i-1][j-1] = '-'
-                    if plan[i-1][j] != key:   plan[i-1][j]   = '-'
-                    if plan[i-1][j+1] != key: plan[i-1][j+1] = '-'
-                    if plan[i][j-1] != key:   plan[i][j-1]   = '-'
-                    if plan[i][j+1] != key:   plan[i][j+1]   = '-'
-                    if plan[i+1][j-1] != key: plan[i+1][j-1] = '-'
-                    if plan[i+1][j] != key:   plan[i+1][j]   = '-'
-                    if plan[i+1][j+1] != key: plan[i+1][j+1] = '-'
-
-    ## Place a door or two
-    if doors:
-        plan[0] = [' ' for _ in range(width)]
-        plan.append([' ' for _ in range(width)])
-        for i in range(len(plan)): plan[i].append(' ')
-
-        placed = False
-        for i in range(len(plan)):
-            for j in range(len(plan[0])):
-                if not placed:
-                    if plan[i][j] == '-':
-                        vertical = [
-                            plan[i-1][j],
-                            plan[i+1][j]]
-                        horizontal = [
-                            plan[i][j-1],
-                            plan[i][j+1]]
-                        if ('-' in vertical) and ('-' in horizontal):
-                            placed = False
-                        elif (' ' not in vertical) and (' ' not in horizontal):
-                            placed = False
-                        else:
-                            if not random.randint(0, 10):
-                                plan[i][j] = '|'
-                                if random.randint(0, 1): placed = True
-                    else: placed = False
-        if not placed:
-            for i in range(len(plan)):
-                for j in range(len(plan[0])):
-                    if not placed:
-                        if plan[i][j] == '-':
-                            vertical = [
-                                plan[i-1][j],
-                                plan[i+1][j]]
-                            horizontal = [
-                                plan[i][j-1],
-                                plan[i][j+1]]
-                            if ('-' in vertical) and ('-' in horizontal):
-                                placed = False
-                            elif (' ' not in vertical) and (' ' not in horizontal):
-                                placed = False
-                            else:
-                                if not random.randint(0, 10):
-                                    plan[i][j] = '|'
-                                    placed = True
-                        else: placed = False
-
-    ## Place furniture and decorations
-    def neighbors(i, j):
-        neighbors = [
-            plan[i-1][j-1], plan[i-1][j], plan[i-1][j+1],
-            plan[i][j-1],                 plan[i][j+1], 
-            plan[i+1][j-1], plan[i+1][j], plan[i+1][j+1]]
-        return neighbors
-    
-    ### Place one of each of these
-    bed    = False
-    dining = False
-    shelf  = False
-    lights = False
-    
-    # Look through tiles
-    for i in range(len(plan)):
-        for j in range(len(plan[0])):
-            if random.randint(0, 1):
-                
-                # Look for floor tiles indoors
-                if (plan[i][j] == '.') and ('|' not in neighbors(i, j)):
-                    if (plan[i][j+1] == '.') and ('|' not in neighbors(i, j+1)):
-                        
-                        # Three open spaces
-                        if (plan[i][j+2] == '.') and ('|' not in neighbors(i, j+2)):
-                            
-                            # Table and chairs
-                            if not dining and not random.randint(0, 5):
-                                plan[i][j]          = 'b'
-                                plan[i][j+1]        = 'T'
-                                plan[i][j+2]        = 'd'
-                                dining = True
-                        
-                        # Two open spaces
-                        else:
-                            
-                            # Bed
-                            if not bed and not random.randint(0, 3):
-                                plan[i][j]          = '='
-                                if not random.randint(0, 2): bed = True
-                            
-                            # Shelf
-                            else:
-                                if (not shelf) and (plan[i-1][j] == '-') and (plan[i-1][j+1] == '-'):
-                                    plan[i][j]      = '['
-                                    plan[i][j+1]    = ']'
-                                    shelf = True
-                
-                # Look outdoors
-                elif plan[i][j] == ' ':
-                    try:
-                        if '|' not in neighbors(i, j):
-                            
-                            # Lights
-                            if not lights:
-                                plan[i][j]              = 'L'
-                                lights = True
-                    
-                    except: continue
-    
-    ## Wrap things up
-    export = []
-    for row in plan:
-        export.append("".join(row))
-    return export
+    generator = TextRoom(width, height, doors)
+    return generator.create()
 
 def add_doors(room):
     """ Add one or two doors to a room, and adds a entryway. """
@@ -2658,9 +2680,60 @@ def create_tile(tile_ID):
         effect : bool or Effect object; True=default, False=None, effect=custom """
     
     # Create object
-    tile_ID = tile_ID.replace(" ", "_")
-    tile    = Tile(**tile_dicts[tile_ID])
+    tile_ID   = tile_ID.replace(" ", "_")
+    json_data = copy.deepcopy(tile_dicts[tile_ID])
+    tile      = Tile(**json_data)
 
     return tile
+
+def find_outside_mask(plan):
+    """
+    plan: list of strings
+    Returns a 2D mask where True = outside.
+    """
+    H = len(plan)
+    W = len(plan[0])
+
+    # What counts as blocking the outside?
+    BLOCKERS = {'-', '|'}   # you can easily adjust this
+
+    outside = [[False]*W for _ in range(H)]
+    queue = []
+
+    # 1. Seed the BFS with all outer-edge *non-blocking* tiles
+    for i in range(H):
+        for j in (0, W-1):
+            if plan[i][j] not in BLOCKERS:
+                outside[i][j] = True
+                queue.append((i,j))
+    for j in range(W):
+        for i in (0, H-1):
+            if plan[i][j] not in BLOCKERS:
+                if not outside[i][j]:
+                    outside[i][j] = True
+                    queue.append((i,j))
+
+    # 2. BFS flood-fill through non-blockers only
+    while queue:
+        i,j = queue.pop(0)
+
+        for di,dj in ((1,0),(-1,0),(0,1),(0,-1)):
+            ni, nj = i+di, j+dj
+
+            # in bounds
+            if 0 <= ni < H and 0 <= nj < W:
+
+                # must not already be marked
+                if outside[ni][nj]:
+                    continue
+
+                # must not be a wall / blocker
+                if plan[ni][nj] in BLOCKERS:
+                    continue
+
+                outside[ni][nj] = True
+                queue.append((ni,nj))
+
+    return outside
 
 ########################################################################################################################################################

@@ -8,6 +8,7 @@
 ## Standard
 import random
 import time
+import copy
 
 ## Specific
 import pygame
@@ -579,10 +580,12 @@ def create_entity(names):
     if type(names) in [tuple, list]:
         for val in ent_dicts.values():
             if val.img_IDs == names:
+                val            = copy.deepcopy(val)
                 ent            = Entity(**val)
                 ent.handedness = random.choice(['left', 'right'])
     else:
-        ent = Entity(**ent_dicts[names])
+        json_data = copy.deepcopy(ent_dicts[names])
+        ent = Entity(**json_data)
     
     # Return if found
     if not ent: raise Exception(names)
@@ -596,7 +599,7 @@ def create_NPC(name):
     #########################################################
     # Custom
     if name in NPC_dicts.keys():
-        NPC = NPC_dicts[name]
+        NPC = copy.deepcopy(NPC_dicts[name])
 
         # Basics
         ent       = create_entity(NPC['model'])
