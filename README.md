@@ -1,13 +1,16 @@
-Mors Somnia
-===========
+```
+██▄  ▄██ ▄████▄ █████▄  ▄█████   ▄█████ ▄████▄ ██▄  ▄██ ███  ██ ██ ▄████▄ 
+██ ▀▀ ██ ██  ██ ██▄▄██▄ ▀▀▀▄▄▄   ▀▀▀▄▄▄ ██  ██ ██ ▀▀ ██ ██ ▀▄██ ██ ██▄▄██ 
+██    ██ ▀████▀ ██   ██ █████▀   █████▀ ▀████▀ ██    ██ ██   ██ ██ ██  ██ 
+```
 
 *It was all a dream...*
 <br />
 *...right?*
 
-In Mors Somnia, only you can seal the fate of the town as death and cryptic communion fill the air. There are people to meet, creatures to defeat, decisions to be made... By dream or drug, these corners are yours to explore freely.
+In Mors Somnia, reality and delusion intertwine in a duality of peace and cryptic communion. There are people to meet, creatures to defeat, decisions to be made... but by dream, drug, or idle leasure, each corner comes at a cost.
 
-While awake, you build and barter in an unsuspecting town, living a regular life among kernels of secrets waiting to be revealed. While asleep -- or lost in the violent haze of a potent elixir -- you venture to shifting lands of danger and promise, whose walls breathe with the pulse of forgotten gods. Mortality blurs in between -- a transience some seek to harness. Will you aid in their search for power, or will you pave a path of your own?
+While awake, you build and barter in an unsuspecting town, living a casual life of trade and creative freedom. While asleep or lost in the haze of a potent elixir, you venture to unexpected lands where secrets lie in wait. Mortality blurs in between -- a transience some citizens seek to harness. Will you aid in their search for power or pave a path of your own?
 
 Features
 --------
