@@ -350,8 +350,6 @@ class QuestMenu:
                 furnishing_a_home.name:  furnishing_a_home}
             
             return gathering_supplies, finding_a_future, furnishing_a_home
-        
-        else: print(env_name)
 
     def check_tasks(self, name, log):
         pyg = session.pyg
@@ -555,30 +553,25 @@ class QuestObjective:
 
         # Ignore events that don't match the objective
         if event_id != self.event_id:
-            #print(f'0 \t {event_id} \t {self.event_id} \t {self.description}')
             return False
         
         # Check all conditions
         for key, value in self.conditions.items():
-            #print()
             event_val = kwargs.get(key)
-            #print(f'{key} \t {value} \t {kwargs} \t {event_val}')
 
             # Return if none of the possible conditions are satisfied
             if isinstance(value, (list, set, tuple)):
                 if event_val not in value:
-                    #print(f'1 \t {event_id} \t {self.event_id} \t {event_val} \t {self.description}')
                     return False
             
             # Return if the condition is not satisfied
             else:
                 if event_val != value:
-                    #print(f'2 \t {event_id} \t {self.event_id} \t {event_val} \t {self.description}')
                     return False
 
         # All conditions passed
         self.complete = True
-        print(f'3 \t {event_id} \t {self.event_id} \t {self.description}')
+        print(f'{event_id} \t {self.event_id} \t {self.description}')
 
         # Trigger any objective-level completion actions by emitting them to the bus
         if self.on_complete:

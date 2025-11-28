@@ -2111,8 +2111,7 @@ class Weather:
             self.cloud_surface.set_alpha(self.light_set)
 
     def set_day_and_time(self, day=None, time=None, increment=False):
-        print(self.env.env_time, self.env.env_date)
-        
+                
         # Set a specific day and time
         if not increment:
             if day is not None:  self.env.env_date = (day % 8) + 1

@@ -258,7 +258,8 @@ class Entity:
         self.trade_times = None
         self.inventory   = {'weapons': [], 'armor': [],  'potions': [], 'scrolls': [], 'drugs': [], 'other': []}
         self.equipment   = {'head': None,  'face': None, 'chest': None, 'body': None,  'dominant hand': None, 'non-dominant hand': None}
-        
+        self.last_dialogue_time = 0
+
         ## Randomizer
         self.rand_X = random.randint(-pyg.tile_width,  pyg.tile_width)
         self.rand_Y = random.randint(-pyg.tile_height, pyg.tile_height)

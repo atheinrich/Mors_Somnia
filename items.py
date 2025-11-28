@@ -47,9 +47,6 @@ class Item:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        if self.name == 'lights':
-            print(self.effect_id)
-
         # Set abilities and effects
         if self.ability_id:
             self.ability = session.abilities.create_ability(

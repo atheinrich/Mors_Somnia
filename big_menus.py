@@ -707,6 +707,9 @@ class FileMenu:
         """ Loads a pickled Player object. """
         
         pyg = session.pyg
+        
+        ## Update event bus
+        session.bus.clear()
 
         #########################################################
         # Add asterisk to active option
@@ -723,9 +726,6 @@ class FileMenu:
         
         #########################################################
         # Clean up and return
-        ## Update event bus
-        session.bus.clear()
-
         ## Check if dead
         if session.player_obj.ent.dead:
             session.play_game_obj.death_checked = True

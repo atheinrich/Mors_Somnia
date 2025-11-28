@@ -894,6 +894,7 @@ class InteractionSystem:
         """ Routes the interaction to the proper channel based on entities and location. """
 
         # Player specific
+        interacted = False
         if ent.role == 'player':
 
             if target.role == 'NPC':
@@ -902,33 +903,40 @@ class InteractionSystem:
                 if target.trade_active() and not target.quest_active():
                     session.trade_obj.trader  = target
                     session.pyg.overlay_state = 'trade'
+                    interacted = True
             
                 # Dialogue
-                session.player_obj.dialogue.emit_dialogue(target.name)
+                current_time = time.time()
+                if current_time - target.last_dialogue_time > 1:
+                    target.last_dialogue_time = current_time
+                    session.player_obj.dialogue.emit_dialogue(target.name)
+                    interacted = True
         
             # Make them flee
             elif type(target.fear) == int:
                 target.fear += 30
+                interacted = True
             
             # Attack
             elif session.pyg.game_state != 'play_garden':
                 self.attack_target(ent, target)
-        
+                interacted = True
+                            
             # Emit interaction
-            session.bus.emit(
-                event_id      = 'entity_interacted',
-                ent_id        = ent.name,
-                target_ent_id = target.name)
-        
+            if interacted:
+                session.bus.emit(
+                    event_id      = 'entity_interacted',
+                    ent_id        = ent.name,
+                    target_ent_id = target.name)
+                
         # General
         elif session.pyg.game_state != 'play_garden':
 
             if ent.role == 'NPC':
                 if target.role != 'player':
-                    self.attack_target(ent, target)
-            
+                    self.attack_target(ent, target)            
             else:
-                self.attack_target(ent, target)
+                self.attack_target(ent, target)        
     
     def attack_target(self, ent, target):
         """ Calculates and applies attack damage. Used for player and entities. """
