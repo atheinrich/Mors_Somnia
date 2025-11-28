@@ -786,7 +786,7 @@ class Images:
     def shift(self, image, offset):
         """Shift the tile by an offset. """
         
-        if type(image) == list: image = self.dict[image[0]][image[1]]
+        if type(image) == list: image = copy.copy(self.dict[image[0]][image[1]])
         
         X_offset, Y_offset = offset[0], offset[1]
         X_offset %= image.get_width()
@@ -1174,7 +1174,7 @@ def screenshot(folder, filename, blur=False):
     
     # Save image
     path = folder + '/' + filename
-    pygame.image.save(pyg.display, path)
+    pygame.image.save(display, path)
     
     # Add effects
     if blur:

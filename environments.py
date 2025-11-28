@@ -1576,9 +1576,10 @@ class Room:
 
     def from_size(self):
         
-        # Assign tiles to room
         for x in range(self.x1, self.x2+1):
             for y in range(self.y1, self.y2+1):
+                
+                # Find position of tile within room
                 tile = self.env.map[x][y]
                 
                 # Apply properties to bulk
@@ -1624,24 +1625,7 @@ class Room:
         self.noncorners_list = list(set(self.walls_list) - set(self.corners_list))
 
     def from_plan(self):
-        """
-        try:
-            self.from_plan_fr()
-        
-        except:
-            try:
-                self.x1 -= 5
-                self.y1 -= 5
-                self.from_plan_fr()
-            except:
-                self.x1 += 10
-                self.y1 += 10
-                self.from_plan_fr()
-        """
-        self.from_plan_fr()
-
-    def from_plan_fr(self):
-        outside = find_outside_mask(self.plan)
+        outside = find_outside(self.plan)
 
         for y in range(len(self.plan)):
             for x in range(len(self.plan[y])):
@@ -1714,13 +1698,13 @@ class Room:
     def from_boundary(self):
         
         # Import details
-        wall_img_IDs = self.boundary['boundary tiles']
+        wall_img_IDs    = self.boundary['boundary tiles']
         boundary_coords = self.boundary['boundary coordinates']
-        min_x, max_x = self.boundary['min x'], self.boundary['max x']
-        min_y, max_y = self.boundary['min y'], self.boundary['max y']
+        min_x, max_x    = self.boundary['min x'], self.boundary['max x']
+        min_y, max_y    = self.boundary['min y'], self.boundary['max y']
         
         visited = set()
-        queue = []
+        queue   = []
         
         # Add all boundary-adjacent tiles from the outer edge of the bounding box
         for x in range(min_x, max_x + 1):
@@ -2072,26 +2056,33 @@ class Weather:
         # Global mechanisms
         self.env = env
 
-        # Dark background
-        self.sky = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
-        
+        # Surfaces
+        self.sky_surface   = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
+        self.cloud_surface = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
+
         self.last_hour = time.localtime().tm_hour + 1
         self.last_min  = time.localtime().tm_min + 1
 
         self.hours = [
-            0,    10,  37,  79, 127, 176, 218, 245,
-            255, 245, 218, 176, 128,  79,  37,  10]
+            0, 1,  2,  3,  4,  5,  6,  7,
+            8, 9, 10, 11, 12, 13, 14, 15]
+        self.alpha_hours = [
+            255, 245, 218, 176, 128,  79,  37,  10,
+            0,    10,  37,  79, 127, 176, 218, 245]
         self.symbols = [
-            "🌑", "🌑", "🌒", "🌒", "🌓", "🌓", "🌔", "🌔",
-            "🌕", "🌕", "🌖", "🌖", "🌗", "🌗", "🌘", "🌘"]
+            "🌕", "🌕", "🌖", "🌖", "🌗", "🌗", "🌘", "🌘",
+            "🌑", "🌑", "🌒", "🌒", "🌓", "🌓", "🌔", "🌔"]
         self.light_list = []
         
         self.light_set = light_set
-        self.cloudy = clouds
-        self.clouds = []
+        self.cloudy    = clouds
+        self.clouds    = []
 
     def run(self):
-        self.sky.fill((0, 0, 0, 255))
+
+        # Reset sky
+        self.sky_surface.fill((0, 0, 0, 255))
+        self.cloud_surface.fill((0, 0, 0, 0))
         
         # Set day (1 in-game day per 8 hours)
         if (time.localtime().tm_hour + 1) != self.last_hour:
@@ -2116,9 +2107,11 @@ class Weather:
         
         # Set a constant brightness
         else:
-            self.sky.set_alpha(self.light_set)
+            self.sky_surface.set_alpha(self.light_set)
+            self.cloud_surface.set_alpha(self.light_set)
 
     def set_day_and_time(self, day=None, time=None, increment=False):
+        print(self.env.env_time, self.env.env_date)
         
         # Set a specific day and time
         if not increment:
@@ -2129,8 +2122,9 @@ class Weather:
         else: self.env.env_time = (self.env.env_time + 1) % 16
 
     def update_brightness(self):
-        self.alpha = self.hours[self.env.env_time]
-        self.sky.set_alpha(self.alpha)
+        self.alpha = self.alpha_hours[self.env.env_time]
+        self.sky_surface.set_alpha(self.alpha)
+        self.cloud_surface.set_alpha(124)
 
     def create_cloud(self):
 
@@ -2180,7 +2174,6 @@ class Weather:
     def update_clouds(self):
         pyg    = session.pyg
         camera = self.env.camera
-        data   = []
         
         # Draw visible tiles
         for y in range(int(camera.Y/32), int(camera.bottom/pyg.tile_height + 1)):
@@ -2203,18 +2196,17 @@ class Weather:
                                         image = session.img.shift(session.img.dict['concrete']['gray floor'], [int((x_char+y_char)*13)%32, int(abs(x_char-y_char)*10)%32])
                                         
                                         # Set transparency
-                                        ratio = (1 - self.alpha / 255)
-                                        if char == '-':   image.set_alpha(int(64 * ratio))
-                                        elif char == '.': image.set_alpha(int(128 * ratio))
-                                        else:             image.set_alpha(int(96 * ratio))
+                                        if char == '-':   image.set_alpha(220)
+                                        elif char == '.': image.set_alpha(255)
+                                        else:             image.set_alpha(190)
                                         
                                         # Set the corresponding map tile
                                         X = x * pyg.tile_width - self.env.camera.X
                                         Y = y * pyg.tile_height - self.env.camera.Y
                                         
-                                        self.sky.blit(image, (X, Y))
+                                        self.cloud_surface.blit(image, (X, Y))
 
-        return data
+        return
 
     def update_lighting(self):
         pyg = session.pyg
@@ -2235,17 +2227,17 @@ class Weather:
 
             light_surface = pygame.Surface((width, height), pygame.SRCALPHA)
             for i in range(size + 1):
-                a = max(0, 255 - alpha * i)
+                a = max(0, alpha * i)
                 transparent_rect = pygame.Rect(
-                    (i) * 16,
-                    (i) * 16,
+                    i * 16,
+                    i * 16,
                     width - i * 32,
                     height - i * 32
                 )
-                pygame.draw.rect(light_surface, (0, 0, 0, a), transparent_rect)
+                pygame.draw.rect(light_surface, (255, 255, 255, a), transparent_rect)
             
             # Blend this light onto the main sky surface with "brightest wins"
-            self.sky.blit(light_surface, (left, top), special_flags=pygame.BLEND_RGBA_MIN)
+            self.sky_surface.blit(light_surface, (left, top), special_flags=pygame.BLEND_RGBA_SUB)
 
     def render(self):
         """ Creates a black overlay and cuts out regions for lighting.
@@ -2253,13 +2245,14 @@ class Weather:
                 1. The object has self.lamp as an effect and is not owned by an entity.
                 2. The object has self.lamp as an effect and is equipped by an entity. """
 
-        # Check for lights
-        self.update_lighting()
-
         # Check for clouds
         if self.cloudy: self.update_clouds()
 
-        session.pyg.display_queue.append([self.sky, (0, 0)])
+        # Check for lights
+        self.update_lighting()
+        
+        session.pyg.display_queue.append([self.cloud_surface, (0, 0)])
+        session.pyg.display_queue.append([self.sky_surface,   (0, 0)])
 
 class Camera:
     """ Defines a camera to follow the player. """
@@ -2686,7 +2679,7 @@ def create_tile(tile_ID):
 
     return tile
 
-def find_outside_mask(plan):
+def find_outside(plan):
     """
     plan: list of strings
     Returns a 2D mask where True = outside.

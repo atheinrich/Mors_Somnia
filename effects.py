@@ -61,8 +61,7 @@ class EffectsSystem:
         self.movement_speed_toggle = 0
 
     def create_effect(self, owner, effect_id, item=None):
-        effect = Effect(owner, item, **self._data[effect_id])
-        return effect
+        return Effect(owner, item, **self._data[effect_id])
 
     def toggle_effect(self, ent, effect_obj):
         """ Adds or removes ability for a given entity. """
@@ -81,11 +80,22 @@ class EffectsSystem:
         
             effect_obj.activate(on_toggle=True)
 
-    def check_tile(self, ent):
-        #if ent.tile.item:
-        #    if ent.tile.item.effect:
-        #        ent.tile.item.effect.effect_fn(ent)
-        pass
+    def _name_generator(self):
+               
+        con = "bcdfghjklmnpqrstvwxyz"
+        vow = "aeiou"
+
+        length = random.randint(2, 8)
+
+        name = [random.choice(con)]
+
+        for i in range(length - 1):
+            if name[-1] in con:
+                name.append(random.choice(vow))
+            else:
+                name.append(random.choice(con))
+        
+        return "".join(name).capitalize()
 
     # On barrier
     @register("dig_tunnel")
@@ -261,7 +271,6 @@ class EffectsSystem:
             env = area['overworld'],
             loc = area['overworld'].player_coordinates)
 
-    # new
     @register("enter_dungeon")
     def enter_dungeon(self, effect_obj=None, **kwargs):
         """ Creates a new dungeon system and its first level. Overwrites any previous system. """
@@ -329,24 +338,6 @@ class EffectsSystem:
             ent = session.player_obj.ent,
             env = area[lvl_num-1],
             loc = area[lvl_num-1].center)
-    # new
-
-    def _name_generator(self):
-               
-        con = "bcdfghjklmnpqrstvwxyz"
-        vow = "aeiou"
-
-        length = random.randint(2, 8)
-
-        name = [random.choice(con)]
-
-        for i in range(length - 1):
-            if name[-1] in con:
-                name.append(random.choice(vow))
-            else:
-                name.append(random.choice(con))
-        
-        return "".join(name).capitalize()
 
     @register("enter_cave")
     def enter_cave(self, effect_obj, **kwargs):

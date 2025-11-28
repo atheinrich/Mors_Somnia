@@ -23,7 +23,7 @@
     "beard":       "white beard",
     "weapon":      "blood dagger",
     "armor":       null,
-    "trade_times": [3, 4, 5, 6],
+    "trade_times": [5, 6, 7, 8, 9, 10],
     "inv":         [
         "shovel",
         "sword",
@@ -50,7 +50,7 @@
     "beard":       "white beard",
     "weapon":      "blood dagger",
     "armor":       null,
-    "trade_times": [3, 4, 5, 6],
+    "trade_times": [5, 6, 7, 8, 9, 10],
     "inv":         [
         "shovel",
         "sword",
@@ -91,7 +91,7 @@
     "beard":       null,
     "weapon":      "shovel",
     "armor":       null,
-    "trade_times": [3, 4, 5, 6],
+    "trade_times": [7, 8, 9, 10, 11, 12],
     "inv":         [
         "shovel",
         "chain dress",
@@ -111,7 +111,7 @@
     "beard":       "blue beard",
     "weapon":      null,
     "armor":       null,
-    "trade_times": [1, 2, 7, 8],
+    "trade_times": [12, 13, 14, 15, 0, 1],
     "inv":         [
         "needle",
         "skin",

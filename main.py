@@ -108,7 +108,7 @@ import cProfile
 
 ########################################################################################################################################################
 # Global values
-API_toggle = False
+API_toggle = True
 
 ########################################################################################################################################################
 # Core
@@ -299,7 +299,7 @@ def rendering():
 def API_updating():
     env = session.player_obj.ent.env
     if API_toggle: API(
-        state   = env.symbols[env.env_time-1],
+        state   = env.weather.symbols[env.env_time-1],
         details = env.name.capitalize())
 
 def API(state, details, init=False):
