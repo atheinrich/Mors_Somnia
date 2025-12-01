@@ -1,26 +1,26 @@
 {
 "jug_of_blood": {
-    "name":       "jug of blood",
-    "img_IDs":  ["potions", "red potion"],
-    "effect_id":  "jug_of_blood",
-    "uses":       3
+    "name":      "jug of blood",
+    "img_IDs":   ["potions", "red_potion"],
+    "effect_id": "jug_of_blood",
+    "uses":      3
     },
 
 "jug_of_grapes": {
-    "name":       "jug of grapes",
-    "img_IDs":  ["potions", "purple potion"]
+    "name":      "jug of grapes",
+    "img_IDs":   ["potions", "purple_potion"]
     },
 
 "jug_of_water": {
-    "name":       "jug of water",
-    "img_IDs":  ["potions", "blue potion 1"],
-    "effect_id":  "jug_of_water",
-    "uses":       3
+    "name":      "jug of water",
+    "img_IDs":   ["potions", "blue_potion_1"],
+    "effect_id": "jug_of_water",
+    "uses":      3
     },
 
 "jug_of_cement": {
-    "name":       "jug of cement",
-    "role":       "potions",
-    "img_IDs":  ["potions", "gray potion"]
+    "name":      "jug of cement",
+    "role":      "potions",
+    "img_IDs":   ["potions", "gray_potion"]
     }
 }

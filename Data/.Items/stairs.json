@@ -1,54 +1,54 @@
 {
 "door": {
     "name":      "door",
-    "img_IDs": ["stairs", "door"]
+    "img_IDs":   ["stairs", "door"]
     },
 
 "descend_dungeon": {
     "name":      "door",
-    "img_IDs": ["stairs", "door"],
+    "img_IDs":   ["stairs", "door"],
     "effect_id": "descend_dungeon"
     },
 
 "ascend_dungeon": {
     "name":      "door",
-    "img_IDs": ["stairs", "door"],
+    "img_IDs":   ["stairs", "door"],
     "effect_id": "ascend_dungeon"
     },
 
 "overworld_entrance": {
     "name":      "door",
-    "img_IDs": ["stairs", "door"],
+    "img_IDs":   ["stairs", "door"],
     "effect_id": "enter_overworld"
     },
 
 "home_entrance": {
     "name":      "door",
-    "img_IDs": ["stairs", "door"],
+    "img_IDs":   ["stairs", "door"],
     "effect_id": "enter_home"
     },
 
 "enter_cave": {
     "name":      "door",
-    "img_IDs": ["floors", "sand2"],
+    "img_IDs":   ["stairs", "ladder_down"],
     "effect_id": "enter_cave"
     },
 
 "descend_cave": {
     "name":      "door",
-    "img_IDs": ["floors", "dirt2"],
+    "img_IDs":   ["stairs", "ladder_down"],
     "effect_id": "descend_cave"
     },
 
 "ascend_cave": {
     "name":      "door",
-    "img_IDs": ["floors", "dirt2"],
+    "img_IDs":   ["stairs", "ladder_up"],
     "effect_id": "ascend_cave"
     },
 
 "portal": {
     "name":      "portal",
-    "img_IDs": ["stairs", "portal"]
+    "img_IDs":   ["stairs", "portal"]
     }
 
 }

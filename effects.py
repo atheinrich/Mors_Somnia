@@ -15,6 +15,7 @@
 # Imports
 import pygame
 import random
+import copy
 
 import session
 from mechanics import place_player
@@ -164,7 +165,7 @@ class EffectsSystem:
 
             # Destroy if no more uses
             if effect_obj.item.uses:
-                effect_obj.item.img_IDs = ['potions', f'blue potion {4-effect_obj.item.uses}']
+                effect_obj.item.img_IDs = ['potions', f'blue_potion_{4-effect_obj.item.uses}']
                 pyg.update_gui("You pour out some water.", pyg.blue)
             
             else:
@@ -467,34 +468,32 @@ class EffectsSystem:
         """ Advances player to bitworld. """
         
         pyg  = session.pyg
-        ent  = session.player_obj.ent
         envs = session.player_obj.envs
+        pyg.overlay = None
         
         #########################################################
         # Create and/or enter
         ## Create
         if 'bitworld' not in envs.areas.keys():
             envs.add_area('bitworld')
-            pyg.fn_queue.append([
-                envs.areas['bitworld'].add_level['overworld'],
-                {'effect_obj': effect_obj}])
+            envs.areas['bitworld'] = copy.deepcopy(envs.areas['overworld'])
 
         # Prepare fade screen
         text = ". . . ! Your vision blurs as the substance seeps through your veins."
         pyg.add_intertitle(text)
         pyg.fade_state = 'out'
-        pyg.fn_queue.append([self.descend_bitworld, {'effect_obj': effect_obj}])
+        pyg.fn_queue.append([self._enter_bitworld_queue, {}])
 
-        ## Enter
+    def _enter_bitworld_queue(self):
+        ent  = session.player_obj.ent
+        envs = session.player_obj.envs
+
         session.img.render_fx = 'bw_binary'
         place_player(
             ent = ent,
             env = envs.areas['bitworld']['overworld'],
             loc = envs.areas['bitworld']['overworld'].center)
-
-    def _enter_bitworld_queue(self, effect_obj, **kwargs):
-        pass
-
+    
     # Item effects
     @register("entity_eat")
     def entity_eat(self, effect_obj=None, target=None):

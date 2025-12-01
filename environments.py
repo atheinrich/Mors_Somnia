@@ -1,6 +1,14 @@
 ########################################################################################################################################################
 # Environment creation and management
 #
+# Environments (player_obj.envs)
+# - Area (envs.areas[area])
+# -- Environment (areas[area][env])
+# --- Tiles (env.map)
+# --- Rooms (env.rooms)
+# --- Weather (env.weather)
+# -- Questlog (areas[area].questlog)
+#
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -57,6 +65,7 @@ class Environments:
         elif name == 'garden':      return self.build_garden(area)
         elif name == 'home':        return self.build_home(area)
         elif name == 'overworld':   return self.build_overworld(area)
+        elif name == 'bitworld':    return self.build_bitworld(area)
         elif name[:7] == 'dungeon': return self.build_dungeon(area, lvl_num)
         elif name[:4] == 'cave':    return self.build_cave(area, lvl_num)
 
@@ -146,8 +155,8 @@ class Environments:
             lvl_num       = 0,
             size          = 1,
             soundtrack    = ['menu'],
-            img_IDs       = ['floors', 'dark green floor'],
-            floor_img_IDs = ['floors', 'dark green floor'],
+            img_IDs       = ['floors', 'dark_green_floor'],
+            floor_img_IDs = ['floors', 'dark_green_floor'],
             wall_img_IDs  = ['walls', 'gray'],
             roof_img_IDs  = ['roofs', 'tiled'],
             blocked       = False,
@@ -212,7 +221,7 @@ class Environments:
             size          = 5,
             soundtrack    = ['home'],
             img_IDs       = ['walls', 'gray'],
-            floor_img_IDs = ['floors', 'green floor'],
+            floor_img_IDs = ['floors', 'green_floor'],
             wall_img_IDs  = ['walls', 'gray'],
             roof_img_IDs  = ['roofs', 'tiled'],
             area          = area)
@@ -355,8 +364,8 @@ class Environments:
         room_counter, counter = 0, 0
         center                = env.center
         (x_1, y_1)            = center
-        x_2                   = lambda width:  len(env.map)    - width  - 1
-        y_2                   = lambda height: len(env.map[0]) - height - 1
+        x_2                   = lambda width:  len(env.map)    - width  - 5
+        y_2                   = lambda height: len(env.map[0]) - height - 5
         while room_counter < num_rooms:
             
             # Generate location
@@ -384,7 +393,7 @@ class Environments:
                     biome          = 'city',
                     hidden         = False,
                     objects        = False,
-                    floor_img_IDs  = ['floors', 'dark green floor'],
+                    floor_img_IDs  = ['floors', 'dark_green_floor'],
                     wall_img_IDs   = env.wall_img_IDs,
                     roof_img_IDs   = env.roof_img_IDs,
                     unbreakable    = True,
@@ -431,7 +440,7 @@ class Environments:
                     biome         = 'city',
                     hidden        = False,
                     objects       = False,
-                    floor_img_IDs = ['floors', 'dark green floor'],
+                    floor_img_IDs = ['floors', 'dark_green_floor'],
                     wall_img_IDs  = env.wall_img_IDs,
                     roof_img_IDs  = env.roof_img_IDs,
                     unbreakable   = True,
@@ -470,7 +479,7 @@ class Environments:
             biome         = 'any',
             hidden        = False,
             objects       = False,
-            floor_img_IDs = ['floors', 'red floor'],
+            floor_img_IDs = ['floors', 'red_floor'],
             wall_img_IDs  = env.wall_img_IDs,
             roof_img_IDs  = env.roof_img_IDs,
             unbreakable   = True,
@@ -665,6 +674,7 @@ class Environments:
         (x, y) = env.rooms[-1].center()
         if lvl_num == 1:
             stairs = create_item('overworld_entrance')
+            stairs.img_IDs = ['stairs', 'ladder_up']
         else:
             stairs = create_item('ascend_cave')
         place_object(stairs, [x, y], env)
@@ -684,7 +694,7 @@ class Environments:
             size          = 2 * (1 + lvl_num//3),
             soundtrack    = [f'dungeon {lvl_num}'],
             img_IDs       = ['walls', 'gray'],
-            floor_img_IDs = ['floors', 'dark green floor'],
+            floor_img_IDs = ['floors', 'dark_green_floor'],
             wall_img_IDs  = ['walls', 'gray'],
             roof_img_IDs  = None,
             blocked       = True,
@@ -717,9 +727,9 @@ class Environments:
             y        = random.randint(0, len(env.map[0]) - height - 1)
             
             floor_img_IDs = random.choice([
-                ['floors', 'dark green floor'],
-                ['floors', 'dark green floor'],
-                ['floors', 'green floor']])
+                ['floors', 'dark_green_floor'],
+                ['floors', 'dark_green_floor'],
+                ['floors', 'green_floor']])
             
             new_room = Room(
                 name    = 'dungeon room',
@@ -806,7 +816,7 @@ class Environments:
             size          = 3,
             soundtrack    = [f'hallucination {lvl_num}'],
             img_IDs       = ['walls',  'gold'],
-            floor_img_IDs = ['floors', 'green floor'],
+            floor_img_IDs = ['floors', 'green_floor'],
             wall_img_IDs  = ['walls',  'gold'],
             roof_img_IDs  = None,
             blocked       = True,
@@ -892,7 +902,7 @@ class Environments:
                     biome   = 'city',
                     hidden = False,
                     objects = False,
-                    floor_img_IDs  = ['floors', 'dark green floor'],
+                    floor_img_IDs  = ['floors', 'dark_green_floor'],
                     wall_img_IDs  = env.wall_img_IDs,
                     roof_img_IDs   = env.roof_img_IDs,
                     plan = create_text_room(width, height, doors=False))
@@ -960,7 +970,7 @@ class Environments:
 
     # Bitworld
     def build_bitworld(self, area):
-        """ Generates the bitworld environment. """
+        """ Generates the overworld environment. """
 
         ###############################################################
         ## Initialize environment
@@ -968,14 +978,14 @@ class Environments:
             envs          = self,
             name          = 'bitworld',
             lvl_num       = 0,
-            size          = 7,
+            size          = 10,
             soundtrack    = [
                 'overworld 1',
                 'overworld 2',
                 'overworld 3',
                 'overworld 4'],
-            img_IDs       = ['floors', 'grass3'],
-            floor_img_IDs = ['floors', 'grass3'],
+            img_IDs       = ['floors', 'grass1'],
+            floor_img_IDs = ['floors', 'grass1'],
             wall_img_IDs  = ['walls', 'gray'],
             roof_img_IDs  = ['roofs', 'tiled'],
             blocked       = False,
@@ -987,13 +997,22 @@ class Environments:
         
         # Set weather
         env.weather_backup = {
-            'light_set': None,
-            'clouds':    False}
+            'light_set': 0,
+            'clouds':    None}
         env.weather = Weather(env, clouds=False)
 
         ## Generate biomes
         biomes = [
-            ['forest', ['floors', 'grass2']]]
+            ['forest', ['floors', 'grass1']],
+            ['forest', ['floors', 'grass1']],
+            ['forest', ['floors', 'grass1']],
+            ['forest', ['floors', 'grass1']],
+            ['desert', ['floors', 'sand1']],
+            ['desert', ['floors', 'sand1']],
+            ['desert', ['floors', 'sand1']],
+            ['desert', ['floors', 'sand1']],
+            ['water',  ['floors', 'water']],
+            ['water',  ['floors', 'water']]]
         voronoi_biomes(env, biomes)
         
         ###############################################################
@@ -1017,24 +1036,25 @@ class Environments:
             for u in range(width):
                 for v in range(height):
                     if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
-                    elif env.map[x+u][y+v].room:                             failed = True
+                    elif env.map[x+u][y+v].room:                     failed = True
             if not failed:
                 
                 ## Construct room
                 new_room = Room(
-                    name   = 'bitworld room',
-                    env    = env,
-                    x1     = x,
-                    y1     = y,
-                    width  = width,
-                    height = height,
-                    biome   = 'city',
-                    hidden = False,
-                    objects = False,
-                    floor_img_IDs  = ['floors', ' floor'],
-                    wall_img_IDs  = env.wall_img_IDs,
+                    name           = 'overworld room',
+                    env            = env,
+                    x1             = x,
+                    y1             = y,
+                    width          = width,
+                    height         = height,
+                    biome          = 'city',
+                    hidden         = False,
+                    objects        = False,
+                    floor_img_IDs  = ['floors', 'dark_green_floor'],
+                    wall_img_IDs   = env.wall_img_IDs,
                     roof_img_IDs   = env.roof_img_IDs,
-                    plan = create_text_room(width, height))
+                    unbreakable    = True,
+                    plan           = create_text_room(width, height))
 
                 room_counter += 1
                 x, y = new_room.center()[0], new_room.center()[1]
@@ -1045,98 +1065,147 @@ class Environments:
                 counter = 0
                 (x_1, y_1) = (0, 0)
         
-        ## Create player's house
-        main_room = Room(
-            name    = 'home room',
-            env     = env,
-            x1      = env.center[0],
-            y1      = env.center[1],
-            width   = self.room_max_size,
-            height  = self.room_max_size,
-            biome   = 'any',
-            hidden  = False,
-            objects = False,
-            floor_img_IDs   = ['floors', 'dark green floor'],
-            wall_img_IDs   = env.wall_img_IDs,
-            roof_img_IDs    = env.roof_img_IDs,
-            plan = ['  -----     ',
-                    ' --...----- ',
-                    ' -........--',
-                    ' -.........-',
-                    '--.........|',
-                    '-.........--',
-                    '--.....---- ',
-                    ' --...--    ',
-                    '  -----     '])
-        
-        # Door
-        x, y = center[0]+1, center[1]+5
-        item = create_item('door')
-        item.name = 'home'
-        place_object(item, [x, y], env)
-        env.map[x][y].blocked = False
-        env.map[x][y].unbreakable = False
+        ## Construct home
+        num_rooms             = 1
+        room_counter, counter = 0, 0
+        (x_1, y_1)            = env.center
+        x_2                   = lambda width:  len(env.map)    - width  - 1
+        y_2                   = lambda height: len(env.map[0]) - height - 1
+        while room_counter < num_rooms:
+            
+            # Generate location
+            width  = random.randint(self.room_min_size, self.room_max_size)
+            height = random.randint(self.room_min_size, self.room_max_size)
+            x      = random.randint(x_1, x_2(width))
+            y      = random.randint(y_1, y_2(height))
+            
+            # Check for solid ground
+            failed = False
+            for u in range(width):
+                for v in range(height):
+                    if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
+                    elif env.map[x+u][y+v].room:                     failed = True
+            if not failed:
+                
+                main_room = Room(
+                    name          = 'home room',
+                    env           = env,
+                    x1            = x,
+                    y1            = y,
+                    width         = self.room_max_size,
+                    height        = self.room_max_size,
+                    biome         = 'city',
+                    hidden        = False,
+                    objects       = False,
+                    floor_img_IDs = ['floors', 'dark_green_floor'],
+                    wall_img_IDs  = env.wall_img_IDs,
+                    roof_img_IDs  = env.roof_img_IDs,
+                    unbreakable   = True,
+                    plan = [
+                        '  -----     ',
+                        ' --...----- ',
+                        ' -........--',
+                        ' -.........-',
+                        '--.........|',
+                        '-.........--',
+                        '--.....---- ',
+                        ' --...--    ',
+                        '  -----     '])
+                
+                # Door
+                door_x, door_y = x+1, y+5
+                room_counter += 1
+            
+            # Spawn rooms elsewhere if needed
+            else: counter += 1
+            if counter > num_rooms:
+                counter = 0
+                (x_1, y_1) = (0, 0)
         
         ## Create church
         main_room = Room(
-            name    = 'church',
-            env     = env,
-            x1      = 20,
-            y1      = 20,
-            width   = self.room_max_size,
-            height  = self.room_max_size,
-            biome   = 'any',
-            hidden  = False,
-            objects = False,
-            floor_img_IDs   = ['floors', 'red floor'],
-            wall_img_IDs   = env.wall_img_IDs,
-            roof_img_IDs    = env.roof_img_IDs,
-            plan = ['  --------------           ---------- ',
-                    ' --............-----      --........--',
-                    ' -.................-      -..........-',
-                    ' -.................--------..........-',
-                    ' -...................................-',
-                    '--.................---------........--',
-                    '-..................-       -----..--- ',
-                    '--...........-------           -||-   ',
-                    ' --.....------                        ',
-                    '  -.....-                             ',
-                    '  -.....-                             ',
-                    '  --...--                             ',
-                    '   --.--                              ',
-                    '    -|-                               '])
+            name          = 'church',
+            env           = env,
+            x1            = 20,
+            y1            = 20,
+            width         = self.room_max_size,
+            height        = self.room_max_size,
+            biome         = 'any',
+            hidden        = False,
+            objects       = False,
+            floor_img_IDs = ['floors', 'red_floor'],
+            wall_img_IDs  = env.wall_img_IDs,
+            roof_img_IDs  = env.roof_img_IDs,
+            unbreakable   = True,
+            plan = [
+                '  --------------           ---------- ',
+                ' --............-----      --........--',
+                ' -.................-      -..........-',
+                ' -.................--------..........-',
+                ' -...................................-',
+                '--.................---------........--',
+                '-..................-       -----..--- ',
+                '--...........-------           -||-   ',
+                ' --.....------                        ',
+                '  -.....-                             ',
+                '  -.....-                             ',
+                '  --...--                             ',
+                '   --.--                              ',
+                '    -|-                               '])
         
         ###############################################################
         # Generate items and entities
         items = [
             ['forest', 'tree',   100],
             ['forest', 'leafy',  10],
-            ['forest', 'blades', 1]]
-        
+            ['forest', 'blades', 1],
+            ['desert', 'plant',  1000],
+            ['desert', 'enter_cave',  100]]
         entities = [
-            ['forest', 'red radish', 50,   [None]],
+            ['forest', 'orange radish', 50,   [None]],
             ['wet',    'frog',       500,  [None]],
-            ['forest', 'grass',      1000, [None]]]
-        
+            ['forest', 'grass',      1000, [None]],
+            ['desert', 'rock',       50,   [None]]]
         place_objects(env, items, entities)
         
-        env.player_coordinates = env.center # [0, 10]
-        self.player_obj.ent.tile = env.map[0][10]
+        env.center               = [door_x, door_y]
+        env.player_coordinates   = [door_x, door_y]
+        self.player_obj.ent.tile = env.map[door_x][door_y]
         
         ## Place NPCs
         bools = lambda room, i: [
             env.map[room.center()[0]+i][room.center()[1]+i].item,
             env.map[room.center()[0]+i][room.center()[1]+i].ent]
         
+        # Set named characters to spawn
+        for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci', 'Oxi', 'Aya', 'Zung', 'Lilao']:
+            
+            # Create NPC if needed
+            if name not in self.player_obj.ents.keys(): self.player_obj.ents[name] = create_NPC(name)
+            
+            # Select room not occupied by player
+            room = random.choice(env.rooms)
+            while room.name in ['home room', 'church']:
+                room = random.choice(env.rooms)
+            
+            # Select spawn location
+            for i in range(3):
+                occupied = bools(room, i-1)
+                if occupied[0] == occupied[1]:
+                    (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
+            
+            # Spawn entity
+            place_object(self.player_obj.ents[name], (x, y), env)
+        
         # Set number of random characters
-        for _ in range(15):
+        for _ in range(5):
             
             # Create entity
             ent = create_NPC('random')
             
             # Select room not occupied by player
             room = random.choice(env.rooms)
-            while room == env.rooms[-1]:
+            while room.name in ['home room', 'church']:
                 room = random.choice(env.rooms)
             
             # Select spawn location
@@ -1147,7 +1216,11 @@ class Environments:
             
             # Spawn entity
             place_object(ent, (x, y), env)
-
+        
+        ###############################################################
+        # Quests
+        area.questlog.load_quest('greet_the_town')
+            
         return env
 
 class Area:
@@ -2192,7 +2265,7 @@ class Weather:
                                     if char != ' ':
                                         
                                         # Set image and pixel shift
-                                        image = session.img.shift(session.img.dict['concrete']['gray floor'], [int((x_char+y_char)*13)%32, int(abs(x_char-y_char)*10)%32])
+                                        image = session.img.shift(session.img.dict['floors']['gray_floor'], [int((x_char+y_char)*13)%32, int(abs(x_char-y_char)*10)%32])
                                         
                                         # Set transparency
                                         if char == '-':   image.set_alpha(220)
@@ -2467,6 +2540,21 @@ def voronoi_biomes(env, biomes):
             
             tile.img_IDs = img_IDs
 
+def create_tile(tile_ID):
+    """ Creates and returns an object.
+    
+        Parameters
+        ----------
+        names  : string or list of strings; name of object
+        effect : bool or Effect object; True=default, False=None, effect=custom """
+    
+    # Create object
+    tile_ID   = tile_ID.replace(" ", "_")
+    json_data = copy.deepcopy(tile_dicts[tile_ID])
+    tile      = Tile(**json_data)
+
+    return tile
+
 def place_objects(env, items, entities):
     """ Places entities and items according to probability and biome.
 
@@ -2585,10 +2673,6 @@ def place_object(obj, loc, env, names=None):
         env.map[loc[0]][loc[1]].blocked = False
         env.entities.append(obj)
 
-def create_text_room(width=5, height=5, doors=True):
-    generator = TextRoom(width, height, doors)
-    return generator.create()
-
 def add_doors(room):
     """ Add one or two doors to a room, and adds a entryway. """
     
@@ -2663,20 +2747,9 @@ def add_doors(room):
                         except:
                             continue
 
-def create_tile(tile_ID):
-    """ Creates and returns an object.
-    
-        Parameters
-        ----------
-        names  : string or list of strings; name of object
-        effect : bool or Effect object; True=default, False=None, effect=custom """
-    
-    # Create object
-    tile_ID   = tile_ID.replace(" ", "_")
-    json_data = copy.deepcopy(tile_dicts[tile_ID])
-    tile      = Tile(**json_data)
-
-    return tile
+def create_text_room(width=5, height=5, doors=True):
+    generator = TextRoom(width, height, doors)
+    return generator.create()
 
 def find_outside(plan):
     """

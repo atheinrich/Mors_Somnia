@@ -679,14 +679,13 @@ class Images:
         walls_options     = other['walls']
         roofs_options     = other['roofs']
         paths_options     = other['paths']
-        concrete_options  = other['concrete']
         null_options      = other['null']
 
         other_options = [
             decor_options,  bubbles_options, furniture_options,
             drugs_options,  potions_options, scrolls_options,
             stairs_options, floors_options,  walls_options,
-            roofs_options,  paths_options,   concrete_options, 
+            roofs_options,  paths_options, 
             null_options]
         
         # Create image dictionary
@@ -1182,14 +1181,9 @@ def screenshot(folder, filename, blur=False):
         image_after  = image_before.filter(ImageFilter.BLUR)
         image_after.save(folder + '/' + filename)
 
-def bw_binary():
+def bw_binary(display):
     import numpy as np
     pyg = session.pyg
-    
-    for (surface, pos) in pyg.display_queue:
-        pyg.display.blit(surface, pos)
-    display = pygame.transform.scale(
-        pyg.display, (pyg.screen_width, pyg.screen_height))
     
     # Extract screen as image
     raw_str = pygame.image.tostring(display, 'RGB')
@@ -1205,7 +1199,7 @@ def bw_binary():
     image = np.stack([image] * 3, axis=-1)
     image = pygame.surfarray.make_surface(image)
     
-    session.pyg.display_queue = [[image, (0, 0)]]
+    return image
 
 def render_display():
     """ Adds tiles, entities, items, etc to the queue for rendering. """
@@ -1274,8 +1268,6 @@ def render_display():
 
     
     ent.env.weather.render()
-
-    if session.img.render_fx == 'bw_binary': bw_binary()
 
     session.aud.shuffle()
 

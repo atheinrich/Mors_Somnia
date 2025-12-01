@@ -55,31 +55,31 @@
 
 "dark_green_floor": {
     "name":    "dark green floor",
-    "img_IDs": ["floors", "dark green floor"],
+    "img_IDs": ["floors", "dark_green_floor"],
     "biome":   "any"
     },
 
 "dark_blue_floor": {
     "name":    "dark blue floor",
-    "img_IDs": ["floors", "dark blue floor"],
+    "img_IDs": ["floors", "dark_blue_floor"],
     "biome":   "any"
     },
 
 "dark_red_floor": {
     "name":    "dark red floor",
-    "img_IDs": ["floors", "dark red floor"],
+    "img_IDs": ["floors", "dark_red_floor"],
     "biome":   "any"
     },
 
 "green_floor": {
     "name":    "green floor",
-    "img_IDs": ["floors", "green floor"],
+    "img_IDs": ["floors", "green_floor"],
     "biome":   "any"
     },
 
 "red_floor": {
     "name":    "red floor",
-    "img_IDs": ["floors", "red floor"],
+    "img_IDs": ["floors", "red_floor"],
     "biome":   "any"
     },
 
@@ -115,13 +115,19 @@
 
 "gray_tile": {
     "name":    "gray tile",
-    "img_IDs": ["floors", "gray tile"],
+    "img_IDs": ["floors", "gray_tile"],
     "biome":   "any"
     },
 
 "brown_tile": {
     "name":    "brown tile",
-    "img_IDs": ["floors", "brown tile"],
+    "img_IDs": ["floors", "brown_tile"],
     "biome":   "any"
+    },
+
+"gray_floor": {
+    "name":    "gray floor",
+    "img_IDs": ["floors", "gray_floor"],
+    "blocked": false
     }
 }

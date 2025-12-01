@@ -159,7 +159,7 @@ class PlayerData:
         session.items.pick_up(self.ent, item, silent=True)
         session.items.toggle_equip(item, silent=True)
 
-        furniture = ["purple_bed", "red_bed", "shelf_left", "shelf_right", "long_table_left", "long_table_right", "table", "red_chair_left", "red_chair_right", "red_rug_bottom_left", "red_rug_bottom_middle", "red_rug_bottom_right", "red_rug_middle_left", "red_rug_middle_middle", "red_rug_middle_right", "red_rug_top_left", "red_rug_top_middle", "red_rug_top_right", "green_rug_bottom_left", "green_rug_bottom_middle", "green_rug_bottom_right", "green_rug_middle_left", "green_rug_middle_middle", "green_rug_middle_right"]
+        furniture = ["purple_bed", "red_bed", "long_table_left", "long_table_right", "table", "red_chair_left", "red_chair_right"]
         for ID in furniture:
             item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)

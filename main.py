@@ -252,8 +252,14 @@ def rendering():
         pyg.display.blit(surface, pos)
     display = pygame.transform.scale(
         pyg.display, (pyg.screen_width, pyg.screen_height))
-    pyg.screen.blit(display, (0, 0))
     
+    ## Apply effects
+    if session.img.render_fx == 'bw_binary':
+        from pygame_utilities import bw_binary
+        display = bw_binary(display)
+
+    pyg.screen.blit(display, (0, 0))
+
     #########################################################
     # Render HUD (messages, time, health, stamina)
     render_hud()

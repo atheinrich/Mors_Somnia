@@ -1,73 +1,37 @@
 {
 "path left right": {
-    "name":      "path",
+    "name":    "path",
     "img_IDs": ["paths", "left right"],
-    "blocked":   false
+    "blocked": false
     },
 
 "path up down": {
-    "name":      "path",
+    "name":    "path",
     "img_IDs": ["paths", "up down"],
-    "blocked":   false
+    "blocked": false
     },
 
 "path down right": {
-    "name":      "path",
+    "name":    "path",
     "img_IDs": ["paths", "down right"],
-    "blocked":   false
+    "blocked": false
     },
 
 "path down left": {
-    "name":      "path",
+    "name":    "path",
     "img_IDs": ["paths", "down left"],
-    "blocked":   false
+    "blocked": false
     },
 
 "paths up right": {
-    "name":      "path",
+    "name":    "path",
     "img_IDs": ["paths", "up right"],
-    "blocked":   false
+    "blocked": false
     },
 
 "paths up left": {
-    "name":      "path",
+    "name":    "path",
     "img_IDs": ["paths", "up left"],
-    "blocked":   false
-    },
-
-"gray window": {
-    "name":      "gray window",
-    "img_IDs": ["concrete", "gray window"],
-    "blocked":   true
-    },
-
-"gray door": {
-    "name":      "gray door",
-    "img_IDs": ["concrete", "gray door"],
-    "blocked":   false
-    },
-
-"gray wall left": {
-    "name":      "gray wall left",
-    "img_IDs": ["concrete", "gray wall left"],
-    "blocked":   true
-    },
-
-"gray wall": {
-    "name":      "gray wall",
-    "img_IDs": ["concrete", "gray wall"],
-    "blocked":   true
-    },
-
-"gray wall right": {
-    "name":      "gray wall right",
-    "img_IDs": ["concrete", "gray wall right"],
-    "blocked":   true
-    },
-
-"gray floor": {
-    "name":      "gray floor",
-    "img_IDs": ["concrete", "gray floor"],
-    "blocked":   false
+    "blocked": false
     }
 }

@@ -211,7 +211,7 @@ class PlayGame:
                     else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
                 
                 ## Chair
-                elif tile.item.name in ['red chair left', 'red chair right']:
+                elif tile.item.name in ['red_chair_left', 'red_chair_right']:
                     ent.env.weather.set_day_and_time(increment=True)
                     pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 
