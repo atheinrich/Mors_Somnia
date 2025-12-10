@@ -2,7 +2,7 @@
 "entity_scare": {
     "name":          "scare",
     "function_id":   "entity_scare",
-    "img_IDs":     ["bubbles", "exclamation bubble"],
+    "img_IDs":       ["bubbles", "exclamation bubble"],
     "sequence":      "⮟⮜⮟",
     "cooldown_time": 1
     },
@@ -10,7 +10,7 @@
 "entity_comfort": {
     "name":          "comfort",
     "function_id":   "entity_comfort",
-    "img_IDs":     ["bubbles", "heart bubble"],
+    "img_IDs":       ["bubbles", "heart bubble"],
     "sequence":      "⮟⮞⮜",
     "cooldown_time": 1
     },
@@ -18,7 +18,7 @@
 "entity_clean": {
     "name":          "clean",
     "function_id":   "entity_clean",
-    "img_IDs":     ["bubbles", "dots bubble"],
+    "img_IDs":       ["bubbles", "dots bubble"],
     "sequence":      "⮟⮟⮟",
     "cooldown_time": 1
     },
@@ -26,7 +26,7 @@
 "entity_capture": {
     "name":          "capture",
     "function_id":   "entity_capture",
-    "img_IDs":     ["bubbles", "heart bubble"],
+    "img_IDs":       ["bubbles", "heart bubble"],
     "sequence":      "⮟⮞⮟",
     "cooldown_time": 1
     },
@@ -34,7 +34,7 @@
 "swing": {
     "name":          "swing",
     "function_id":   "swing",
-    "img_IDs":     ["dagger", "dropped"],
+    "img_IDs":       ["dagger", "dropped"],
     "sequence":      "⮜⮟⮞",
     "cooldown_time": 0.1
     },
@@ -42,7 +42,7 @@
 "suicide": {
     "name":          "suicide",
     "function_id":   "suicide",
-    "img_IDs":     ["decor", "bones"],
+    "img_IDs":       ["decor", "bones"],
     "sequence":      "⮟⮟⮟",
     "cooldown_time": 1
     },
@@ -50,7 +50,7 @@
 "dirtball": {
     "name":          "dirtball",
     "function_id":   "propagate",
-    "img_IDs":     ["green blob", "right"],
+    "img_IDs":      ["green blob", "right"],
     "sequence":      "⮞⮜⮞",
     "cooldown_time": 1
     }

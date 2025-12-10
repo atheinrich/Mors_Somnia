@@ -20,6 +20,28 @@ from   pygame.locals import *
 import session
 
 ########################################################################################################################################################
+# Standard objects and parameters
+spacing = 24
+
+def choice_pos(List):
+    return (48, 436 - len(List) * spacing)
+
+def cursor_pos(List):
+    return (32, 436 - len(List) * spacing)
+
+def cursor():
+    cursor_surface = pygame.Surface((16, 16)).convert()
+    cursor_surface.set_colorkey(cursor_surface.get_at((0, 0)))
+    pygame.draw.polygon(cursor_surface, session.pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
+    return cursor_surface
+
+def background_fade():
+    pyg = session.pyg
+    background_surface = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
+    background_surface.fill((0, 0, 0, 50))
+    return background_surface
+
+########################################################################################################################################################
 # Classes
 class MainMenu:
     """ Host a menu for file management and gameplay options. """
@@ -35,19 +57,12 @@ class MainMenu:
         self.choices    = ["NEW GAME", "LOAD", "SAVE", "CONTROLS", "QUIT"]
 
         ## Positions
-        self.spacing    = 24
-        self.logo_pos   = []                                         # set later (list of tuples)
-        self.header_pos = (0,  85)                                   # set later (centered)
-        self.choice_pos = (48, 436 - len(self.choices)*self.spacing) # top choice
-        self.cursor_pos = (32, 436 - len(self.choices)*self.spacing) # top choice
+        self.logo_pos   = []                       # set later (list of tuples)
+        self.choice_pos = choice_pos(self.choices) # top choice
+        self.cursor_pos = cursor_pos(self.choices) # top choice
 
         ## Other
         self.choice = 0
-        
-        self.last_press_time = 0
-        self.cooldown_time   = 0.5
-        self.gui_cache = False
-        self.msg_cache = False
 
         #########################################################
         # Surface initialization
@@ -56,13 +71,12 @@ class MainMenu:
         img = session.img
 
         ## Background
-        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
+        self.background_fade = background_fade()
 
         ## Header
         self.header_font    = pygame.font.SysFont('segoeuisymbol', 40, bold=True)
         self.header_surface = self.header_font.render(self.header, True, pyg.gray)
-        self.header_pos     = (int((pyg.screen_width - self.header_surface.get_width())/2), self.header_pos[1])
+        self.header_pos     = (int((pyg.screen_width - self.header_surface.get_width())/2), 85)
 
         ## Logo (2x2)
         self.logo_surfaces = []
@@ -77,9 +91,7 @@ class MainMenu:
         self.choice_surfaces = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
 
         ## Cursor
-        self.cursor_surface = pygame.Surface((16, 16)).convert()
-        self.cursor_surface.set_colorkey(self.cursor_surface.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_surface, pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
+        self.cursor_surface = cursor()
 
     def run(self):
         
@@ -193,12 +205,12 @@ class MainMenu:
                 surface = pyg.font.render(self.choices[i], True, pyg.dark_gray)
             else: surface = self.choice_surfaces[i]
 
-            offset   = self.spacing * i
+            offset   = spacing * i
             position = (self.choice_pos[0], self.choice_pos[1] + offset)
             pyg.overlay_queue.append([surface, position])
         
         ## Cursor
-        offset     = self.spacing * self.choice
+        offset     = spacing * self.choice
         cursor_pos = (self.cursor_pos[0], self.cursor_pos[1] + offset)
         pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
@@ -238,8 +250,8 @@ class MainMenu:
         if len(self.choices) == 5:
             self.choices.insert(0, option_dict[self.game_state])
             self.choice_surfaces.insert(0, pyg.font.render(option_dict[self.game_state], True, pyg.gray))
-            self.choice_pos = (self.choice_pos[0], 436 - len(self.choices)*self.spacing) # top choice
-            self.cursor_pos = (self.cursor_pos[0], 436 - len(self.choices)*self.spacing) # top choice
+            self.choice_pos = choice_pos(self.choices) # top choice
+            self.cursor_pos = cursor_pos(self.choices) # top choice
             self.choice     += 1
 
         else:
@@ -280,47 +292,38 @@ class MainMenu:
             pyg.hud_state  = 'on'
 
 class NewGameMenu:
+    """ Hosts a menu for character creation.
+
+        Creates a temporary player for customization in the Womb environment.
+        Can discard the temporary player or keep it to replace the current player.
+        If kept, an introduction screen is displayed before entering a dungeon.
+    """
 
     # Core
     def __init__(self):
-        """ Creates a temporary player for customization in the Womb environment.
-            Hosts a menu that can discard the temporary player or keep it to replace the current player.
-            If kept, an introduction screen is displayed before entering the dungeon.
-        
-            HAIR:       sets hair by altering hair_index, which is used in new_game to add hair as an Object hidden in the inventory
-            HANDEDNESS: mirrors player/equipment tiles, which are saved in session.img.dict and session.img.cache
-            ACCEPT:     runs new_game() to generate player, home, and default items, then runs play_game() """
-        
+
         pyg = session.pyg
 
         #########################################################
         # Menu details
         ## Basics
         self.choices      = ["HAIR", "FACE", "SEX", "SKIN", "HANDEDNESS", "", "ACCEPT", "BACK"]        
-        self.orientations = ['front', 'right', 'back', 'left']
+        self.orientations = ['front', 'right', 'back', 'left'] # character rotation
 
         ## Positions
-        self.spacing    = 24
-        self.logo_pos   = []                                         # set later (list of tuples)
-        self.header_pos = (0,  85)                                   # set later (centered)
-        self.choice_pos = (48, 436 - len(self.choices)*self.spacing) # top choice
-        self.cursor_pos = (32, 436 - len(self.choices)*self.spacing) # top choice
+        self.choice_pos = choice_pos(self.choices) # top choice
+        self.cursor_pos = cursor_pos(self.choices) # top choice
 
         ## Other
         self.choice = 0
 
-        self.last_press_time = 0
-        self.cooldown_time   = 0.7
-
-        self.gui_cache = False
-        self.msg_cache = False
+        self.last_rotate_time = 0
+        self.rotate_time      = 0.7
 
         #########################################################
         # Menu
         ## Cursor
-        self.cursor_surface = pygame.Surface((16, 16)).convert()
-        self.cursor_surface.set_colorkey(self.cursor_surface.get_at((0, 0)))
-        pygame.draw.polygon(self.cursor_surface, pyg.gray, [(5, 8), (10, 12), (5, 16)], 0)
+        self.cursor_surface = cursor()
 
         ## Options
         self.choice_surfaces = []
@@ -331,10 +334,8 @@ class NewGameMenu:
             self.choice_surfaces.append(pyg.font.render(self.choices[i], True, color))
 
     def run(self):
-        """ Creates a temporary player, then returns to garden at startup or hosts character creation otherwise.
-        
-            Player creation
-            ---------------
+        """ Functions
+            ---------
             init_player     : womb and garden; stays in NewGameMenu
             startup         : womb and garden; scrapped after finalize_player
             finalize_player : womb, garden, home, overworld, and dungeon; persistent
@@ -403,8 +404,8 @@ class NewGameMenu:
         #########################################################
         # Render environment and character
         ## Rotate character
-        if time.time()-self.last_press_time > self.cooldown_time:
-            self.last_press_time = float(time.time())
+        if time.time() - self.last_rotate_time > self.rotate_time:
+            self.last_rotate_time = float(time.time())
             self.temp_obj.ent.img_IDs[1] = self.orientations[
                 self.orientations.index(self.temp_obj.ent.img_IDs[1]) - 1]
         
@@ -413,12 +414,12 @@ class NewGameMenu:
         ## Choices
         for i in range(len(self.choices)):
             surface  = self.choice_surfaces[i]
-            offset   = self.spacing * i
+            offset   = spacing * i
             position = (self.choice_pos[0], self.choice_pos[1] + offset)
             pyg.overlay_queue.append([surface, position])
         
         ## Cursor
-        offset     = self.spacing * self.choice
+        offset     = spacing * self.choice
         cursor_pos = (self.cursor_pos[0], self.cursor_pos[1] + offset)
         pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
@@ -549,55 +550,51 @@ class NewGameMenu:
         pyg.overlay_state  = None
 
 class FileMenu:
+    """ Hosts file saving and loading. Takes screenshots for background images. """
 
     # Core
     def __init__(self):
-        """ Hosts file saving and loading. Takes screenshots for background images.
-            The mode is passed from the game state, which also populates the header.
-        """
         
         pyg = session.pyg
 
         #########################################################
         # Menu details
         ## Basics
-        self.mode    = None
-        self.header  = None
-
-        self.options = [
-            "File 1",
-            "File 2",
-            "File 3"]
+        self.game_state  = 'load'
+        self.headers     = ['SAVE', 'LOAD']
+        self.choices     = ["FILE 1", "FILE 2", "FILE 3"]
         self.backgrounds = [
             "Data/File_1/screenshot.png",
             "Data/File_2/screenshot.png",
             "Data/File_3/screenshot.png"]
         
         ## Positions
-        self.options_dict = {
-            0: 38,
-            1: 62,
-            2: 86}
+        self.choice_pos = choice_pos(self.choices) # top choice
+        self.cursor_pos = cursor_pos(self.choices) # top choice
 
         ## Other
         self.choice = 0
-        self.gui_cache = False
-        self.msg_cache = False
 
         #########################################################
         # Surface initialization
-        ## Headers
-        self.header_dict = {
-            'save': pyg.font.render('Save', True, pyg.white),
-            'load': pyg.font.render('Load', True, pyg.white)}
-        
+        ## Shorthand
+        pyg = session.pyg
+
+        ## Background
+        self.background_fade    = background_fade()
+        self.backgrounds_render = [pygame.image.load(path).convert() for path in self.backgrounds]
+
+        ## Header
+        self.header_surfaces = {
+            'save': pyg.font.render(self.headers[0], True, pyg.gray),
+            'load': pyg.font.render(self.headers[1], True, pyg.gray)}
+        self.header_pos = (48, 32)
+
+        ## Options
+        self.choice_surfaces = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
+
         ## Cursor
-        self.cursor_render = pygame.Surface((16, 16)).convert()
-        self.cursor_render.set_colorkey(self.cursor_render.get_at((0,0)))
-        pygame.draw.polygon(self.cursor_render, pyg.green, [(0, 0), (16, 8), (0, 16)], 0)
-        
-        ## Backgrounds
-        self.update_backgrounds()
+        self.cursor_surface = cursor()
 
     def run(self):
         
@@ -605,7 +602,7 @@ class FileMenu:
 
         #########################################################
         # Initialize
-        self.mode = pyg.overlay_state
+        self.game_state = pyg.overlay_state
 
         ## Pause the game
         pyg.pause = True
@@ -630,11 +627,11 @@ class FileMenu:
                 #########################################################
                 # Activate and return
                 if event.key in pyg.key_ENTER:
-                    if self.mode == 'save':
+                    if self.game_state == 'save':
                         self.save_account()
                         self.key_BACK()
                         return
-                    elif self.mode == 'load':
+                    elif self.game_state == 'load':
                         self.load_account()
                         self.key_BACK()
                         return
@@ -645,30 +642,38 @@ class FileMenu:
                     self.key_BACK()
                     return
         
-        pyg.overlay_state = self.mode
+        pyg.overlay_state = self.game_state
         return
 
     def render(self):
+        #########################################################
+        # Render surfaces
         pyg = session.pyg
 
-        # Render background
+        ## Background
         pyg.overlay_queue.append([self.backgrounds_render[self.choice], (0, 0)])
+        pyg.overlay_queue.append([self.background_fade,                 (0, 0)])
         
-        # Render header and cursor
-        pyg.overlay_queue.append([self.header_dict[self.mode], (25, 10)])
-        pyg.overlay_queue.append([self.cursor_render, (25, self.options_dict[self.choice])])
+        ## Header
+        pyg.overlay_queue.append([self.header_surfaces[self.game_state], self.header_pos])
         
-        # Render categories and options
-        for i in range(len(self.options)):
-            option_render = pyg.font.render(self.options[i], True, pyg.gray)
-            pyg.overlay_queue.append([option_render, (50, self.options_dict[i])])
+        ## Choices
+        for i in range(len(self.choices)):
+            offset   = spacing * i
+            position = (self.choice_pos[0], self.choice_pos[1] + offset)
+            pyg.overlay_queue.append([self.choice_surfaces[i], position])
+
+        ## Cursor
+        offset     = spacing * self.choice
+        cursor_pos = (self.cursor_pos[0], self.cursor_pos[1] + offset)
+        pyg.overlay_queue.append([self.cursor_surface, cursor_pos])
 
     # Keys
     def key_UP(self):
-        self.choice = (self.choice - 1) % len(self.options)
+        self.choice = (self.choice - 1) % len(self.choices)
         
     def key_DOWN(self):
-        self.choice = (self.choice + 1) % len(self.options)
+        self.choice = (self.choice + 1) % len(self.choices)
 
     def key_BACK(self):
         pyg = session.pyg
@@ -684,9 +689,9 @@ class FileMenu:
         
         #########################################################
         # Add asterisk to active option
-        for i in range(len(self.options)):
-            if self.options[i][-1] == '*': self.options[i] = self.options[i][:-2]
-        self.options[self.choice] += ' *'
+        for i in range(len(self.choices)):
+            if self.choices[i][-1] == '*': self.choices[i] = self.choices[i][:-2]
+        self.choices[self.choice] += ' *'
         
         #########################################################
         # Save data from current player
@@ -701,7 +706,7 @@ class FileMenu:
             folder   = f"Data/File_{file_num}",
             filename = "screenshot.png",
             blur     = True)
-        self.update_backgrounds()
+        self.backgrounds_render = [pygame.image.load(path).convert() for path in self.backgrounds]
 
     def load_account(self):
         """ Loads a pickled Player object. """
@@ -713,10 +718,10 @@ class FileMenu:
 
         #########################################################
         # Add asterisk to active option
-        for i in range(len(self.options)):
-            if self.options[i][-1] == '*':
-                self.options[i] = self.options[i][:-2]
-        self.options[self.choice] += ' *'
+        for i in range(len(self.choices)):
+            if self.choices[i][-1] == '*':
+                self.choices[i] = self.choices[i][:-2]
+        self.choices[self.choice] += ' *'
 
         #########################################################
         # Load data onto fresh player
@@ -739,9 +744,6 @@ class FileMenu:
         pyg.msg_toggle     = True
         pyg.startup_toggle = False
         pyg.game_state     = 'play_game'
-
-    def update_backgrounds(self):
-        self.backgrounds_render = [pygame.image.load(path).convert() for path in self.backgrounds]
 
     def check_player_id(self, id):
         """ Overwrites a save if it matches the provided ID of a living save file. """
@@ -776,8 +778,6 @@ class CtrlMenu:
         
         ## Other
         self.choice = 0
-        self.gui_cache = False
-        self.msg_cache = False
 
         #########################################################
         # Surface initialization
@@ -835,7 +835,8 @@ class CtrlMenu:
         
         # Render categories and options
         for i in range(len(self.layout_render)):
-            pyg.overlay_queue.append([self.layout_render[i], (50, 38+24*i)])
+            offset = spacing * i
+            pyg.overlay_queue.append([self.layout_render[i], (50, 38+offset)])
 
     # Keys
     def key_BACK(self):
@@ -960,7 +961,7 @@ class StatsMenu:
     def key_BACK(self):
         pyg = session.pyg
 
-        pyg.last_press_time = float(time.time())
+        pyg.last_rotate_time = float(time.time())
         pyg.overlay_state = None
 
     def update(self):
@@ -1125,8 +1126,6 @@ class Textbox:
 
         ## Other
         self.backdrop_size = (32*18, 32*13)
-        self.gui_cache = False
-        self.msg_cache = False
         
         #########################################################
         # Surface initialization
@@ -1135,8 +1134,7 @@ class Textbox:
         self.text_render   = [pyg.font.render(row, True, pyg.gray) for row in text]
         
         ## Background
-        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
+        self.background_fade = background_fade()
         
         ## Backdrop
         self.backdrop = pygame.Surface(self.backdrop_size, pygame.SRCALPHA)

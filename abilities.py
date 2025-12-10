@@ -3,7 +3,7 @@
 # No items are managed here -- only functions for predefined abilities.
 #
 # Abilities may be added to an entity directly, or they may be available upon equipping an item.
-# Abilities are can be assigned to anything, but they are only owned by entities and tiles.
+# They be assigned to anything but are only owned by entities and tiles.
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -22,8 +22,21 @@ def register(function_id):
     return decorator
 
 class Ability:
+    """ Holds a function, owner, and other details for one instance of an ability. """
 
     def __init__(self, owner, **kwargs):
+        """ Parameters
+            ----------
+            name            : str; descriptor to be displayed in ability list
+            img_IDs         : list of str; sets image to be displayed in ability list
+            sequence        : str; three-key combo for ability activation (ex. ⮜⮟⮞)
+            cooldown        : float; time required between activations
+            function_id     : str; sets the ability function on initialization (not used after)
+
+            ability_fn      : ability function; see AbilitiesSystem
+            owner           : entity object; used in ability function
+            last_press_time : float; time of last activation
+        """
 
         # Load general details from JSON
         for key, value in kwargs.items():
@@ -38,6 +51,7 @@ class Ability:
         self.ability_fn(self, self)
 
 class AbilitiesSystem:
+    """ Holds all ability functions, as well as ability creation and toggling. """
 
     # Core
     def __init__(self, registry):
@@ -48,10 +62,11 @@ class AbilitiesSystem:
         return Ability(owner, **self._data[ability_id])
 
     def toggle_ability(self, ent, ability_obj):
-        """ Adds or removes ability for a given entity. """
+        """ Adds or removes ability for a given entity. Called when equipping/dequipping items. """
 
         if session.pyg.game_state not in ['startup', 'play_garden']:
-
+            
+            # Add ability
             if ability_obj.name not in ent.game_abilities.keys():
                 ent.game_abilities[ability_obj.name] = ability_obj
                 ability_obj.owner = ent
@@ -62,7 +77,7 @@ class AbilitiesSystem:
                 ability_obj.owner = None
 
     def toggle_abilities(self, ent):
-        """ Switches between different sets of effects. """
+        """ Switches ability list for the garden and game. """
         
         if session.pyg.game_state in ['startup', 'play_garden']:
             ent.active_abilities = ent.garden_abilities
@@ -72,7 +87,7 @@ class AbilitiesSystem:
     # Entity interactions
     @register("entity_scare")
     def entity_scare(self, ability_obj):
-        """ Combo effect. """
+        """ Combo effect. Should be updated. """
 
         pyg   = session.pyg
         owner = ability_obj.owner
@@ -102,7 +117,7 @@ class AbilitiesSystem:
 
     @register("entity_capture")
     def entity_capture(self, ability_obj):
-        """ Combo effect. """
+        """ Combo effect. Should be updated. """
 
         pyg   = session.pyg
         owner = ability_obj.owner
@@ -147,7 +162,7 @@ class AbilitiesSystem:
 
     @register("entity_comfort")
     def entity_comfort(self, ability_obj):
-        """ Combo effect. """
+        """ Combo effect. Should be updated. """
 
         owner = ability_obj.owner
 
@@ -168,7 +183,7 @@ class AbilitiesSystem:
 
     @register("entity_clean")
     def entity_clean(self, ability_obj):
-        """ Combo effect. """
+        """ Combo effect. Should be updated. """
         
         owner = ability_obj.owner
 
@@ -186,6 +201,7 @@ class AbilitiesSystem:
     # Attacks
     @register("swing")
     def swing(self, ability_obj):
+        """ Renders attack cinematic and damages enemies with a small stat boost. """
 
         owner = ability_obj.owner
         
@@ -197,6 +213,7 @@ class AbilitiesSystem:
                 image = session.img.dict[owner.equipment['dominant hand'].img_IDs[0]]['dropped']
             else:
                 image = session.img.dict[ability_obj.img_IDs[0]][ability_obj.img_IDs[1]]
+            
             session.img.vicinity_flash(owner, image)
             
             # Apply attack to enemies
@@ -211,6 +228,7 @@ class AbilitiesSystem:
 
     @register("propagate")
     def propagate(self, ability_obj):
+        """ Throws projectile that damages entity upon contact. Needs updating. """
         
         pyg   = session.pyg
         owner = ability_obj.owner
@@ -254,6 +272,8 @@ class AbilitiesSystem:
 
     @register("suicide")
     def suicide(self, ability_obj):
+        """ Instant death for the activating entity. """
+
         owner = ability_obj.owner
 
         # Activate animation
