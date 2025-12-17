@@ -87,13 +87,8 @@ class Item:
                 Y -= self.rand_Y
         
             # Add effects and draw
-            if (self.img_IDs[1] in ['leafy']) and not self.rand_Y:
-                surface = img.dict[self.img_IDs[0]][self.img_IDs[1]]
-                X       -= 32
-                Y       -= 32
-            else:
-                if self.flipped: surface = img.flipped.dict[self.img_IDs[0]][self.img_IDs[1]]
-                else:            surface = img.dict[self.img_IDs[0]][self.img_IDs[1]]
+            if self.flipped: surface = img.flipped.dict[self.img_IDs[0]][self.img_IDs[1]]
+            else:            surface = img.dict[self.img_IDs[0]][self.img_IDs[1]]
 
             pos = (X, Y)
                 
@@ -336,6 +331,7 @@ def create_item(item_id):
     item_id = item_id.replace(" ", "_")
     json_data = copy.deepcopy(item_dicts[item_id])
     item    = Item(**json_data)
+    item.id = item_id
 
     return item
 

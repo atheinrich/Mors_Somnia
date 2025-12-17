@@ -477,6 +477,7 @@ class NewGameMenu:
         return session.player_obj
 
     def apply_option(self):
+        from items import create_item
 
         if self.choice in [0, 1, 2]:
         
@@ -506,7 +507,7 @@ class NewGameMenu:
             
             ## Generate option before equip
             else:
-                item = session.items.create_item(img_name)
+                item = create_item(img_name)
                 session.items.pick_up(self.temp_obj.ent, item, silent=True)
                 session.items.toggle_equip(item, silent=True)
         
@@ -1037,7 +1038,7 @@ class StatsMenu:
             Y += pyg.tile_height//2
 
     def pet_startup(self, env):
-        self.ents = env.entities
+        self.ents = env.ents
 
     def pet_stat_check(self, dic):
         for key, value in dic.items():

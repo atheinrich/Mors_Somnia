@@ -58,17 +58,6 @@ class Environments:
     def add_area(self, name, permadeath=False):
         self.areas[name] = Area(name, self, permadeath)
 
-    def build_env(self, name, area, lvl_num=None):
-        """ Do not call this directly! Only use add_level in Area. """
-
-        if name == 'womb':          return self.build_womb(area)
-        elif name == 'garden':      return self.build_garden(area)
-        elif name == 'home':        return self.build_home(area)
-        elif name == 'overworld':   return self.build_overworld(area)
-        elif name == 'bitworld':    return self.build_bitworld(area)
-        elif name[:7] == 'dungeon': return self.build_dungeon(area, lvl_num)
-        elif name[:4] == 'cave':    return self.build_cave(area, lvl_num)
-
     # Underworld
     def build_garden(self, area):
         """ Generates the overworld environment. """
@@ -384,7 +373,7 @@ class Environments:
                 
                 ## Construct room
                 new_room = Room(
-                    name           = 'overworld room',
+                    name           = f"room {room_counter + 1}",
                     env            = env,
                     x1             = x,
                     y1             = y,
@@ -514,9 +503,9 @@ class Environments:
             ['desert', 'rock',       50,   [None]]]
         place_objects(env, items, entities)
         
-        env.center             = [door_x, door_y]
-        env.player_coordinates = [door_x, door_y]
-        self.player_obj.ent.tile    = env.map[door_x][door_y]
+        env.center               = [door_x, door_y]
+        env.player_coordinates   = [door_x, door_y]
+        self.player_obj.ent.tile = env.map[door_x][door_y]
         
         ## Place NPCs
         bools = lambda room, i: [
@@ -524,15 +513,17 @@ class Environments:
             env.map[room.center()[0]+i][room.center()[1]+i].ent]
         
         # Set named characters to spawn
+        room_list = ['home room', 'church']
         for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci', 'Oxi', 'Aya', 'Zung', 'Lilao']:
             
             # Create NPC if needed
-            if name not in self.player_obj.ents.keys(): self.player_obj.ents[name] = create_NPC(name)
+            ent = create_NPC(name)
             
             # Select room not occupied by player
             room = random.choice(env.rooms)
-            while room.name in ['home room', 'church']:
+            while room.name in room_list:
                 room = random.choice(env.rooms)
+            room_list.append(room.name)
             
             # Select spawn location
             for i in range(3):
@@ -541,7 +532,7 @@ class Environments:
                     (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
             
             # Spawn entity
-            place_object(self.player_obj.ents[name], (x, y), env)
+            place_object(ent, (x, y), env)
         
         # Set number of random characters
         for _ in range(5):
@@ -968,261 +959,6 @@ class Environments:
 
         return env
 
-    # Bitworld
-    def build_bitworld(self, area):
-        """ Generates the overworld environment. """
-
-        ###############################################################
-        ## Initialize environment
-        env = Environment(
-            envs          = self,
-            name          = 'bitworld',
-            lvl_num       = 0,
-            size          = 10,
-            soundtrack    = [
-                'overworld 1',
-                'overworld 2',
-                'overworld 3',
-                'overworld 4'],
-            img_IDs       = ['floors', 'grass1'],
-            floor_img_IDs = ['floors', 'grass1'],
-            wall_img_IDs  = ['walls', 'gray'],
-            roof_img_IDs  = ['roofs', 'tiled'],
-            blocked       = False,
-            hidden        = False,
-            area          = area)
-        env.camera = Camera(self.player_obj.ent)
-        env.camera.fixed = False
-        env.camera.zoom_in(custom=1)
-        
-        # Set weather
-        env.weather_backup = {
-            'light_set': 0,
-            'clouds':    None}
-        env.weather = Weather(env, clouds=False)
-
-        ## Generate biomes
-        biomes = [
-            ['forest', ['floors', 'grass1']],
-            ['forest', ['floors', 'grass1']],
-            ['forest', ['floors', 'grass1']],
-            ['forest', ['floors', 'grass1']],
-            ['desert', ['floors', 'sand1']],
-            ['desert', ['floors', 'sand1']],
-            ['desert', ['floors', 'sand1']],
-            ['desert', ['floors', 'sand1']],
-            ['water',  ['floors', 'water']],
-            ['water',  ['floors', 'water']]]
-        voronoi_biomes(env, biomes)
-        
-        ###############################################################
-        ## Construct rooms
-        num_rooms             = 20
-        room_counter, counter = 0, 0
-        center                = env.center
-        (x_1, y_1)            = center
-        x_2                   = lambda width:  len(env.map)    - width  - 1
-        y_2                   = lambda height: len(env.map[0]) - height - 1
-        while room_counter < num_rooms:
-            
-            # Generate location
-            width  = random.randint(self.room_min_size, self.room_max_size)
-            height = random.randint(self.room_min_size, self.room_max_size)
-            x      = random.randint(x_1, x_2(width))
-            y      = random.randint(y_1, y_2(height))
-            
-            # Check for solid ground
-            failed = False
-            for u in range(width):
-                for v in range(height):
-                    if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
-                    elif env.map[x+u][y+v].room:                     failed = True
-            if not failed:
-                
-                ## Construct room
-                new_room = Room(
-                    name           = 'overworld room',
-                    env            = env,
-                    x1             = x,
-                    y1             = y,
-                    width          = width,
-                    height         = height,
-                    biome          = 'city',
-                    hidden         = False,
-                    objects        = False,
-                    floor_img_IDs  = ['floors', 'dark_green_floor'],
-                    wall_img_IDs   = env.wall_img_IDs,
-                    roof_img_IDs   = env.roof_img_IDs,
-                    unbreakable    = True,
-                    plan           = create_text_room(width, height))
-
-                room_counter += 1
-                x, y = new_room.center()[0], new_room.center()[1]
-            
-            # Spawn rooms elsewhere if needed
-            else: counter += 1
-            if counter > num_rooms:
-                counter = 0
-                (x_1, y_1) = (0, 0)
-        
-        ## Construct home
-        num_rooms             = 1
-        room_counter, counter = 0, 0
-        (x_1, y_1)            = env.center
-        x_2                   = lambda width:  len(env.map)    - width  - 1
-        y_2                   = lambda height: len(env.map[0]) - height - 1
-        while room_counter < num_rooms:
-            
-            # Generate location
-            width  = random.randint(self.room_min_size, self.room_max_size)
-            height = random.randint(self.room_min_size, self.room_max_size)
-            x      = random.randint(x_1, x_2(width))
-            y      = random.randint(y_1, y_2(height))
-            
-            # Check for solid ground
-            failed = False
-            for u in range(width):
-                for v in range(height):
-                    if env.map[x+u][y+v].biome in session.img.biomes['sea']: failed = True
-                    elif env.map[x+u][y+v].room:                     failed = True
-            if not failed:
-                
-                main_room = Room(
-                    name          = 'home room',
-                    env           = env,
-                    x1            = x,
-                    y1            = y,
-                    width         = self.room_max_size,
-                    height        = self.room_max_size,
-                    biome         = 'city',
-                    hidden        = False,
-                    objects       = False,
-                    floor_img_IDs = ['floors', 'dark_green_floor'],
-                    wall_img_IDs  = env.wall_img_IDs,
-                    roof_img_IDs  = env.roof_img_IDs,
-                    unbreakable   = True,
-                    plan = [
-                        '  -----     ',
-                        ' --...----- ',
-                        ' -........--',
-                        ' -.........-',
-                        '--.........|',
-                        '-.........--',
-                        '--.....---- ',
-                        ' --...--    ',
-                        '  -----     '])
-                
-                # Door
-                door_x, door_y = x+1, y+5
-                room_counter += 1
-            
-            # Spawn rooms elsewhere if needed
-            else: counter += 1
-            if counter > num_rooms:
-                counter = 0
-                (x_1, y_1) = (0, 0)
-        
-        ## Create church
-        main_room = Room(
-            name          = 'church',
-            env           = env,
-            x1            = 20,
-            y1            = 20,
-            width         = self.room_max_size,
-            height        = self.room_max_size,
-            biome         = 'any',
-            hidden        = False,
-            objects       = False,
-            floor_img_IDs = ['floors', 'red_floor'],
-            wall_img_IDs  = env.wall_img_IDs,
-            roof_img_IDs  = env.roof_img_IDs,
-            unbreakable   = True,
-            plan = [
-                '  --------------           ---------- ',
-                ' --............-----      --........--',
-                ' -.................-      -..........-',
-                ' -.................--------..........-',
-                ' -...................................-',
-                '--.................---------........--',
-                '-..................-       -----..--- ',
-                '--...........-------           -||-   ',
-                ' --.....------                        ',
-                '  -.....-                             ',
-                '  -.....-                             ',
-                '  --...--                             ',
-                '   --.--                              ',
-                '    -|-                               '])
-        
-        ###############################################################
-        # Generate items and entities
-        items = [
-            ['forest', 'tree',   100],
-            ['forest', 'leafy',  10],
-            ['forest', 'blades', 1],
-            ['desert', 'plant',  1000],
-            ['desert', 'enter_cave',  100]]
-        entities = [
-            ['forest', 'orange radish', 50,   [None]],
-            ['wet',    'frog',       500,  [None]],
-            ['forest', 'grass',      1000, [None]],
-            ['desert', 'rock',       50,   [None]]]
-        place_objects(env, items, entities)
-        
-        env.center               = [door_x, door_y]
-        env.player_coordinates   = [door_x, door_y]
-        self.player_obj.ent.tile = env.map[door_x][door_y]
-        
-        ## Place NPCs
-        bools = lambda room, i: [
-            env.map[room.center()[0]+i][room.center()[1]+i].item,
-            env.map[room.center()[0]+i][room.center()[1]+i].ent]
-        
-        # Set named characters to spawn
-        for name in ['Kyrio', 'Kapno', 'Erasti', 'Merci', 'Oxi', 'Aya', 'Zung', 'Lilao']:
-            
-            # Create NPC if needed
-            if name not in self.player_obj.ents.keys(): self.player_obj.ents[name] = create_NPC(name)
-            
-            # Select room not occupied by player
-            room = random.choice(env.rooms)
-            while room.name in ['home room', 'church']:
-                room = random.choice(env.rooms)
-            
-            # Select spawn location
-            for i in range(3):
-                occupied = bools(room, i-1)
-                if occupied[0] == occupied[1]:
-                    (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
-            
-            # Spawn entity
-            place_object(self.player_obj.ents[name], (x, y), env)
-        
-        # Set number of random characters
-        for _ in range(5):
-            
-            # Create entity
-            ent = create_NPC('random')
-            
-            # Select room not occupied by player
-            room = random.choice(env.rooms)
-            while room.name in ['home room', 'church']:
-                room = random.choice(env.rooms)
-            
-            # Select spawn location
-            for i in range(3):
-                occupied = bools(room, i-1)
-                if occupied[0] == occupied[1]:
-                    (x, y) = (room.center()[0]+i-1, room.center()[1]+i-1)
-            
-            # Spawn entity
-            place_object(ent, (x, y), env)
-        
-        ###############################################################
-        # Quests
-        area.questlog.load_quest('greet_the_town')
-            
-        return env
-
 class Area:
 
     # Core
@@ -1255,9 +991,18 @@ class Area:
         self.questlog   = Questlog()
 
     def add_level(self, name, lvl_num=None):
-        self.levels[name] = self.envs.build_env(name, self, lvl_num)
+        if name       == 'womb':      env = self.envs.build_womb(self)
+        elif name     == 'garden':    env = self.envs.build_garden(self)
+        elif name     == 'home':      env = self.envs.build_home(self)
+        elif name     == 'overworld': env = self.envs.build_overworld(self)
+        elif name[:7] == 'dungeon':   env = self.envs.build_dungeon(self, lvl_num)
+        elif name[:4] == 'cave':      env = self.envs.build_cave(self,    lvl_num)
+
+        self.levels[name] = env
 
     def __getitem__(self, key):
+        """ Allows the instance to be treated as a dictionary with levels as values. """
+
         if isinstance(key, int):   return list(self.levels.values())[key]
         elif isinstance(key, str): return self.levels[key]
 
@@ -1346,7 +1091,7 @@ class Environment:
             self.map.append(row)
         
         # Other
-        self.entities = []
+        self.ents = []
         self.player_coordinates = [0, 0]
         self.camera             = None
         self.center             = [int(len(self.map)/2), int(len(self.map[0])/2)]
@@ -1367,7 +1112,7 @@ class Environment:
             tile.blocked   = False
             tile.img_IDs = img_set
             if tile.ent:
-                self.entities.remove(tile.ent)
+                self.ents.remove(tile.ent)
                 tile.ent = None
 
     def create_v_tunnel(self, y1, y2, x, img_set=None):
@@ -1386,40 +1131,50 @@ class Environment:
             tile.blocked   = False
             tile.img_IDs = img_set
             if tile.ent:
-                self.entities.remove(tile.ent)
+                self.ents.remove(tile.ent)
                 tile.ent = None
 
     def build_room(self, obj):
         """ Checks if a placed tile has other placed tiles around it.
-            If so, it creates a room if these placed tiles form a closed shape. """
+            If so, it creates a room if these placed tiles form a closed shape.
+            Called by place_object when a wall is placed by the player.
+        """
         
         from mechanics import get_vicinity
 
-        # Make a list of the tile and its neighbors
-        first_neighbors = [obj]        # list of initial set of tiles; temporary
+        # List of placed tile and its immediate neighbors
+        first_neighbors = [obj]
         for first_neighbor in get_vicinity(obj).values():
             if first_neighbor.placed:
                 first_neighbors.append(first_neighbor)
         
-        # Look for a chain of adjacent-placed tiles
-        connected = dict()             # final dictionary of connected tiles
-        queue = list(first_neighbors)  # holds additional tiles outside of nearest neighbors
-        visited = set()                # avoids revisiting tiles
+        # Chains of adjacent-placed tiles
+        connected = dict()                # final dictionary of connected tiles
+        queue     = list(first_neighbors) # all tiles to check
+        visited   = set()                 # avoids revisiting tiles
         while queue:
+
+            # Create dictionary entry for placed tile
             tile = queue.pop(0)
             if tile in visited: continue
             visited.add(tile)
             connected[tile] = []
             
-            # Add new links to the chain
+            # Look at all neighbors of placed tile
             for neighbor in get_vicinity(tile).values():
+
+                # Add neighboring placed tiles to chain
                 if neighbor.placed:
                     connected[tile].append(neighbor)
-                    if neighbor not in visited and neighbor not in queue:
+
+                    # Queue to check for neighboring placed tiles
+                    if (neighbor not in visited) and (neighbor not in queue):
                         queue.append(neighbor)
         
         # Check if the chain forms a closed boundary
         def has_closed_boundary(graph):
+            """ This is a ChatGPT algorithm; don't ask. """
+
             visited = set()
 
             def dfs(node, parent, path):
@@ -1443,7 +1198,6 @@ class Environment:
                         return True
             return False
         
-        # Look for enclosed tiles and create room
         if has_closed_boundary(connected):
             
             # Get bounds of the area to check
@@ -1461,7 +1215,7 @@ class Environment:
                 'min y':                min_y,
                 'max y':                max_y}
         
-            main_room = Room(
+            room = Room(
                 name     = 'placed',
                 env      = self,
                 x1       = min_x,
@@ -1670,7 +1424,7 @@ class Room:
                 if not self.objects:
                     tile.item = None
                     if tile.ent:
-                        self.env.entities.remove(tile.ent)
+                        self.env.ents.remove(tile.ent)
                         tile.ent = None
                 
                 # Handle tiles
@@ -1686,7 +1440,7 @@ class Room:
                     # Remove items and entities
                     tile.item = None
                     if tile.ent:
-                        self.env.entities.remove(tile.ent)
+                        self.env.ents.remove(tile.ent)
                         tile.ent = None
                 
                     # Handle corners
@@ -1721,7 +1475,7 @@ class Room:
                 if not self.objects:
                     tile.item = None
                     if tile.ent:
-                        self.env.entities.remove(tile.ent)
+                        self.env.ents.remove(tile.ent)
                         tile.ent = None
 
                 # Set tile details
@@ -1869,11 +1623,7 @@ class Room:
         return hash((self.x1, self.y1))
 
 class TextRoom:
-    """
-    Generates a text-based room layout with walls, floors, doors, and furniture.
-    This class preserves the exact syntax and styling of the original implementation
-    while modularizing the logic into smaller functions.
-    """
+    """ Generates a text-based room layout with walls, floors, doors, and furniture. """
 
     def __init__(self, width=5, height=5, doors=True):
         self.width  = width if width else random.randint(5, 7)
@@ -1882,6 +1632,7 @@ class TextRoom:
         self.plan   = [['' for x in range(self.width)] for y in range(self.height)]
 
     def neighbors(self, i, j):
+        """ Possibly redundant; see get_vicinity. """
 
         # Return all 8 neighbors of a tile
         neighbors = [
@@ -2603,7 +2354,7 @@ def place_objects(env, items, entities):
                                         obj.effect.trigger = 'passive'
                         
                         entity.biome = env.map[x][y].biome
-                        env.entities.append(entity)
+                        env.ents.append(entity)
                         place_object(entity, [x, y], env)
 
 def place_object(obj, loc, env, names=None):
@@ -2626,7 +2377,6 @@ def place_object(obj, loc, env, names=None):
         
         # Update object
         obj.env    = env
-        obj.placed = True
         obj.X      = loc[0] * pyg.tile_width
         obj.Y      = loc[1] * pyg.tile_height
         obj.item   = env.map[loc[0]][loc[1]].item
@@ -2637,6 +2387,7 @@ def place_object(obj, loc, env, names=None):
 
         ## Check structures
         if obj.img_IDs[0] == 'walls':
+            obj.placed = True
             session.player_obj.ent.env.build_room(obj)
 
     # Place item
@@ -2651,8 +2402,9 @@ def place_object(obj, loc, env, names=None):
         obj.tile = env.map[loc[0]][loc[1]]
 
         # Update environment
-        env.map[loc[0]][loc[1]].item    = obj
-        env.map[loc[0]][loc[1]].blocked = obj.blocked
+        env.map[loc[0]][loc[1]].item        = obj
+        env.map[loc[0]][loc[1]].blocked     = obj.blocked
+        env.map[loc[0]][loc[1]].unbreakable = obj.blocked
 
         if obj.effect:
             session.effects.toggle_effect(obj.tile, obj.effect)
@@ -2671,7 +2423,7 @@ def place_object(obj, loc, env, names=None):
         # Update environment
         env.map[loc[0]][loc[1]].ent = obj
         env.map[loc[0]][loc[1]].blocked = False
-        env.entities.append(obj)
+        env.ents.append(obj)
 
 def add_doors(room):
     """ Add one or two doors to a room, and adds a entryway. """

@@ -7,6 +7,14 @@
     "cost":      20
     },
 
+"leafy": {
+    "name":      "leafy tree",
+    "img_IDs":   ["decor", "leafy"],
+    "blocked":   true,
+    "movable":   true,
+    "cost":      25
+    },
+
 "bones": {
     "name":      "bones",
     "img_IDs":  ["decor", "bones"],
@@ -26,16 +34,6 @@
     "img_IDs":   ["decor", "fire"],
     "blocked":   true,
     "cost":      20
-    },
-
-"leafy": {
-    "name":      "leafy tree",
-    "img_IDs":   ["decor", "leafy"],
-    "blocked":   true,
-    "movable":   true,
-    "rand_X":    0,
-    "rand_Y":    2,
-    "cost":      25
     },
 
 "skeleton": {

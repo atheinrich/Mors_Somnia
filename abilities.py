@@ -156,7 +156,7 @@ class AbilitiesSystem:
         # Update entity
         target.dead     = True
         target.tile.ent = None
-        target.env.entities.remove(target)
+        target.env.ents.remove(target)
         
         owner.discoveries['entities'][target.name] = target.img_IDs
 

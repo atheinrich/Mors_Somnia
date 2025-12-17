@@ -3,12 +3,7 @@
 # No items are managed here -- only mechanics for predefined effects.
 #
 # Like abilities, effects are owned by entities and items.
-# Unlike abilities, effects can be also be owned by tiles.
-# Unlike abilities, effects have various trigger mechanisms.
-# - on_idle:  applies when not in an inventory;               includes lights
-# - on_hover: applies when stepped on by an entity;           includes pet food and traps
-# - on_hold:  applies continuously when wielded by an entity; includes weapon strikes
-# - on_use:   applies when activated manually by the player;  includes drugs
+# Unlike abilities, effects can be also be owned by tiles and have various trigger mechanisms.
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -31,8 +26,23 @@ def register(function_id):
     return decorator
 
 class Effect:
+    """ Holds a function, owner, and other details for one instance of an effect. """
 
     def __init__(self, owner, item, **kwargs):
+        """ Parameters
+            ----------
+            name         : str; only used to find the effect in active effects
+            img_IDs      : list of str; not really used for anything
+            trigger      : str; sets when the effect is activated
+                on_idle  : applies when not in an inventory;               includes lights
+                on_hover : applies when stepped on by an entity;           includes pet food and traps
+                on_hold  : applies continuously when wielded by an entity; includes weapon strikes
+                on_use   : applies when activated manually by the player;  includes drugs
+
+            effect_fn    : effect function; see EffectsSystem
+            owner        : entity object; used in effect function
+            item         : item object; references item associated with effect
+        """
 
         # Load general details from JSON
         for key, value in kwargs.items():
@@ -101,6 +111,7 @@ class EffectsSystem:
     # On barrier
     @register("dig_tunnel")
     def dig_tunnel(self, effect_obj, **kwargs):
+        """ Removes a barrier if needed and decreases item condition. Activated via on_blocked in mechanics. """
 
         pyg = session.pyg
         ent = effect_obj.owner
@@ -130,13 +141,13 @@ class EffectsSystem:
                         session.items.destroy(effect_obj.item)
                 
                 # Do not dig
-                else:
-                    pyg.update_gui("You strike the barrier but cannot break it.", pyg.dark_gray)
+                #else:
+                #    pyg.update_gui("You strike the barrier but cannot break it.", pyg.dark_gray)
 
     # On render
     @register("lamp")
     def lamp(self, effect_obj, **kwargs):
-        """ Adds or removes a light to be rendered. """
+        """ Adds or removes a light to be rendered. Activated via on_render in pygame_utilities. """
 
         light_list = session.player_obj.ent.env.weather.light_list
 
@@ -149,7 +160,7 @@ class EffectsSystem:
     # On use (potions)
     @register("jug_of_water")
     def jug_of_water(self, effect_obj, **kwargs):
-        """ Dumps water on the ground. """
+        """ Dumps water on the ground. Activated via on_use in items. """
 
         pyg = session.pyg
 
@@ -174,7 +185,7 @@ class EffectsSystem:
 
     @register("heal")
     def heal(self, effect_obj, **kwargs):
-        """ Heals player by the given amount without going over the maximum. """
+        """ Heals player by the given amount without going over the maximum. Activated via on_use in items. """
         
         pyg   = session.pyg
         owner = effect_obj.owner
@@ -200,6 +211,8 @@ class EffectsSystem:
 
     @register("jug_of_blood")
     def jug_of_blood(self, effect_obj, **kwargs):
+        """ Boosts stats at hp cost. Activated via on_use in items. """
+
         pyg   = session.pyg
         owner = effect_obj.owner
         
@@ -232,6 +245,8 @@ class EffectsSystem:
 
     @register("boost_stamina")
     def boost_stamina(self, effect_obj, **kwargs):
+        """ Restores stamina.  Activated via on_use in items. """
+
         pyg   = session.pyg
         owner = effect_obj.owner
 
@@ -252,7 +267,7 @@ class EffectsSystem:
     # On use (environments)
     @register("enter_home")
     def enter_home(self, effect_obj=None):
-        """ Assumes home is already constructed. """
+        """ Assumes home is already constructed. Activated via on_use in items. """
 
         area = session.player_obj.envs.areas['overworld']
 
@@ -263,7 +278,7 @@ class EffectsSystem:
 
     @register("enter_overworld")
     def enter_overworld(self, effect_obj=None):
-        """ Assumes overworld is already created. """
+        """ Assumes overworld is already created. Activated via on_use in items. """
 
         area = session.player_obj.envs.areas['overworld']
         
@@ -274,7 +289,9 @@ class EffectsSystem:
 
     @register("enter_dungeon")
     def enter_dungeon(self, effect_obj=None, **kwargs):
-        """ Creates a new dungeon system and its first level. Overwrites any previous system. """
+        """ Creates a new dungeon system and its first level. Overwrites any previous system.
+            Activated via on_use in items.
+        """
 
         envs = session.player_obj.envs
 

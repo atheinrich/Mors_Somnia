@@ -145,7 +145,7 @@ class PlayGame:
         #########################################################
         # Move AI controlled entities
         if not pyg.pause:
-            for ent in ent.env.entities:
+            for ent in ent.env.ents:
                 session.movement.ai(ent)
         
         pyg.game_state = 'play_game'
@@ -211,7 +211,7 @@ class PlayGame:
                     else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
                 
                 ## Chair
-                elif tile.item.name in ['red_chair_left', 'red_chair_right']:
+                elif tile.item.id in ['red_chair_left', 'red_chair_right']:
                     ent.env.weather.set_day_and_time(increment=True)
                     pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 
@@ -463,7 +463,7 @@ class PlayGarden:
         # Move AI controlled entities
         if not pyg.pause:
 
-            for ent in ent.env.entities:
+            for ent in ent.env.ents:
                 session.movement.ai(ent)
 
             session.movement.ai(session.player_obj.ent)
@@ -1031,8 +1031,8 @@ class InteractionSystem:
         else:
             ent.dead        = True
             ent.tile.ent = None
-            ent.env.entities.remove(ent)
-            if ent in session.player_obj.ent.env.entities: session.player_obj.ent.env.entities.remove(ent)
+            ent.env.ents.remove(ent)
+            if ent in session.player_obj.ent.env.ents: session.player_obj.ent.env.ents.remove(ent)
             
             if ent.role != 'projectile':
                 pyg.update_gui("The " + ent.name + " is dead! You gain " + str(ent.exp) + " experience points.", pyg.red)
@@ -1069,7 +1069,7 @@ def place_player(ent, env, loc):
         # Remove from current location
         if ent.env:
             ent.env.player_coordinates = [ent.X//32, ent.Y//32]
-            ent.env.entities.remove(ent)
+            ent.env.ents.remove(ent)
             ent.tile.ent = None
             ent.tile        = None
             
@@ -1092,7 +1092,7 @@ def place_player(ent, env, loc):
                 ent.env.env_time = ent.last_env.env_time
 
         # Notify environment of player position
-        ent.env.entities.append(ent)
+        ent.env.ents.append(ent)
         ent.tile.ent = ent
         check_tile(loc[0], loc[1], ent=ent, startup=True)
         
