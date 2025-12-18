@@ -292,6 +292,11 @@ class Entity:
                 return True
         return False
 
+    def get_pos(self, pixels=False):
+        pyg = session.pyg
+        if pixels: return (self.X, self.Y)
+        else:      return (self.X//pyg.tile_width, self.Y//pyg.tile_height)
+
     # Rendering
     def _find_body(self, swimming):
         

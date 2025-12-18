@@ -518,8 +518,6 @@ class Images:
         self.blank_surface     = pygame.Surface((pyg.tile_width, pyg.tile_height)).convert()
         self.blank_surface.set_colorkey(self.blank_surface.get_at((0,0)))
         self.render_log = []
-        
-        self.render_fx = None
 
     def import_tiles(self, filename, flipped=False, effects=None):
         """ Converts an image to a pygame image, cuts it into tiles, then returns a matrix of tiles. """
@@ -1181,7 +1179,7 @@ def screenshot(folder, filename, blur=False):
         image_after  = image_before.filter(ImageFilter.BLUR)
         image_after.save(folder + '/' + filename)
 
-def bw_binary(display):
+def bw_binaryx(display):
     import numpy as np
     pyg = session.pyg
     
@@ -1189,17 +1187,32 @@ def bw_binary(display):
     raw_str = pygame.image.tostring(display, 'RGB')
     image   = Image.frombytes('RGB', display.get_size(), raw_str)
     
-    # Apply PIL effects
+    # Make grayscale
     image = image.convert('L')
     
     # Apply numpy effects
+    threshold = 30 # white for >50
+
     image = np.array(image)
-    image = np.where(image > 50, 255, 0)
+    image = np.where(image > threshold, 0, 255)
     image = image.T
     image = np.stack([image] * 3, axis=-1)
     image = pygame.surfarray.make_surface(image)
     
     return image
+
+def bw_binary(surface, cutoff=20):
+    w, h = surface.get_size()
+    out = pygame.Surface((w, h))
+
+    pygame.transform.threshold(
+        out, surface,
+        search_color=(cutoff, cutoff, cutoff),
+        threshold=(cutoff, cutoff, cutoff),
+        set_color=(255, 255, 255),
+        inverse_set=True
+    )
+    return out
 
 def render_display():
     """ Adds tiles, entities, items, etc to the queue for rendering. """

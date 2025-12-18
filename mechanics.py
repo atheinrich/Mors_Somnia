@@ -362,7 +362,6 @@ class PlayGame:
             ent = ent,
             env = last_env,
             loc = last_env.player_coordinates)
-        session.img.render_fx = None
         pygame.event.clear()
 
 class PlayGarden:
@@ -609,7 +608,7 @@ class MovementSystem:
         # Move if alive
         moved = False
         if not ent.dead:
-            if time.time()-ent.last_press > ent.cooldown:
+            if time.time() - ent.last_press > ent.cooldown:
                 ent.last_press = float(time.time())
                 
                 # Move or follow
@@ -662,7 +661,7 @@ class MovementSystem:
 
     # Preset sequence
     def idle(self, ent):
-        """ Randomly walks around """
+        """ Randomly walk around. """
         
         pyg = session.pyg
 
@@ -676,11 +675,17 @@ class MovementSystem:
         
         # Move
         if self.distance_new(ent, [ent.X+dX, ent.Y+dY], [ent.X0, ent.Y0]) <= ent.reach:
+
+            # High chance to move in the faced direction
             if   (dX < 0) and (ent.img_IDs[1] == 'left'):  chance = 5
             elif (dX > 0) and (ent.img_IDs[1] == 'right'): chance = 5
             elif (dY < 0) and (ent.img_IDs[1] == 'back'):  chance = 5
             elif (dY > 0) and (ent.img_IDs[1] == 'front'): chance = 5
-            else:                                             chance = 1
+
+            # Low chance to face a new direction
+            else:                                          chance = 1
+
+            # Move, chance weighed by lethargy
             if not random.randint(0, ent.lethargy//chance):
                 self.move(ent, dX, dY)
 
@@ -911,17 +916,17 @@ class InteractionSystem:
                     target.last_dialogue_time = current_time
                     session.player_obj.dialogue.emit_dialogue(target.name)
                     interacted = True
-        
+
+            # Attack
+            elif target.aggression:
+                self.attack_target(ent, target)
+                interacted = True
+            
             # Make them flee
             elif type(target.fear) == int:
                 target.fear += 30
                 interacted = True
-            
-            # Attack
-            elif session.pyg.game_state != 'play_garden':
-                self.attack_target(ent, target)
-                interacted = True
-                            
+                     
             # Emit interaction
             if interacted:
                 session.bus.emit(
@@ -1013,6 +1018,10 @@ class InteractionSystem:
         from environments import place_object
         from items import create_item
 
+        session.bus.emit(
+            event_id = 'entity_death',
+            ent_id   = ent.name)
+        
         #########################################################
         # Player death
         if ent.role == 'player':
@@ -1029,13 +1038,13 @@ class InteractionSystem:
         #########################################################
         # Entity or projectile death
         else:
-            ent.dead        = True
+            ent.dead     = True
             ent.tile.ent = None
             ent.env.ents.remove(ent)
             if ent in session.player_obj.ent.env.ents: session.player_obj.ent.env.ents.remove(ent)
-            
+
             if ent.role != 'projectile':
-                pyg.update_gui("The " + ent.name + " is dead! You gain " + str(ent.exp) + " experience points.", pyg.red)
+                pyg.update_gui(ent.name.upper() + " is dead! You gain " + str(ent.exp) + " experience points.", pyg.red)
                 
                 if not ent.tile.item:
                     item = create_item('bones')
@@ -1071,7 +1080,7 @@ def place_player(ent, env, loc):
             ent.env.player_coordinates = [ent.X//32, ent.Y//32]
             ent.env.ents.remove(ent)
             ent.tile.ent = None
-            ent.tile        = None
+            ent.tile     = None
             
             ent.last_env          = ent.env
             ent.env.area.last_env = ent.env

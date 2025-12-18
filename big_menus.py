@@ -687,12 +687,14 @@ class FileMenu:
         """ Pickles a Player object and takes a screenshot. """
 
         from pygame_utilities import screenshot
-        
+        pyg = session.pyg
+
         #########################################################
         # Add asterisk to active option
         for i in range(len(self.choices)):
             if self.choices[i][-1] == '*': self.choices[i] = self.choices[i][:-2]
         self.choices[self.choice] += ' *'
+        self.choice_surfaces = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
         
         #########################################################
         # Save data from current player
@@ -723,6 +725,7 @@ class FileMenu:
             if self.choices[i][-1] == '*':
                 self.choices[i] = self.choices[i][:-2]
         self.choices[self.choice] += ' *'
+        self.choice_surfaces = [pyg.font.render(choice, True, pyg.gray) for choice in self.choices]
 
         #########################################################
         # Load data onto fresh player

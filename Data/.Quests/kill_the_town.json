@@ -1,0 +1,100 @@
+{
+"quest_id":    "kill_the_town",
+"name":        "Kill the Town",
+"category":    "main",
+"description": [
+   "I should kill my neighbors."],
+
+
+
+   
+"on_load": [
+   
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Kyrio",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Kapno",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Erasti",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Merci",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Oxi",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Aya",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Zung",
+    "dialogue_id": "quest_greet_the_town"},
+
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "Lilao",
+    "dialogue_id": "quest_greet_the_town"}
+
+],
+
+
+
+
+"objectives": [
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Kyrio.",
+    "conditions": {
+        "ent_id": "Kyrio"}},
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Kapno.",
+    "conditions": {
+        "ent_id": "Kapno"}},
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Erasti.",
+    "conditions": {
+        "ent_id": "Erasti"}},
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Merci.",
+    "conditions": {
+        "ent_id": "Merci"}},
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Oxi.",
+    "conditions": {
+        "ent_id": "Oxi"}},
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Aya.",
+    "conditions": {
+        "ent_id": "Aya"}},
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Zung.",
+    "conditions": {
+        "ent_id": "Zung"}},
+
+   {"event_id":    "entity_interacted",
+    "description": "Kill Lilao.",
+    "conditions": {
+        "ent_id": "Lilao"}}
+
+],
+
+"on_complete": [
+
+   {"event_id":    "emit_message",
+    "text":        "Guess that's everyone!"}
+
+]}

@@ -11,6 +11,7 @@
 import pygame
 import random
 import copy
+import time
 
 import session
 from mechanics import place_player
@@ -493,7 +494,8 @@ class EffectsSystem:
         ## Create
         if 'bitworld' not in envs.areas.keys():
             envs.add_area('bitworld')
-            envs.areas['bitworld'] = copy.deepcopy(envs.areas['overworld'])
+            envs.areas['bitworld'].add_level('bitworld')
+            print(envs.areas['bitworld'], envs.areas['bitworld'].levels)
 
         # Prepare fade screen
         text = ". . . ! Your vision blurs as the substance seeps through your veins."
@@ -505,11 +507,12 @@ class EffectsSystem:
         ent  = session.player_obj.ent
         envs = session.player_obj.envs
 
-        session.img.render_fx = 'bw_binary'
         place_player(
             ent = ent,
             env = envs.areas['bitworld']['overworld'],
-            loc = envs.areas['bitworld']['overworld'].center)
+            loc = envs.areas['bitworld']['overworld'].player_coordinates)
+        
+        session.overlay_state = None
     
     # Item effects
     @register("entity_eat")

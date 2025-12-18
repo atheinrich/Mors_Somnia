@@ -57,6 +57,7 @@ class Environments:
 
     def add_area(self, name, permadeath=False):
         self.areas[name] = Area(name, self, permadeath)
+        return self.areas[name]
 
     # Underworld
     def build_garden(self, area):
@@ -82,9 +83,6 @@ class Environments:
         env.camera.zoom_in(custom=1)
         
         # Set weather
-        env.weather_backup = {
-            'light_set': 0,
-            'clouds':    False}
         env.weather = Weather(env, light_set=0, clouds=False)
         
         ## Generate biomes
@@ -156,9 +154,6 @@ class Environments:
         env.camera.zoom_in(custom=1)
         
         # Set weather
-        env.weather_backup = {
-            'light_set': 0,
-            'clouds':    False}
         env.weather = Weather(env, light_set=0, clouds=False)
         
         ## Generate biomes
@@ -220,10 +215,7 @@ class Environments:
         center = [14, 14]
         
         # Set weather
-        env.weather_backup = {
-            'light_set': 32,
-            'clouds':    False}
-        env.weather = Weather(env, light_set=32)
+        env.weather = Weather(env, light_set=32, clouds=False)
         
         ###############################################################
         ## Construct rooms
@@ -326,10 +318,7 @@ class Environments:
         env.camera.zoom_in(custom=1)
         
         # Set weather
-        env.weather_backup = {
-            'light_set': None,
-            'clouds':    True}
-        env.weather = Weather(env, clouds=True)
+        env.weather = Weather(env, light_set=None, clouds=True)
         for _ in range(random.randint(0, 10)):
             env.weather.create_cloud()
 
@@ -580,10 +569,7 @@ class Environments:
             area          = area)
         
         # Set weather
-        env.weather_backup = {
-            'light_set': 16,
-            'clouds':    False}
-        env.weather = Weather(env, light_set=16)
+        env.weather = Weather(env, light_set=16, clouds=False)
         
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
@@ -672,7 +658,7 @@ class Environments:
 
         return env
 
-    # Dungeon
+    # Dreams
     def build_dungeon(self, area, lvl_num):
         """ Generates the overworld environment. """
         
@@ -693,10 +679,7 @@ class Environments:
             area          = area)
         
         # Set weather
-        env.weather_backup = {
-            'light_set': 0,
-            'clouds':    False}
-        env.weather = Weather(env, clouds=False, light_set=0)
+        env.weather = Weather(env, light_set=0, clouds=False)
         
         env.camera = Camera(self.player_obj.ent)
         env.camera.fixed = False
@@ -790,7 +773,40 @@ class Environments:
 
         return env
 
-    # Hallucination
+    def build_bitworld(self, area):
+        from pygame_utilities import bw_binary
+        current_level = session.player_obj.ent.env.name
+
+        area.envs.areas['bitworld'] = copy.deepcopy(area.envs.areas['overworld'])
+        
+        area.envs.areas['bitworld'].name       = 'bitworld'
+        area.envs.areas['bitworld'].permadeath = False
+        area.envs.areas['bitworld'].last_env   = None
+
+        area.envs.areas['bitworld'].questlog   = Questlog()
+        area.envs.areas['bitworld'].questlog.load_quest('kill_the_town')
+
+        area.envs.areas['bitworld'].display_fx = bw_binary
+
+        for env in area.envs.areas['bitworld']:
+            env.weather.cloudy    = False
+            env.weather.clouds    = []
+            env.weather.light_set = env.weather.alpha_hours[4]
+            env.camera = Camera(session.player_obj.ent)
+
+            if env.name == current_level:
+                x, y = session.player_obj.ent.get_pos()
+                session.player_obj.ent.tile = env.map[x][y]
+
+                # Update environment
+                env.map[x][y].ent = None
+                for ent in env.ents:
+                    if ent.name == 'player':
+                        env.ents.remove(ent)
+                    else:
+                        ent.role       = 'enemy'
+                        ent.aggression = 5
+
     def build_hallucination(self, area, lvl_num=0):
         """ Generates the overworld environment. """
         
@@ -815,9 +831,6 @@ class Environments:
             area          = area)
         
         # Set weather
-        env.weather_backup = {
-            'light_set': 32,
-            'clouds':    False}
         env.weather = Weather(env, light_set=32, clouds=False)
 
         ## Generate biomes
@@ -990,15 +1003,19 @@ class Area:
 
         self.questlog   = Questlog()
 
+        self.display_fx = None
+
     def add_level(self, name, lvl_num=None):
         if name       == 'womb':      env = self.envs.build_womb(self)
         elif name     == 'garden':    env = self.envs.build_garden(self)
         elif name     == 'home':      env = self.envs.build_home(self)
         elif name     == 'overworld': env = self.envs.build_overworld(self)
+        if name       == 'bitworld':  env = self.envs.build_bitworld(self)
         elif name[:7] == 'dungeon':   env = self.envs.build_dungeon(self, lvl_num)
         elif name[:4] == 'cave':      env = self.envs.build_cave(self,    lvl_num)
 
-        self.levels[name] = env
+        if env:
+            self.levels[name] = env
 
     def __getitem__(self, key):
         """ Allows the instance to be treated as a dictionary with levels as values. """
@@ -1294,19 +1311,6 @@ class Environment:
         for room in self.rooms[:]:
             if room.delete:
                 self.rooms.remove(room)
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        if "weather" in state:
-            del state["weather"]
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.weather = Weather(
-            env       = self,
-            light_set = self.weather_backup['light_set'],
-            clouds    = self.weather_backup['clouds'])
 
 class Room:
     """ Defines rectangles on the map. Used to characterize a room. """
@@ -1885,7 +1889,7 @@ class Weather:
         self.cloud_surface = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
 
         self.last_hour = time.localtime().tm_hour + 1
-        self.last_min  = time.localtime().tm_min + 1
+        self.last_min  = time.localtime().tm_min  + 1
 
         self.hours = [
             0, 1,  2,  3,  4,  5,  6,  7,
@@ -1896,6 +1900,7 @@ class Weather:
         self.symbols = [
             "🌕", "🌕", "🌖", "🌖", "🌗", "🌗", "🌘", "🌘",
             "🌑", "🌑", "🌒", "🌒", "🌓", "🌓", "🌔", "🌔"]
+        
         self.light_list = []
         
         self.light_set = light_set
@@ -2076,6 +2081,21 @@ class Weather:
         
         session.pyg.display_queue.append([self.cloud_surface, (0, 0)])
         session.pyg.display_queue.append([self.sky_surface,   (0, 0)])
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+
+        del state['sky_surface']
+        del state['cloud_surface']
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        
+        pyg = session.pyg
+        self.sky_surface   = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
+        self.cloud_surface = pygame.Surface((pyg.screen_width*10, pyg.screen_height*10), pygame.SRCALPHA)
 
 class Camera:
     """ Defines a camera to follow the player. """

@@ -254,9 +254,8 @@ def rendering():
         pyg.display, (pyg.screen_width, pyg.screen_height))
     
     ## Apply effects
-    if session.img.render_fx == 'bw_binary':
-        from pygame_utilities import bw_binary
-        display = bw_binary(display)
+    if session.player_obj.ent.env.area.display_fx:
+        display = session.player_obj.ent.env.area.display_fx(display)
 
     pyg.screen.blit(display, (0, 0))
 
