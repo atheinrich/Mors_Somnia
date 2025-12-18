@@ -270,7 +270,7 @@ class QuestMenu:
         
         # Stage 0: 
         if env_name == 'garden':
-            session.player_obj.gardenlog.add_quest('garden_build_a_shed')
+            pass
         
             #water = Quest(
             #    name='Lead a root to water',
@@ -293,11 +293,6 @@ class QuestMenu:
             #           '☐ Set a floor.',
             #           '☐ Decorate.'],
             #    category='Side')
-            
-            #session.player_obj.ent.gardenlog = {
-            #    water.name:             water,
-            #    food.name:              food,
-            #    building_shelter.name:  building_shelter}
             
             #return water, food, building_shelter
         
@@ -651,7 +646,6 @@ class Bloodkin:
                 for j in range(3):
                     y_test = y(pyg.tile_height*(j-1))
                     if not session.player_obj.ent.env.map[x_test][y_test].ent:
-                        session.player_obj.cache = False
                         
                         obj = session.items.create_item('scroll of death')
                         obj.name = 'mysterious note'

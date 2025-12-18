@@ -33,7 +33,7 @@ except Exception:
 
 # Create and finalize a player
 session.player_obj = PlayerData()
-session.player_obj.init_player()
+session.player_obj.new_player_ent()
 session.player_obj.finalize_player()
 
 # Make some deterministic checks by recording baseline
@@ -44,7 +44,6 @@ baseline['inventory_counts'] = {k: len(v) for k, v in session.player_obj.ent.inv
 baseline['equipment_slots'] = {k: (v.name if v else None) for k, v in session.player_obj.ent.equipment.items()}
 baseline['discoveries'] = {k: len(v) for k, v in session.player_obj.ent.discoveries.discoveries.items()}
 baseline['env_areas'] = list(session.player_obj.envs.areas.keys())
-baseline['gardenlog_qs'] = len(getattr(session.player_obj, 'gardenlog').active_quests) if getattr(session.player_obj, 'gardenlog', None) else 0
 baseline['dialogue_states'] = len(getattr(session.player_obj, 'dialogue').npc_states) if getattr(session.player_obj, 'dialogue', None) else 0
 baseline['stats'] = {'pet_levels': getattr(session.stats_obj, 'pet_levels', None) if session.stats_obj else None}
 
@@ -81,7 +80,6 @@ else:
     results['ent_name'] = None
 
 results['envs_areas'] = list(session.player_obj.envs.areas.keys()) if getattr(session.player_obj, 'envs', None) else None
-results['gardenlog_qs'] = len(getattr(session.player_obj, 'gardenlog').active_quests) if getattr(session.player_obj, 'gardenlog', None) else None
 results['dialogue_states'] = len(getattr(session.player_obj, 'dialogue').npc_states) if getattr(session.player_obj, 'dialogue', None) else None
 results['stats_pet_levels'] = getattr(session.stats_obj, 'pet_levels', None) if session.stats_obj else None
 

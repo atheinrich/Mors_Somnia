@@ -463,8 +463,7 @@ class Images:
         by the categories list. This function breaks the tileset into individual tiles and adds each tile
         to its respective category in a global dictionary for later use.
         
-        session.img.dict:        mutable dictionary sorted by category
-        session.img.cache:  less mutable than session.img.dict """
+        img.dict: mutable dictionary sorted by category """
 
     # Initialization
     def __init__(self, flipped=False):

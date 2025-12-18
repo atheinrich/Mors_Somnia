@@ -17,14 +17,42 @@ from   pygame.locals import *
 import session
 
 ########################################################################################################################################################
+# Standard objects and parameters
+def cursor(locked):
+    cursor_surface = pygame.Surface((32, 32), pygame.SRCALPHA)
+    fill_surface   = pygame.Surface((32, 32), pygame.SRCALPHA)
+
+    if locked: data = {'size':  30, 'width': 2, 'alpha': 192}
+    else:      data = {'size':  31, 'width': 1, 'alpha': 128}
+
+    pygame.draw.polygon(
+        cursor_surface, 
+        pygame.Color('white'), 
+        [
+            (0,            0),
+            (data['size'], 0),
+            (data['size'], data['size']),
+            (0,            data['size'])
+        ],  
+        data['width'])
+
+    fill_surface.fill((255, 255, 255, data['alpha']))
+
+    return cursor_surface, fill_surface
+
+def background_fade():
+    pyg = session.pyg
+    background_surface = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
+    background_surface.fill((0, 0, 0, 50))
+    return background_surface
+
+########################################################################################################################################################
 # Classes
 class InventoryMenu:
     
     # Core
     def __init__(self):
         """ Manages inventory menu on the side of the screen. Allows item activation. """
-        
-        pyg = session.pyg
 
         #########################################################
         # Parameters
@@ -48,42 +76,11 @@ class InventoryMenu:
         #########################################################
         # Surface initialization
         ## Background
-        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
+        self.background_fade = background_fade()
 
         ## Cursor
-        self.cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
-        cursor_data = {
-            'size':  31,
-            'width': 1,
-            'alpha': 128}
-        
-        self.locked_cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.locked_cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
-        locked_cursor_data = {
-            'size':  30,
-            'width': 2,
-            'alpha': 192}
-        
-        cursors = [
-            (self.cursor,        self.cursor_fill,        cursor_data),
-            (self.locked_cursor, self.locked_cursor_fill, locked_cursor_data)]
-        
-        for (cursor, fill, data) in cursors:
-
-            fill.fill((255, 255, 255, data['alpha']))
-
-            pygame.draw.polygon(
-                cursor, 
-                pygame.Color('white'), 
-                [
-                    (0, 0),
-                    (data['size'], 0),
-                    (data['size'], data['size']),
-                    (0, data['size'])
-                ],  
-                data['width'])
+        self.cursor,        self.cursor_fill        = cursor(locked=False)
+        self.locked_cursor, self.locked_cursor_fill = cursor(locked=True)
 
     def run(self):
         
@@ -375,42 +372,11 @@ class CatalogMenu:
         #########################################################
         # Surface initialization
         ## Background
-        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
+        self.background_fade = background_fade()
 
         ## Cursor
-        self.cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
-        cursor_data = {
-            'size':  31,
-            'width': 1,
-            'alpha': 128}
-        
-        self.locked_cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.locked_cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
-        locked_cursor_data = {
-            'size':  30,
-            'width': 2,
-            'alpha': 192}
-        
-        cursors = [
-            (self.cursor,        self.cursor_fill,        cursor_data),
-            (self.locked_cursor, self.locked_cursor_fill, locked_cursor_data)]
-        
-        for (cursor, fill, data) in cursors:
-
-            fill.fill((255, 255, 255, data['alpha']))
-
-            pygame.draw.polygon(
-                cursor, 
-                pygame.Color('white'), 
-                [
-                    (0, 0),
-                    (data['size'], 0),
-                    (data['size'], data['size']),
-                    (0, data['size'])
-                ],  
-                data['width'])
+        self.cursor,        self.cursor_fill        = cursor(locked=False)
+        self.locked_cursor, self.locked_cursor_fill = cursor(locked=True)
 
     def run(self):
         
@@ -856,33 +822,10 @@ class ExchangeMenu:
         #########################################################
         # Surface initialization
         ## Background
-        self.background_fade = pygame.Surface((pyg.screen_width, pyg.screen_height), pygame.SRCALPHA)
-        self.background_fade.fill((0, 0, 0, 50))
+        self.background_fade = background_fade()
 
         ## Cursor
-        self.cursor      = pygame.Surface((32, 32), pygame.SRCALPHA)
-        self.cursor_fill = pygame.Surface((32, 32), pygame.SRCALPHA)
-        cursor_data = {
-            'size':  31,
-            'width': 1,
-            'alpha': 128}
-        
-        cursors = [(self.cursor, self.cursor_fill, cursor_data)]
-        
-        for (cursor, fill, data) in cursors:
-
-            fill.fill((255, 255, 255, data['alpha']))
-
-            pygame.draw.polygon(
-                cursor, 
-                pygame.Color('white'), 
-                [
-                    (0, 0),
-                    (data['size'], 0),
-                    (data['size'], data['size']),
-                    (0, data['size'])
-                ],  
-                data['width'])
+        self.cursor, self.cursor_fill = cursor(locked=False)
 
     def run(self):
         

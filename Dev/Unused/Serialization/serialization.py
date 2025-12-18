@@ -531,11 +531,6 @@ class EnvironmentSerializer:
         except Exception:
             data['envlog'] = []
 
-        try:
-            data['gardenlog'] = [EnvironmentSerializer.serialize_quest(q) for q in (getattr(ent, 'gardenlog').values() if getattr(ent, 'gardenlog', None) else [])]
-        except Exception:
-            data['gardenlog'] = []
-
         return data
 
     @staticmethod
@@ -678,19 +673,6 @@ class EnvironmentSerializer:
         except Exception:
             pass
 
-        # Restore per-entity quest logs (questlog/envlog/gardenlog)
-        try:
-            if data.get('questlog'):
-                ent.questlog = {}
-                for qdata in data.get('questlog'):
-                    try:
-                        q = EnvironmentSerializer.deserialize_quest(qdata)
-                        ent.questlog[q.name] = q
-                    except Exception:
-                        continue
-        except Exception:
-            pass
-
         try:
             if data.get('envlog'):
                 ent.envlog = {}
@@ -698,18 +680,6 @@ class EnvironmentSerializer:
                     try:
                         q = EnvironmentSerializer.deserialize_quest(qdata)
                         ent.envlog[q.name] = q
-                    except Exception:
-                        continue
-        except Exception:
-            pass
-
-        try:
-            if data.get('gardenlog'):
-                ent.gardenlog = {}
-                for qdata in data.get('gardenlog'):
-                    try:
-                        q = EnvironmentSerializer.deserialize_quest(qdata)
-                        ent.gardenlog[q.name] = q
                     except Exception:
                         continue
         except Exception:
@@ -783,12 +753,6 @@ class EnvironmentSerializer:
                 data['dialogue'] = {}
         except Exception:
             data['dialogue'] = {}
-
-        # Garden log (player-level questlog)
-        try:
-            data['gardenlog'] = [EnvironmentSerializer.serialize_quest(q) for q in (getattr(player_obj, 'gardenlog').active_quests if getattr(player_obj, 'gardenlog', None) else [])]
-        except Exception:
-            data['gardenlog'] = []
 
         # Cache flag (used by various systems)
         try:
@@ -866,13 +830,6 @@ class EnvironmentSerializer:
                 except Exception:
                     pass
 
-            # Gardenlog / questlogs
-            if getattr(player, 'gardenlog', None) and hasattr(player.gardenlog, '_subscribe_events'):
-                try:
-                    player.gardenlog._subscribe_events()
-                except Exception:
-                    pass
-
             # Area questlogs
             if getattr(player, 'envs', None):
                 for area in player.envs.areas.values():
@@ -913,25 +870,6 @@ class EnvironmentSerializer:
                 player.dialogue = None
         except Exception:
             player.dialogue = None
-
-        # Restore gardenlog
-        try:
-            if data.get('gardenlog'):
-                player.gardenlog = Questlog()
-                for qdata in data.get('gardenlog'):
-                    try:
-                        q = EnvironmentSerializer.deserialize_quest(qdata)
-                        player.gardenlog.active_quests.append(q)
-                    except Exception:
-                        continue
-        except Exception:
-            player.gardenlog = None
-
-        # Restore cache flag
-        try:
-            player.cache = data.get('cache', False)
-        except Exception:
-            player.cache = False
 
         # Restore stats
         try:

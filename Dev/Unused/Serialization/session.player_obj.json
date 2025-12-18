@@ -97,8 +97,7 @@
       ]
     },
     "questlog": [],
-    "envlog": [],
-    "gardenlog": []
+    "envlog": []
   },
   "dialogue": {
     "friend": "quest_tutorial_1",
@@ -111,8 +110,6 @@
     "Zung": "quest_greet_the_town",
     "Lilao": "quest_greet_the_town"
   },
-  "gardenlog": [],
-  "cache": false,
   "stats": {
     "pet_levels": {
       "stamina": 1,

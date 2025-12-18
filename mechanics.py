@@ -257,7 +257,7 @@ class PlayGame:
         session.pyg.overlay_state = 'hold'
 
     def key_INFO(self):
-        session.pyg.overlay_state = 'ent_stats'
+        session.pyg.overlay_state = 'stats'
 
     def key_INV(self):
         session.pyg.overlay_state = 'inv'
@@ -376,7 +376,7 @@ class PlayGarden:
         #########################################################
         # Initialize
         ## Update pet stats, mood, and effects
-        session.stats_obj.pet_update()
+        session.pets.update()
         
         ## Active AI when viewing the main menu
         if pyg.overlay_state == 'menu': session.player_obj.ent.role = 'NPC'
@@ -504,7 +504,7 @@ class PlayGarden:
         session.pyg.overlay_state = 'hold'
 
     def key_INFO(self):
-        session.pyg.overlay_state = 'pet_stats'
+        session.pyg.overlay_state = 'stats'
 
     def key_INV(self):
         session.pyg.overlay_state = 'inv'
@@ -1056,6 +1056,78 @@ class InteractionSystem:
 
             pygame.event.get()
         pygame.event.clear()
+
+class PetsSystem:
+    """ Manager pet mood for stats menu. """
+
+    def __init__(self):
+
+        # Passed to stat menu
+        self.mood = None
+
+        # Time to lose happiness and gain something else
+        self.happiness_cooldown = 10
+        self.happiness_press    = 0
+        
+        # Time between mood switches if tied
+        self.emoji_cooldown     = 10
+        self.emoji_press        = 0
+
+    def update(self):
+        """ Decreases happiness over time, sets mood to current highest stat, handles mood effects, and updates stat display. """
+        
+        pet_moods = session.player_obj.ent.env.pet_moods
+
+        #######################################################
+        # Change stats
+        if pet_moods['happiness']:
+            if time.time() - self.happiness_press > self.happiness_cooldown:
+                self.happiness_press = time.time()
+                
+                # Random chance to lose happiness and gain something else
+                if not random.randint(0, 2):
+                    pet_moods['happiness'] -= 1
+                    pet_moods[random.choice(list(pet_moods.keys()))] += 1
+        
+                # Keep stats to [0, 9]
+                self._stat_limiter(pet_moods)
+        
+        #######################################################
+        # Set mood
+        max_val       = max(pet_moods.values())
+        current_moods = [mood for mood, val in pet_moods.items() if val == max_val]
+        
+        ## Alternate between tied moods
+        if len(current_moods) > 1:
+            if time.time() - self.emoji_press > self.emoji_cooldown:
+                self.emoji_press = time.time()
+
+                # Random chance to switch mood
+                self.mood = random.choice(current_moods)
+        
+        else:
+            self.mood = current_moods[0]
+        
+        #######################################################
+        # Change color
+        ent = session.player_obj.ent
+        happiness = pet_moods['happiness']
+
+        if happiness >= 6:   target_img = 'orange radish'
+        elif happiness >= 3: target_img = 'red radish'
+        else:                target_img = 'purple radish'
+
+        if ent.env.ents[-1].img_IDs[0] == target_img:
+            return
+
+        for pet in ent.env.ents:
+            if pet is not ent:
+                pet.img_IDs[0] = target_img
+
+    def _stat_limiter(self, dic):
+        for key, value in dic.items():
+            if value > 9:   dic[key] = 9
+            elif value < 0: dic[key] = 0
 
 ########################################################################################################################################################
 # Environments

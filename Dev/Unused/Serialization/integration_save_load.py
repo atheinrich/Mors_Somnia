@@ -39,7 +39,7 @@ except Exception:
 
 # Create and finalize a player
 session.player_obj = PlayerData()
-session.player_obj.init_player()
+session.player_obj.new_player_ent()
 session.player_obj.finalize_player()
 
 # Save to file 1

@@ -96,7 +96,7 @@ from entities import PlayerData
 from abilities import _abilities
 from effects import _effects
 from items import ItemSystem
-from mechanics import MovementSystem, InteractionSystem
+from mechanics import MovementSystem, InteractionSystem, PetsSystem
 from mechanics import PlayGame, PlayGarden
 from big_menus import MainMenu, NewGameMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
@@ -135,6 +135,7 @@ def init():
     ## Mechanics
     session.movement         = MovementSystem()
     session.interact         = InteractionSystem()
+    session.pets             = PetsSystem()
     session.items            = ItemSystem()
     session.effects          = _effects
     session.abilities        = _abilities
@@ -227,7 +228,7 @@ def game_states():
             session.trade_obj.run()
             session.trade_obj.render()
         
-        elif pyg.overlay_state in ['ent_stats', 'pet_stats']:
+        elif pyg.overlay_state == 'stats':
             session.stats_obj.run()
             session.stats_obj.render()
         

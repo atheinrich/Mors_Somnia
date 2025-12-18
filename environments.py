@@ -129,6 +129,26 @@ class Environments:
         self.player_obj.ent.tile = env.map[x][y]
         env.center = center
         
+        ###############################################################
+        # Quests
+        area.questlog.load_quest('garden_build_a_shed')
+        area.questlog.load_quest('garden_provide_water')
+        
+        ###############################################################
+        # Pets
+        env.pet_stats = {
+            "stamina":  1,
+            "strength": 1,
+            "appeal":   1}
+        
+        env.pet_moods = {
+            "happiness": 5,
+            "sadness":   0,
+            "anger":     0,
+            "boredom":   0,
+            "lethargy":  0,
+            "confusion": 0}
+
         return env
 
     def build_womb(self, area):
@@ -1010,7 +1030,7 @@ class Area:
         elif name     == 'garden':    env = self.envs.build_garden(self)
         elif name     == 'home':      env = self.envs.build_home(self)
         elif name     == 'overworld': env = self.envs.build_overworld(self)
-        if name       == 'bitworld':  env = self.envs.build_bitworld(self)
+        elif name     == 'bitworld':  env = self.envs.build_bitworld(self)
         elif name[:7] == 'dungeon':   env = self.envs.build_dungeon(self, lvl_num)
         elif name[:4] == 'cave':      env = self.envs.build_cave(self,    lvl_num)
 

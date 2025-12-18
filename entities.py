@@ -20,8 +20,6 @@ from data_management import ent_dicts, NPC_dicts, load_json
 from items import create_item
 
 ########################################################################################################################################################
-
-########################################################################################################################################################
 # Classes
 class PlayerData:
     """ Manages player file. One save for each file.
@@ -51,19 +49,16 @@ class PlayerData:
         self.dialogue   = None
 
         # Utility
-        self.file_num   = 0
+        self.file_num = 0
 
     # Startup
-    def init_player(self):
+    def new_player_ent(self):
         from mechanics import place_player
 
+        # Initialize entity, womb, and garden
         self.ent      = self._create_entity()
         self.envs     = self._create_environments()
         self.dialogue = Dialogue()
-
-        self._add_items()
-        self._add_discoveries()
-        session.stats_obj.pet_startup(self.envs.areas['underworld']['garden'])
 
         self.ent.last_env = self.envs.areas['underworld']['womb']
         place_player(
@@ -73,7 +68,8 @@ class PlayerData:
 
     def _create_entity(self):
         
-        # Default parameters
+        #############################################
+        # Entity
         ent = create_entity('white')
 
         ent.name        = "player"
@@ -83,10 +79,11 @@ class PlayerData:
         ent.max_hp      = 10
         ent.attack      = 0
         ent.defense     = 1
-            
-        # Player-specific attributes
+
         ent.player_id   = random.randint(100_000_000, 999_999_999)
 
+        #############################################
+        # Abilities
         ent.garden_abilities = {
             'entity_scare':   session.abilities.create_ability(ent, 'entity_scare'),
             'entity_comfort': session.abilities.create_ability(ent, 'entity_comfort'),
@@ -97,6 +94,27 @@ class PlayerData:
             'entity_capture': session.abilities.create_ability(ent, 'entity_capture'),
             'suicide':        session.abilities.create_ability(ent, 'suicide')}
 
+        #############################################
+        # Items
+        for item_name in ['bald', 'clean', 'flat', 'dagger']:
+            item = create_item(item_name)
+            session.items.pick_up(ent, item, silent=True)
+            session.items.toggle_equip(item, silent=True)
+
+        #############################################
+        # Discoveries
+        ent.discoveries = Discoveries()
+        
+        walls     = ['gray', 'green']
+        floors    = ['grass4', 'wood', 'water']
+        stairs    = ['door']
+        decor     = ['blades', 'lights']
+        furniture = ['table', 'red_chair_left', 'red_chair_right']
+        starter_disc = walls + floors + stairs + decor + furniture
+
+        for object_ID in starter_disc:
+            ent.discoveries.add_discovery(object_ID)
+        
         return ent
 
     def _create_environments(self):
@@ -108,31 +126,8 @@ class PlayerData:
         envs.add_area('underworld', permadeath=True)
         envs.areas['underworld'].add_level('womb')
         envs.areas['underworld'].add_level('garden')
-        
-        # Quests
-        envs.areas['underworld'].questlog.load_quest('garden_build_a_shed')
-        envs.areas['underworld'].questlog.load_quest('garden_provide_water')
 
         return envs
-
-    def _add_items(self):
-        for item_name in ['bald', 'clean', 'flat', 'dagger']:
-            item = create_item(item_name)
-            session.items.pick_up(self.ent, item, silent=True)
-            session.items.toggle_equip(item, silent=True)
-
-    def _add_discoveries(self):
-        self.ent.discoveries = Discoveries()
-        
-        walls     = ['gray', 'green']
-        floors    = ['grass4', 'wood', 'water']
-        stairs    = ['door']
-        decor     = ['blades', 'lights']
-        furniture = ['table', 'red_chair_left', 'red_chair_right']
-        starter_disc = walls + floors + stairs + decor + furniture
-
-        for object_ID in starter_disc:
-            self.ent.discoveries.add_discovery(object_ID)
 
     def finalize_player(self):
         from mechanics import place_player
@@ -159,7 +154,7 @@ class PlayerData:
         session.items.pick_up(self.ent, item, silent=True)
         session.items.toggle_equip(item, silent=True)
 
-        furniture = ["purple_bed", "red_bed", "long_table_left", "long_table_right", "table", "red_chair_left", "red_chair_right"]
+        furniture = ["red_bed", "table", "red_chair_left", "red_chair_right"]
         for ID in furniture:
             item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
@@ -181,7 +176,7 @@ class PlayerData:
 
         clothes = None
         if self.ent.equipment['chest'].img_IDs[0] == 'bra': clothes = 'yellow dress'
-        else:                                                 clothes = 'green clothes'
+        else:                                               clothes = 'green clothes'
         item = create_item(clothes)
         session.items.pick_up(self.ent, item, silent=True)
         session.items.toggle_equip(item, silent=True)
