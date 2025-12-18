@@ -1,0 +1,109 @@
+{
+  "name": "underworld",
+  "permadeath": true,
+  "last_env": "womb",
+  "display_fx": null,
+  "questlog": [
+    {
+      "quest_id": "garden_build_a_shed",
+      "name": "Build a Shed",
+      "category": "side",
+      "description": [
+        "Build a shed to rest in."
+      ],
+      "objectives": [
+        {
+          "event_id": "item_placed",
+          "description": "Build a wall for your shed.",
+          "conditions": {
+            "tile_id": "wall",
+            "ent_id": "player"
+          },
+          "on_complete": [],
+          "complete": false
+        },
+        {
+          "event_id": "item_placed",
+          "description": "Build a floor for your shed.",
+          "conditions": {
+            "tile_id": "floor",
+            "ent_id": "player"
+          },
+          "on_complete": [],
+          "complete": false
+        },
+        {
+          "event_id": "item_placed",
+          "description": "Add some furniture to your shed.",
+          "conditions": {
+            "item_id": "furniture",
+            "ent_id": "player"
+          },
+          "on_complete": [],
+          "complete": false
+        }
+      ],
+      "on_load": null,
+      "on_complete": [
+        {
+          "event_id": "reward",
+          "action_id": "add_discovery",
+          "item_id": "frond"
+        }
+      ]
+    },
+    {
+      "quest_id": "garden_provide_water",
+      "name": "Lead a Root to Water",
+      "category": "side",
+      "description": [
+        "These odd beings seem thirsty.",
+        "I should pour out some water for them."
+      ],
+      "objectives": [
+        {
+          "event_id": "item_used",
+          "description": "Pour out some water.",
+          "conditions": {
+            "item_id": "jug of water",
+            "ent_id": "player"
+          },
+          "on_complete": [],
+          "complete": false
+        },
+        {
+          "event_id": "tile_occupied",
+          "description": "Let it take a drink.",
+          "conditions": {
+            "tile_id": "water",
+            "ent_id": [
+              "radish",
+              "red radish",
+              "orange radish",
+              "purple radish"
+            ]
+          },
+          "on_complete": [],
+          "complete": false
+        }
+      ],
+      "on_load": null,
+      "on_complete": [
+        {
+          "event_id": "reward",
+          "action_id": "add_item",
+          "item_id": "bubbles"
+        },
+        {
+          "event_id": "quest",
+          "action_id": "add_quest",
+          "item_id": "garden_provide_food"
+        }
+      ]
+    }
+  ],
+  "levels": [
+    "womb",
+    "garden"
+  ]
+}

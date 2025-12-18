@@ -1,0 +1,131 @@
+{
+  "file_num": 1,
+  "ent": {
+    "name": "player",
+    "role": "player",
+    "hp": 10,
+    "max_hp": 10,
+    "attack": 2,
+    "defense": 12,
+    "player_id": 931248340,
+    "ability_ids": [],
+    "inventory": {
+      "weapons": [
+        "dagger",
+        "shovel",
+        "super_shovel",
+        "sword",
+        "blood_sword",
+        "blood_dagger"
+      ],
+      "armor": [
+        "bald",
+        "clean",
+        "flat",
+        "lamp",
+        "orange_clothes",
+        "exotic_clothes",
+        "yellow_dress",
+        "chain_dress",
+        "iron_armor",
+        "green_clothes"
+      ],
+      "potions": [],
+      "scrolls": [],
+      "drugs": [],
+      "other": [
+        "tree",
+        "bones",
+        "boxes",
+        "fire",
+        "leafy",
+        "shrooms",
+        "cup_shroom",
+        "frond",
+        "blades",
+        "purple_bulbs",
+        "lights"
+      ]
+    },
+    "equipment": {
+      "head": "bald",
+      "face": "clean",
+      "chest": "flat",
+      "body": "green_clothes",
+      "dominant hand": "shovel",
+      "non-dominant hand": null
+    },
+    "active_effects": [
+      "dig tunnel"
+    ],
+    "active_abilities": [
+      "entity_scare",
+      "entity_capture",
+      "suicide"
+    ],
+    "discoveries": {
+      "walls": [
+        "gray wall",
+        "green wall"
+      ],
+      "floors": [
+        "grass 4",
+        "wood floor",
+        "water"
+      ],
+      "stairs": [
+        "door"
+      ],
+      "decor": [
+        "blades",
+        "lights"
+      ],
+      "furniture": [
+        "table",
+        "red_chair_left",
+        "red_chair_right"
+      ],
+      "paths": [],
+      "entities": []
+    },
+    "location": {
+      "area": "dungeon",
+      "env": "dungeon",
+      "pos": [
+        22,
+        14
+      ]
+    },
+    "questlog": [],
+    "envlog": [],
+    "gardenlog": []
+  },
+  "dialogue": {
+    "friend": "quest_tutorial_1",
+    "Kyrio": "quest_greet_the_town",
+    "Kapno": "quest_greet_the_town",
+    "Erasti": "quest_greet_the_town",
+    "Merci": "quest_greet_the_town",
+    "Oxi": "quest_greet_the_town",
+    "Aya": "quest_greet_the_town",
+    "Zung": "quest_greet_the_town",
+    "Lilao": "quest_greet_the_town"
+  },
+  "gardenlog": [],
+  "cache": false,
+  "stats": {
+    "pet_levels": {
+      "stamina": 1,
+      "strength": 1,
+      "appeal": 1
+    },
+    "pet_moods": {
+      "happiness": 4,
+      "sadness": 0,
+      "anger": 1,
+      "boredom": 0,
+      "lethargy": 0,
+      "confusion": 1
+    }
+  }
+}

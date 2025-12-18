@@ -700,7 +700,7 @@ class FileMenu:
         # Save data from current player
         file_num = self.choice + 1
         session.player_obj.file_num = file_num
-        with open(f"Data/File_{file_num}/session.player_obj.pkl", 'wb') as file:
+        with open(f"Data/File_{file_num}/player_obj.pkl", 'wb') as file:
             pickle.dump(session.player_obj, file)
         
         #########################################################
@@ -730,7 +730,7 @@ class FileMenu:
         #########################################################
         # Load data onto fresh player
         session.player_obj.__init__()
-        with open(f"Data/File_{self.choice+1}/session.player_obj.pkl", "rb") as file:
+        with open(f"Data/File_{self.choice+1}/player_obj.pkl", "rb") as file:
             session.player_obj = pickle.load(file)
         
         #########################################################
@@ -753,7 +753,7 @@ class FileMenu:
         """ Overwrites a save if it matches the provided ID of a living save file. """
 
         for choice in range(3):
-            with open(f"Data/File_{choice+1}/session.player_obj.pkl", "rb") as file:
+            with open(f"Data/File_{choice+1}/player_obj.pkl", "rb") as file:
                 player_obj = pickle.load(file)
                 if (player_obj.ent.player_id == id) and (not player_obj.ent.dead):
                     self.choice = choice

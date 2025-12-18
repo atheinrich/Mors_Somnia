@@ -1,0 +1,27 @@
+{
+  "room_max_size": 10,
+  "room_min_size": 4,
+  "max_rooms": 3,
+  "areas": {
+    "underworld": {
+      "levels": {
+        "womb": "envs/underworld/womb.json",
+        "garden": "envs/underworld/garden.json"
+      },
+      "meta_file": "envs/underworld/area.json"
+    },
+    "overworld": {
+      "levels": {
+        "home": "envs/overworld/home.json",
+        "overworld": "envs/overworld/overworld.json"
+      },
+      "meta_file": "envs/overworld/area.json"
+    },
+    "dungeon": {
+      "levels": {
+        "dungeon level 1": "envs/dungeon/dungeon level 1.json"
+      },
+      "meta_file": "envs/dungeon/area.json"
+    }
+  }
+}

@@ -1179,28 +1179,6 @@ def screenshot(folder, filename, blur=False):
         image_after  = image_before.filter(ImageFilter.BLUR)
         image_after.save(folder + '/' + filename)
 
-def bw_binaryx(display):
-    import numpy as np
-    pyg = session.pyg
-    
-    # Extract screen as image
-    raw_str = pygame.image.tostring(display, 'RGB')
-    image   = Image.frombytes('RGB', display.get_size(), raw_str)
-    
-    # Make grayscale
-    image = image.convert('L')
-    
-    # Apply numpy effects
-    threshold = 30 # white for >50
-
-    image = np.array(image)
-    image = np.where(image > threshold, 0, 255)
-    image = image.T
-    image = np.stack([image] * 3, axis=-1)
-    image = pygame.surfarray.make_surface(image)
-    
-    return image
-
 def bw_binary(surface, cutoff=20):
     w, h = surface.get_size()
     out = pygame.Surface((w, h))

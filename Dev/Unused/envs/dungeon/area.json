@@ -1,0 +1,10 @@
+{
+  "name": "dungeon",
+  "permadeath": false,
+  "last_env": null,
+  "display_fx": null,
+  "questlog": [],
+  "levels": [
+    "dungeon level 1"
+  ]
+}
