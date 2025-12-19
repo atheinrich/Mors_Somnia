@@ -1,14 +1,14 @@
 {
 "lamp": {
     "name":          "lamp",
-    "img_IDs":     ["lamp", "dropped"],
+    "img_IDs":       ["lamp", "dropped"],
     "cost":          100,
     "effect_id":     "lamp"
     },
 
 "iron_shield": {
     "name":          "iron shield",
-    "img_IDs":     ["iron shield", "dropped"],
+    "img_IDs":       ["iron_shield", "dropped"],
     "cost":          50,
     "defense_bonus": 10
     }

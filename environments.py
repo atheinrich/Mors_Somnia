@@ -114,7 +114,7 @@ class Environments:
         ###############################################################
         # Generate items and entities
         items    = [['forest', 'tree',       10]]
-        entities = [['forest', 'red radish', 50, [None]]]
+        entities = [['forest', 'red_radish', 50, [None]]]
         place_objects(env, items, entities)
         
         x = center[0] + random.randint(1, 5)
@@ -509,10 +509,10 @@ class Environments:
             ['desert', 'plant',  1000],
             ['desert', 'enter_cave',  100]]
         entities = [
-            ['forest', 'red radish', 50,   [None]],
-            ['wet',    'frog',       500,  [None]],
-            ['forest', 'grass',      1000, [None]],
-            ['desert', 'rock',       50,   [None]]]
+            ['forest', 'red_radish', 50,   [None]],
+            ['wet',    'frog_ent',       500,  [None]],
+            ['forest', 'grass_ent',      1000, [None]],
+            ['desert', 'rock_ent',       50,   [None]]]
         place_objects(env, items, entities)
         
         env.center               = [door_x, door_y]
@@ -583,9 +583,9 @@ class Environments:
             lvl_num       = lvl_num,
             size          = 1,
             soundtrack    = [f'dungeon {lvl_num}'],
-            img_IDs       = ['walls',  'dark red'],
+            img_IDs       = ['walls',  'dark_red'],
             floor_img_IDs = ['floors', 'dirt1'],
-            wall_img_IDs  = ['walls',  'dark red'],
+            wall_img_IDs  = ['walls',  'dark_red'],
             roof_img_IDs  = None,
             blocked       = True,
             hidden        = True,
@@ -599,7 +599,7 @@ class Environments:
         env.camera.zoom_in(custom=1)
 
         # Generate biomes
-        biomes = [['dungeon', ['walls', 'dark red']]]
+        biomes = [['dungeon', ['walls', 'dark_red']]]
         voronoi_biomes(env, biomes)
         
         ###############################################################
@@ -654,9 +654,9 @@ class Environments:
             ['dungeon', 'sword',          1000//env.lvl_num]]
         
         entities = [
-            ['dungeon', 'red radish',     1000, [None]],
-            ['dungeon', 'red',            300,  [None]],
-            ['dungeon', 'round3',         50,   [None]]]
+            ['dungeon', 'red_radish',     1000, [None]],
+            ['dungeon', 'red_ent',            300,  [None]],
+            ['dungeon', 'round3_ent',         50,   [None]]]
         
         place_objects(env, items, entities)
         
@@ -766,15 +766,15 @@ class Environments:
             ['land', 'jug of blood',   10],
             ['land', 'bones',          50],
             ['land', 'sword',          1000//env.lvl_num],
-            ['land', 'iron shield',    1000//env.lvl_num],
+            ['land', 'iron_shield',    1000//env.lvl_num],
             ['land', 'skeleton',       500],
             ['land', 'fire',           100]]
         
         entities = [
-            ['land', 'plant',          300,   [None]],
-            ['land', 'eye',            15,    [None]],
-            ['land', 'red radish',     1000,  [None]],
-            ['land', 'round1',         30,    [None]]]
+            ['land', 'plant_ent',          300,   [None]],
+            ['land', 'eye_ent',            15,    [None]],
+            ['land', 'red_radish',     1000,  [None]],
+            ['land', 'round1_ent',         30,    [None]]]
         
         place_objects(env, items, entities)
         
@@ -961,25 +961,24 @@ class Environments:
         ###############################################################
         # Generate items and entities
         items = [
-            ['any', 'jug of grapes',  100],
+            ['any', 'jug_of_grapes',  100],
             ['any', 'shrooms',        10],
-            ['any', 'shrooms',        10],
-            ['any', 'purple bulbs',   10],
-            ['any', 'cup shroom',     25],
+            ['any', 'purple_bulbs',   10],
+            ['any', 'cup_shroom',     25],
             ['any', 'sword',          1000//env.lvl_num],
-            ['any', 'yellow dress',   200]]
+            ['any', 'yellow_dress',   200]]
         
         entities = [
-            ['any', 'triangle',       200,  [None]],
-            ['any', 'tentacles',      100,  [None]],
-            ['any', 'red radish',     1000, [None]],
-            ['any', 'star',           150,  [None]]]
+            ['any', 'triangle_ent',       200,  [None]],
+            ['any', 'tentacles_ent',      100,  [None]],
+            ['any', 'red_radish',     1000, [None]],
+            ['any', 'star_ent',           150,  [None]]]
         
         place_objects(env, items, entities)
         
         # Change player into tentacles
         self.player_obj.ent.img_names_backup = self.player_obj.ent.img_IDs
-        self.player_obj.ent.img_IDs = ['tentacles', 'front']
+        self.player_obj.ent.img_IDs = ['tentacles_ent', 'front']
         
         # Place player in first room
         (x, y) = env.rooms[0].center()
@@ -1833,31 +1832,31 @@ class TextRoom:
 class Tile:
     """ Defines a tile of the map and its parameters. Sight is blocked if a tile is blocked. """
     
-    def __init__(self, **kwargs):
+    def __init__(self, tile_id, **kwargs):
         """ Parameters
             ----------
-            env         : Environment object; owner of this tile
+            env           : environment object; owner of this tile
 
-            room        : Room object
-            entity      : Entity object; entity that occupies the tile
-            item        : Item object; entity that occupies the tile
+            room          : room instance
+            entity        : entity instance; entity that occupies the tile
+            item          : item instance; entity that occupies the tile
             
-            img_IDs   : list of str; current image names
-            wall_img_IDs       : list of str; default image name for wall
-            floor_img_IDs       : list of str; default image name for floor
-            roof_img_IDs        : list of str; default image name for roof
-            img_ID_timer       : int; fixed amount of time between animations
+            img_IDs       : list of str; current image names
+            wall_img_IDs  : list of str; default image name for wall
+            floor_img_IDs : list of str; default image name for floor
+            roof_img_IDs  : list of str; default image name for roof
+            img_ID_timer  : int; fixed amount of time between animations
             
-            X           : int; location of the tile in screen coordinate
-            Y           : int; location of the tile in screen coordinate
-            rand_X      : int; fixed amount of shift allowed in horizontal direction
-            rand_Y      : int; fixed amount of shift allowed in vertical direction
+            X             : int; location of the tile in screen coordinate
+            Y             : int; location of the tile in screen coordinate
+            rand_X        : int; fixed amount of shift allowed in horizontal direction
+            rand_Y        : int; fixed amount of shift allowed in vertical direction
             
-            biome       : str; identifier for assigning biomes
-            blocked     : bool; prevents items and entities from occupying the tile 
-            hidden      : bool; prevents player from seeing the tile
-            unbreakable : bool; prevents player from changing the tile
-            placed      : bool; notifies custom placement via CatalogMenu """
+            biome         : str; identifier for assigning biomes
+            blocked       : bool; prevents items and entities from occupying the tile 
+            hidden        : bool; prevents player from seeing the tile
+            unbreakable   : bool; prevents player from changing the tile
+            placed        : bool; notifies custom placement via CatalogMenu """
         
         pyg = session.pyg
 
@@ -1865,6 +1864,8 @@ class Tile:
         for key, value in kwargs.items():
             setattr(self, key, value)
         
+        self.tile_id = tile_id
+
         # Seed a seed for individual adjustments
         self.img_ID_timer = random.randint(0, 3) * 2
         self.rand_X       = random.randint(-pyg.tile_width, pyg.tile_width)
@@ -2334,7 +2335,7 @@ def voronoi_biomes(env, biomes):
             
             tile.img_IDs = img_IDs
 
-def create_tile(tile_ID):
+def create_tile(tile_id):
     """ Creates and returns an object.
     
         Parameters
@@ -2343,9 +2344,9 @@ def create_tile(tile_ID):
         effect : bool or Effect object; True=default, False=None, effect=custom """
     
     # Create object
-    tile_ID   = tile_ID.replace(" ", "_")
-    json_data = copy.deepcopy(tile_dicts[tile_ID])
-    tile      = Tile(**json_data)
+    tile_id   = tile_id.replace(" ", "_")
+    json_data = copy.deepcopy(tile_dicts[tile_id])
+    tile      = Tile(tile_id, **json_data)
 
     return tile
 

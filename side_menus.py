@@ -27,7 +27,7 @@ def cursor(locked):
 
     pygame.draw.polygon(
         cursor_surface, 
-        pygame.Color('white'), 
+        session.pyg.white, 
         [
             (0,            0),
             (data['size'], 0),
@@ -727,14 +727,14 @@ class AbilitiesMenu:
         
         # Renders menu to update cursor location
         Y = 32
-        for name, ability in session.player_obj.ent.active_abilities.items():
+        for ability in session.player_obj.ent.active_abilities.values():
         
             # Render details
             if self.detail:
                 Y_cache = int(Y)
 
-                sequence   = session.player_obj.ent.active_abilities[name].sequence
-                text_lines = [name, sequence]
+                sequence   = ability.sequence
+                text_lines = [ability.name, sequence]
                 for text in text_lines:
                     surface = pyg.minifont.render(text, True, color)
                     pyg.overlay_queue.append([surface, (40, Y_cache)])
@@ -866,9 +866,11 @@ class ExchangeMenu:
                 elif event.key in pyg.key_DEV:
                     self.key_DEV()
                 
+            elif event.type == KEYUP:
+
                 #########################################################
                 # Trade an item
-                elif event.key in pyg.key_ENTER:
+                if event.key in pyg.key_ENTER:
                     self.key_ENTER()
                 
                 #########################################################
@@ -876,11 +878,9 @@ class ExchangeMenu:
                 elif event.key in pyg.key_GUI:
                     self.key_GUI()
                 
-            #########################################################
-            # Return to game
-            elif event.type == KEYUP:
-
-                if event.key in pyg.key_BACK:
+                #########################################################
+                # Return to game
+                elif event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
         

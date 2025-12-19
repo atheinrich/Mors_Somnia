@@ -1,12 +1,12 @@
 {
-"white": {
+"white_skin": {
     "name":    "white",
-    "img_IDs": ["white", "front"]
+    "img_IDs": ["white_skin", "front"]
     },
 
-"black": {
+"black_skin": {
     "name":    "black",
-    "img_IDs": ["black", "front"]
+    "img_IDs": ["black_skin", "front"]
     },
 
 "fat": {

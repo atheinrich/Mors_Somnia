@@ -27,15 +27,15 @@
     "group": "decor"
     },
 
-"red plant right": {
+"red_plant_right": {
     "group": "decor"
     },
 
-"red plant left": {
+"red_plant_left": {
     "group": "decor"
     },
 
-"cup shroom": {
+"cup_shroom": {
     "group": "decor"
     },
 
@@ -47,7 +47,7 @@
     "group": "decor"
     },
 
-"purple bulbs": {
+"purple_bulbs": {
     "group": "decor"
     },
 
@@ -58,62 +58,62 @@
 
 
 
-"dots bubble": {
+"dots_bubble": {
     "group": "bubbles"
     },
 
-"exclamation bubble": {
+"exclamation_bubble": {
     "group": "bubbles"
     },
 
-"dollar bubble": {
+"dollar_bubble": {
     "group": "bubbles"
     },
 
-"cart bubble": {
+"cart_bubble": {
     "group": "bubbles"
     },
 
-"question bubble": {
+"question_bubble": {
     "group": "bubbles"
     },
 
-"skull bubble": {
+"skull_bubble": {
     "group": "bubbles"
     },
 
-"heart bubble": {
+"heart_bubble": {
     "group": "bubbles"
     },
 
-"water bubble": {
+"water_bubble": {
     "group": "bubbles"
     },
 
 
 
 
-"purple bed": {
+"purple_bed": {
     "group": "furniture"
     },
 
-"red bed": {
+"red_bed": {
     "group": "furniture"
     },
 
-"shelf left": {
+"shelf_left": {
     "group": "furniture"
     },
 
-"shelf right": {
+"shelf_right": {
     "group": "furniture"
     },
 
-"long table left": {
+"long_table_left": {
     "group": "furniture"
     },
 
-"long table right": {
+"long_table_right": {
     "group": "furniture"
     },
 
@@ -311,15 +311,15 @@
 
 
 
-"dark green": {
+"dark_green": {
     "group": "walls"
     },
 
-"dark red": {
+"dark_red": {
     "group": "walls"
     },
 
-"dark blue": {
+"dark_blue": {
     "group": "walls"
     },
 
@@ -350,27 +350,27 @@
 
 
 
-"left right": {
+"left_right": {
     "group": "paths"
     },
 
-"up down": {
+"up_down": {
     "group": "paths"
     },
 
-"down right": {
+"down_right": {
     "group": "paths"
     },
 
-"down left": {
+"down_left": {
     "group": "paths"
     },
 
-"up right": {
+"up_right": {
     "group": "paths"
     },
 
-"up left": {
+"up_left": {
     "group": "paths"
     },
 
@@ -379,5 +379,5 @@
 
 "null": {
     "group": "null"
-}
+    }
 }

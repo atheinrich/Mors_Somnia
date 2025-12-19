@@ -1,17 +1,17 @@
 {
 "dark_green": {
     "name":    "dark green wall",
-    "img_IDs": ["walls", "dark green"]
+    "img_IDs": ["walls", "dark_green"]
     },
 
 "dark_red": {
     "name":    "dark red wall",
-    "img_IDs": ["walls", "dark red"]
+    "img_IDs": ["walls", "dark_red"]
     },
 
 "dark_blue": {
     "name":    "dark blue wall",
-    "img_IDs": ["walls", "dark blue"]
+    "img_IDs": ["walls", "dark_blue"]
     },
 
 "gray": {

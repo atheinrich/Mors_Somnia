@@ -1,42 +1,42 @@
 {
 "purple_bed": {
     "name":    "purple bed",
-    "img_IDs": ["furniture", "purple bed"]
+    "img_IDs": ["furniture", "purple_bed"]
     },
 
 "red_bed": {
     "name":    "red bed",
-    "img_IDs": ["furniture", "red bed"]
+    "img_IDs": ["furniture", "red_bed"]
     },
 
 "shelf_left": {
     "name":    "shelf left",
-    "img_IDs": ["furniture", "shelf left"],
-    "blocked":   true
+    "img_IDs": ["furniture", "shelf_left"],
+    "blocked": true
     },
 
 "shelf_right": {
     "name":    "shelf right",
-    "img_IDs": ["furniture", "shelf right"],
-    "blocked":   true
+    "img_IDs": ["furniture", "shelf_right"],
+    "blocked": true
     },
 
 "long_table_left": {
     "name":    "long table left",
-    "img_IDs": ["furniture", "long table left"],
+    "img_IDs": ["furniture", "long_table_left"],
     "blocked": true
     },
 
 "long_table_right": {
     "name":    "long table right",
-    "img_IDs": ["furniture", "long table right"],
+    "img_IDs": ["furniture", "long_table_right"],
     "blocked": true
     },
 
 "table": {
     "name":    "table",
     "img_IDs": ["furniture", "table"],
-    "blocked":   true
+    "blocked": true
     },
 
 "red_chair_left": {

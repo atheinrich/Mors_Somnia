@@ -85,6 +85,23 @@ def load_json(filename):
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
+def merge_json(group, names):
+    """ Imports all category-specific json data, then fills in the gaps with default parameters. """
+
+    _defaults = load_json(f'Data/.{group}/_defaults.json')
+    dicts     = {}
+
+    for category in names:
+        category_dict  = load_json(f'Data/.{group}/{category}.json')
+        _defaults_dict = _defaults[category]
+
+        for item_id, attrs in category_dict.items():
+            full_attrs = copy.deepcopy(_defaults_dict)
+            full_attrs.update(attrs)
+            dicts[item_id] = full_attrs
+
+    return dicts
+
 ########################################################################################################################################################
 # Development tools
 def debug_call(func):
@@ -187,23 +204,6 @@ def rebuild_databases(filename_list):
 
 ########################################################################################################################################################
 # Startup
-def merge_json(group, names):
-    """ Imports all category-specific json data, then fills in the gaps with default parameters. """
-
-    _defaults = load_json(f'Data/.{group}/_defaults.json')
-    dicts     = {}
-
-    for category in names:
-        category_dict  = load_json(f'Data/.{group}/{category}.json')
-        _defaults_dict = _defaults[category]
-
-        for item_id, attrs in category_dict.items():
-            full_attrs = copy.deepcopy(_defaults_dict)
-            full_attrs.update(attrs)
-            dicts[item_id] = full_attrs
-
-    return dicts
-
 ########################################################################################################################################################
 # Initializations
 ## Group database files
@@ -222,7 +222,7 @@ tiles       = ['walls', 'floors']
 item_dicts   = merge_json('Items',    items)
 ent_dicts    = merge_json('Entities', entities)
 tile_dicts   = merge_json('Tiles',    tiles)
-NPC_dicts    = load_json(f'Data/.Databases/NPCs.json')
+NPC_dicts    = load_json(f'Data/.Entities/NPCs.json')
 biome_dicts  = load_json(f'Data/.Databases/biomes.json')
 img_dicts    = {name: load_json(f'Data/.Databases/{name}.json') for name in img_IDs}
 

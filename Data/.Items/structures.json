@@ -1,37 +1,37 @@
 {
-"path left right": {
+"path_left_right": {
     "name":    "path",
-    "img_IDs": ["paths", "left right"],
+    "img_IDs": ["paths", "left_right"],
     "blocked": false
     },
 
-"path up down": {
+"path_up_down": {
     "name":    "path",
-    "img_IDs": ["paths", "up down"],
+    "img_IDs": ["paths", "up_down"],
     "blocked": false
     },
 
-"path down right": {
+"path_down_right": {
     "name":    "path",
-    "img_IDs": ["paths", "down right"],
+    "img_IDs": ["paths", "down_right"],
     "blocked": false
     },
 
-"path down left": {
+"path_down_left": {
     "name":    "path",
-    "img_IDs": ["paths", "down left"],
+    "img_IDs": ["paths", "down_left"],
     "blocked": false
     },
 
-"paths up right": {
+"paths_up_right": {
     "name":    "path",
-    "img_IDs": ["paths", "up right"],
+    "img_IDs": ["paths", "up_right"],
     "blocked": false
     },
 
-"paths up left": {
+"paths_up_left": {
     "name":    "path",
-    "img_IDs": ["paths", "up left"],
+    "img_IDs": ["paths", "up_left"],
     "blocked": false
     }
 }

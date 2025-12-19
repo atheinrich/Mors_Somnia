@@ -56,8 +56,8 @@ class PlayerData:
         from mechanics import place_player
 
         # Initialize entity, womb, and garden
-        self.ent      = self._create_entity()
-        self.envs     = self._create_environments()
+        self.ent      = self._new_entity()
+        self.envs     = self._new_environments()
 
         # Dialogue
         self.dialogue_cache  = {}
@@ -69,11 +69,11 @@ class PlayerData:
             env = self.envs.areas['underworld']['womb'],
             loc = self.envs.areas['underworld']['womb'].center)
 
-    def _create_entity(self):
+    def _new_entity(self):
         
         #############################################
         # Entity
-        ent = create_entity('white')
+        ent = create_entity('white_skin')
 
         ent.name        = "player"
         ent.role        = 'player'
@@ -120,7 +120,7 @@ class PlayerData:
         
         return ent
 
-    def _create_environments(self):
+    def _new_environments(self):
         from environments import Environments
 
         envs = Environments(self)
@@ -132,70 +132,78 @@ class PlayerData:
 
         return envs
 
-    def finalize_player(self):
+    def finalize_player_ent(self):
         from mechanics import place_player
 
-        #########################################################
-        # Make object permanent
-        ## Copy player and womb environment
-        self.ent.role = 'player'
+        # Create and equip items
+        self._finalize_entity()
 
-        ## Add additional environments
-        self.envs.add_area('overworld', permadeath=True)
-        self.envs.areas['overworld'].add_level('home')
-        self.envs.areas['overworld'].add_level('overworld')
+        # Add additional environments
+        self._finalize_environments()
 
         place_player(
             ent = self.ent,
             env = self.envs.areas['overworld']['home'],
             loc = self.envs.areas['overworld']['home'].center)
+    
+    def _finalize_entity(self):
 
-        #########################################################
-        # Create and equip items
+        # Shovel
         item = create_item('shovel')
         item.uses = 25
         session.items.pick_up(self.ent, item, silent=True)
         session.items.toggle_equip(item, silent=True)
 
+        # Clothes
+        clothes = None
+        if self.ent.equipment['chest'].img_IDs[0] == 'bra': clothes = 'yellow_dress'
+        else:                                               clothes = 'green_clothes'
+        item = create_item(clothes)
+        session.items.pick_up(self.ent, item, silent=True)
+        session.items.toggle_equip(item, silent=True)
+
+        # Lamp and debugging
+        apparel = ['lamp', 'orange_clothes', 'exotic_clothes', 'yellow_dress', 'chain_dress', 'iron_armor']
+        for ID in apparel:
+            item = create_item(ID)
+            session.items.pick_up(self.ent, item, silent=True)
+
+        # Debugging
         furniture = ["red_bed", "table", "red_chair_left", "red_chair_right"]
         for ID in furniture:
             item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
 
+        # Debugging
         decor = ['tree', 'bones', 'boxes', 'fire', 'leafy', 'skeleton', 'shrooms', 'cup_shroom', 'frond', 'blades', 'purple_bulbs', 'lights']
         for ID in decor:
             item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
 
-        weapons = ['super shovel', 'sword', 'blood sword', 'blood dagger']
+        # Debugging
+        weapons = ['super_shovel', 'sword', 'blood_sword', 'blood_dagger']
         for ID in weapons:
             item = create_item(ID)
             session.items.pick_up(self.ent, item, silent=True)
 
-        apparel = ['lamp', 'orange clothes', 'exotic clothes', 'yellow dress', 'chain dress', 'iron armor']
-        for ID in apparel:
-            item = create_item(ID)
-            session.items.pick_up(self.ent, item, silent=True)
+    def _finalize_environments(self):
 
-        clothes = None
-        if self.ent.equipment['chest'].img_IDs[0] == 'bra': clothes = 'yellow dress'
-        else:                                               clothes = 'green clothes'
-        item = create_item(clothes)
-        session.items.pick_up(self.ent, item, silent=True)
-        session.items.toggle_equip(item, silent=True)
+        self.envs.add_area('overworld', permadeath=True)
+        self.envs.areas['overworld'].add_level('home')
+        self.envs.areas['overworld'].add_level('overworld')
 
 class Entity:
     """ Player, enemies, and NPCs. Manages stats, inventory, and basic mechanics. """
     
     # Core
-    def __init__(self, **kwargs):
+    def __init__(self, ent_id, **kwargs):
         """ Parameters
             ----------
             player_obj     : PlayerData object
 
             name           : string
             role           : string in ['player', 'enemy', 'NPC']
-            img_IDs      : list of strings
+            img_IDs        : list of strings
             handedness     : string in ['left', 'right']
 
             exp            : int; experience accumulated by player or given from enemy
@@ -214,8 +222,8 @@ class Entity:
             Y0             : int; initial vertical position
             reach          : int or None; number of tiles the entity can move from its initial position
 
-            inventory      : list of Item objects
-            equipment      : list of Item objects
+            inventory      : dict of categories with lists of item instances
+            equipment      : dict of categories with lists of item instances
             death          : 
             follow         : bool or Entity object; sets entity as follower
             aggression     : int; toggles attack functions
@@ -228,6 +236,8 @@ class Entity:
         ## Import parameters
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+        self.ent_id = ent_id
         
         ## Images
         self.img_names_backup = self.img_IDs
@@ -454,13 +464,14 @@ class Entity:
         #########################################################
         # Bubbles
         bubble = None
-        shift = 32 - session.img.ent_data[self.img_IDs[0]]['height']
+        shift  = 32 - session.img.ent_data[self.img_IDs[0]]['height']
 
-        if self.quest_active():                bubble = 'dots bubble'
-        if self.trade_active() and not bubble: bubble = 'cart bubble'
+        if self.quest_active():                bubble = 'dots_bubble'
+        if self.trade_active() and not bubble: bubble = 'cart_bubble'
         
         if bubble:
-            pyg.display_queue.append([session.img.dict['bubbles'][bubble], (X, Y - pyg.tile_height + shift)])
+            loc = (X, Y - pyg.tile_height + shift)
+            pyg.display_queue.append([session.img.dict['bubbles'][bubble], loc])
 
 class Dialogue:
     """ Imports and stores dialogue from JSON files, and returns a random piece of accessible dialogue.
@@ -497,7 +508,7 @@ class Dialogue:
         lines = cache[ent_id].get(key)
         return random.choice(lines)
 
-    # Actions
+    # Events
     def unlock_dialogue(self, ent_id, dialogue_id):
         """ Changes current set of available options. """
 
@@ -571,44 +582,36 @@ class Discoveries:
 
 ########################################################################################################################################################
 # Tools
-def create_entity(names):
+def create_entity(ent_id):
     """ Creates and returns an object.
     
         Parameters
         ----------
         names : str; name of object """
 
-    if type(names) in [tuple, list]:
-        for val in ent_dicts.values():
-            if val.img_IDs == names:
-                val            = copy.deepcopy(val)
-                ent            = Entity(**val)
-                ent.handedness = random.choice(['left', 'right'])
-    else:
-        json_data = copy.deepcopy(ent_dicts[names])
-        ent = Entity(**json_data)
-        ent.id = names
+    json_data = copy.deepcopy(ent_dicts[ent_id])
+    ent       = Entity(ent_id, **json_data)
     
     # Return if found
-    if not ent: raise Exception(names)
+    if not ent: raise Exception(ent_id)
     else:       return ent
 
-def create_NPC(name):
+def create_NPC(NPC_id):
     """ A more specific version of create_entity. """
     
     ent = None
 
     #########################################################
     # Custom
-    if name in NPC_dicts.keys():
-        NPC = copy.deepcopy(NPC_dicts[name])
+    if NPC_id in NPC_dicts.keys():
+        NPC = copy.deepcopy(NPC_dicts[NPC_id])
 
         # Basics
-        ent       = create_entity(NPC['model'])
-        ent.role  = 'NPC'
-        ent.name  = NPC['name']
-        ent.id    = NPC['name']
-        ent.reach = NPC['reach']
+        ent        = create_entity(NPC['model'])
+        ent.role   = 'NPC'
+        ent.name   = NPC['name']
+        ent.reach  = NPC['reach']
+        ent.ent_id = NPC_id
         
         # Equipment
         for item_type in ['clothes', 'chest', 'hair', 'beard', 'weapon', 'armor']:
@@ -627,7 +630,7 @@ def create_NPC(name):
     
     #########################################################
     # Randomly generated
-    elif name == 'random':
+    elif NPC_id == 'random':
         
         # Basics
         ent       = create_entity(str(random.choice(session.img.skin_options)))

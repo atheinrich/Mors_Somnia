@@ -53,19 +53,19 @@
 
 "red_plant_left": {
     "name":      "red plant left",
-    "img_IDs":  ["decor", "red plant left"],
+    "img_IDs":  ["decor", "red_plant_left"],
     "cost":      15
     },
 
 "red_plant_right": {
     "name":      "red plant right",
-    "img_IDs":   ["decor", "red plant right"],
+    "img_IDs":   ["decor", "red_plant_right"],
     "cost":      15
     },
 
 "cup_shroom": {
     "name":      "cup shroom",
-    "img_IDs":   ["decor", "cup shroom"],
+    "img_IDs":   ["decor", "cup_shroom"],
     "cost":      15
     },
 
@@ -86,7 +86,7 @@
 
 "purple_bulbs": {
     "name":      "purple bulbs",
-    "img_IDs":   ["decor", "purple bulbs"],
+    "img_IDs":   ["decor", "purple_bulbs"],
     "hidden":    true,
     "movable":   true,
     "rand_X":    10,

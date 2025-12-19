@@ -1,71 +1,93 @@
 {
-    "iron armor": {
-        "slot": "armor"
+"iron_armor": {
+    "slot": "armor"
     },
-    "green clothes": {
-        "slot": "armor"
+
+"green_clothes": {
+    "slot": "armor"
     },
-    "iron shield": {
-        "slot": null
+
+"iron_shield": {
+    "slot": null
     },
-    "orange clothes": {
-        "slot": "armor"
+
+"orange_clothes": {
+    "slot": "armor"
     },
-    "exotic clothes": {
-        "slot": "armor"
+
+"exotic_clothes": {
+    "slot": "armor"
     },
-    "yellow dress": {
-        "slot": "armor"
+
+"yellow_dress": {
+    "slot": "armor"
     },
-    "chain dress": {
-        "slot": "armor"
+
+"chain_dress": {
+    "slot": "armor"
     },
-    "bra": {
-        "slot": "chest"
+
+"bra": {
+    "slot": "chest"
     },
-    "lamp": {
-        "slot": null
+
+"lamp": {
+    "slot": null
     },
-    "glasses": {
-        "slot": "face"
+
+"glasses": {
+    "slot": "face"
     },
-    "brown hair": {
-        "slot": "hair"
+
+"brown_hair": {
+    "slot": "hair"
     },
-    "blue hair": {
-        "slot": "hair"
+
+"blue_hair": {
+    "slot": "hair"
     },
-    "blue beard": {
-        "slot": "face"
+
+"blue_beard": {
+    "slot": "face"
     },
-    "brown beard": {
-        "slot": "face"
+
+"brown_beard": {
+    "slot": "face"
     },
-    "white beard": {
-        "slot": "face"
+
+"white_beard": {
+    "slot": "face"
     },
-    "short brown hair": {
-        "slot": "hair"
+
+"short_brown_hair": {
+    "slot": "hair"
     },
-    "dagger": {
-        "slot": null
+
+"dagger": {
+    "slot": null
     },
-    "blood dagger": {
-        "slot": null
+
+"blood_dagger": {
+    "slot": null
     },
-    "shovel": {
-        "slot": null
+
+"shovel": {
+    "slot": null
     },
-    "super shovel": {
-        "slot": null
+
+"super_shovel": {
+    "slot": null
     },
-    "sword": {
-        "slot": null
+
+"sword": {
+    "slot": null
     },
-    "blood sword": {
-        "slot": null
+
+"blood_sword": {
+    "slot": null
     },
-    "null": {
-        "slot": null
+
+"null": {
+    "slot": null
     }
 }

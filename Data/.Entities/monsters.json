@@ -18,9 +18,9 @@
     "reach":       640
     },
 
-"eye": {
+"eye_ent": {
     "name":        "eye",
-    "img_IDs":     ["eye", "front"],
+    "img_IDs":     ["eye_ent", "front"],
     "habitat":     "land",
     "ability_ids": ["swing"],
 
@@ -37,9 +37,9 @@
     "reach":       1000
     },
 
-"eyes": {
+"eyes_ent": {
     "name":        "eyes",
-    "img_IDs":     ["eyes", "front"],
+    "img_IDs":     ["eyes_ent", "front"],
     "habitat":     "land",
     "ability_ids": [],
 
@@ -56,9 +56,9 @@
     "reach":       1000
     },
 
-"troll": {
+"troll_ent": {
     "name":        "troll",
-    "img_IDs":     ["troll", "front"],
+    "img_IDs":     ["troll_ent", "front"],
     "habitat":     "land",
     "ability_ids": [],
 
@@ -75,9 +75,9 @@
     "reach":       1000
     },
 
-"triangle": {
+"triangle_ent": {
     "name":        "triangle",
-    "img_IDs":     ["triangle", "front"],
+    "img_IDs":     ["triangle_ent", "front"],
     "habitat":     "land",
     "ability_ids": [],
 
@@ -94,9 +94,9 @@
     "reach":       1000
     },
 
-"purple": {
+"purple_ent": {
     "name":        "purple",
-    "img_IDs":     ["purple", "front"],
+    "img_IDs":     ["purple_ent", "front"],
     "habitat":     "land",
     "ability_ids": [],
 
@@ -113,9 +113,9 @@
     "reach":       1000
     },
 
-"tentacles": {
+"tentacles_ent": {
     "name":        "tentacles",
-    "img_IDs":     ["tentacles", "front"],
+    "img_IDs":     ["tentacles_ent", "front"],
     "habitat":     "any",
     "ability_ids": [],
 
@@ -132,9 +132,9 @@
     "reach":       1000
     },
 
-"round1": {
+"round1_ent": {
     "name":        "round1",
-    "img_IDs":     ["round1", "front"],
+    "img_IDs":     ["round1_ent", "front"],
     "habitat":     "land",
     "ability_ids": [],
 
@@ -151,9 +151,9 @@
     "reach":       1000
     },
 
-"round2": {
+"round2_ent": {
     "name":        "round2",
-    "img_IDs":     ["round2", "front"],
+    "img_IDs":     ["round2_ent", "front"],
     "habitat":     "land",
     "ability_ids": [],
 
@@ -170,9 +170,9 @@
     "reach":       1000
     },
 
-"grass": {
+"grass_ent": {
     "name":        "grass",
-    "img_IDs":     ["grass", "front"],
+    "img_IDs":     ["grass_ent", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
@@ -189,9 +189,9 @@
     "reach":       1000
     },
 
-"round3": {
+"round3_ent": {
     "name":        "round3",
-    "img_IDs":     ["round3", "front"],
+    "img_IDs":     ["round3_ent", "front"],
     "habitat":     "any",
     "ability_ids": [],
 
@@ -208,9 +208,9 @@
     "reach":       64
     },
 
-"lizard": {
+"lizard_ent": {
     "name":        "lizard",
-    "img_IDs":     ["lizard", "front"],
+    "img_IDs":     ["lizard_ent", "front"],
     "habitat":     "desert",
     "ability_ids": [],
 
@@ -227,9 +227,9 @@
     "reach":       1000
     },
 
-"red": {
+"red_ent": {
     "name":        "red",
-    "img_IDs":     ["red", "front"],
+    "img_IDs":     ["red_ent", "front"],
     "habitat":     "land",
     "ability_ids": [],
 
@@ -246,9 +246,9 @@
     "reach":       0
     },
 
-"rock": {
+"rock_ent": {
     "name":        "rock",
-    "img_IDs":     ["rock", "front"],
+    "img_IDs":     ["rock_ent", "front"],
     "habitat":     "desert",
     "ability_ids": [],
 
@@ -265,9 +265,9 @@
     "reach":       0
     },
 
-"frog": {
+"frog_ent": {
     "name":        "frog",
-    "img_IDs":     ["frog", "front"],
+    "img_IDs":     ["frog_ent", "front"],
     "habitat":     "any",
     "ability_ids": [],
 
@@ -284,9 +284,9 @@
     "reach":       32
     },
 
-"red radish": {
+"red_radish": {
     "name":        "red radish",
-    "img_IDs":     ["red radish", "front"],
+    "img_IDs":     ["red_radish", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
@@ -304,9 +304,9 @@
     "reach":       1000
     },
 
-"orange radish": {
+"orange_radish": {
     "name":        "orange radish",
-    "img_IDs":     ["orange radish", "front"],
+    "img_IDs":     ["orange_radish", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
@@ -324,9 +324,9 @@
     "reach":       1000
     },
 
-"purple radish": {
+"purple_radish": {
     "name":        "purple radish",
-    "img_IDs":     ["purple radish", "front"],
+    "img_IDs":     ["purple_radish", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
@@ -344,9 +344,9 @@
     "reach":       1000
     },
 
-"snake": {
+"snake_ent": {
     "name":        "snake",
-    "img_IDs":     ["snake", "front"],
+    "img_IDs":     ["snake_ent", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
@@ -363,9 +363,9 @@
     "reach":       1000
     },
 
-"buzz": {
+"buzz_ent": {
     "name":        "buzz",
-    "img_IDs":     ["buzz", "front"],
+    "img_IDs":     ["buzz_ent", "front"],
     "habitat":     "city",
     "ability_ids": [],
 
@@ -382,9 +382,9 @@
     "reach":       1000
     },
 
-"egg": {
+"egg_ent": {
     "name":        "egg",
-    "img_IDs":     ["egg", "front"],
+    "img_IDs":     ["egg_ent", "front"],
     "habitat":     "any",
     "ability_ids": [],
 
@@ -401,9 +401,9 @@
     "reach":       1000
     },
 
-"star": {
+"star_ent": {
     "name":        "star",
-    "img_IDs":     ["star", "front"],
+    "img_IDs":     ["star_ent", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
@@ -420,9 +420,9 @@
     "reach":       1000
     },
 
-"plant": {
+"plant_ent": {
     "name":        "plant",
-    "img_IDs":     ["plant", "front"],
+    "img_IDs":     ["plant_ent", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
@@ -439,10 +439,10 @@
     "reach":       1000
     },
 
-"green blob": {
+"green_blob": {
     "name":        "green blob",
     "role":        "projectile",
-    "img_IDs":     ["green blob", "front"],
+    "img_IDs":     ["green_blob", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 

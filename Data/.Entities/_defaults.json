@@ -1,7 +1,7 @@
 {
 "humanoids": {
     "name":        null,
-    "img_IDs":   null,
+    "img_IDs":     null,
 
     "role":        "enemy",
     "habitat":     "any",
@@ -27,7 +27,7 @@
 
 "monsters": {
     "name":        null,
-    "img_IDs":   null,
+    "img_IDs":     null,
     "habitat":     "any",
     "ability_ids": [],
 

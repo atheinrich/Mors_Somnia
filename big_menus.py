@@ -337,8 +337,8 @@ class NewGameMenu:
         """ Functions
             ---------
             init_player     : womb and garden; stays in NewGameMenu
-            startup         : womb and garden; scrapped after finalize_player
-            finalize_player : womb, garden, home, overworld, and dungeon; persistent
+            startup         : womb and garden; scrapped after _finalize_player
+            _finalize_player : womb, garden, home, overworld, and dungeon; persistent
         """
         
         pyg = session.pyg
@@ -514,8 +514,8 @@ class NewGameMenu:
         #########################################################
         # Apply skin option
         elif self.choice == 3:
-            if self.temp_obj.ent.img_IDs[0] == 'white':   self.temp_obj.ent.img_IDs[0] = 'black'
-            elif self.temp_obj.ent.img_IDs[0] == 'black': self.temp_obj.ent.img_IDs[0] = 'white'
+            if self.temp_obj.ent.img_IDs[0] == 'white_skin':   self.temp_obj.ent.img_IDs[0] = 'black_skin'
+            elif self.temp_obj.ent.img_IDs[0] == 'black_skin': self.temp_obj.ent.img_IDs[0] = 'white_skin'
         
         #########################################################
         # Apply handedness option
@@ -529,18 +529,18 @@ class NewGameMenu:
         # Prepare fade screen
         text = "Your hands tremble as the ground shudders in tune... something is wrong."
         pyg.add_intertitle(text)
-        pyg.fn_queue.append([self.finalize_player,          {}])
+        pyg.fn_queue.append([self._finalize_player,         {}])
         pyg.fn_queue.append([session.effects.enter_dungeon, {}])
         pyg.fade_state = 'out'
 
-    def finalize_player(self):
+    def _finalize_player(self):
         """ Initializes NEW GAME. Does not handle user input. Resets player stats, inventory, map, and rooms.
             Called in fade queue after the character creation menu is accepted. """
         
         pyg = session.pyg
 
         session.player_obj = copy.deepcopy(self.temp_obj)
-        session.player_obj.finalize_player()
+        session.player_obj.finalize_player_ent()
         
         self.temp_obj      = self.init_player()
         pyg.msg_history    = {}

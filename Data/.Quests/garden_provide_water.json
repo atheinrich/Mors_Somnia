@@ -25,9 +25,9 @@
         "tile_id": "water",
         "ent_id":  [
             "radish",
-            "red radish",
-            "orange radish",
-            "purple radish"]}}
+            "red_radish",
+            "orange_radish",
+            "purple_radish"]}}
 
 
 ],

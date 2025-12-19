@@ -174,6 +174,7 @@ class PlayGame:
     def key_ENTER(self):
         pyg = session.pyg
         ent = session.player_obj.ent
+        print('enter')
 
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
@@ -193,7 +194,7 @@ class PlayGame:
                 #########################################################
                 # Furniture
                 ## Bed
-                if tile.item.name in ['red bed', 'purple bed']:
+                if tile.item.item_id in ['red_bed', 'purple_bed']:
                     
                     # Check if it is the player's bed
                     if tile.room:
@@ -211,7 +212,7 @@ class PlayGame:
                     else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
                 
                 ## Chair
-                elif tile.item.id in ['red_chair_left', 'red_chair_right']:
+                elif tile.item.item_id in ['red_chair_left', 'red_chair_right']:
                     ent.env.weather.set_day_and_time(increment=True)
                     pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 
@@ -780,7 +781,7 @@ class MovementSystem:
                                         
             # Send directions to entity
             ent.motions_log = motions_log
-            image = session.img.dict['bubbles']['question bubble']
+            image = session.img.dict['bubbles']['question_bubble']
 
         # Bathe
         else:
@@ -792,11 +793,11 @@ class MovementSystem:
         
             if session.stats_obj.pet_moods['anger']:
                 session.stats_obj.pet_moods['anger'] -= 1
-                image = session.img.dict['bubbles']['water bubble']
+                image = session.img.dict['bubbles']['water_bubble']
             
             else:
                 session.stats_obj.pet_moods['boredom'] += 1
-                image = session.img.dict['bubbles']['dots bubble']
+                image = session.img.dict['bubbles']['dots_bubble']
             
         session.img.flash_above(ent, image)
 
@@ -850,11 +851,11 @@ class MovementSystem:
             
             # Send directions to entity
             ent.motions_log = motions_log
-            image = session.img.dict['bubbles']['question bubble']
+            image = session.img.dict['bubbles']['question_bubble']
 
         # Sleep
         else:
-            image = session.img.dict['bubbles']['dots bubble']
+            image = session.img.dict['bubbles']['dots_bubble']
             
         session.img.flash_above(ent, image)
 
@@ -1113,9 +1114,9 @@ class PetsSystem:
         ent = session.player_obj.ent
         happiness = pet_moods['happiness']
 
-        if happiness >= 6:   target_img = 'orange radish'
-        elif happiness >= 3: target_img = 'red radish'
-        else:                target_img = 'purple radish'
+        if happiness >= 6:   target_img = 'orange_radish'
+        elif happiness >= 3: target_img = 'red_radish'
+        else:                target_img = 'purple_radish'
 
         if ent.env.ents[-1].img_IDs[0] == target_img:
             return

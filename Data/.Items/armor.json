@@ -1,42 +1,42 @@
 {
 "green_clothes": {
     "name":          "green clothes",
-    "img_IDs":     ["green clothes", "dropped"],
+    "img_IDs":     ["green_clothes", "dropped"],
     "cost":          10,
     "defense_bonus": 1
     },
 
 "orange_clothes": {
     "name":          "orange clothes",
-    "img_IDs":     ["orange clothes", "dropped"],
+    "img_IDs":     ["orange_clothes", "dropped"],
     "cost":          10,
     "defense_bonus": 1
     },
 
 "exotic_clothes": {
     "name":          "exotic clothes",
-    "img_IDs":     ["exotic clothes", "dropped"],
+    "img_IDs":     ["exotic_clothes", "dropped"],
     "cost":          20,
     "defense_bonus": 1
     },
 
 "yellow_dress": {
     "name":          "yellow dress",
-    "img_IDs":     ["yellow dress", "dropped"],
+    "img_IDs":     ["yellow_dress", "dropped"],
     "cost":          10,
     "defense_bonus": 1
     },
 
 "chain_dress": {
     "name":          "chain dress",
-    "img_IDs":     ["chain dress", "dropped"],
+    "img_IDs":     ["chain_dress", "dropped"],
     "cost":          20,
     "defense_bonus": 2
     },
 
 "iron_armor": {
     "name":          "iron armor",
-    "img_IDs":     ["iron armor", "dropped"],
+    "img_IDs":     ["iron_armor", "dropped"],
     "cost":          100,
     "defense_bonus": 10
     }

@@ -1,7 +1,7 @@
 {
 "shovel": {
     "name":          "shovel",
-    "img_IDs":     ["shovel", "dropped"],
+    "img_IDs":       ["shovel", "dropped"],
     "uses":          100,
     "cost":          15,
     "attack_bonus":  2,
@@ -11,14 +11,14 @@
 
 "super_shovel": {
     "name":          "super shovel",
-    "img_IDs":     ["super shovel", "dropped"],
+    "img_IDs":       ["super_shovel", "dropped"],
     "cost":          10,
     "attack_bonus":  100
     },
 
 "dagger": {
     "name":          "dagger",
-    "img_IDs":     ["dagger", "dropped"],
+    "img_IDs":       ["dagger", "dropped"],
     "cost":          25,
     "attack_bonus":  2,
     "ability_id":    "swing"
@@ -26,21 +26,21 @@
 
 "sword": {
     "name":          "sword",
-    "img_IDs":     ["sword", "dropped"],
+    "img_IDs":       ["sword", "dropped"],
     "cost":          75,
     "attack_bonus":  5
     },
 
 "blood_dagger": {
     "name":          "blood dagger",
-    "img_IDs":     ["blood dagger", "dropped"],
+    "img_IDs":       ["blood_dagger", "dropped"],
     "cost":          500,
     "attack_bonus":  10
     },
 
 "blood_sword": {
     "name":          "blood sword",
-    "img_IDs":     ["blood sword", "dropped"],
+    "img_IDs":       ["blood_sword", "dropped"],
     "cost":          1000,
     "attack_bonus":  15
     }

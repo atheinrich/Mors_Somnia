@@ -1143,7 +1143,6 @@ class EventBus:
 
     def emit(self, event_id, **kwargs):
         """ Accepts an event flag and calls any functions with a matching event. """
-        if event_id != 'tile_occupied': print(event_id)
         for function in self.listeners.get(event_id, []):
             function(**kwargs)
 

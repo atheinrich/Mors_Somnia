@@ -15,23 +15,23 @@ from data_management import load_json
 ########################################################################################################################################################
 # Core
 _registry = {}
-def register(function_id):
+def register(ability_id):
     def decorator(function):
-        _registry[function_id] = function
+        _registry[ability_id] = function
         return function
     return decorator
 
 class Ability:
     """ Holds a function, owner, and other details for one instance of an ability. """
 
-    def __init__(self, owner, **kwargs):
+    def __init__(self, owner, ability_id, **kwargs):
         """ Parameters
             ----------
             name            : str; descriptor to be displayed in ability list
             img_IDs         : list of str; sets image to be displayed in ability list
             sequence        : str; three-key combo for ability activation (ex. ⮜⮟⮞)
             cooldown        : float; time required between activations
-            function_id     : str; sets the ability function on initialization (not used after)
+            ability_id      : str; sets the ability function on initialization (not used after)
 
             ability_fn      : ability function; see AbilitiesSystem
             owner           : entity object; used in ability function
@@ -43,7 +43,8 @@ class Ability:
             setattr(self, key, value)
 
         # Other
-        self.ability_fn      = session.abilities._registry[self.function_id]
+        self.ability_id      = ability_id
+        self.ability_fn      = session.abilities._registry[ability_id]
         self.owner           = owner
         self.last_press_time = 0
 
@@ -59,7 +60,7 @@ class AbilitiesSystem:
         self._registry = registry
 
     def create_ability(self, owner, ability_id):
-        return Ability(owner, **self._data[ability_id])
+        return Ability(owner, ability_id, **self._data[ability_id])
 
     def toggle_ability(self, ent, ability_obj):
         """ Adds or removes ability for a given entity. Called when equipping/dequipping items. """
@@ -105,7 +106,7 @@ class AbilitiesSystem:
                 session.stats_obj.pet_moods['lethargy'] -= 1
                 session.stats_obj.pet_moods['boredom']  -= 1
             
-            image = session.img.dict['bubbles']['exclamation bubble']
+            image = session.img.dict['bubbles']['exclamation_bubble']
             for ent in ent_list:
                 for tile in get_vicinity(ent).values():
                     if not tile.blocked:
@@ -132,7 +133,7 @@ class AbilitiesSystem:
         
         # Activate effect if entities are found
         if target:
-            image = session.img.dict['bubbles']['heart bubble']
+            image = session.img.dict['bubbles']['heart_bubble']
             session.img.flash_above(target, image)
             session.img.flash_on(target, session.img.dict[target.img_IDs[0]][target.img_IDs[1]])
             
@@ -226,8 +227,11 @@ class AbilitiesSystem:
             # Decrease stamina
             owner.stamina -= 5
 
-    @register("propagate")
-    def propagate(self, ability_obj):
+    @register("dirtball")
+    def dirtball(self, ability_obj):
+        self._propagate(ability_obj)
+    
+    def _propagate(self, ability_obj):
         """ Throws projectile that damages entity upon contact. Needs updating. """
         
         pyg   = session.pyg
@@ -246,7 +250,7 @@ class AbilitiesSystem:
         elif owner.direction == 'left':  img_x -= 1
         
         # Place blob
-        blob = create_entity('green blob')
+        blob = create_entity('green_blob')
         blob.lethargy = 0
         blob.cooldown = 0.1
         blob.direction = None

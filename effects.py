@@ -20,16 +20,16 @@ from data_management import load_json
 ########################################################################################################################################################
 # Core
 _registry = {}
-def register(function_id):
+def register(effect_id):
     def decorator(function):
-        _registry[function_id] = function
+        _registry[effect_id] = function
         return function
     return decorator
 
 class Effect:
     """ Holds a function, owner, and other details for one instance of an effect. """
 
-    def __init__(self, owner, item, **kwargs):
+    def __init__(self, owner, item, effect_id, **kwargs):
         """ Parameters
             ----------
             name         : str; only used to find the effect in active effects
@@ -50,7 +50,8 @@ class Effect:
             setattr(self, key, value)
         
         # Other
-        self.effect_fn = session.effects._registry[self.function_id]
+        self.effect_id = effect_id
+        self.effect_fn = session.effects._registry[effect_id]
         self.owner     = owner
         self.item      = item
 
@@ -73,7 +74,7 @@ class EffectsSystem:
         self.movement_speed_toggle = 0
 
     def create_effect(self, owner, effect_id, item=None):
-        return Effect(owner, item, **self._data[effect_id])
+        return Effect(owner, item, effect_id, **self._data[effect_id])
 
     def toggle_effect(self, ent, effect_obj):
         """ Adds or removes ability for a given entity. """
@@ -520,7 +521,7 @@ class EffectsSystem:
         
         session.stats_obj.pet_moods['happiness'] += 1
         session.stats_obj.pet_moods['boredom']   -= 1
-        image = session.img.dict['bubbles']['heart bubble']
+        image = session.img.dict['bubbles']['heart_bubble']
         session.img.flash_above(target, image)
         target.tile.item = None
 
@@ -623,8 +624,8 @@ class EffectsSystem:
                 "Typical.",
                 "Caves can kill in mysterious ways."]}
         
-        if random.randint(0, 4): image = session.img.dict['bubbles']['skull bubble']
-        else:                    image = session.img.dict['bubbles']['exclamation bubble']
+        if random.randint(0, 4): image = session.img.dict['bubbles']['skull_bubble']
+        else:                    image = session.img.dict['bubbles']['exclamation_bubble']
         session.img.flash_above(session.player_obj.ent, image)
 
 _effects = EffectsSystem(_registry)

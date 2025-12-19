@@ -20,7 +20,7 @@ from data_management import item_dicts
 # Classes
 class Item:
     
-    def __init__(self, **kwargs):
+    def __init__(self, item_id, **kwargs):
         """ Parameters
             ----------
             name          : string
@@ -46,6 +46,8 @@ class Item:
         # Import parameters
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+        self.item_id = item_id
 
         # Set abilities and effects
         if self.ability_id:
@@ -138,14 +140,23 @@ class ItemSystem:
 
         ent.inventory = inventory_cache
 
-    # Mechanics
+    # Events
+    def find_and_drop(self, ent_id, item_id, **kwargs):
+        for ent in session.player_obj.ent.env.ents:
+            if ent.ent_id == ent_id:
+                for category in ent.inventory.values():
+                    for item in category:
+                        if item.item_id == item_id:
+                            self.drop(item, kwargs.get('vicinity', None))
+
+    # Activation
     def pick_up(self, ent, item, silent=False):
         """ Adds an item to the player's inventory and removes it from the map. Assigns owner to item.
         
             Parameters
             ----------
-            ent    : Entity object; new owner of the item
-            item   : Item object; item picked up
+            ent    : Entity instance; new owner of the item
+            item   : item instance; item picked up
             silent : bool; updates GUI if False
         """
 
@@ -233,14 +244,6 @@ class ItemSystem:
             item.owner = tile
             if item.effect:
                 item.effect.owner = tile
-
-    def find_and_drop(self, ent_id, item_id, **kwargs):
-        for ent in session.player_obj.ent.env.ents:
-            if ent.id == ent_id:
-                for category in ent.inventory.values():
-                    for item in category:
-                        if item.id == item_id:
-                            self.drop(item, kwargs.get('vicinity', None))
 
     def destroy(self, item):
         self.drop(item)
@@ -366,9 +369,7 @@ def create_item(item_id):
     # Create object
     item_id   = item_id.replace(" ", "_")
     json_data = copy.deepcopy(item_dicts[item_id])
-
-    item      = Item(**json_data)
-    item.id   = item_id
+    item      = Item(item_id, **json_data)
 
     return item
 
