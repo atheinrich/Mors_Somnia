@@ -914,7 +914,7 @@ class InteractionSystem:
                 current_time = time.time()
                 if current_time - target.last_dialogue_time > 1:
                     target.last_dialogue_time = current_time
-                    session.player_obj.dialogue.emit_dialogue(target.name)
+                    session.dialogue.emit_dialogue(target.name)
                     interacted = True
 
             # Attack
@@ -1190,13 +1190,6 @@ def place_player(ent, env, loc):
         # Change song
         if ent.env.name != ent.last_env.name:
             session.aud.control(soundtrack=env.soundtrack)
-        
-        # Update event bus
-        session.bus.clear()
-        pyg._subscribe_events()
-        env.area.questlog._subscribe_events()
-        if session.player_obj.dialogue:
-            session.player_obj.dialogue._subscribe_events()
 
 def get_vicinity(obj):
     """ Returns a list of tiles surrounding the given location.
@@ -1221,7 +1214,7 @@ def get_vicinity(obj):
     return obj.vicinity
 
 def check_tile(x, y, ent=None, startup=False):
-    """ Reveals newly explored regions with respect to the player's position. """
+    """ Reveals newly explored regions with respect to the player's position and reveals/hides roof. """
     
     # Select entity
     if not ent: ent = session.player_obj.ent
@@ -1261,26 +1254,25 @@ def check_tile(x, y, ent=None, startup=False):
                     if spot not in prev_tile.room.walls_list:
                         spot.img_IDs = prev_tile.room.roof_img_IDs
 
-def is_blocked(env, loc):
+def is_blocked(env=None, loc=None, tile=None):
     """ Checks for barriers. """
     
-    try:
-        # Check for barriers
-        if env.map[loc[0]][loc[1]].blocked:
-            return True
-        
-        # Check for monsters
-        if env.map[loc[0]][loc[1]].ent: 
-            return True
-        
-        # Triggers message for hidden passages
-        if env.map[loc[0]][loc[1]].unbreakable:
-            #session.pyg.update_gui("A mysterious breeze seeps through the cracks.", session.pyg.dark_gray)
-            pygame.event.clear()
-            return True
+    # Check by location
+    if env: tile = env.map[loc[0]][loc[1]]
+
+    # Check for barriers
+    if tile.blocked:
+        return True
     
-    except: return False
+    # Check for monsters
+    if tile.ent: 
+        return True
     
+    # Triggers message for hidden passages
+    if tile.unbreakable:
+        pygame.event.clear()
+        return True
+
     return False
 
 ########################################################################################################################################################

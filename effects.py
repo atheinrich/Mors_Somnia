@@ -495,7 +495,6 @@ class EffectsSystem:
         if 'bitworld' not in envs.areas.keys():
             envs.add_area('bitworld')
             envs.areas['bitworld'].add_level('bitworld')
-            print(envs.areas['bitworld'], envs.areas['bitworld'].levels)
 
         # Prepare fade screen
         text = ". . . ! Your vision blurs as the substance seeps through your veins."

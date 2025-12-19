@@ -92,7 +92,7 @@ from pypresence import Presence
 ## Local
 import session
 from pygame_utilities import Pygame, Images, Audio, EventBus
-from entities import PlayerData
+from entities import PlayerData, Dialogue
 from abilities import _abilities
 from effects import _effects
 from items import ItemSystem
@@ -100,7 +100,7 @@ from mechanics import MovementSystem, InteractionSystem, PetsSystem
 from mechanics import PlayGame, PlayGarden
 from big_menus import MainMenu, NewGameMenu, FileMenu, StatsMenu, CtrlMenu, Textbox
 from side_menus import InventoryMenu, CatalogMenu, AbilitiesMenu, ExchangeMenu
-from quests import QuestMenu
+from quests import QuestMenu, Questlog
 from pygame_utilities import render_display, render_hud
 
 ## Debugging
@@ -137,6 +137,8 @@ def init():
     session.interact         = InteractionSystem()
     session.pets             = PetsSystem()
     session.items            = ItemSystem()
+    session.dialogue         = Dialogue()
+    session.questlog         = Questlog()
     session.effects          = _effects
     session.abilities        = _abilities
 

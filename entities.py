@@ -58,7 +58,10 @@ class PlayerData:
         # Initialize entity, womb, and garden
         self.ent      = self._create_entity()
         self.envs     = self._create_environments()
-        self.dialogue = Dialogue()
+
+        # Dialogue
+        self.dialogue_cache  = {}
+        self.dialogue_states = {}
 
         self.ent.last_env = self.envs.areas['underworld']['womb']
         place_player(
@@ -274,8 +277,8 @@ class Entity:
             For this to work, set quest_ as a prefix for all quest IDs.    
         """
 
-        if self.name in session.player_obj.dialogue.npc_states.keys():
-            if session.player_obj.dialogue.npc_states[self.name][:6] == 'quest_':
+        if self.name in session.player_obj.dialogue_states.keys():
+            if session.player_obj.dialogue_states[self.name][:6] == 'quest_':
                 return True
         return False
 
@@ -472,53 +475,50 @@ class Dialogue:
             Parameters
             ----------
             dialogue_cache : dict; (key) NPC names → (key) dialogue set identifier → (value) dialogue string
-            npc_states     : dict; (key) NPC names → (value) dialogue set identifier
+            dialogue_states     : dict; (key) NPC names → (value) dialogue set identifier
         """
 
-        self.dialogue_cache = {}
-        self.npc_states     = {}
-
-        self._subscribe_events()
-
-    def _load_npc(self, ent_id):
-        """ Sends all dialogue to dialogue_cache. """
-
-        if ent_id not in self.dialogue_cache:
-            
-            self.dialogue_cache[ent_id] = load_json(f'Data/.Dialogue/{ent_id}.json')
-            self.npc_states[ent_id]     = "default"
-
-    def _get_dialogue(self, ent_id):
-        """ Return a random dialogue string from the character's current set of available options. """
-
-        self._load_npc(ent_id)
-        key   = self.npc_states.get(ent_id)
-        lines = self.dialogue_cache[ent_id].get(key)
-        return random.choice(lines)
-
-    def _subscribe_events(self):
         session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
         session.bus.subscribe('emit_dialogue',   self.emit_dialogue)
 
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self._subscribe_events()
+    def _load_npc(self, ent_id, cache, states):
+        """ Sends all dialogue to dialogue_cache. """
+
+        if ent_id not in cache:
+            
+            cache[ent_id]  = load_json(f'Data/.Dialogue/{ent_id}.json')
+            states[ent_id] = "default"
+
+    def _get_dialogue(self, ent_id, cache, states):
+        """ Return a random dialogue string from the character's current set of available options. """
+
+        self._load_npc(ent_id, cache, states)
+        key   = states.get(ent_id)
+        lines = cache[ent_id].get(key)
+        return random.choice(lines)
 
     # Actions
     def unlock_dialogue(self, ent_id, dialogue_id):
         """ Changes current set of available options. """
 
-        self._load_npc(ent_id)
-        self.npc_states[ent_id] = dialogue_id
+        cache  = session.player_obj.dialogue_cache
+        states = session.player_obj.dialogue_states
+
+        self._load_npc(ent_id, cache, states)
+        states[ent_id] = dialogue_id
 
     def emit_dialogue(self, ent_id, dialogue_id=None):
         """ Loads dialogue, sends it to the GUI, and plays some audio. """
 
+        cache  = session.player_obj.dialogue_cache
+        states = session.player_obj.dialogue_states
+
         if dialogue_id:
             self.unlock_dialogue(ent_id, dialogue_id)
 
-        dialogue = self._get_dialogue(ent_id)
+        dialogue = self._get_dialogue(ent_id, cache, states)
         session.pyg.update_gui(dialogue)
+
         if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:
             session.aud.last_press_time_speech = time.time()
             session.aud.play_speech(dialogue)
@@ -587,6 +587,7 @@ def create_entity(names):
     else:
         json_data = copy.deepcopy(ent_dicts[names])
         ent = Entity(**json_data)
+        ent.id = names
     
     # Return if found
     if not ent: raise Exception(names)
@@ -606,6 +607,7 @@ def create_NPC(name):
         ent       = create_entity(NPC['model'])
         ent.role  = 'NPC'
         ent.name  = NPC['name']
+        ent.id    = NPC['name']
         ent.reach = NPC['reach']
         
         # Equipment

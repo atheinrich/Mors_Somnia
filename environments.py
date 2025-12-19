@@ -131,8 +131,8 @@ class Environments:
         
         ###############################################################
         # Quests
-        area.questlog.load_quest('garden_build_a_shed')
-        area.questlog.load_quest('garden_provide_water')
+        session.questlog.load_quest('garden_build_a_shed', area)
+        session.questlog.load_quest('garden_provide_water', area)
         
         ###############################################################
         # Pets
@@ -278,7 +278,8 @@ class Environments:
             roof_img_IDs    = None)
         
         ###############################################################
-        # Hidden objects
+        # Items and entities
+        ## Hidden objects
         x, y = center[0]+10, center[1]+9
         item = create_item('blood_sword')
         place_object(item, [x, y], env)
@@ -286,25 +287,27 @@ class Environments:
         item = create_item('iron_shield')
         place_object(item, [x, y], env)
         
-        # Bug fix
+        ## Bug fix
         x, y = 0, 0
         item = create_item('scroll_of_fireball')
         place_object(item, [x, y], env)
         
-        # Door
-        x, y = center[0]-3, center[1]+1
+        ## Door
+        x, y   = center[0]-3, center[1]+1
         stairs = create_item('overworld_entrance')
         place_object(stairs, [x, y], env)
         
-        # Friend
-        x, y = center[0]+1, center[1]
-        ent = create_entity('friend')
+        ## Friend
+        x, y     = center[0]+1, center[1]
+        ent      = create_entity('friend')
         ent.role = 'NPC'
+        item     = create_item('scroll_of_death')
+        session.items.pick_up(ent, item, silent=True)
         place_object(ent, [x, y], env)
         
         ###############################################################
         # Quests
-        area.questlog.load_quest('tutorial')
+        session.questlog.load_quest('tutorial', area)
         
         # Initial position
         env.player_coordinates = env.center
@@ -565,7 +568,7 @@ class Environments:
         
         ###############################################################
         # Quests
-        area.questlog.load_quest('greet_the_town')
+        session.questlog.load_quest('greet_the_town', area)
             
         return env
 
@@ -804,7 +807,7 @@ class Environments:
         area.envs.areas['bitworld'].last_env   = None
 
         area.envs.areas['bitworld'].questlog   = Questlog()
-        area.envs.areas['bitworld'].questlog.load_quest('kill_the_town')
+        area.envs.areas['bitworld'].questlog.load_quest('kill_the_town', area)
 
         area.envs.areas['bitworld'].display_fx = bw_binary
 
@@ -1021,7 +1024,7 @@ class Area:
         self.levels     = {}
         self.last_env   = None
 
-        self.questlog   = Questlog()
+        self.questlog   = []
 
         self.display_fx = None
 

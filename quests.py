@@ -218,10 +218,10 @@ class QuestMenu:
     def update_questlog(self):
         """ Updates and sorts main quests and side quests. """
 
-        log = session.player_obj.ent.env.area.questlog.active_quests
+        log = session.player_obj.ent.env.area.questlog
 
-        if self.mode == 'log':            self.update_quest_list(log)
-        elif self.mode == 'quest':        self.update_quest_details(log)
+        if self.mode == 'log':     self.update_quest_list(log)
+        elif self.mode == 'quest': self.update_quest_details(log)
         
     def update_quest_list(self, log):
         """ Prepares names and categories of active quests. """
@@ -370,23 +370,19 @@ class QuestMenu:
 
 class Questlog:
 
-    # Initializations
+    # Core
     def __init__(self):
         """ Loads and tracks all active quests and tells them about event information.
             Defines one function for each event that might be needed for a quest, such as dialogue.
         """
 
-        self.active_quests = []
-        self._subscribe_events()
-
-    def _subscribe_events(self):
         session.bus.subscribe('entity_interacted', self.on_interact)
         session.bus.subscribe('item_picked_up',    self.on_item_pickup)
         session.bus.subscribe('item_placed',       self.on_item_placed)
         session.bus.subscribe('item_used',         self.on_item_used)
         session.bus.subscribe('tile_occupied',     self.on_tile_occupied)
 
-    def load_quest(self, filename):
+    def load_quest(self, filename, area):
 
         # Import file
         data = load_json(f'Data/.Quests/{filename}.json')
@@ -412,59 +408,55 @@ class Questlog:
             on_load     = data.get('on_load', []),
             on_complete = data.get('on_complete', []))
         
-        self.active_quests.append(quest)
+        area.questlog.append(quest)
 
         # Sort alphabetically and by category
-        self.sort_quests()
+        self.sort_quests(area)
     
-    def sort_quests(self):
+    def sort_quests(self, area):
 
         def sort_key(quest):
             if quest.category == 'main': category_order = 0
             else:                        category_order = 1
             return (category_order, quest.name.lower())
 
-        return sorted(self.active_quests, key=sort_key)
+        return sorted(area.questlog, key=sort_key)
 
     # Event functions
     def on_interact(self, ent_id, target_ent_id):
-        for quest in self.active_quests:
+        for quest in session.player_obj.ent.env.area.questlog:
             quest.notify(
                 event_id      = 'entity_interacted',
                 ent_id        = ent_id,
                 target_ent_id = target_ent_id)
 
     def on_item_pickup(self, ent_id, item_id):
-        for quest in self.active_quests:
+        for quest in session.player_obj.ent.env.area.questlog:
             quest.notify(
                 event_id = 'item_picked_up',
                 ent_id   = ent_id,
                 item_id  = item_id)
 
     def on_item_placed(self, ent_id, item_id):
-        for quest in self.active_quests:
+        for quest in session.player_obj.ent.env.area.questlog:
             quest.notify(
                 event_id = 'item_placed',
                 ent_id   = ent_id,
                 item_id  = item_id)
 
     def on_item_used(self, ent_id, item_id):
-        for quest in self.active_quests:
+        for quest in session.player_obj.ent.env.area.questlog:
             quest.notify(
                 event_id = 'item_used',
                 ent_id   = ent_id,
                 item_id  = item_id)
 
     def on_tile_occupied(self, ent_id, tile_id):
-        for quest in self.active_quests:
+        for quest in session.player_obj.ent.env.area.questlog:
             quest.notify(
                 event_id = 'tile_occupied',
                 ent_id   = ent_id,
                 tile_id  = tile_id)
-
-    def __setstate__(self, state):
-        self.__dict__.update(state) 
-        self._subscribe_events()
 
 class Quest:
 
@@ -500,17 +492,19 @@ class Quest:
 
     def notify(self, event_id, **kwargs):
 
-        # Check if the event satisfies an objective
-        for objective in self.objectives:
-            satisfied = objective.check_event(event_id, **kwargs)
-            if satisfied: break
+        if not self.complete():
 
-        # Check if that completes all objectives
-        if self.complete():
-            if self.on_complete:
-                for action in self.on_complete:
-                    kwargs = {k: v for k, v in action.items() if (k != 'event_id')}
-                    session.bus.emit(action.get('event_id'), **kwargs)
+            # Check if the event satisfies an objective
+            for objective in self.objectives:
+                satisfied = objective.check_event(event_id, **kwargs)
+                if satisfied: break
+
+            # Check if that completes all objectives
+            if self.complete():
+                if self.on_complete:
+                    for action in self.on_complete:
+                        kwargs = {k: v for k, v in action.items() if (k != 'event_id')}
+                        session.bus.emit(action.get('event_id'), **kwargs)
 
     def complete(self):
         return all(obj.complete for obj in self.objectives)

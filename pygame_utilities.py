@@ -55,12 +55,13 @@ class Pygame:
 
         #########################################################
         # Utility
-        self._subscribe_events()
         self.pause = False
         self.startup_toggle  = True
         self.cooldown_time   = 0.2
         self.last_press_time = 0
 
+        session.bus.subscribe('emit_message', self.update_gui)
+        
     # Screens
     def init_screen(self):
         """ Final window that everything is shown on. """
@@ -354,9 +355,6 @@ class Pygame:
             'time':     self.minifont.render(time,    True, bottom_color),
             'stamina':  self.minifont.render(stamina, True, self.green),
             'location': self.minifont.render(env,     True, bottom_color)}
-
-    def _subscribe_events(self):
-        session.bus.subscribe('emit_message', self.update_gui)
 
     # Fade tools
     def update_fade(self):
@@ -1145,6 +1143,7 @@ class EventBus:
 
     def emit(self, event_id, **kwargs):
         """ Accepts an event flag and calls any functions with a matching event. """
+        if event_id != 'tile_occupied': print(event_id)
         for function in self.listeners.get(event_id, []):
             function(**kwargs)
 

@@ -713,9 +713,6 @@ class FileMenu:
         
         pyg = session.pyg
         
-        ## Update event bus
-        session.bus.clear()
-
         #########################################################
         # Add asterisk to active option
         for i in range(len(self.choices)):
@@ -875,7 +872,6 @@ class CtrlMenu:
     
         self.layout_render = [pyg.font.render(row, True, pyg.gray) for row in layout]
 
-# Needs updating
 class StatsMenu:
     
     def __init__(self):
@@ -988,7 +984,7 @@ class StatsMenu:
     # Keys
     def key_BACK(self):
         pyg = session.pyg
-        
+
         pyg.overlay_state = None
         if pyg.game_state != 'play_garden':
             pyg.hud_state = 'on'
@@ -1028,6 +1024,7 @@ class StatsMenu:
 
         return "★" * stars + "☆" * no_stars
 
+# Needs updating
 class Textbox:
 
     def __init__(self, header='', text=''):

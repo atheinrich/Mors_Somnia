@@ -113,6 +113,9 @@ class Item:
 class ItemSystem:
 
     # Core
+    def __init__(self):
+        session.bus.subscribe('drop_item', self.find_and_drop)
+
     def sort_inventory(self, ent=None):
         
         # Allow for NPC actions
@@ -177,34 +180,67 @@ class ItemSystem:
             if (ent.role == 'player') and (not silent):
                 pyg.update_gui("Picked up " + item.name + ".", pyg.dark_gray)
 
-    def drop(self, item):
+    def drop(self, item, vicinity):
         """ Unequips item before dropping if the object has the Equipment component, then adds it to the map at
             the player's coordinates and removes it from their inventory.
             Dropped items are only saved if dropped in home. """
+
+        # Set location
+        tile = None
+
+        ## Place under entity
+        if not vicinity and not item.owner.tile.item:
+                tile = item.owner.tile
         
-        ent = item.owner
+        ## Place near entity
+        else:
+            from mechanics import get_vicinity, is_blocked
+
+            # Select random location
+            vicinity = list(get_vicinity(item.owner).values())
+            tile     = random.choice(vicinity)
+
+            # Check if location is blocked
+            recursion_stop = 8
+            while is_blocked(tile=tile) or tile.item:
+                tile = random.choice(vicinity)
+                recursion_stop -= 1
+
+                # Place under entity if no other locations are free
+                if not recursion_stop:
+                    if not tile.item:
+                        tile = item.owner.tile
+                    break
 
         # Prevent dropping items over other items
-        if not item.owner.tile.item:
-        
+        if tile:
+
             # Update tile
-            ent.tile.item = item
+            tile.item = item
             
             # Update owner
-            if item in ent.equipment.values():
+            if item in item.owner.equipment.values():
                 self.toggle_equip(item)
-            ent.inventory[item.role].remove(item)
+            item.owner.inventory[item.role].remove(item)
 
             if item.effect and (item.effect.trigger == 'passive'):
-                ent.active_effects.remove(item.effect)
+                item.owner.active_effects.remove(item.effect)
 
             # Update item
-            item.X     = ent.X
-            item.Y     = ent.Y
-            item.tile  = ent.tile
-            item.owner = ent.tile
+            item.X     = tile.X
+            item.Y     = tile.Y
+            item.tile  = tile
+            item.owner = tile
             if item.effect:
-                item.effect.owner = ent.tile
+                item.effect.owner = tile
+
+    def find_and_drop(self, ent_id, item_id, **kwargs):
+        for ent in session.player_obj.ent.env.ents:
+            if ent.id == ent_id:
+                for category in ent.inventory.values():
+                    for item in category:
+                        if item.id == item_id:
+                            self.drop(item, kwargs.get('vicinity', None))
 
     def destroy(self, item):
         self.drop(item)
@@ -328,10 +364,11 @@ def create_item(item_id):
         effect : bool or Effect object; True=default, False=None, effect=custom """
     
     # Create object
-    item_id = item_id.replace(" ", "_")
+    item_id   = item_id.replace(" ", "_")
     json_data = copy.deepcopy(item_dicts[item_id])
-    item    = Item(**json_data)
-    item.id = item_id
+
+    item      = Item(**json_data)
+    item.id   = item_id
 
     return item
 
