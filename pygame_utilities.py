@@ -453,6 +453,24 @@ class Pygame:
         
         self.fade_cache.append([surface, loc])
 
+class EventBus:
+
+    def __init__(self):
+        """ Accepts event information, holds functions tied to events, and calls the functions if events match. """
+        self.listeners = {}
+
+    def subscribe(self, event_id, function):
+        """ Adds a new function to be called when the given event type occurs. """
+        self.listeners.setdefault(event_id, []).append(function)
+
+    def emit(self, event_id, **kwargs):
+        """ Accepts an event flag and calls any functions with a matching event. """
+        for function in self.listeners.get(event_id, []):
+            function(**kwargs)
+
+    def clear(self):
+        self.listeners = {}
+
 # Needs updating
 class Images:
     """ Loads images from png file and sorts them in a global dictionary. One save for each file.
@@ -972,7 +990,6 @@ class Images:
                     else:
                         self.render_log.pop(j)
 
-# Needs updating/fixing
 class Audio:
     """ Manages audio. One save for each file. """
 
@@ -1078,7 +1095,7 @@ class Audio:
                 current_time = pygame.mixer.music.get_pos() / 1000
                 self.remaining_time = self.duration - current_time
                 if self.remaining_time <= 3:
-                    self.i = (self.i + 1) // len(soundtrack)
+                    self.i = (self.i + 1) % len(soundtrack)
                     self.play_track(song=self.soundtrack[self.i])
 
     def pause(self, paused):
@@ -1130,24 +1147,6 @@ class Audio:
                 else:
                     pygame.time.delay(self.speech_speed)
                     pygame.event.clear()
-
-class EventBus:
-
-    def __init__(self):
-        """ Accepts event information, holds functions tied to events, and calls the functions if events match. """
-        self.listeners = {}
-
-    def subscribe(self, event_id, function):
-        """ Adds a new function to be called when the given event type occurs. """
-        self.listeners.setdefault(event_id, []).append(function)
-
-    def emit(self, event_id, **kwargs):
-        """ Accepts an event flag and calls any functions with a matching event. """
-        for function in self.listeners.get(event_id, []):
-            function(**kwargs)
-
-    def clear(self):
-        self.listeners = {}
 
 ########################################################################################################################################################
 # Tools

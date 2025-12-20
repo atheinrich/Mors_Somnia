@@ -115,8 +115,16 @@ class InventoryMenu:
                     self.key_RIGHT()
                 
                 #########################################################
+                # Open catalog
+                elif event.key in pyg.key_DEV:
+                    self.key_DEV()
+                    return
+            
+            elif event.type == KEYUP:
+
+                #########################################################
                 # Activate or drop item
-                elif event.key in pyg.key_ENTER:
+                if event.key in pyg.key_ENTER:
                     self.key_ENTER()
                 elif event.key in pyg.key_PERIOD:
                     self.key_PERIOD()
@@ -132,20 +140,11 @@ class InventoryMenu:
                     self.key_INV()
                 
                 #########################################################
-                # Open catalog
-                elif event.key in pyg.key_DEV:
-                    self.key_DEV()
-                    return
-                
-            #########################################################
-            # Return to game
-            elif event.type == KEYUP:
-
-                if event.key in pyg.key_BACK:
+                # Return to game
+                elif event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
         
-        pyg.overlay_state = 'inv'
         return
 
     def render(self):
@@ -411,8 +410,16 @@ class CatalogMenu:
                     self.key_RIGHT()
                 
                 #########################################################
+                # Open inventory
+                elif event.key in pyg.key_INV:
+                    self.key_INV()
+                    return
+                
+            elif event.type == KEYUP:
+
+                #########################################################
                 # Activate or drop item
-                elif event.key in pyg.key_ENTER:
+                if event.key in pyg.key_ENTER:
                     self.key_ENTER()
                 elif event.key in pyg.key_PERIOD:
                     self.key_PERIOD()
@@ -428,16 +435,8 @@ class CatalogMenu:
                     self.key_DEV()
                 
                 #########################################################
-                # Open inventory
-                elif event.key in pyg.key_INV:
-                    self.key_INV()
-                    return
-                
-            #########################################################
-            # Return to game
-            elif event.type == KEYUP:
-
-                if event.key in pyg.key_BACK:
+                # Return to game
+                elif event.key in pyg.key_BACK:
                     self.key_BACK()
                     return
         

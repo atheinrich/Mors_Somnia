@@ -1,0 +1,114 @@
+{
+"quest_id":    "mysterious_note",
+"name":        "Mysterious Note",
+"category":    "main",
+"description": [
+
+   "I found a mysterious note.",
+   "Someone in town might know what it means."
+
+],
+
+
+"on_load": [
+   
+   {"event_id":    "unlock_dialogue",
+    "ent_id":      "friend",
+    "dialogue_id": "quest_tutorial_1"}
+
+],
+
+
+"objectives": [
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn how to interact.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "quest_tutorial_2"}]},
+
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the main menu.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "quest_tutorial_3"}]},
+
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn how to zoom in and out.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "quest_tutorial_4"}]},
+
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about the inventory.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "quest_tutorial_5"}]},
+
+
+
+
+   {"event_id":    "entity_interacted",
+    "description": "Learn about ability combos.",
+    "conditions": {
+
+        "ent_id":        "player",
+        "target_ent_id": "friend"},
+
+    "on_complete": [
+
+       {"event_id":    "unlock_dialogue",
+        "ent_id":      "friend",
+        "dialogue_id": "default"}]}
+
+],
+
+
+"on_complete": [
+
+   {"event_id":    "emit_message",
+    "text":        "Check out Options in the Main Menu!"},
+
+   {"event_id":    "drop_item",
+    "ent_id":      "friend",
+    "item_id":     "scroll_of_death",
+    "vicinity":    true}
+
+]}

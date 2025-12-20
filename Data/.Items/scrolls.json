@@ -1,23 +1,30 @@
 {
 "scroll_of_lightning_bolt": {
     "name":      "scroll of lightning bolt",
-    "img_IDs": ["scrolls", "closed"]
+    "img_IDs":   ["scrolls", "closed"]
     },
 
 
 "scroll_of_fireball": {
     "name":      "scroll of fireball",
-    "img_IDs": ["scrolls", "closed"]
+    "img_IDs":   ["scrolls", "closed"]
     },
 
 "scroll_of_confusion": {
     "name":      "scroll of confusion",
-    "img_IDs": ["scrolls", "closed"]
+    "img_IDs":   ["scrolls", "closed"]
     },
 
 "scroll_of_death": {
     "name":      "scroll of death",
-    "img_IDs": ["scrolls", "open"],
+    "img_IDs":   ["scrolls", "open"],
     "cost":      1000
+    },
+
+"mysterious_note": {
+    "name":      "mysterious note",
+    "img_IDs":   ["scrolls", "open"],
+    "cost":      0,
+    "effect_id": "mysterious_note"
     }
 }

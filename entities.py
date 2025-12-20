@@ -485,8 +485,8 @@ class Dialogue:
 
             Parameters
             ----------
-            dialogue_cache : dict; (key) NPC names → (key) dialogue set identifier → (value) dialogue string
-            dialogue_states     : dict; (key) NPC names → (value) dialogue set identifier
+            dialogue_cache  : dict; (key) NPC name → (key) dialogue-set identifier → (value) list of dialogue strings
+            dialogue_states : dict; (key) NPC name → (value) dialogue-set identifier
         """
 
         session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
@@ -633,9 +633,10 @@ def create_NPC(NPC_id):
     elif NPC_id == 'random':
         
         # Basics
-        ent       = create_entity(str(random.choice(session.img.skin_options)))
-        ent.name  = random.choice(['traveler', 'settler', 'stranger'])
-        ent.reach = 20
+        ent        = create_entity(str(random.choice(session.img.skin_options)))
+        ent.name   = random.choice(['traveler', 'settler', 'stranger'])
+        ent.reach  = 20
+        ent.ent_id = ent.name
         
         # Equipment
         items = {

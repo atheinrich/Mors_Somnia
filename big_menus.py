@@ -1027,7 +1027,7 @@ class StatsMenu:
 # Needs updating
 class Textbox:
 
-    def __init__(self, header='', text=''):
+    def __init__(self):
         """ Basic textbox inlay. No controls or anything complicated. """
         
         pyg = session.pyg
@@ -1035,23 +1035,20 @@ class Textbox:
         #########################################################
         # Parameters
         ## Basics
-        self.header = header
-        self.text   = text
+        self.header = None
+        self.text   = None
 
         ## Positions
         self.backdrop_pos = (32, 32)
         self.header_pos   = (37, 32)
-        self.text_pos     = [(62, 54+32*(i+1)) for i in range(len(text))]
+        self.text_pos_fn  = lambda text: [(62, 54+32*(i+1)) for i in range(len(text))]
 
         ## Other
         self.backdrop_size = (32*18, 32*13)
+        self.last_overlay  = None # allows switching back to previous overlay on close
         
         #########################################################
         # Surface initialization
-        ## Headers and text
-        self.header_render = pyg.font.render(header, True, pyg.white)
-        self.text_render   = [pyg.font.render(row, True, pyg.gray) for row in text]
-        
         ## Background
         self.background_fade = background_fade()
         
@@ -1072,6 +1069,7 @@ class Textbox:
         
     def run(self):
         pyg = session.pyg
+        pyg.hud_state = 'off'
 
         for event in pygame.event.get():
 
@@ -1081,9 +1079,19 @@ class Textbox:
                 self.key_BACK()
                 return
 
-        pyg.overlay_state = 'textbox'
         return
 
+    def update(self, header, text, last_overlay=None):
+        pyg = session.pyg
+
+        # Update text surfaces
+        self.header_render = pyg.font.render(header, True, pyg.white)
+        self.text_render   = [pyg.font.render(row, True, pyg.gray) for row in text]
+        self.text_pos      = self.text_pos_fn(text)
+
+        # Cache last overlay
+        self.last_overlay = last_overlay
+        
     def render(self):
         pyg = session.pyg
         
@@ -1100,8 +1108,12 @@ class Textbox:
     def key_BACK(self):
         pyg = session.pyg
 
+        # Restore HUD if not in garden
         if pyg.game_state != 'play_garden':
             pyg.hud_state = 'on'
-        pyg.overlay_state = None
+        
+        # Restore and/or reset overlay
+        pyg.overlay_state = self.last_overlay
+        self.last_overlay = None
 
 ########################################################################################################################################################

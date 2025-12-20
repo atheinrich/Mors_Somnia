@@ -628,6 +628,18 @@ class EffectsSystem:
         else:                    image = session.img.dict['bubbles']['exclamation_bubble']
         session.img.flash_above(session.player_obj.ent, image)
 
+    @register("mysterious_note")
+    def mysterious_note(self, effect_obj=None, **kwargs):
+        pyg = session.pyg
+
+        # Open textbox
+        note_text = ["ξνμλ λξ ξλι ξγθιβξ ξ θθ.", "Ηκρσ σρσ λβνξθι νθ.", "Ψπθ αβνιθ πθμ."]
+        session.textbox.update(header="mysterious note", text=note_text, last_overlay=pyg.overlay_state)
+        pyg.overlay_state = 'textbox'
+
+        # Start quest
+        #session.questlog.load_quest('mysterious_note', session.player_obj.envs['overworld'])
+
 _effects = EffectsSystem(_registry)
 
 ########################################################################################################################################################

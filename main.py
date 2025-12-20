@@ -235,11 +235,6 @@ def game_states():
             session.stats_obj.render()
         
         #########################################################
-        # Add fade
-        if pyg.fade_state != 'off':
-            pyg.update_fade()
-        
-        #########################################################
         # Rendering
         rendering()
         API_updating()
@@ -264,6 +259,7 @@ def rendering():
 
     #########################################################
     # Render HUD (messages, time, health, stamina)
+    ## Toggle with pyg.hud_state in ['on', 'off']
     render_hud()
     for (surface, pos) in pyg.hud_queue:
         pyg.overlays.blit(surface, pos)
@@ -273,6 +269,7 @@ def rendering():
 
     #########################################################
     # Render overlays (menus)
+    ## Toggle with pyg.overlay_state
     for (surface, pos) in pyg.overlay_queue:
         pyg.overlays.blit(surface, pos)
     overlays = pygame.transform.scale(
@@ -280,7 +277,9 @@ def rendering():
     pyg.screen.blit(overlays, (0, 0))
 
     #########################################################
-    # Render fade (intertitles)
+    # Render fade and intertitles; run background functions
+    ## Toggle with pyg.fade_state in ['in', 'out', 'off']
+    pyg.update_fade()
     for (surface, pos) in pyg.fade_queue:
         pyg.fade.blit(surface, pos)
     fade = pygame.transform.scale(

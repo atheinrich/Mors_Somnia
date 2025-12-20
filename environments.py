@@ -7,8 +7,8 @@
 # --- Tiles (env.map)
 # --- Rooms (env.rooms)
 # --- Weather (env.weather)
+# --- Entities (env.ents)
 # -- Questlog (areas[area].questlog)
-#
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -301,7 +301,7 @@ class Environments:
         x, y     = center[0]+1, center[1]
         ent      = create_entity('friend')
         ent.role = 'NPC'
-        item     = create_item('scroll_of_death')
+        item     = create_item('mysterious_note')
         session.items.pick_up(ent, item, silent=True)
         place_object(ent, [x, y], env)
         

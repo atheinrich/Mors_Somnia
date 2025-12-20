@@ -78,5 +78,10 @@
 "enter_hallucination": {
     "name":          "enter hallucination",
     "trigger":       "on_use"
+    },
+
+"mysterious_note": {
+    "name":          "mysterious note",
+    "trigger":       "on_use"
     }
 }
