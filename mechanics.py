@@ -174,7 +174,6 @@ class PlayGame:
     def key_ENTER(self):
         pyg = session.pyg
         ent = session.player_obj.ent
-        print('enter')
 
         if time.time()-self.last_press_time > self.cooldown_time:
             self.last_press_time = time.time()
@@ -900,7 +899,6 @@ class InteractionSystem:
         """ Routes the interaction to the proper channel based on entities and location. """
 
         # Player specific
-        interacted = False
         if ent.role == 'player':
 
             if target.role == 'NPC':
@@ -909,32 +907,30 @@ class InteractionSystem:
                 if target.trade_active() and not target.quest_active():
                     session.trade_obj.trader  = target
                     session.pyg.overlay_state = 'trade'
-                    interacted = True
             
                 # Dialogue
                 current_time = time.time()
                 if current_time - target.last_dialogue_time > 1:
                     target.last_dialogue_time = current_time
-                    session.dialogue.emit_dialogue(target.name)
-                    interacted = True
+                    session.dialogue.emit_dialogue(target.ent_id)
+
+                    # Emit event
+                    states      = session.player_obj.dialogue_states
+                    dialogue_id = states.get(target.ent_id)['dialogue_id']
+                    session.bus.emit(
+                        event_id      = 'entity_dialogue',
+                        ent_id        = ent.ent_id,
+                        target_ent_id = target.ent_id,
+                        dialogue_id   = dialogue_id)
 
             # Attack
             elif target.aggression:
                 self.attack_target(ent, target)
-                interacted = True
             
             # Make them flee
             elif type(target.fear) == int:
                 target.fear += 30
-                interacted = True
-                     
-            # Emit interaction
-            if interacted:
-                session.bus.emit(
-                    event_id      = 'entity_interacted',
-                    ent_id        = ent.name,
-                    target_ent_id = target.name)
-                
+            
         # General
         elif session.pyg.game_state != 'play_garden':
 

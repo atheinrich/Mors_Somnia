@@ -131,8 +131,8 @@ class Environments:
         
         ###############################################################
         # Quests
-        session.questlog.load_quest('garden_build_a_shed', area)
-        session.questlog.load_quest('garden_provide_water', area)
+        session.questlogs.load_quest('garden_build_a_shed', area)
+        session.questlogs.load_quest('garden_provide_water', area)
         
         ###############################################################
         # Pets
@@ -307,7 +307,7 @@ class Environments:
         
         ###############################################################
         # Quests
-        session.questlog.load_quest('tutorial', area)
+        session.questlogs.load_quest('tutorial', area)
         
         # Initial position
         env.player_coordinates = env.center
@@ -568,7 +568,7 @@ class Environments:
         
         ###############################################################
         # Quests
-        session.questlog.load_quest('greet_the_town', area)
+        session.questlogs.load_quest('greet_the_town', area)
             
         return env
 
@@ -806,8 +806,8 @@ class Environments:
         area.envs.areas['bitworld'].permadeath = False
         area.envs.areas['bitworld'].last_env   = None
 
-        area.envs.areas['bitworld'].questlog   = Questlog()
-        area.envs.areas['bitworld'].questlog.load_quest('kill_the_town', area)
+        area.envs.areas['bitworld'].questlog   = {}
+        session.questlogs.load_quest('kill_the_town', area)
 
         area.envs.areas['bitworld'].display_fx = bw_binary
 
@@ -1023,7 +1023,7 @@ class Area:
         self.levels     = {}
         self.last_env   = None
 
-        self.questlog   = []
+        self.questlog   = {}
 
         self.display_fx = None
 

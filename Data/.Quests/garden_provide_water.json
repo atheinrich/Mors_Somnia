@@ -5,6 +5,7 @@
 "description": [
     "These odd beings seem thirsty.",
     "I should pour out some water for them."],
+"hidden":      true,
 
 
 "objectives": [

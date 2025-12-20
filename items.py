@@ -328,11 +328,9 @@ class ItemSystem:
         
         # Effects
         elif item.effect:
-            print(1)
             
             # Use item
             if item.effect.trigger == 'on_use':
-                print(2)
                 item.effect.activate()
         
         elif (ent.role == 'player') and not silent:

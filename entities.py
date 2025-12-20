@@ -56,8 +56,8 @@ class PlayerData:
         from mechanics import place_player
 
         # Initialize entity, womb, and garden
-        self.ent      = self._new_entity()
-        self.envs     = self._new_environments()
+        self.ent  = self._new_entity()
+        self.envs = self._new_environments()
 
         # Dialogue
         self.dialogue_cache  = {}
@@ -76,6 +76,7 @@ class PlayerData:
         ent = create_entity('white_skin')
 
         ent.name        = "player"
+        ent.ent_id      = 'player'
         ent.role        = 'player'
 
         ent.hp          = 10
@@ -283,13 +284,14 @@ class Entity:
 
     # Utility
     def quest_active(self):
-        """ Returns True if the current dialogue set is related to a quest.
-            For this to work, set quest_ as a prefix for all quest IDs.    
+        """ Returns True if the current dialogue is related to a quest.
+            Assumes quest IDs start with 'quest_'.
         """
 
-        if self.name in session.player_obj.dialogue_states.keys():
-            if session.player_obj.dialogue_states[self.name][:6] == 'quest_':
-                return True
+        state = session.player_obj.dialogue_states.get(self.name)
+        if state:
+            dialogue_id = state.get("dialogue_id", "")
+            return dialogue_id.startswith("quest_")
         return False
 
     def trade_active(self):
@@ -485,49 +487,104 @@ class Dialogue:
 
             Parameters
             ----------
-            dialogue_cache  : dict; (key) NPC name → (key) dialogue-set identifier → (value) list of dialogue strings
-            dialogue_states : dict; (key) NPC name → (value) dialogue-set identifier
+            dialogue_cache  : dict; all dialogue
+                (key) NPC name → (key) dialogue ID → (value) list of dialogue strings
+            dialogue_states : dict; current ID;
+                (key) NPC name → (value) current quest ID, current dialogue ID, or dict of dialogue IDs in queue
+        
+            Schematic
+            ---------
+            load quest: {"event_id": "unlock_dialogue", "ent_id": <>, "dialogue_id": <>, "owner_id": <>}
+            trigger:    dialogue.emit_dialogue(target.ent_id)
+            end quest:  {"event_id": "release_dialogue", "ent_id": <>, "owner_id": <>}]}
         """
 
-        session.bus.subscribe('unlock_dialogue', self.unlock_dialogue)
-        session.bus.subscribe('emit_dialogue',   self.emit_dialogue)
+        session.bus.subscribe('unlock_dialogue',  self.unlock_dialogue)
+        session.bus.subscribe('emit_dialogue',    self.emit_dialogue)
+        session.bus.subscribe('release_dialogue', self.release_dialogue)
 
-    def _load_npc(self, ent_id, cache, states):
+    def _load_npc(self, ent_id):
         """ Sends all dialogue to dialogue_cache. """
+
+        cache  = session.player_obj.dialogue_cache
+        states = session.player_obj.dialogue_states
 
         if ent_id not in cache:
             
             cache[ent_id]  = load_json(f'Data/.Dialogue/{ent_id}.json')
-            states[ent_id] = "default"
+            states[ent_id] = {
+                'dialogue_id': 'default', # ex. 'quest_1_dialogue_1'
+                'owner_id':    None,      # ex. 'quest_1'
+                'queue':       {}}        # ex. {'quest_2': 'quest_2_dialogue_1'}
 
-    def _get_dialogue(self, ent_id, cache, states):
+    def _get_dialogue(self, ent_id):
         """ Return a random dialogue string from the character's current set of available options. """
+        
+        cache  = session.player_obj.dialogue_cache
+        states = session.player_obj.dialogue_states
 
-        self._load_npc(ent_id, cache, states)
-        key   = states.get(ent_id)
-        lines = cache[ent_id].get(key)
-        return random.choice(lines)
+        self._load_npc(ent_id)
+        key   = states[ent_id]["dialogue_id"]
+        lines = cache[ent_id].get(key, [])
+        return random.choice(lines) if lines else ""
 
     # Events
-    def unlock_dialogue(self, ent_id, dialogue_id):
-        """ Changes current set of available options. """
+    def unlock_dialogue(self, ent_id, dialogue_id, owner_id):
+        """ Changes current set of available options.
+            Keeps the current quest at the top, and adds new quests to the queue.
+        """
 
-        cache  = session.player_obj.dialogue_cache
         states = session.player_obj.dialogue_states
 
-        self._load_npc(ent_id, cache, states)
-        states[ent_id] = dialogue_id
+        self._load_npc(ent_id)
+        state = states[ent_id]
 
-    def emit_dialogue(self, ent_id, dialogue_id=None):
+        # Make quest the current owner
+        if state['owner_id'] is None:
+            state['owner_id']    = owner_id
+            state['dialogue_id'] = dialogue_id
+            return
+        
+        # Update dialogue for current owner
+        if state['owner_id'] == owner_id:
+            state['dialogue_id'] = dialogue_id
+            return
+
+        # Defer new quest dialogue to the queue
+        # Update existing queue entry without changing its position
+        if owner_id in state['queue']:
+            state['queue'][owner_id] = dialogue_id
+        else:
+            # Add new entry to the end
+            state['queue'][owner_id] = dialogue_id
+
+    def release_dialogue(self, ent_id, owner_id):
+        """ Release dialogue ownership and hand off to the next queued quest if present. """
+
+        state = session.player_obj.dialogue_states.get(ent_id)
+
+        # Remove current owner
+        if state['owner_id'] == owner_id:
+            state['owner_id'] = None
+
+            # Add new owner and remove it from the queue
+            if state['queue']:
+                next_owner_id        = next(iter(state['queue']))
+                state['owner_id']    = next_owner_id
+                state['dialogue_id'] = state['queue'].pop(next_owner_id)
+            
+            # Return to default dialogue
+            else:
+                state['dialogue_id'] = "default"
+
+        # Remove from the queue
+        elif owner_id in state['queue']:
+            state['queue'].pop(owner_id)
+
+    def emit_dialogue(self, ent_id):
         """ Loads dialogue, sends it to the GUI, and plays some audio. """
 
-        cache  = session.player_obj.dialogue_cache
-        states = session.player_obj.dialogue_states
-
-        if dialogue_id:
-            self.unlock_dialogue(ent_id, dialogue_id)
-
-        dialogue = self._get_dialogue(ent_id, cache, states)
+        dialogue = self._get_dialogue(ent_id)
         session.pyg.update_gui(dialogue)
 
         if time.time() - session.aud.last_press_time_speech > session.aud.speech_speed//100:

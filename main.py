@@ -138,7 +138,7 @@ def init():
     session.pets             = PetsSystem()
     session.items            = ItemSystem()
     session.dialogue         = Dialogue()
-    session.questlog         = Questlog()
+    session.questlogs        = Questlog()
     session.effects          = _effects
     session.abilities        = _abilities
 

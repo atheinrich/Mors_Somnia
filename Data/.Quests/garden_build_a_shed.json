@@ -4,6 +4,7 @@
 "category":    "side",
 "description": [
     "Build a shed to rest in."],
+"hidden":      true,
 
 
 "objectives": [

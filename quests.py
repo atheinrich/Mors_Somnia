@@ -218,7 +218,7 @@ class QuestMenu:
     def update_questlog(self):
         """ Updates and sorts main quests and side quests. """
 
-        log = session.player_obj.ent.env.area.questlog
+        log = list(session.player_obj.ent.env.area.questlog.values())
 
         if self.mode == 'log':     self.update_quest_list(log)
         elif self.mode == 'quest': self.update_quest_details(log)
@@ -232,7 +232,9 @@ class QuestMenu:
         self.choices    = []
         self.categories = []
         for quest in log:
-            self.choices.append(quest.name)
+            if quest.completed: checkbox = "☑ "
+            else:               checkbox = "☐ "
+            self.choices.append(checkbox + quest.name)
             self.categories.append(quest.category)
 
         # Construct surfaces
@@ -254,9 +256,10 @@ class QuestMenu:
         # Extract objectives
         self.choices = list(quest.description)
         for objective in quest.objectives:
-            if objective.complete: checkbox = "☑ "
-            else:                  checkbox = "☐ "
-            self.choices.append(checkbox + objective.description)
+            if not objective.hidden:
+                if objective.completed: checkbox = "☑ "
+                else:                  checkbox = "☐ "
+                self.choices.append(checkbox + objective.description)
 
         # Construct surfaces
         self.header            = quest.name.upper()
@@ -376,13 +379,10 @@ class Questlog:
             Defines one function for each event that might be needed for a quest, such as dialogue.
         """
 
-        session.bus.subscribe('entity_interacted', self.on_interact)
-        session.bus.subscribe('item_picked_up',    self.on_item_pickup)
-        session.bus.subscribe('item_placed',       self.on_item_placed)
-        session.bus.subscribe('item_used',         self.on_item_used)
-        session.bus.subscribe('tile_occupied',     self.on_tile_occupied)
+        self.subscribe_events()
 
     def load_quest(self, filename, area):
+        pyg = session.pyg
 
         # Import file
         data = load_json(f'Data/.Quests/{filename}.json')
@@ -393,7 +393,8 @@ class Questlog:
             QuestObjective(
                 event_id    = obj['event_id'],
                 description = obj['description'],
-                conditions  = obj['conditions'],
+                hidden      = obj.get('hidden',      False),
+                conditions  = obj.get('conditions',  {}),
                 on_complete = obj.get('on_complete', []))
 
             for obj in data["objectives"]]
@@ -404,11 +405,15 @@ class Questlog:
             name        = data['name'],
             category    = data['category'],
             description = data['description'],
+            hidden      = data.get('hidden',      False),
             objectives  = objectives,
-            on_load     = data.get('on_load', []),
+            on_load     = data.get('on_load',     []),
             on_complete = data.get('on_complete', []))
         
-        area.questlog.append(quest)
+        area.questlog[data['quest_id']] = quest
+
+        if not data.get('hidden', False):
+            pyg.update_gui(f"Quest added: {data['name']}", pyg.violet)
 
         # Sort alphabetically and by category
         self.sort_quests(area)
@@ -420,47 +425,46 @@ class Questlog:
             else:                        category_order = 1
             return (category_order, quest.name.lower())
 
-        return sorted(area.questlog, key=sort_key)
+        sorted_items = sorted(area.questlog.items(), key=lambda item: sort_key(item[1]))
+        return dict(sorted_items)
 
     # Event functions
-    def on_interact(self, ent_id, target_ent_id):
-        for quest in session.player_obj.ent.env.area.questlog:
-            quest.notify(
-                event_id      = 'entity_interacted',
-                ent_id        = ent_id,
-                target_ent_id = target_ent_id)
+    def subscribe_events(self):
+        """ Identify any signals that a quest might need. """
 
-    def on_item_pickup(self, ent_id, item_id):
-        for quest in session.player_obj.ent.env.area.questlog:
-            quest.notify(
-                event_id = 'item_picked_up',
-                ent_id   = ent_id,
-                item_id  = item_id)
+        # Events checked by quest
+        events = [
+            'complete_quest',  # ex. skip other objectives
+            'entity_dialogue', # ex. talking to Kyrio
+            'item_placed',     # ex. building walls
+            'item_used',       # ex. pouring water
+            'tile_occupied']   # ex. swimming
+        
+        for event in events:
+            session.bus.subscribe(
+                event_id = event,
+                function = lambda *args, x=event, **kwargs: self.on_event(x, *args, **kwargs))
+            
+        # Events checked by questlog
+        session.bus.subscribe('complete_quest', self.complete_quest)
 
-    def on_item_placed(self, ent_id, item_id):
-        for quest in session.player_obj.ent.env.area.questlog:
-            quest.notify(
-                event_id = 'item_placed',
-                ent_id   = ent_id,
-                item_id  = item_id)
+    def on_event(self, event_id, *args, **kwargs):
+        """ Tell each quest that an event has been triggered. """
 
-    def on_item_used(self, ent_id, item_id):
-        for quest in session.player_obj.ent.env.area.questlog:
-            quest.notify(
-                event_id = 'item_used',
-                ent_id   = ent_id,
-                item_id  = item_id)
+        for quest in session.player_obj.ent.env.area.questlog.values():
+            quest.notify(event_id=event_id, *args, **kwargs)
 
-    def on_tile_occupied(self, ent_id, tile_id):
-        for quest in session.player_obj.ent.env.area.questlog:
-            quest.notify(
-                event_id = 'tile_occupied',
-                ent_id   = ent_id,
-                tile_id  = tile_id)
+    def complete_quest(self, quest_id):
+        """ Marks a quest as complete when 'complete_quest' event is emitted. """
+
+        for quest in session.player_obj.ent.env.area.questlog.values():
+            if quest.quest_id == quest_id:
+                quest.completed = True
+                break
 
 class Quest:
 
-    def __init__(self, quest_id, name, category, description, objectives, on_load=None, on_complete=None):
+    def __init__(self, quest_id, name, category, description, hidden, objectives, on_load, on_complete):
         """ Represents a single quest. Holds objectives and checks if all are complete.
         
             Parameters
@@ -479,10 +483,12 @@ class Quest:
         self.name        = name
         self.category    = category
         self.description = description
+        self.hidden      = hidden
 
         # Actions
         self.objectives  = objectives
         self.on_complete = on_complete
+        self.completed   = False
 
         # Initial action
         if on_load:
@@ -492,7 +498,7 @@ class Quest:
 
     def notify(self, event_id, **kwargs):
 
-        if not self.complete():
+        if not self.completed:
 
             # Check if the event satisfies an objective
             for objective in self.objectives:
@@ -500,18 +506,16 @@ class Quest:
                 if satisfied: break
 
             # Check if that completes all objectives
-            if self.complete():
+            if all(obj.completed for obj in self.objectives):
+                self.completed = True
                 if self.on_complete:
                     for action in self.on_complete:
                         kwargs = {k: v for k, v in action.items() if (k != 'event_id')}
                         session.bus.emit(action.get('event_id'), **kwargs)
 
-    def complete(self):
-        return all(obj.complete for obj in self.objectives)
-
 class QuestObjective:
 
-    def __init__(self, event_id, description, conditions, on_complete=None):
+    def __init__(self, event_id, description, conditions, hidden, on_complete):
         """ Represents a single objective. Sets which events to listen for.
             Allows a function (on_complete) to run directly and/or emits a completion flag.
 
@@ -527,17 +531,18 @@ class QuestObjective:
 
         self.event_id    = event_id
         self.description = description
+        self.hidden      = hidden
 
-        self.conditions  = conditions or {}
+        self.conditions  = conditions
 
         self.on_complete = on_complete
-        self.complete    = False
+        self.completed   = False
 
     def check_event(self, event_id, **kwargs):
         """ Checks if the event matches the objective. If so, checks if all conditions match. """
 
         # Ignore events if the objective is complete
-        if self.complete:
+        if self.completed:
             return False
 
         # Ignore events that don't match the objective
@@ -559,8 +564,8 @@ class QuestObjective:
                     return False
 
         # All conditions passed
-        self.complete = True
-        print(f'{event_id} \t {self.event_id} \t {self.description}')
+        self.completed = True
+        print(f'completed! \t {event_id} \t {self.event_id} \t {self.description}')
 
         # Trigger any objective-level completion actions by emitting them to the bus
         if self.on_complete:

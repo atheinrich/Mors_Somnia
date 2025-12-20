@@ -638,7 +638,9 @@ class EffectsSystem:
         pyg.overlay_state = 'textbox'
 
         # Start quest
-        #session.questlog.load_quest('mysterious_note', session.player_obj.envs['overworld'])
+        area = session.player_obj.envs.areas['overworld']
+        if 'mysterious_note' not in area.questlog.keys():
+            session.questlogs.load_quest('mysterious_note', area)
 
 _effects = EffectsSystem(_registry)
 
