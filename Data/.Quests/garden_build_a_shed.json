@@ -1,47 +1,70 @@
 {
-"quest_id":    "garden_build_a_shed",
-"name":        "Build a Shed",
-"category":    "side",
-"description": [
-    "Build a shed to rest in."],
-"hidden":      true,
-
-
-"objectives": [
-
-
-   {"event_id":    "item_placed",
-    "description": "Build a wall for your shed.",
-    "conditions": {
-
-        "tile_id": "wall",
-        "ent_id":  "player"}},
-
-
-
-   {"event_id":    "item_placed",
-    "description": "Build a floor for your shed.",
-    "conditions": {
-
-        "tile_id": "floor",
-        "ent_id":  "player"}},
-
-
-
-   {"event_id":    "item_placed",
-    "description": "Add some furniture to your shed.",
-    "conditions": {
-        
-        "item_id": "furniture",
-        "ent_id":  "player"}}
+"quest_id": "garden_build_a_shed",
+"name": "Build a Shed",
+"category": "side",
+"hidden": true,
+"description":
+[
+    "Build a shed to rest in."
 ],
 
 
-"on_complete": [
+"progression":
+[
+    {
+        "start":
+        [
+            "build_wall",
+            "build_floor",
+            "build_furniture"            
+        ]
+    }
+],
 
 
-   {"event_id":   "reward",
-    "action_id":  "add_discovery",
-    "item_id":    "frond"}
+"objectives":
+[
+    {
+        "obj_id": "build_wall",
+        "event_id": "item_placed",
+        "description": "Build a wall for your shed.",
+        "conditions":
+        {
+            "tile_id": "wall",
+            "ent_id": "player"
+        }
+    },
+    {
+        "obj_id": "build_floor",
+        "event_id": "item_placed",
+        "description": "Build a floor for your shed.",
+        "conditions":
+        {
+            "tile_id": "floor",
+            "ent_id": "player"
+        }
+    },
+    {
+        "obj_id": "build_furniture",
+        "event_id": "item_placed",
+        "description": "Add some furniture to your shed.",
+        "conditions":
+        {
+            "item_id": "furniture",
+            "ent_id": "player"
+        }
+    }
+],
 
-]}
+
+"on_complete":
+[
+    {
+        "event_id":   "reward",
+        "action_id":  "add_discovery",
+        "item_id":    "frond"
+    }
+]
+
+
+}

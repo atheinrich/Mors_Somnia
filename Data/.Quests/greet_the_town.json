@@ -1,200 +1,249 @@
 {
-"quest_id":    "greet_the_town",
-"name":        "Greet the Town",
-"category":    "main",
-"description": [
-   "I should get to know my neighbors."],
-"hidden":      true,
-
-
-
-   
-"on_load": [
-   
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Kyrio",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"},
-
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Kapno",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"},
-
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Erasti",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"},
-
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Merci",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"},
-
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Oxi",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"},
-
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Aya",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"},
-
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Zung",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"},
-
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "Lilao",
-    "dialogue_id": "quest_greet_the_town",
-    "owner_id":    "greet_the_town"}
-
+"quest_id": "greet_the_town",
+"name":     "Greet the Town",
+"category": "main",
+"hidden":    true,
+"description":
+[
+   "I should get to know my neighbors."
 ],
 
 
-"objectives": [
+"progression":
+[
+    {
+        "start":
+        [
+            "greet_Kyrio",
+            "greet_Kapno",
+            "greet_Erasti",
+            "greet_Merci",
+            "greet_Oxi",
+            "greet_Aya",
+            "greet_Zung",
+            "greet_Lilao"
+        ]
+    }
+],
 
 
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Kyrio.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Kyrio",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+"on_load":
+[
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Kyrio",
-        "owner_id":    "greet_the_town"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Kapno.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Kapno",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    },
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Kapno",
-        "owner_id":    "greet_the_town"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Erasti.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Erasti",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    },
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Erasti",
-        "owner_id":    "greet_the_town"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Merci.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Merci",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    },
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Merci",
-        "owner_id":    "greet_the_town"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Oxi.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Oxi",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    },
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Oxi",
-        "owner_id":    "greet_the_town"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Aya.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Aya",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    },
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Aya",
-        "owner_id":    "greet_the_town"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Zung.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Zung",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    },
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Zung",
-        "owner_id":    "greet_the_town"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Talk to Lilao.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "Lilao",
-        "dialogue_id":   "quest_greet_the_town"},
-        
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    },
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "Lilao",
-        "owner_id":    "greet_the_town"}]}
-
+        "dialogue_id": "quest_greet_the_town",
+        "owner_id":    "greet_the_town"
+    }
 ],
 
-"on_complete": [
 
-   {"event_id":    "emit_message",
-    "text":        "Guess that's everyone!"}
+"objectives":
+[
+    {
+        "obj_id":      "greet_Kyrio",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Kyrio.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Kyrio",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Kyrio",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    },
+    {
+        "obj_id":      "greet_Kapno",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Kapno.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Kapno",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Kapno",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    },
+    {
+        "obj_id":      "greet_Erasti",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Erasti.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Erasti",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Erasti",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    },
+    {
+        "obj_id":      "greet_Merci",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Merci.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Merci",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Merci",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    },
+    {
+        "obj_id":      "greet_Oxi",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Oxi.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Oxi",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Oxi",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    },
+    {
+        "obj_id":      "greet_Aya",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Aya.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Aya",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Aya",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    },
+    {
+        "obj_id":      "greet_Zung",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Zung.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Zung",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Zung",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    },
+    {
+        "obj_id":      "greet_Lilao",
+        "event_id":    "entity_dialogue",
+        "description": "Talk to Lilao.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "Lilao",
+            "dialogue_id":   "quest_greet_the_town"
+        },
+        "on_complete":
+        [
+            {
+                "event_id": "release_dialogue",
+                "ent_id":   "Lilao",
+                "owner_id": "greet_the_town"
+            }
+        ]
+    }
+],
 
-]}
+
+"on_complete":
+[
+    {
+        "event_id": "emit_message",
+        "text":     "Guess that's everyone!"
+    }
+]
+
+
+}

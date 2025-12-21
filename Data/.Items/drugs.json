@@ -1,39 +1,39 @@
 {
-"needle": {
+"needle_drug": {
     "name":      "needle",
-    "img_IDs":   ["drugs", "needle"],
+    "img_IDs":   ["drugs", "needle_drug"],
     "cost":      25
     },
 
-"skin": {
+"skin_drug": {
     "name":      "skin",
-    "img_IDs":   ["drugs", "skin"],
+    "img_IDs":   ["drugs", "skin_drug"],
     "cost":      10
     },
 
-"teeth": {
+"teeth_drug": {
     "name":      "teeth",
-    "img_IDs":   ["drugs", "teeth"],
+    "img_IDs":   ["drugs", "teeth_drug"],
     "cost":      10
     },
 
-"bowl": {
+"bowl_drug": {
     "name":      "bowl",
-    "img_IDs":   ["drugs", "bowl"],
+    "img_IDs":   ["drugs", "bowl_drug"],
     "cost":      30,
     "effect_id": "enter_bitworld"
     },
 
-"plant": {
+"plant_drug": {
     "name":      "plant",
-    "img_IDs":   ["drugs", "plant"],
+    "img_IDs":   ["drugs", "plant_drug"],
     "cost":      10,
     "effect_id": "boost_stamina"
     },
 
-"bubbles": {
+"bubbles_drug": {
     "name":      "bubbles",
-    "img_IDs":   ["drugs", "bubbles"],
+    "img_IDs":   ["drugs", "bubbles_drug"],
     "cost":      50
     }
 }

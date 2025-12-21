@@ -1,3 +1,0 @@
-# AI
-- Improve path-finding.
--- abilities (find_water), etc.

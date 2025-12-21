@@ -210,17 +210,16 @@ class ItemSystem:
             # Select random location
             vicinity = list(get_vicinity(item.owner).values())
             tile     = random.choice(vicinity)
+            vicinity.remove(tile)
 
             # Check if location is blocked
-            recursion_stop = 8
             while is_blocked(tile=tile) or tile.item:
                 tile = random.choice(vicinity)
-                recursion_stop -= 1
+                vicinity.remove(tile)
 
                 # Place under entity if no other locations are free
-                if not recursion_stop:
-                    if not tile.item:
-                        tile = item.owner.tile
+                if not vicinity:
+                    tile = item.owner.tile
                     break
 
         # Prevent dropping items over other items
@@ -319,8 +318,8 @@ class ItemSystem:
 
         session.bus.emit(
             event_id = 'item_used',
-            ent_id   = ent.name,
-            item_id  = item.name)
+            ent_id   = ent.ent_id,
+            item_id  = item.item_id)
         
         # Equip
         if item.equippable:
@@ -354,6 +353,13 @@ class ItemSystem:
             # Give to recipient
             self.pick_up(recipient, item)
             recipient.wallet -= item.cost
+
+            # Emit event
+            session.bus.emit(
+                event_id      = 'item_traded',
+                ent_id        = recipient.ent_id,
+                target_ent_id = owner.ent_id,
+                item_id       = item.item_id)
         
         else:
             pyg.update_gui("Not enough cash!", color=pyg.red)
@@ -367,7 +373,6 @@ def create_item(item_id):
         effect : bool or Effect object; True=default, False=None, effect=custom """
     
     # Create object
-    item_id   = item_id.replace(" ", "_")
     json_data = copy.deepcopy(item_dicts[item_id])
     item      = Item(item_id, **json_data)
 

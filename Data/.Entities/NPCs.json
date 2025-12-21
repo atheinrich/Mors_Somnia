@@ -96,9 +96,7 @@
         "shovel",
         "chain_dress",
         "green_clothes",
-        "yellow_dress",
-        "bubbles",
-        "plant"]
+        "yellow_dress"]
     },
 
 "Oxi": {
@@ -113,12 +111,10 @@
     "armor":       null,
     "trade_times": [12, 13, 14, 15, 0, 1],
     "inv":         [
-        "needle",
-        "skin",
-        "teeth",
-        "bowl",
-        "plant",
-        "bubbles"]
+        "needle_drug",
+        "skin_drug",
+        "teeth_drug",
+        "bowl_drug"]
     },
 
 "Aya": {

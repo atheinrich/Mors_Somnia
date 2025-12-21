@@ -2,121 +2,156 @@
 "quest_id":    "tutorial",
 "name":        "Tutorial",
 "category":    "main",
-"description": [
+"hidden":      true,
+"description":
+[
    "Talk to the friend."
 ],
-"hidden":      true,
 
 
-"on_load": [
-   
-   {"event_id":    "unlock_dialogue",
-    "ent_id":      "friend",
-    "dialogue_id": "quest_tutorial_1",
-    "owner_id":    "tutorial"}
-
+"progression":
+[
+    {
+        "start":
+        [
+            "friend_1",
+            "friend_2",
+            "friend_3",
+            "friend_4",
+            "friend_5"
+        ]
+    }
 ],
 
 
-"objectives": [
-
-   {"event_id":    "entity_dialogue",
-    "description": "Learn how to interact.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "friend",
-        "dialogue_id":   "quest_tutorial_1"},
-
-    "on_complete": [
-
-       {"event_id":    "unlock_dialogue",
+"on_load":
+[
+    {
+        "event_id":    "unlock_dialogue",
         "ent_id":      "friend",
-        "dialogue_id": "quest_tutorial_2",
-        "owner_id":    "tutorial"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Learn about the main menu.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "friend",
-        "dialogue_id":   "quest_tutorial_2"},
-
-    "on_complete": [
-
-       {"event_id":    "unlock_dialogue",
-        "ent_id":      "friend",
-        "dialogue_id": "quest_tutorial_3",
-        "owner_id":    "tutorial"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Learn how to zoom in and out.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "friend",
-        "dialogue_id":   "quest_tutorial_3"},
-
-    "on_complete": [
-
-       {"event_id":    "unlock_dialogue",
-        "ent_id":      "friend",
-        "dialogue_id": "quest_tutorial_4",
-        "owner_id":    "tutorial"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Learn about the inventory.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "friend",
-        "dialogue_id":   "quest_tutorial_4"},
-
-    "on_complete": [
-
-       {"event_id":    "unlock_dialogue",
-        "ent_id":      "friend",
-        "dialogue_id": "quest_tutorial_5",
-        "owner_id":    "tutorial"}]},
-
-
-
-
-   {"event_id":    "entity_dialogue",
-    "description": "Learn about ability combos.",
-    "conditions": {
-
-        "ent_id":        "player",
-        "target_ent_id": "friend",
-        "dialogue_id":   "quest_tutorial_5"},
-
-    "on_complete": [
-
-       {"event_id":    "release_dialogue",
-        "ent_id":      "friend",
-        "owner_id":    "tutorial"}]}
-
+        "dialogue_id": "quest_tutorial_1",
+        "owner_id":    "tutorial"
+    }
 ],
 
 
-"on_complete": [
+"objectives":
+[
+    {
+        "obj_id":      "friend_1",
+        "event_id":    "entity_dialogue",
+        "description": "Learn how to interact.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "friend",
+            "dialogue_id":   "quest_tutorial_1"
+        },
+        "on_complete":
+        [
+            {
+                "event_id":    "unlock_dialogue",
+                "ent_id":      "friend",
+                "dialogue_id": "quest_tutorial_2",
+                "owner_id":    "tutorial"
+            }
+        ]
+    },
+    {
+        "obj_id":      "friend_2",
+        "event_id":    "entity_dialogue",
+        "description": "Learn about the main menu.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "friend",
+            "dialogue_id":   "quest_tutorial_2"
+        },
+        "on_complete":
+        [
+            {
+                "event_id":    "unlock_dialogue",
+                "ent_id":      "friend",
+                "dialogue_id": "quest_tutorial_3",
+                "owner_id":    "tutorial"
+            }
+        ]
+    },
+    {
+        "obj_id":      "friend_3",
+        "event_id":    "entity_dialogue",
+        "description": "Learn how to zoom in and out.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "friend",
+            "dialogue_id":   "quest_tutorial_3"
+        },
+        "on_complete":
+        [
+            {
+                "event_id":    "unlock_dialogue",
+                "ent_id":      "friend",
+                "dialogue_id": "quest_tutorial_4",
+                "owner_id":    "tutorial"
+            }
+        ]
+    },
+    {
+        "obj_id":      "friend_4",
+        "event_id":    "entity_dialogue",
+        "description": "Learn about the inventory.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "friend",
+            "dialogue_id":   "quest_tutorial_4"
+        },
+        "on_complete":
+        [
+            {
+                "event_id":    "unlock_dialogue",
+                "ent_id":      "friend",
+                "dialogue_id": "quest_tutorial_5",
+                "owner_id":    "tutorial"
+            }
+        ]
+    },
+    {
+        "obj_id":      "friend_5",
+        "event_id":    "entity_dialogue",
+        "description": "Learn about ability combos.",
+        "conditions":
+        {
+            "ent_id":        "player",
+            "target_ent_id": "friend",
+            "dialogue_id":   "quest_tutorial_5"
+        },
+        "on_complete":
+        [
+            {
+                "event_id":    "release_dialogue",
+                "ent_id":      "friend",
+                "owner_id":    "tutorial"
+            }
+        ]
+    }
+],
 
-   {"event_id":    "emit_message",
-    "text":        "Check out Options in the Main Menu!"},
 
-   {"event_id":    "drop_item",
-    "ent_id":      "friend",
-    "item_id":     "mysterious_note",
-    "vicinity":    true}
+"on_complete":
+[
+    {
+        "event_id":    "emit_message",
+        "text":        "Check out Options in the Main Menu!"
+    },
+    {
+        "event_id":    "drop_item",
+        "ent_id":      "friend",
+        "item_id":     "mysterious_note",
+        "vicinity":    true
+    }
+]
 
-]}
+
+}

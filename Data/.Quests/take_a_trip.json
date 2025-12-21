@@ -1,0 +1,82 @@
+{
+"quest_id": "take_a_trip",
+"name": "Take a Trip",
+"category": "main",
+"description":
+[
+   "That mysterious note... what could it be?",
+   "Oxi might have something that could help.",
+   "I should find him at night."
+],
+
+
+"progression":
+[
+    {
+        "start":
+        [
+            "buy_drug"
+        ]
+    },
+    {
+        "on_complete": "buy_drug",
+        "add":
+        [
+            "talk_to_Oxi",
+            "use_drug"
+        ]
+    }
+],
+
+
+"objectives":
+[
+    {
+        "obj_id": "buy_drug",
+        "event_id": "item_purchased",
+        "description": "Buy something from Oxi.",
+        "conditions":
+        {
+            "ent_id": "Oxi",
+            "target_ent_id": "player",
+            "item_id":
+            [
+                "needle_drug",
+                "skin_drug",
+                "teeth_drug",
+                "bowl_drug"
+            ]
+        }
+    },
+    {
+        "obj_id": "talk_to_Oxi",
+        "event_id": "entity_dialogue",
+        "description": "Talk to Oxi.",
+        "hidden": true,
+        "conditions":
+        {
+            "ent_id": "player",
+            "target_ent_id": "Oxi",
+            "dialogue_id": "quest_take_a_trip"
+        }
+    },
+    {
+        "obj_id": "use_drug",
+        "event_id": "item_used",
+        "description": "Try the drug.",
+        "conditions":
+        {
+            "ent_id": "player",
+            "item_id":
+            [
+                "needle_drug",
+                "skin_drug",
+                "teeth_drug",
+                "bowl_drug"
+            ]
+        }
+    }
+]
+
+
+}

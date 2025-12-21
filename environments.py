@@ -23,7 +23,6 @@ import pygame
 
 ## Local
 import session
-from quests import Questlog
 from entities import create_entity, create_NPC
 from items import create_item
 from data_management import tile_dicts
@@ -506,7 +505,7 @@ class Environments:
             ['forest', 'tree',   100],
             ['forest', 'leafy',  10],
             ['forest', 'blades', 1],
-            ['desert', 'plant',  1000],
+            ['desert', 'plant_drug',  1000],
             ['desert', 'enter_cave',  100]]
         entities = [
             ['forest', 'red_radish', 50,   [None]],
@@ -763,7 +762,7 @@ class Environments:
         ###############################################################
         # Generate items and entities
         items = [
-            ['land', 'jug of blood',   10],
+            ['land', 'jug_of_blood',   10],
             ['land', 'bones',          50],
             ['land', 'sword',          1000//env.lvl_num],
             ['land', 'iron_shield',    1000//env.lvl_num],

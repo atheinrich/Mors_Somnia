@@ -132,27 +132,27 @@
 
 
 
-"needle": {
+"needle_drug": {
     "group": "drugs"
     },
 
-"skin": {
+"skin_drug": {
     "group": "drugs"
     },
 
-"teeth": {
+"teeth_drug": {
     "group": "drugs"
     },
 
-"bowl": {
+"bowl_drug": {
     "group": "drugs"
     },
 
-"plant": {
+"plant_drug": {
     "group": "drugs"
     },
 
-"bubbles": {
+"bubbles_drug": {
     "group": "drugs"
     },
 

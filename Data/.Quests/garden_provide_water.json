@@ -1,49 +1,71 @@
 {
-"quest_id":    "garden_provide_water",
-"name":        "Lead a Root to Water",
-"category":    "side",
-"description": [
+"quest_id": "garden_provide_water",
+"name": "Lead a Root to Water",
+"category": "side",
+"hidden": true,
+"description":
+[
     "These odd beings seem thirsty.",
-    "I should pour out some water for them."],
-"hidden":      true,
-
-
-"objectives": [
-
-
-   {"event_id":    "item_used",
-    "description": "Pour out some water.",
-    "conditions": {
-
-        "item_id": "jug of water",
-        "ent_id":  "player"}},
-
-
-   {"event_id":    "tile_occupied",
-    "description": "Let it take a drink.",
-    "conditions": {
-
-        "tile_id": "water",
-        "ent_id":  [
-            "radish",
-            "red_radish",
-            "orange_radish",
-            "purple_radish"]}}
-
-
+    "I should pour out some water for them."
 ],
 
-"on_complete": [
+
+"progression":
+[
+    {
+        "start":
+        [
+            "pour_water",
+            "lead_to_water"
+        ]
+    }
+],
 
 
-   {"event_id":   "reward",
-    "action_id":  "add_item",
-    "item_id":    "bubbles"},
+"objectives":
+[
+    {
+        "obj_id": "pour_water",
+        "event_id": "item_used",
+        "description": "Pour out some water.",
+        "conditions":
+        {
+            "item_id": "jug of water",
+            "ent_id": "player"
+        }
+    },
+    {
+        "obj_id": "lead_to_water",
+        "event_id": "tile_occupied",
+        "description": "Let it take a drink.",
+        "conditions":
+        {
+            "tile_id": "water",
+            "ent_id":
+            [
+                "radish",
+                "red_radish",
+                "orange_radish",
+                "purple_radish"
+            ]
+        }
+    }
+],
 
 
-   {"event_id":   "quest",
-    "action_id":  "add_quest",
-    "item_id":    "garden_provide_food"}
+"on_complete":
+[
+    {
+        "event_id": "reward",
+        "action_id": "add_item",
+        "item_id": "bubbles_drug"
+    },
+    {
+        "event_id": "quest",
+        "action_id": "add_quest",
+        "item_id": "garden_provide_food"
+    }
+]
 
 
-]}
+}

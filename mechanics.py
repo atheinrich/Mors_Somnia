@@ -583,7 +583,7 @@ class MovementSystem:
 
                     session.bus.emit(
                         event_id = 'tile_occupied',
-                        ent_id   = ent.name,
+                        ent_id   = ent.ent_id,
                         tile_id  = ent.tile.img_IDs[1])
                 
             #########################################################
@@ -672,7 +672,7 @@ class MovementSystem:
         else:
             dX = 0
             dY = random.randint(-1, 1) * pyg.tile_width
-        
+
         # Move
         if self.distance_new(ent, [ent.X+dX, ent.Y+dY], [ent.X0, ent.Y0]) <= ent.reach:
 
@@ -787,7 +787,7 @@ class MovementSystem:
 
             session.bus.emit(
                 event_id = 'tile_occupied',
-                ent_id   = ent.name,
+                ent_id   = ent.ent_id,
                 tile_id  = 'water')
         
             if session.stats_obj.pet_moods['anger']:
@@ -1017,7 +1017,7 @@ class InteractionSystem:
 
         session.bus.emit(
             event_id = 'entity_death',
-            ent_id   = ent.name)
+            ent_id   = ent.ent_id)
         
         #########################################################
         # Player death

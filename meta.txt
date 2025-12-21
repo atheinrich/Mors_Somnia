@@ -1,0 +1,23 @@
+####################################################################################
+# Events
+## Makes action (usually emitted by a quest)
+'complete_quest'   # mark quest as complete and skip all remaining objectives
+'load_quest'       # load a quest by ID
+'unlock_dialogue'  # add or queues dialogue for a given entity
+'emit_dialogue'    # manually trigger an entity's dialogue
+'release_dialogue' # remove all queued dialogue for a given entity and quest
+'drop_item'        # removes an item from an entity's inventory and places it nearby
+
+## Notifies of action (usually detected by a quest)
+'entity_dialogue'  # an entity with dialogue has been spoken to by the player
+'item_placed'      # an item has been placed by the player from the catalog
+'item_used'        # at item has been used by the player from the inventory
+'tile_occupied'    # an entity has occupied a tile
+
+####################################################################################
+# TO-DO
+## AI
+- Improve path-finding.
+-- abilities (find_water), etc.
+
+####################################################################################
