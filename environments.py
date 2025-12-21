@@ -502,16 +502,16 @@ class Environments:
         ###############################################################
         # Generate items and entities
         items = [
-            ['forest', 'tree',   100],
-            ['forest', 'leafy',  10],
-            ['forest', 'blades', 1],
-            ['desert', 'plant_drug',  1000],
-            ['desert', 'enter_cave',  100]]
+            ['forest', 'tree',       100],
+            ['forest', 'leafy',      10],
+            ['forest', 'blades',     1],
+            ['desert', 'plant_drug', 1000],
+            ['desert', 'enter_cave', 100]]
         entities = [
             ['forest', 'red_radish', 50,   [None]],
-            ['wet',    'frog_ent',       500,  [None]],
-            ['forest', 'grass_ent',      1000, [None]],
-            ['desert', 'rock_ent',       50,   [None]]]
+            ['wet',    'frog_ent',   500,  [None]],
+            ['forest', 'grass_ent',  1000, [None]],
+            ['desert', 'rock_ent',   50,   [None]]]
         place_objects(env, items, entities)
         
         env.center               = [door_x, door_y]
@@ -647,16 +647,14 @@ class Environments:
         ###############################################################
         # Generate items and entities
         items = [
-            ['dungeon', 'jug of cement',  100],
+            ['dungeon', 'jug_of_cement',  100],
             ['dungeon', 'shovel',         500],
             ['dungeon', 'bones',          500],
             ['dungeon', 'sword',          1000//env.lvl_num]]
-        
         entities = [
             ['dungeon', 'red_radish',     1000, [None]],
-            ['dungeon', 'red_ent',            300,  [None]],
-            ['dungeon', 'round3_ent',         50,   [None]]]
-        
+            ['dungeon', 'red_ent',        300,  [None]],
+            ['dungeon', 'round3_ent',     50,   [None]]]
         place_objects(env, items, entities)
         
         # Place player in first room
@@ -762,19 +760,17 @@ class Environments:
         ###############################################################
         # Generate items and entities
         items = [
-            ['land', 'jug_of_blood',   10],
-            ['land', 'bones',          50],
-            ['land', 'sword',          1000//env.lvl_num],
-            ['land', 'iron_shield',    1000//env.lvl_num],
-            ['land', 'skeleton',       500],
-            ['land', 'fire',           100]]
-        
+            ['land', 'jug_of_blood', 10],
+            ['land', 'bones',        50],
+            ['land', 'sword',        1000//env.lvl_num],
+            ['land', 'iron_shield',  1000//env.lvl_num],
+            ['land', 'skeleton',     500],
+            ['land', 'fire',         100]]
         entities = [
-            ['land', 'plant_ent',          300,   [None]],
-            ['land', 'eye_ent',            15,    [None]],
-            ['land', 'red_radish',     1000,  [None]],
-            ['land', 'round1_ent',         30,    [None]]]
-        
+            ['land', 'plant_ent',    300,   [None]],
+            ['land', 'eye_ent',      15,    [None]],
+            ['land', 'red_radish',   1000,  [None]],
+            ['land', 'round1_ent',   30,    [None]]]
         place_objects(env, items, entities)
         
         # Place player in first room
@@ -966,13 +962,11 @@ class Environments:
             ['any', 'cup_shroom',     25],
             ['any', 'sword',          1000//env.lvl_num],
             ['any', 'yellow_dress',   200]]
-        
         entities = [
             ['any', 'triangle_ent',       200,  [None]],
             ['any', 'tentacles_ent',      100,  [None]],
             ['any', 'red_radish',     1000, [None]],
             ['any', 'star_ent',           150,  [None]]]
-        
         place_objects(env, items, entities)
         
         # Change player into tentacles

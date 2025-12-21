@@ -191,10 +191,11 @@ class ItemSystem:
             if (ent.role == 'player') and (not silent):
                 pyg.update_gui("Picked up " + item.name + ".", pyg.dark_gray)
 
-    def drop(self, item, vicinity):
+    def drop(self, item, vicinity=False):
         """ Unequips item before dropping if the object has the Equipment component, then adds it to the map at
             the player's coordinates and removes it from their inventory.
-            Dropped items are only saved if dropped in home. """
+            Dropped items are only saved if dropped in home.
+        """
 
         # Set location
         tile = None

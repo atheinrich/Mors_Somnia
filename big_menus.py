@@ -280,7 +280,7 @@ class MainMenu:
         
         #########################################################
         # Place player in world
-        elif not pyg.startup_toggle:
+        else:
 
             place_player(
                 ent = ent,

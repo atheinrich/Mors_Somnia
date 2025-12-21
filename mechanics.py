@@ -905,7 +905,7 @@ class InteractionSystem:
 
                 # Trading
                 if target.trade_active() and not target.quest_active():
-                    session.trade_obj.trader  = target
+                    session.trade_obj.columns[1].ent = target
                     session.pyg.overlay_state = 'trade'
             
                 # Dialogue
@@ -1164,10 +1164,9 @@ def place_player(ent, env, loc):
         session.abilities.toggle_abilities(ent)
 
         # Set time and date
-        if ent.env.name in ['home', 'overworld', 'cave']:
-            if ent.last_env.name in ['home', 'overworld', 'cave']:
-                ent.env.env_date = ent.last_env.env_date
-                ent.env.env_time = ent.last_env.env_time
+        if ent.env.area == ent.last_env.area:
+            ent.env.env_date = ent.last_env.env_date
+            ent.env.env_time = ent.last_env.env_time
 
         # Notify environment of player position
         ent.env.ents.append(ent)

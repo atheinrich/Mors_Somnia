@@ -17,7 +17,7 @@ from   pygame.locals import *
 import session
 
 ########################################################################################################################################################
-# Standard objects and parameters
+# General tools
 def cursor(locked):
     cursor_surface = pygame.Surface((32, 32), pygame.SRCALPHA)
     fill_surface   = pygame.Surface((32, 32), pygame.SRCALPHA)
@@ -46,55 +46,72 @@ def background_fade():
     background_surface.fill((0, 0, 0, 50))
     return background_surface
 
+def find_visible(inv):
+    """ Rebuilds a dictionary of visible inventory items, grouped by category. """
+
+    inventory_dicts = {}
+
+    for category, items in inv.items():
+        visible_items = [item for item in items if not item.hidden]
+        if visible_items:
+            inventory_dicts[category] = visible_items
+
+    return inventory_dicts
+
 ########################################################################################################################################################
 # Classes
-class InventoryMenu:
-    
+class ColumnData:
+
+    def __init__(self, col_id):
+
+        # Identifier
+        self.col_id         = col_id
+        self.active         = False
+
+        # Item management
+        self.ent            = None    # owner
+        self.inv            = None    # set of objects to display
+        self.categories     = []      # cache of category names with visible items
+        self.items          = []      # cache of actual item objects in current category
+
+        # Choice management
+        self.category_index = 0       # which category is active
+        self.item_index     = 0       # index of highlighted item corresponding to self.items
+        self.offset         = 0       # difference of first item in category and first currently shown
+
+        # Positions
+        self.cursor_pos     = [0, 0]  # second value is altered
+        self.detail_pos     = [0, 0]  # second value is altered
+        self.index_history  = {}      # position memory; category_name: [item_index, offset]
+
+class ColumnMenu:
+
     # Core
     def __init__(self):
-        """ Manages inventory menu on the side of the screen. Allows item activation. """
-
-        #########################################################
+        
         # Parameters
-        ## Item management
-        self.categories = []         # cache of category names with visible items
-        self.items      = []         # cache of actual item objects in current category
+        self.locked  = False # allows the player to active highlighted item while moving
+        self.detail  = True  # toggles item names
 
-        ## Choice management
-        self.category_index = 0      # which category is active
-        self.item_index     = 0      # index of highlighted item corresponding to self.items
-        self.offset         = 0      # difference of first item in category and first currently shown
-
-        ## Positions
-        self.cursor_pos    = [0, 32] # second value is altered
-        self.index_history = {}      # position memory; category_name: [item_index, offset]
-
-        ## Other
-        self.locked = False          # allows the player to active highlighted item while moving
-        self.detail = True           # toggles item names
-
-        #########################################################
-        # Surface initialization
-        ## Background
+        # Background
         self.background_fade = background_fade()
 
-        ## Cursor
+        # Cursor
         self.cursor,        self.cursor_fill        = cursor(locked=False)
         self.locked_cursor, self.locked_cursor_fill = cursor(locked=True)
 
     def run(self):
+        pyg = session.pyg
         
         #########################################################
         # Initialize
         ## Update dictionaries and create cursors
-        self.update_data()
+        for data in self.columns:
+            self.update_data(data)
 
         ## Set navigation speed
         session.effects.movement_speed(toggle=False, custom=0)
         
-        ## Define shorthand
-        pyg = session.pyg
-
         ## Wait for input
         for event in pygame.event.get():
             
@@ -108,22 +125,16 @@ class InventoryMenu:
                     self.key_DOWN()
                 
                 #########################################################
-                # Switch section
+                # Switch category
                 elif event.key in pyg.key_LEFT:
                     self.key_LEFT()
                 elif event.key in pyg.key_RIGHT:
                     self.key_RIGHT()
                 
-                #########################################################
-                # Open catalog
-                elif event.key in pyg.key_DEV:
-                    self.key_DEV()
-                    return
-            
             elif event.type == KEYUP:
 
                 #########################################################
-                # Activate or drop item
+                # Select an item
                 if event.key in pyg.key_ENTER:
                     self.key_ENTER()
                 elif event.key in pyg.key_PERIOD:
@@ -135,9 +146,11 @@ class InventoryMenu:
                     self.key_GUI()
                 
                 #########################################################
-                # Toggle selection lock
+                # Switch columns
                 elif event.key in pyg.key_INV:
                     self.key_INV()
+                elif event.key in pyg.key_DEV:
+                    self.key_DEV()
                 
                 #########################################################
                 # Return to game
@@ -157,86 +170,187 @@ class InventoryMenu:
 
         #########################################################
         # Renders
-        ## Background and cursor fill
-        if self.locked:
-            pyg.overlay_queue.append([self.locked_cursor_fill, self.cursor_pos])
-        else:
+        ## Background fade
+        if not self.locked:
             pyg.overlay_queue.append([self.background_fade, (0, 0)])
-            pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
-
+        
         ## Color
         session.img.average()
-        c     = session.img.left_correct
-        color = pygame.Color(c, c, c)
+        L = session.img.left_correct
+        R = session.img.right_correct
         
-        ## Items
-        for i in range(self.offset, min(len(self.items), self.offset + 12)):
+        if self.active != self.columns[0]: L = L-20
+        else:                              R = R-20
 
-            # Select next item and position
-            item = self.items[i]
-            Y    = 32 + (i - self.offset) * 32
+        for data in self.columns:
+            if data.cursor_pos[0] == 0: color = pygame.Color(L, L, L)
+            else:                       color = pygame.Color(R, R, R)
             
-            # Render details
-            if self.detail:
-                Y_detail = int(Y)
+            ## Cursor fill
+            if self.active == data:
+                if self.locked: pyg.overlay_queue.append([self.locked_cursor_fill, data.cursor_pos])
+                else:           pyg.overlay_queue.append([self.cursor_fill, data.cursor_pos])
+
+            ## Items
+            for i in range(data.offset, min(len(data.items), data.offset + 12)):
+
+                # Select next item and position
+                item = data.items[i]
+                Y    = pyg.tile_height + (i - data.offset) * pyg.tile_height
                 
-                # Set text
-                if item:
-                    if item.equipped: detail = '(equipped)'
-                    else:             detail = ''
-                else:                 detail = ''
+                # Render details
+                if self.detail:
+                    Y_detail = int(Y)
+                    
+                    # Create text surfaces
+                    for text in self.details(item):
+                        surface = pyg.minifont.render(text, True, color)
+                        pyg.overlay_queue.append([
+                            surface,
+                            (data.detail_pos(surface)[0], Y_detail)])
+                        Y_detail += 12
                 
-                # Create text surfaces
-                text_lines = [item.name, detail]
-                for text in text_lines:
-                    surface = pyg.minifont.render(text, True, color)
-                    pyg.overlay_queue.append([surface, (40, Y_detail)])
-                    Y_detail += 12
-            
-            # Send to queue
-            img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
-            pyg.overlay_queue.append([img, (0, Y)])
-        
-        ## Cursor border
-        if self.locked: pyg.overlay_queue.append([self.locked_cursor, self.cursor_pos])
-        else:           pyg.overlay_queue.append([self.cursor,        self.cursor_pos])
+                # Send to queue
+                img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
+                pyg.overlay_queue.append([img, (data.cursor_pos[0], Y)])
+                
+            ## Cursor border
+            if self.active == data:
+                if self.locked: pyg.overlay_queue.append([self.locked_cursor, data.cursor_pos])
+                else:           pyg.overlay_queue.append([self.cursor,        data.cursor_pos])
 
     # Keys
     def key_UP(self):
         if not self.locked:
-            self.item_index = (self.item_index - 1) % len(self.items)
-            self.update_data()
+            self.active.item_index = (self.active.item_index - 1) % len(self.active.items)
+            self.update_data(self.active)
         else:
             session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
     def key_DOWN(self):
         if not self.locked:
-            self.item_index = (self.item_index + 1) % len(self.items)
-            self.update_data()
+            self.active.item_index = (self.active.item_index + 1) % len(self.active.items)
+            self.update_data(self.active)
         else:
             session.movement.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
     def key_LEFT(self):
         if not self.locked:
-            self.update_category(-1)
-            self.update_data()
+            self.update_category(self.active, -1)
+            self.update_data(self.active)
         else:
             session.movement.move(session.player_obj.ent, -session.pyg.tile_height, 0)
 
     def key_RIGHT(self):
         if not self.locked:
-            self.update_category(1)
-            self.update_data()
+            self.update_category(self.active, 1)
+            self.update_data(self.active)
         else:
             session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
     def key_BACK(self):
-        self.locked = False
         session.pyg.overlay_state = None
 
     def key_GUI(self):
         self.detail = not self.detail
 
+    # Tools
+    def update_data(self, data):
+        """ Updates current category and its items. """
+
+        # Update entity and select inventory
+        if data.col_id in ['inv', 'dev']:
+            data.ent = session.player_obj.ent
+            if data.col_id == 'inv':
+                data.inv = session.player_obj.ent.inventory
+            else:
+                data.inv = session.player_obj.ent.discoveries
+        else:
+            data.inv = data.ent.inventory
+        
+        # Update inventory cache
+        inventory_dicts = find_visible(data.inv)
+        data.categories = list(inventory_dicts.keys())
+
+        # Normalize the current category to the number of categories with visible items
+        data.category_index %= len(data.categories)
+
+        # Update item cache for selected category
+        data.items = inventory_dicts[data.categories[data.category_index]]
+
+        self._update_offset(data)
+
+    def _update_offset(self, data):
+        """ Updates which items are currently shown. """
+
+        pyg = session.pyg
+
+        max_visible = 12
+
+        # Show all visible items
+        if len(data.items) <= max_visible:
+            data.offset = 0
+        
+        # Show current 12 items, set by offset
+        else:
+
+            # Shift current 12 items up by one; cursor is at the top (not the ultimate top)
+            if data.item_index < data.offset:
+                data.offset -= 1
+
+            # Shift current 12 items down by one; cursor is at the bottom (not the ultimate bottom)
+            elif data.item_index >= data.offset + max_visible:
+                data.offset += 1
+
+        # Update cursor
+        data.cursor_pos[1] = (data.item_index - data.offset + 1) * pyg.tile_height
+
+        # Keep cursor in the desired bounds
+        if data.cursor_pos[1] == 0:
+            data.cursor_pos[1] = pyg.tile_height
+        elif data.cursor_pos[1] == (max_visible + 1) * pyg.tile_height:
+            data.cursor_pos[1] += pyg.tile_height * 2
+        elif data.cursor_pos[1] == (max_visible + 2) * pyg.tile_height:
+            data.cursor_pos[1] += pyg.tile_height * 2
+
+    def update_category(self, data, direction):
+        """ Manages history for cursor position in each category. """
+        
+        # Check for new categories
+        for filled_category in data.categories:
+            if filled_category not in data.index_history.keys():
+                data.index_history[filled_category] = [0, 0]
+    
+        # Remove old categories
+        for saved_category in list(data.index_history.keys()):
+            if saved_category not in data.categories:
+                del data.index_history[saved_category]
+
+        # Save last
+        last_category                     = data.categories[data.category_index]
+        data.index_history[last_category] = [data.item_index, data.offset]
+
+        # Load new
+        data.category_index = (data.category_index + direction) % len(data.categories)
+        new_category        = data.categories[data.category_index]
+        data.item_index, data.offset = data.index_history[new_category]
+
+class InventoryMenu(ColumnMenu):
+    
+    # Core
+    def __init__(self):
+        """ Manages inventory menu on the side of the screen. Allows item activation. """
+
+        super().__init__()
+
+        self.columns = [ColumnData('inv')]
+        self.columns[0].cursor_pos = [0, 32]
+        self.columns[0].detail_pos = lambda surface: [40, 32]
+        self.active  = self.columns[0]
+
+        self.details = lambda item: [item.name] + ["(equipped)" if item.equipped else ""]
+
+    # Keys
     def key_INV(self):
         self.locked = not self.locked
 
@@ -245,289 +359,31 @@ class InventoryMenu:
         session.pyg.overlay_state = 'dev'
 
     def key_ENTER(self):
-        session.items.use(self.items[self.item_index])
-        self.update_data()
+        session.items.use(self.active.items[self.active.item_index])
+        self.update_data(self.active)
 
     def key_PERIOD(self):
-        session.items.drop(self.items[self.item_index])
-        self.update_data()
+        session.items.drop(self.active.items[self.active.item_index])
+        self.update_data(self.active)
 
-    # Tools
-    def update_data(self):
-        """ Updates current category and its items. """
-        
-        # Update inventory cache
-        inventory_dicts = self._find_visible()
-        self.categories = list(inventory_dicts.keys())
-        
-        # Close the menu if no items are visible
-        if not self.categories:
-            session.pyg.overlay_state = None
-            return
-
-        # Normalize the current category to the number of categories with visible items
-        self.category_index %= len(self.categories)
-
-        # Update item cache for selected category
-        self.items = inventory_dicts[self.categories[self.category_index]]
-
-        self._update_offset()
-
-    def _find_visible(self):
-        """ Rebuilds a dictionary of visible inventory items, grouped by category. """
-
-        inv = session.player_obj.ent.inventory
-
-        inventory_dicts = {}
-
-        for category, items in inv.items():
-            visible_items = [item for item in items if not item.hidden]
-            if visible_items:
-                inventory_dicts[category] = visible_items
-
-        return inventory_dicts
-
-    def _update_offset(self):
-        """ Updates which items are currently shown. """
-
-        max_visible = 12
-
-        # Show all visible items
-        if len(self.items) <= max_visible:
-            self.offset = 0
-        
-        # Show current 12 items, set by offset
-        else:
-
-            # Shift current 12 items up by one; cursor is at the top (not the ultimate top)
-            if self.item_index < self.offset:
-                self.offset -= 1 #= self.item_index
-
-            # Shift current 12 items down by one; cursor is at the bottom (not the ultimate bottom)
-            elif self.item_index >= self.offset + max_visible:
-                self.offset += 1 # self.item_index - max_visible + 1
-
-        # Update cursor
-        self.cursor_pos[1] = (self.item_index - self.offset + 1) * 32
-
-        # Keep cursor in the desired bounds
-        if self.cursor_pos[1] == 0:
-            self.cursor_pos[1] = 32
-        elif self.cursor_pos[1] == (max_visible + 1) * 32:
-            self.cursor_pos[1] += 64
-        elif self.cursor_pos[1] == (max_visible + 2) * 32:
-            self.cursor_pos[1] += 64
-
-    def update_category(self, direction):
-        """ Manages history for cursor position in each category. """
-        
-        # Check for new categories
-        for filled_category in self.categories:
-            if filled_category not in self.index_history.keys():
-                self.index_history[filled_category] = [0, 0]
-    
-        # Remove old categories
-        for saved_category in list(self.index_history.keys()):
-            if saved_category not in self.categories:
-                del self.index_history[saved_category]
-
-        # Save last
-        last_category = self.categories[self.category_index]
-        self.index_history[last_category] = [self.item_index, self.offset]
-
-        # Load new
-        self.category_index = (self.category_index + direction) % len(self.categories)
-        new_category        = self.categories[self.category_index]
-        self.item_index, self.offset = self.index_history[new_category]
-
-class CatalogMenu:
+class CatalogMenu(ColumnMenu):
     
     # Core
     def __init__(self):
         """ Manages inventory menu on the side of the screen. Allows item activation. """
-        
-        pyg   = session.pyg
 
-        #########################################################
-        # Parameters
-        ## Item management
-        self.categories = []         # cache of category names with visible items
-        self.items      = []         # cache of actual item objects in current category
-
-        ## Choice management
-        self.category_index = 0      # which category is active
-        self.item_index     = 0      # index of highlighted item corresponding to self.items
-        self.offset         = 0      # difference of first item in category and first currently shown
-
-        ## Positions
-        self.right_pos     = pyg.screen_width - pyg.tile_width
-        self.cursor_pos    = [self.right_pos, 32] # second value is altered
-        self.index_history = {}      # position memory; category_name: [item_index, offset]
-
-        ## Other
-        self.locked = False          # allows the player to active highlighted item while moving
-        self.detail = True           # toggles item names
-
-        #########################################################
-        # Surface initialization
-        ## Background
-        self.background_fade = background_fade()
-
-        ## Cursor
-        self.cursor,        self.cursor_fill        = cursor(locked=False)
-        self.locked_cursor, self.locked_cursor_fill = cursor(locked=True)
-
-    def run(self):
-        
-        #########################################################
-        # Initialize
-        ## Update dictionaries and create cursors
-        self.update_data()
-
-        ## Set navigation speed
-        session.effects.movement_speed(toggle=False, custom=0)
-        
-        ## Define shorthand
         pyg = session.pyg
+        super().__init__()
 
-        ## Wait for input
-        for event in pygame.event.get():
-            
-            if event.type == KEYDOWN:
-            
-                #########################################################
-                # Move cursor
-                if event.key in pyg.key_UP:
-                    self.key_UP()
-                elif event.key in pyg.key_DOWN:
-                    self.key_DOWN()
-                
-                #########################################################
-                # Switch section
-                elif event.key in pyg.key_LEFT:
-                    self.key_LEFT()
-                elif event.key in pyg.key_RIGHT:
-                    self.key_RIGHT()
-                
-                #########################################################
-                # Open inventory
-                elif event.key in pyg.key_INV:
-                    self.key_INV()
-                    return
-                
-            elif event.type == KEYUP:
+        right_side = pyg.screen_width - pyg.tile_width
+        self.columns = [ColumnData('dev')]
+        self.columns[0].cursor_pos = [right_side, 32]
+        self.columns[0].detail_pos = lambda surface: [right_side-surface.get_width()-8, 0]
+        self.active  = self.columns[0]
 
-                #########################################################
-                # Activate or drop item
-                if event.key in pyg.key_ENTER:
-                    self.key_ENTER()
-                elif event.key in pyg.key_PERIOD:
-                    self.key_PERIOD()
-                
-                #########################################################
-                # Toggle details
-                elif event.key in pyg.key_GUI:
-                    self.key_GUI()
-                
-                #########################################################
-                # Toggle selection lock
-                elif event.key in pyg.key_DEV:
-                    self.key_DEV()
-                
-                #########################################################
-                # Return to game
-                elif event.key in pyg.key_BACK:
-                    self.key_BACK()
-                    return
-        
-        pyg.overlay_state = 'dev'
-        return
-
-    def render(self):
-
-        #########################################################
-        # Adjust GUI
-        pyg = session.pyg
-        pyg.msg_height = 1
-        pyg.update_gui()
-
-        #########################################################
-        # Renders
-        ## Background and cursor fill
-        if self.locked:
-            pyg.overlay_queue.append([self.locked_cursor_fill, self.cursor_pos])
-        else:
-            pyg.overlay_queue.append([self.background_fade, (0, 0)])
-            pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
-
-        ## Color
-        session.img.average()
-        c     = session.img.left_correct
-        color = pygame.Color(c, c, c)
-        
-        ## Items
-        for i in range(self.offset, min(len(self.items), self.offset + 12)):
-
-            # Select next item and position
-            item = self.items[i]
-            Y    = 32 + (i - self.offset) * 32
-            
-            # Render details
-            if self.detail:
-                Y_detail = int(Y)
-                
-                # Create text surfaces
-                text_lines = [item.name]
-                for text in text_lines:
-                    surface = pyg.minifont.render(text, True, color)
-                    width   = surface.get_width()
-                    pyg.overlay_queue.append([surface, (self.right_pos-width-8, Y_detail)])
-                    Y_detail += 12
-            
-            # Send to queue
-            img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
-            pyg.overlay_queue.append([img, (self.right_pos, Y)])
-        
-        ## Cursor border
-        if self.locked: pyg.overlay_queue.append([self.locked_cursor, self.cursor_pos])
-        else:           pyg.overlay_queue.append([self.cursor,        self.cursor_pos])
+        self.details = lambda item: [item.name]
 
     # Keys
-    def key_UP(self):
-        if not self.locked:
-            self.item_index = (self.item_index - 1) % len(self.items)
-            self.update_data()
-        else:
-            session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
-
-    def key_DOWN(self):
-        if not self.locked:
-            self.item_index = (self.item_index + 1) % len(self.items)
-            self.update_data()
-        else:
-            session.movement.move(session.player_obj.ent, 0, session.pyg.tile_height)
-
-    def key_LEFT(self):
-        if not self.locked:
-            self.update_category(-1)
-            self.update_data()
-        else:
-            session.movement.move(session.player_obj.ent, -session.pyg.tile_height, 0)
-
-    def key_RIGHT(self):
-        if not self.locked:
-            self.update_category(1)
-            self.update_data()
-        else:
-            session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
-
-    def key_BACK(self):
-        self.locked = False
-        session.pyg.overlay_state = None
-
-    def key_GUI(self):
-        self.detail = not self.detail
-
     def key_DEV(self):
         self.locked = not self.locked
 
@@ -539,13 +395,13 @@ class CatalogMenu:
         from environments import place_object
         pyg = session.pyg
 
-        item = copy.deepcopy(self.items[self.item_index])
+        item = copy.deepcopy(self.active.items[self.active.item_index])
         
         # Note location
         x = int(session.player_obj.ent.X / pyg.tile_width)
         y = int(session.player_obj.ent.Y / pyg.tile_height)
         
-        direction = session.player_obj.ent.direction
+        direction = self.active.ent.direction
         if direction == 'front':   y += 1
         elif direction == 'back':  y -= 1
         elif direction == 'right': x += 1
@@ -554,99 +410,47 @@ class CatalogMenu:
         place_object(
             obj = item,
             loc = [x, y],
-            env = session.player_obj.ent.env)        
+            env = self.active.ent.env)        
 
     def key_PERIOD(self):
-        session.items.drop(self.items[self.item_index])
-        self.update_data()
+        session.items.drop(self.active.items[self.active.item_index])
+        self.update_data(self.active)
 
-    # Tools
-    def update_data(self):
-        """ Updates current category and its items. """
-        
-        # Update inventory cache
-        inventory_dicts = self._find_visible()
-        self.categories = list(inventory_dicts.keys())
-        
-        # Close the menu if no items are visible
-        if not self.categories:
-            session.pyg.overlay_state = None
-            return
-
-        # Normalize the current category to the number of categories with visible items
-        self.category_index %= len(self.categories)
-
-        # Update item cache for selected category
-        self.items = inventory_dicts[self.categories[self.category_index]]
-
-        self._update_offset()
-
-    def _find_visible(self):
-        """ Rebuilds a dictionary of visible inventory items, grouped by category. """
-
-        inv = session.player_obj.ent.discoveries
-
-        inventory_dicts = {}
-
-        for category, items in inv.items():
-            visible_items = [item for item in items if not item.hidden]
-            if visible_items:
-                inventory_dicts[category] = visible_items
-
-        return inventory_dicts
-
-    def _update_offset(self):
-        """ Updates which items are currently shown. """
-
-        max_visible = 12
-
-        # Show all visible items
-        if len(self.items) <= max_visible:
-            self.offset = 0
-        
-        # Show current 12 items, set by offset
-        else:
-
-            # Shift current 12 items up by one; cursor is at the top (not the ultimate top)
-            if self.item_index < self.offset:
-                self.offset -= 1 #= self.item_index
-
-            # Shift current 12 items down by one; cursor is at the bottom (not the ultimate bottom)
-            elif self.item_index >= self.offset + max_visible:
-                self.offset += 1 # self.item_index - max_visible + 1
-
-        # Update cursor
-        self.cursor_pos[1] = (self.item_index - self.offset + 1) * 32
-
-        # Keep cursor in the desired bounds
-        if self.cursor_pos[1] == 0:
-            self.cursor_pos[1] = 32
-        elif self.cursor_pos[1] == (max_visible + 1) * 32:
-            self.cursor_pos[1] += 64
-        elif self.cursor_pos[1] == (max_visible + 2) * 32:
-            self.cursor_pos[1] += 64
-
-    def update_category(self, direction):
-        """ Manages history for cursor position in each category. """
-        
-        # Check for new categories
-        for filled_category in self.categories:
-            if filled_category not in self.index_history.keys():
-                self.index_history[filled_category] = [0, 0]
+class ExchangeMenu(ColumnMenu):
     
-        # Remove old categories
-        for saved_category in list(self.index_history.keys()):
-            if saved_category not in self.categories:
-                del self.index_history[saved_category]
+    # Core
+    def __init__(self):
+        """ Manages inventory menu on the side of the screen. Allows item activation. """
+        
+        pyg = session.pyg
+        super().__init__()
 
-        # Save last
-        last_category = self.categories[self.category_index]
-        self.index_history[last_category] = [self.item_index, self.offset]
+        right_side = pyg.screen_width - pyg.tile_width
+        self.columns = [ColumnData('inv'), ColumnData('trade')]
+        self.columns[0].cursor_pos = [0, 32]
+        self.columns[0].detail_pos = lambda surface: [40, 0]
+        self.columns[1].cursor_pos = [right_side, 32]
+        self.columns[1].detail_pos = lambda surface: [right_side-surface.get_width()-8, 0]
+        self.active = self.columns[0]
+    
+        self.details = lambda item: [item.name, f"⨋ {item.cost}"]
 
-        # Load new
-        self.category_index = (self.category_index + direction) % len(self.categories)
-        new_category        = self.categories[self.category_index]
-        self.item_index, self.offset = self.index_history[new_category]
+    # Keys
+    def key_INV(self):
+        if self.active == self.columns[1]:
+            self.active = self.columns[0]
+
+    def key_DEV(self):
+        if self.active == self.columns[0]:
+            self.active = self.columns[1]
+
+    def key_ENTER(self):
+        for data in self.columns:
+            if self.active == data: owner = data.ent
+            else:                   recipient = data.ent
+        
+        session.items.trade(self.active.items[self.active.item_index], owner, recipient)
+        self.update_data(self.active)
 
 class AbilitiesMenu:
     
@@ -722,7 +526,8 @@ class AbilitiesMenu:
         pyg.update_gui()
         
         session.img.average()
-        color = pygame.Color(session.img.left_correct, session.img.left_correct, session.img.left_correct)
+        c = session.img.left_correct
+        color = pygame.Color(c, c, c)
         
         # Renders menu to update cursor location
         Y = 32
@@ -781,309 +586,5 @@ class AbilitiesMenu:
                     ability.last_press_time = float(time.time())
                     ability.activate()
                     return
-
-class ExchangeMenu:
-    
-    # Core
-    def __init__(self):
-        """ Manages inventory menu on the side of the screen. Allows item activation. """
-        
-        pyg = session.pyg
-
-        #########################################################
-        # Parameters
-        ## Inventory selector
-        self.inv_toggle = 0              # toggles player (0) and NPC (1) inventories
-        self.trader     = None           # entity to trade with 
-
-        ## Item management
-        self.categories = [[], []]       # cache of category names with visible items
-        self.items      = [[], []]       # cache of actual item objects in current category
-
-        ## Choice management
-        self.category_indices = [0, 0]   # which category is active
-        self.item_indices     = [0, 0]   # index of highlighted item corresponding to self.items
-        self.offsets          = [0, 0]   # difference of first item in category and first currently shown
-
-        ## Positions
-        self.cursor_pos       = [0, 32]  # second value is altered
-        self.index_histories  = [{}, {}] # position memory; category_name: [item_index, offset]
-
-        ## Other
-        self.detail = True               # toggles item names
-        self.X_img = [
-            0,
-            pyg.screen_width - pyg.tile_width]
-        self.X_details = lambda surface: [
-            40, 
-            self.X_img[1] - surface.get_width() - 8]
-        
-        #########################################################
-        # Surface initialization
-        ## Background
-        self.background_fade = background_fade()
-
-        ## Cursor
-        self.cursor, self.cursor_fill = cursor(locked=False)
-
-    def run(self):
-        
-        #########################################################
-        # Initialize
-        ## Update dictionaries and create cursors
-        self.update_data()
-
-        ## Set navigation speed
-        session.effects.movement_speed(toggle=False, custom=0)
-        
-        ## Define shorthand
-        pyg = session.pyg
-
-        ## Wait for input
-        for event in pygame.event.get():
-            
-            if event.type == KEYDOWN:
-            
-                #########################################################
-                # Move cursor
-                if event.key in pyg.key_UP:
-                    self.key_UP()
-                elif event.key in pyg.key_DOWN:
-                    self.key_DOWN()
-                
-                #########################################################
-                # Switch section
-                elif event.key in pyg.key_LEFT:
-                    self.key_LEFT()
-                elif event.key in pyg.key_RIGHT:
-                    self.key_RIGHT()
-                
-                #########################################################
-                # Switch inventories
-                elif event.key in pyg.key_INV:
-                    self.key_INV()
-                elif event.key in pyg.key_DEV:
-                    self.key_DEV()
-                
-            elif event.type == KEYUP:
-
-                #########################################################
-                # Trade an item
-                if event.key in pyg.key_ENTER:
-                    self.key_ENTER()
-                
-                #########################################################
-                # Toggle details
-                elif event.key in pyg.key_GUI:
-                    self.key_GUI()
-                
-                #########################################################
-                # Return to game
-                elif event.key in pyg.key_BACK:
-                    self.key_BACK()
-                    return
-        
-        pyg.overlay_state = 'trade'
-        return
-
-    def render(self):
-
-        #########################################################
-        # Adjust GUI
-        pyg = session.pyg
-        pyg.msg_height = 1
-        pyg.update_gui()
-
-        #########################################################
-        # Renders
-        ## Background and cursor fill
-        pyg.overlay_queue.append([self.background_fade, (0, 0)])
-        pyg.overlay_queue.append([self.cursor_fill, self.cursor_pos])
-
-        ## Color
-        session.img.average()
-        L = session.img.left_correct
-        R = session.img.right_correct
-        
-        if self.inv_toggle: L = L-20
-        else:               R = R-20
-
-        colors = [
-            pygame.Color(L, L, L),
-            pygame.Color(R, R, R)]
-
-        ## Items
-        for i in range(len(self.items)):
-            for j in range(self.offsets[i], min(len(self.items[i]), self.offsets[i] + 12)):
-
-                # Select next item and position
-                item = self.items[i][j]
-                Y    = 32 + (j - self.offsets[i]) * 32
-                
-                # Render details
-                if self.detail:
-                    Y_detail = int(Y)
-                    
-                    # Set text
-                    if item: detail = f"⨋ {item.cost}"
-                    else:    detail = ''
-                    
-                    # Create text surfaces
-                    text_lines = [item.name, detail]
-                    for text in text_lines:
-                        surface = pyg.minifont.render(text, True, colors[i])
-                        pyg.overlay_queue.append([
-                            surface,
-                            (self.X_details(surface)[i], Y_detail)])
-                        Y_detail += 12
-                
-                # Send to queue
-                img = session.img.dict[item.img_IDs[0]][item.img_IDs[1]]
-                pyg.overlay_queue.append([img, (self.X_img[i], Y)])
-            
-        ## Cursor border
-        pyg.overlay_queue.append([self.cursor, self.cursor_pos])
-
-    # Keys
-    def key_UP(self):
-        i = self.inv_toggle
-        self.item_indices[i] = (self.item_indices[i] - 1) % len(self.items[i])
-        self.update_data()
-
-    def key_DOWN(self):
-        i = self.inv_toggle
-        self.item_indices[i] = (self.item_indices[i] + 1) % len(self.items[i])
-        self.update_data()
-
-    def key_LEFT(self):
-        self.update_category(-1)
-        self.update_data()
-
-    def key_RIGHT(self):
-        self.update_category(1)
-        self.update_data()
-
-    def key_BACK(self):
-        session.pyg.overlay_state = None
-
-    def key_GUI(self):
-        self.detail = not self.detail
-
-    def key_INV(self):
-        self.inv_toggle = 0
-        self.cursor_pos[0] = self.X_img[self.inv_toggle]
-
-    def key_DEV(self):
-        self.inv_toggle = 1
-        self.cursor_pos[0] = self.X_img[self.inv_toggle]
-
-    def key_ENTER(self):
-        i = self.inv_toggle
-        if i:
-            owner     = self.trader
-            recipient = session.player_obj.ent
-        else:
-            owner     = session.player_obj.ent
-            recipient = self.trader
-        
-        session.items.trade(self.items[i][self.item_indices[i]], owner, recipient)
-        self.update_data()
-
-    # Tools
-    def update_data(self):
-        """ Updates current category and its items. """
-
-        ents = [
-            session.player_obj.ent,
-            self.trader]
-        
-        for i in range(len(ents)):
-
-            # Update inventory cache
-            inventory_dicts    = self._find_visible(ents[i])
-            self.categories[i] = list(inventory_dicts.keys())
-            
-            # Close the menu if no items are visible
-            if (i == 1) and (not self.categories[i]):
-                session.pyg.overlay_state = None
-                return
-
-            # Normalize the current category to the number of categories with visible items
-            self.category_indices[i] %= len(self.categories[i])
-
-            # Update item cache for selected category
-            self.items[i] = inventory_dicts[self.categories[i][self.category_indices[i]]]
-
-            self._update_offset()
-
-    def _find_visible(self, ent):
-        """ Rebuilds a dictionary of visible inventory items, grouped by category. """
-
-        inv = ent.inventory
-
-        inventory_dicts = {}
-
-        for category, items in inv.items():
-            visible_items = [item for item in items if not item.hidden]
-            if visible_items:
-                inventory_dicts[category] = visible_items
-
-        return inventory_dicts
-
-    def _update_offset(self):
-        """ Updates which items are currently shown. """
-
-        max_visible = 12
-        i = self.inv_toggle
-
-        # Show all visible items
-        if len(self.items[i]) <= max_visible:
-            self.offsets[i] = 0
-        
-        # Show current 12 items, set by offset
-        else:
-
-            # Shift current 12 items up by one; cursor is at the top (not the ultimate top)
-            if self.item_indices[i] < self.offsets[i]:
-                self.offsets[i] = self.item_indices[i]
-
-            # Shift current 12 items down by one; cursor is at the bottom (not the ultimate bottom)
-            elif self.item_indices[i] >= self.offsets[i] + max_visible:
-                self.offsets[i] = self.item_indices[i] - max_visible + 1
-
-        # Update cursor
-        self.cursor_pos[1] = (self.item_indices[i] - self.offsets[i] + 1) * 32
-
-        # Keep cursor in the desired bounds
-        if self.cursor_pos[1] == 0:
-            self.cursor_pos[1] = 32
-        elif self.cursor_pos[1] == (max_visible + 1) * 32:
-            self.cursor_pos[1] += 64
-        elif self.cursor_pos[1] == (max_visible + 2) * 32:
-            self.cursor_pos[1] += 64
-
-    def update_category(self, direction):
-        """ Manages history for cursor position in each category. """
-        
-        i = self.inv_toggle
-
-        # Check for new categories
-        for filled_category in self.categories[i]:
-            if filled_category not in self.index_histories[i].keys():
-                self.index_histories[i][filled_category] = [0, 0]
-    
-        # Remove old categories
-        for saved_category in list(self.index_histories[i].keys()):
-            if saved_category not in self.categories[i]:
-                del self.index_histories[i][saved_category]
-
-        # Save last
-        last_category = self.categories[i][self.category_indices[i]]
-        self.index_histories[i][last_category] = [self.item_indices[i], self.offsets[i]]
-
-        # Load new
-        self.category_indices[i] = (self.category_indices[i] + direction) % len(self.categories[i])
-        new_category             = self.categories[i][self.category_indices[i]]
-        self.item_indices[i], self.offsets[i] = self.index_histories[i][new_category]
 
 ########################################################################################################################################################
