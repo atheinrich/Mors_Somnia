@@ -55,6 +55,26 @@
     "group": "decor"
     },
 
+"pink_flower": {
+    "group": "decor"
+    },
+
+"potted_grass": {
+    "group": "decor"
+    },
+
+"potted_cactus": {
+    "group": "decor"
+    },
+
+"round_cactus": {
+    "group": "decor"
+    },
+
+"tall_cactus": {
+    "group": "decor"
+    },
+
 
 
 
@@ -339,11 +359,18 @@
     "group": "walls"
     },
 
+
+
+
 "tiled": {
     "group": "roofs"
     },
 
 "slats": {
+    "group": "roofs"
+    },
+
+"bars": {
     "group": "roofs"
     },
 

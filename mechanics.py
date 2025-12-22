@@ -790,12 +790,14 @@ class MovementSystem:
                 ent_id   = ent.ent_id,
                 tile_id  = 'water')
         
-            if session.stats_obj.pet_moods['anger']:
-                session.stats_obj.pet_moods['anger'] -= 1
+            env = session.player_obj.envs.areas['underworld']['garden']
+
+            if env.pet_moods['anger']:
+                env.pet_moods['anger'] -= 1
                 image = session.img.dict['bubbles']['water_bubble']
             
             else:
-                session.stats_obj.pet_moods['boredom'] += 1
+                env.pet_moods['boredom'] += 1
                 image = session.img.dict['bubbles']['dots_bubble']
             
         session.img.flash_above(ent, image)

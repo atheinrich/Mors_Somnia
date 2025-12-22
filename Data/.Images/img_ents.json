@@ -14,32 +14,15 @@
     "height": 32
     },
 
+
+
+    
 "friend": {
     "slot": null,
     "height": 32
     },
 
 "eye_ent": {
-    "slot": null,
-    "height": 32
-    },
-
-"eyes_ent": {
-    "slot": null,
-    "height": 32
-    },
-
-"troll_ent": {
-    "slot": null,
-    "height": 32
-    },
-
-"triangle_ent": {
-    "slot": null,
-    "height": 32
-    },
-
-"purple_ent": {
     "slot": null,
     "height": 32
     },
@@ -104,22 +87,7 @@
     "height": 20
     },
 
-"star_ent": {
-    "slot": null,
-    "height": 32
-    },
-
 "plant_ent": {
-    "slot": null,
-    "height": 32
-    },
-
-"snake_ent": {
-    "slot": null,
-    "height": 32
-    },
-
-"buzz_ent": {
     "slot": null,
     "height": 32
     },
@@ -129,10 +97,21 @@
     "height": 32
     },
 
+"red_radish_tall": {
+    "slot": null,
+    "height": 32
+    },
+
+
+
+
 "green_blob": {
     "slot": null,
     "height": 32
     },
+
+
+
 
 "null": {
     "slot": null,

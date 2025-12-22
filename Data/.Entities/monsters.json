@@ -37,82 +37,6 @@
     "reach":       1000
     },
 
-"eyes_ent": {
-    "name":        "eyes",
-    "img_IDs":     ["eyes_ent", "front"],
-    "habitat":     "land",
-    "ability_ids": [],
-
-    "exp":         35,
-    "hp":          20,
-    "max_hp":      4,
-    "attack":      0,
-    "defense":     100,
-
-    "follow":      true,
-    "lethargy":    5,
-    "miss_rate":   10,
-    "aggression":  10,
-    "reach":       1000
-    },
-
-"troll_ent": {
-    "name":        "troll",
-    "img_IDs":     ["troll_ent", "front"],
-    "habitat":     "land",
-    "ability_ids": [],
-
-    "exp":         100,
-    "hp":          30,
-    "max_hp":      8,
-    "attack":      2,
-    "defense":     100,
-
-    "follow":      true,
-    "lethargy":    5,
-    "miss_rate":   10,
-    "aggression":  10,
-    "reach":       1000
-    },
-
-"triangle_ent": {
-    "name":        "triangle",
-    "img_IDs":     ["triangle_ent", "front"],
-    "habitat":     "land",
-    "ability_ids": [],
-
-    "exp":         100,
-    "hp":          25,
-    "max_hp":      15,
-    "attack":      10,
-    "defense":     100,
-
-    "follow":      true,
-    "lethargy":    1,
-    "miss_rate":   5,
-    "aggression":  100,
-    "reach":       1000
-    },
-
-"purple_ent": {
-    "name":        "purple",
-    "img_IDs":     ["purple_ent", "front"],
-    "habitat":     "land",
-    "ability_ids": [],
-
-    "exp":         500,
-    "hp":          50,
-    "max_hp":      15,
-    "attack":      5,
-    "defense":     100,
-
-    "follow":      true,
-    "lethargy":    5,
-    "miss_rate":   10,
-    "aggression":  10,
-    "reach":       1000
-    },
-
 "tentacles_ent": {
     "name":        "tentacles",
     "img_IDs":     ["tentacles_ent", "front"],
@@ -344,41 +268,23 @@
     "reach":       1000
     },
 
-"snake_ent": {
-    "name":        "snake",
-    "img_IDs":     ["snake_ent", "front"],
+"red_radish_tall": {
+    "name":        "red radish",
+    "img_IDs":     ["red_radish_tall", "front"],
     "habitat":     "forest",
     "ability_ids": [],
 
     "exp":         0,
     "hp":          25,
     "max_hp":      0,
-    "attack":      25,
+    "attack":      0,
     "defense":     100,
 
     "follow":      true,
     "lethargy":    6,
     "miss_rate":   6,
     "aggression":  0,
-    "reach":       1000
-    },
-
-"buzz_ent": {
-    "name":        "buzz",
-    "img_IDs":     ["buzz_ent", "front"],
-    "habitat":     "city",
-    "ability_ids": [],
-
-    "exp":         0,
-    "hp":          25,
-    "max_hp":      0,
-    "attack":      25,
-    "defense":     100,
-
-    "follow":      true,
-    "lethargy":    6,
-    "miss_rate":   6,
-    "aggression":  0,
+    "fear":        0,
     "reach":       1000
     },
 
@@ -398,25 +304,6 @@
     "lethargy":    6,
     "miss_rate":   6,
     "aggression":  0,
-    "reach":       1000
-    },
-
-"star_ent": {
-    "name":        "star",
-    "img_IDs":     ["star_ent", "front"],
-    "habitat":     "forest",
-    "ability_ids": [],
-
-    "exp":         0,
-    "hp":          25,
-    "max_hp":      0,
-    "attack":      25,
-    "defense":     100,
-
-    "follow":      true,
-    "lethargy":    20,
-    "miss_rate":   20,
-    "aggression":  10,
     "reach":       1000
     },
 

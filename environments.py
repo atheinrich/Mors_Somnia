@@ -963,10 +963,8 @@ class Environments:
             ['any', 'sword',          1000//env.lvl_num],
             ['any', 'yellow_dress',   200]]
         entities = [
-            ['any', 'triangle_ent',       200,  [None]],
             ['any', 'tentacles_ent',      100,  [None]],
-            ['any', 'red_radish',     1000, [None]],
-            ['any', 'star_ent',           150,  [None]]]
+            ['any', 'red_radish',     1000, [None]]]
         place_objects(env, items, entities)
         
         # Change player into tentacles

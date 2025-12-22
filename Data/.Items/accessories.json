@@ -23,6 +23,24 @@
     "img_IDs": ["short_brown_hair", "dropped"]
     },
 
+"long_brown_hair": {
+    "name":    "long brown hair",
+    "slot":    "head",
+    "img_IDs": ["long_brown_hair", "dropped"]
+    },
+
+"brown_fade_hair": {
+    "name":    "brown fade hair",
+    "slot":    "head",
+    "img_IDs": ["brown_fade_hair", "dropped"]
+    },
+
+"black_fade_hair": {
+    "name":    "black fade hair",
+    "slot":    "head",
+    "img_IDs": ["black_fade_hair", "dropped"]
+    },
+
 "clean": {
     "name":    "clean",
     "slot":    "face",

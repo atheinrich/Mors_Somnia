@@ -100,5 +100,50 @@
     "rand_X":    5,
     "rand_Y":    5,
     "effect_id": "lamp"
+    },
+
+"pink_flower": {
+    "name":      "pink flower",
+    "img_IDs":   ["decor", "pink_flower"],
+    "hidden":    true,
+    "movable":   true,
+    "rand_X":    10,
+    "rand_Y":    10
+    },
+
+"potted_grass": {
+    "name":      "potted grass",
+    "img_IDs":   ["decor", "potted_grass"],
+    "hidden":    true,
+    "movable":   true,
+    "rand_X":    10,
+    "rand_Y":    10
+    },
+
+"potted_cactus": {
+    "name":      "potted cactus",
+    "img_IDs":   ["decor", "potted_cactus"],
+    "hidden":    true,
+    "movable":   true,
+    "rand_X":    10,
+    "rand_Y":    10
+    },
+
+"round_cactus": {
+    "name":      "round cactus",
+    "img_IDs":   ["decor", "round_cactus"],
+    "hidden":    true,
+    "movable":   true,
+    "rand_X":    10,
+    "rand_Y":    10
+    },
+
+"tall_cactus": {
+    "name":      "tall cactus",
+    "img_IDs":   ["decor", "tall_cactus"],
+    "hidden":    true,
+    "movable":   true,
+    "rand_X":    10,
+    "rand_Y":    10
     }
 }

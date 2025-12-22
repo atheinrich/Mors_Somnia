@@ -35,6 +35,9 @@
     "slot": null
     },
 
+
+
+
 "glasses": {
     "slot": "face"
     },
@@ -63,6 +66,21 @@
     "slot": "hair"
     },
 
+"long_brown_hair": {
+    "slot": "hair"
+    },
+
+"brown_fade_hair": {
+    "slot": "hair"
+    },
+
+"black_fade_hair": {
+    "slot": "hair"
+    },
+
+
+
+
 "dagger": {
     "slot": null
     },
@@ -87,6 +105,9 @@
     "slot": null
     },
 
+
+
+    
 "null": {
     "slot": null
     }

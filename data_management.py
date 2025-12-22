@@ -224,6 +224,6 @@ ent_dicts    = merge_json('Entities', entities)
 tile_dicts   = merge_json('Tiles',    tiles)
 NPC_dicts    = load_json(f'Data/.Entities/NPCs.json')
 biome_dicts  = load_json(f'Data/.Databases/biomes.json')
-img_dicts    = {name: load_json(f'Data/.Databases/{name}.json') for name in img_IDs}
+img_dicts    = {name: load_json(f'Data/.Images/{name}.json') for name in img_IDs}
 
 ########################################################################################################################################################
