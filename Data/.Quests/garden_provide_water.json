@@ -29,26 +29,30 @@
         "event_id": "item_used",
         "description": "Pour out some water.",
         "conditions":
-        {
-            "item_id": "jug of water",
-            "ent_id": "player"
-        }
+        [
+            {
+                "item_id": "jug of water",
+                "ent_id": "player"
+            }
+        ]
     },
     {
         "obj_id": "lead_to_water",
         "event_id": "tile_occupied",
         "description": "Let it take a drink.",
         "conditions":
-        {
-            "tile_id": "water",
-            "ent_id":
-            [
-                "radish",
-                "red_radish",
-                "orange_radish",
-                "purple_radish"
-            ]
-        }
+        [
+            {
+                "tile_id": "water",
+                "ent_id":
+                [
+                    "radish",
+                    "red_radish",
+                    "orange_radish",
+                    "purple_radish"
+                ]
+            }
+        ]
     }
 ],
 

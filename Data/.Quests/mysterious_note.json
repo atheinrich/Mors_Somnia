@@ -38,31 +38,7 @@
 [
     {
         "event_id":    "unlock_dialogue",
-        "ent_id":      "Kyrio",
-        "dialogue_id": "quest_mysterious_note_1",
-        "owner_id":    "mysterious_note"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Kapno",
-        "dialogue_id": "quest_mysterious_note_1",
-        "owner_id":    "mysterious_note"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Erasti",
-        "dialogue_id": "quest_mysterious_note_1",
-        "owner_id":    "mysterious_note"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Merci",
-        "dialogue_id": "quest_mysterious_note_1",
-        "owner_id":    "mysterious_note"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Oxi",
+        "ent_id":      ["Kyrio", "Kapno", "Erasti", "Merci", "Oxi"],
         "dialogue_id": "quest_mysterious_note_1",
         "owner_id":    "mysterious_note"
     }
@@ -78,14 +54,17 @@
         "description": "Talk to Kyrio.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kyrio",
-            "dialogue_id":   "quest_mysterious_note_1"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kyrio",
+                "dialogue_id":   "quest_mysterious_note_1"
+            }
+        ],
         "on_complete":
         [
-            {"event_id":       "unlock_dialogue",
+            {
+                "event_id":    "unlock_dialogue",
                 "ent_id":      "Kyrio",
                 "dialogue_id": "quest_mysterious_note_2",
                 "owner_id":    "mysterious_note"
@@ -98,12 +77,13 @@
         "description": "Talk to Kyrio.",
         "hidden":      true,
         "conditions":
-        {
-
-            "ent_id":        "player",
-            "target_ent_id": "Kyrio",
-            "dialogue_id":   "quest_mysterious_note_2"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kyrio",
+                "dialogue_id":   "quest_mysterious_note_2"
+            }
+        ],
         "on_complete":
         [
             {
@@ -119,11 +99,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Kyrio.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kyrio",
-            "dialogue_id":   "quest_mysterious_note_3"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kyrio",
+                "dialogue_id":   "quest_mysterious_note_3"
+            }
+        ],
         "on_complete":
         [
             {
@@ -139,11 +121,13 @@
         "description": "Talk to Kapno.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kapno",
-            "dialogue_id":   "quest_mysterious_note_1"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kapno",
+                "dialogue_id":   "quest_mysterious_note_1"
+            }
+        ],
         "on_complete":
         [
             {
@@ -160,11 +144,13 @@
         "description": "Talk to Kapno.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kapno",
-            "dialogue_id":   "quest_mysterious_note_2"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kapno",
+                "dialogue_id":   "quest_mysterious_note_2"
+            }
+        ],
         "on_complete":
         [
             {
@@ -180,11 +166,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Kapno.",
         "conditions":
-        {
+        [
+            {
             "ent_id":        "player",
             "target_ent_id": "Kapno",
             "dialogue_id":   "quest_mysterious_note_3"
-        },
+            }
+        ],
         "on_complete":
         [
             {
@@ -200,11 +188,13 @@
         "description": "Talk to Erasti.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Erasti",
-            "dialogue_id":   "quest_mysterious_note_1"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Erasti",
+                "dialogue_id":   "quest_mysterious_note_1"
+            }
+        ],
         "on_complete":
         [
             {
@@ -221,11 +211,13 @@
         "description": "Talk to Erasti.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Erasti",
-            "dialogue_id":   "quest_mysterious_note_2"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Erasti",
+                "dialogue_id":   "quest_mysterious_note_2"
+            }
+        ],
         "on_complete": 
         [
             {
@@ -241,11 +233,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Erasti.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Erasti",
-            "dialogue_id":   "quest_mysterious_note_3"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Erasti",
+                "dialogue_id":   "quest_mysterious_note_3"
+            }
+        ],
         "on_complete":
         [
             {
@@ -261,11 +255,13 @@
         "description": "Talk to Merci.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Merci",
-            "dialogue_id":   "quest_mysterious_note_1"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Merci",
+                "dialogue_id":   "quest_mysterious_note_1"
+            }
+        ],
         "on_complete":
         [
             {
@@ -282,11 +278,13 @@
         "description": "Talk to Merci.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Merci",
-            "dialogue_id":   "quest_mysterious_note_2"
-        }, 
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Merci",
+                "dialogue_id":   "quest_mysterious_note_2"
+            }
+        ],
         "on_complete":
         [
             {
@@ -302,11 +300,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Merci.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Merci",
-            "dialogue_id":   "quest_mysterious_note_3"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Merci",
+                "dialogue_id":   "quest_mysterious_note_3"
+            }
+        ],
         "on_complete":
         [
             {
@@ -322,11 +322,13 @@
         "description": "Talk to Oxi.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Oxi",
-            "dialogue_id":   "quest_mysterious_note_1"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Oxi",
+                "dialogue_id":   "quest_mysterious_note_1"
+            }
+        ],
         "on_complete":
         [
             {
@@ -343,11 +345,13 @@
         "description": "Talk to Oxi.",
         "hidden":      true,
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Oxi",
-            "dialogue_id":   "quest_mysterious_note_2"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Oxi",
+                "dialogue_id":   "quest_mysterious_note_2"
+            }
+        ],
         "on_complete":
         [
             {
@@ -363,41 +367,19 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Oxi.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Oxi",
-            "dialogue_id":   "quest_mysterious_note_3"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Oxi",
+                "dialogue_id":   "quest_mysterious_note_3"
+            }
+        ],
         "on_complete":
         [
             {
                 "event_id": "release_dialogue",
-                "ent_id":   "Kyrio",
+                "ent_id":   ["Kyrio", "Kapno", "Erasti", "Merci", "Oxi"],
                 "owner_id": "mysterious_note"
-            },
-            {
-                "event_id": "release_dialogue",
-                "ent_id":   "Kapno",
-                "owner_id": "mysterious_note"
-            },
-            {
-                "event_id": "release_dialogue",
-                "ent_id":   "Erasti",
-                "owner_id": "mysterious_note"
-            },
-            {
-                "event_id": "release_dialogue",
-                "ent_id":   "Merci",
-                "owner_id": "mysterious_note"
-            },
-            {
-                "event_id": "release_dialogue",
-                "ent_id":   "Oxi",
-                "owner_id": "mysterious_note"
-            },
-            {
-                "event_id": "complete_quest",
-                "quest_id": "mysterious_note"
             }
         ]
     }

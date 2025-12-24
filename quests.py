@@ -481,13 +481,13 @@ class Quest:
 
         if not self.completed:
 
-            # Check if the event satisfies an objective
+            # Check if the event satisfies an objective's condition
             for objective in self.objectives:
                 satisfied = objective.check_event(event_id, **kwargs)
                 if satisfied:
 
                     # Add new objectives if applicable
-                    self.on_objective_complete(objective)
+                    self.on_condition_complete(objective)
                     break
 
             # Check if that completes all objectives
@@ -500,13 +500,16 @@ class Quest:
                         kwargs = {k: v for k, v in action.items() if (k != 'event_id')}
                         session.bus.emit(action.get('event_id'), **kwargs)
 
-    def on_objective_complete(self, objective):
+    def on_condition_complete(self, objective):
         """ Checks if any progressions are triggered by the completed objective. """
 
-        for condition in self.progression:
-            if condition.get('on_complete', None) == objective.obj_id:
-                self.add_objectives(condition['add'])
-                break
+        # Verify no unmet conditions remain
+        if not objective.conditions:
+
+            for condition in self.progression:
+                if condition.get('on_complete', None) == objective.obj_id:
+                    self.add_objectives(condition['add_objective'])
+                    break
     
     def add_objectives(self, obj_id_list):
         """ Creates objective instances and adds them to the quest. """
@@ -561,23 +564,29 @@ class QuestObjective:
         if event_id != self.event_id:
             return False
         
-        # Check all conditions
-        for key, value in self.conditions.items():
-            event_val = kwargs.get(key)
+        # Look through list of events
+        for condition in self.conditions:
+            for key, value in condition.items():
+                event_val = kwargs.get(key)
 
-            # Return if none of the possible conditions are satisfied
-            if isinstance(value, (list, set, tuple)):
-                if event_val not in value:
-                    return False
-            
-            # Return if the condition is not satisfied
-            else:
-                if event_val != value:
-                    return False
+                # Check if more than one event satisfies the condition
+                if isinstance(value, (list, set, tuple)):
+                    if event_val not in value:
+                        return False
+                
+                # Return if the condition is not satisfied
+                else:
+                    if event_val != value:
+                        return False
 
         # All conditions passed
-        self.completed = True
-        print(f'completed! \t {event_id} \t {self.event_id} \t {self.description}')
+        self.on_condition_complete()
+        return True
+
+    def on_condition_complete(self):
+
+        # Remove condition
+        self.conditions.pop(0)
 
         # Trigger any objective-level completion actions by emitting them to the bus
         if self.on_complete:
@@ -585,7 +594,9 @@ class QuestObjective:
                 kwargs = {k: v for k, v in action.items() if (k != 'event_id')}
                 session.bus.emit(action.get('event_id'), **kwargs)
         
-        return True
+        # Verify no unmet conditions remain
+        if not self.conditions:
+            self.completed = True
 
 ########################################################################################################################################################
 # Old

@@ -29,30 +29,36 @@
         "event_id": "item_placed",
         "description": "Build a wall for your shed.",
         "conditions":
-        {
-            "tile_id": "wall",
-            "ent_id": "player"
-        }
+        [
+            {
+                "tile_id": "wall",
+                "ent_id": "player"
+            }
+        ]
     },
     {
         "obj_id": "build_floor",
         "event_id": "item_placed",
         "description": "Build a floor for your shed.",
         "conditions":
-        {
-            "tile_id": "floor",
-            "ent_id": "player"
-        }
+        [
+            {
+                "tile_id": "floor",
+                "ent_id": "player"
+            }
+        ]
     },
     {
         "obj_id": "build_furniture",
         "event_id": "item_placed",
         "description": "Add some furniture to your shed.",
         "conditions":
-        {
-            "item_id": "furniture",
-            "ent_id": "player"
-        }
+        [
+            {
+                "item_id": "furniture",
+                "ent_id": "player"
+            }
+        ]
     }
 ],
 

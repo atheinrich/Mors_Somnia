@@ -534,52 +534,57 @@ class Dialogue:
             Keeps the current quest at the top, and adds new quests to the queue.
         """
 
-        states = session.player_obj.dialogue_states
+        # Handle more than one entity
+        if isinstance(ent_id, str): ent_id = [ent_id]
+        for id in ent_id:
 
-        self._load_npc(ent_id)
-        state = states[ent_id]
+            self._load_npc(id)
+            state = session.player_obj.dialogue_states[id]
 
-        # Make quest the current owner
-        if state['owner_id'] is None:
-            state['owner_id']    = owner_id
-            state['dialogue_id'] = dialogue_id
-            return
-        
-        # Update dialogue for current owner
-        if state['owner_id'] == owner_id:
-            state['dialogue_id'] = dialogue_id
-            return
+            # Make quest the current owner
+            if state['owner_id'] is None:
+                state['owner_id']    = owner_id
+                state['dialogue_id'] = dialogue_id
+            
+            # Update dialogue for current owner
+            elif state['owner_id'] == owner_id:
+                state['dialogue_id'] = dialogue_id
 
-        # Defer new quest dialogue to the queue
-        # Update existing queue entry without changing its position
-        if owner_id in state['queue']:
-            state['queue'][owner_id] = dialogue_id
-        else:
-            # Add new entry to the end
-            state['queue'][owner_id] = dialogue_id
+            # Defer new quest dialogue to the queue
+            elif owner_id in state['queue']:
+
+                # Update existing queue entry without changing its position
+                state['queue'][owner_id] = dialogue_id
+            else:
+
+                # Add new entry to the end
+                state['queue'][owner_id] = dialogue_id
 
     def release_dialogue(self, ent_id, owner_id):
         """ Release dialogue ownership and hand off to the next queued quest if present. """
 
-        state = session.player_obj.dialogue_states.get(ent_id)
+        # Handle more than one entity
+        if isinstance(ent_id, str): ent_id = [ent_id]
+        for id in ent_id:
+            state = session.player_obj.dialogue_states[id]
 
-        # Remove current owner
-        if state['owner_id'] == owner_id:
-            state['owner_id'] = None
+            # Remove current owner
+            if state['owner_id'] == owner_id:
+                state['owner_id'] = None
 
-            # Add new owner and remove it from the queue
-            if state['queue']:
-                next_owner_id        = next(iter(state['queue']))
-                state['owner_id']    = next_owner_id
-                state['dialogue_id'] = state['queue'].pop(next_owner_id)
-            
-            # Return to default dialogue
-            else:
-                state['dialogue_id'] = "default"
+                # Add new owner and remove it from the queue
+                if state['queue']:
+                    next_owner_id        = next(iter(state['queue']))
+                    state['owner_id']    = next_owner_id
+                    state['dialogue_id'] = state['queue'].pop(next_owner_id)
+                
+                # Return to default dialogue
+                else:
+                    state['dialogue_id'] = "default"
 
-        # Remove from the queue
-        elif owner_id in state['queue']:
-            state['queue'].pop(owner_id)
+            # Remove from the queue
+            elif owner_id in state['queue']:
+                state['queue'].pop(owner_id)
 
     def emit_dialogue(self, ent_id):
         """ Loads dialogue, sends it to the GUI, and plays some audio. """

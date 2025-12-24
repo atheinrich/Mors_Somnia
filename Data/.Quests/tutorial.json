@@ -42,11 +42,13 @@
         "event_id":    "entity_dialogue",
         "description": "Learn how to interact.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "friend",
-            "dialogue_id":   "quest_tutorial_1"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "friend",
+                "dialogue_id":   "quest_tutorial_1"
+            }
+        ],
         "on_complete":
         [
             {
@@ -62,11 +64,13 @@
         "event_id":    "entity_dialogue",
         "description": "Learn about the main menu.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "friend",
-            "dialogue_id":   "quest_tutorial_2"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "friend",
+                "dialogue_id":   "quest_tutorial_2"
+            }
+        ],
         "on_complete":
         [
             {
@@ -82,11 +86,13 @@
         "event_id":    "entity_dialogue",
         "description": "Learn how to zoom in and out.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "friend",
-            "dialogue_id":   "quest_tutorial_3"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "friend",
+                "dialogue_id":   "quest_tutorial_3"
+            }
+        ],
         "on_complete":
         [
             {
@@ -102,11 +108,13 @@
         "event_id":    "entity_dialogue",
         "description": "Learn about the inventory.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "friend",
-            "dialogue_id":   "quest_tutorial_4"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "friend",
+                "dialogue_id":   "quest_tutorial_4"
+            }
+        ],
         "on_complete":
         [
             {
@@ -122,11 +130,13 @@
         "event_id":    "entity_dialogue",
         "description": "Learn about ability combos.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "friend",
-            "dialogue_id":   "quest_tutorial_5"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "friend",
+                "dialogue_id":   "quest_tutorial_5"
+            }
+        ],
         "on_complete":
         [
             {

@@ -20,7 +20,7 @@
     },
     {
         "on_complete": "buy_drug",
-        "add":
+        "add_objective":
         [
             "talk_to_Oxi",
             "use_drug"
@@ -36,17 +36,19 @@
         "event_id": "item_purchased",
         "description": "Buy something from Oxi.",
         "conditions":
-        {
-            "ent_id": "Oxi",
-            "target_ent_id": "player",
-            "item_id":
-            [
-                "needle_drug",
-                "skin_drug",
-                "teeth_drug",
-                "bowl_drug"
-            ]
-        }
+        [
+            {
+                "ent_id": "Oxi",
+                "target_ent_id": "player",
+                "item_id":
+                [
+                    "needle_drug",
+                    "skin_drug",
+                    "teeth_drug",
+                    "bowl_drug"
+                ]
+            }
+        ]
     },
     {
         "obj_id": "talk_to_Oxi",
@@ -54,27 +56,31 @@
         "description": "Talk to Oxi.",
         "hidden": true,
         "conditions":
-        {
-            "ent_id": "player",
-            "target_ent_id": "Oxi",
-            "dialogue_id": "quest_take_a_trip"
-        }
+        [
+            {
+                "ent_id": "player",
+                "target_ent_id": "Oxi",
+                "dialogue_id": "quest_take_a_trip"
+            }
+        ]
     },
     {
         "obj_id": "use_drug",
         "event_id": "item_used",
         "description": "Try the drug.",
         "conditions":
-        {
-            "ent_id": "player",
-            "item_id":
-            [
-                "needle_drug",
-                "skin_drug",
-                "teeth_drug",
-                "bowl_drug"
-            ]
-        }
+        [
+                {
+                "ent_id": "player",
+                "item_id":
+                [
+                    "needle_drug",
+                    "skin_drug",
+                    "teeth_drug",
+                    "bowl_drug"
+                ]
+            }
+        ]
     }
 ]
 

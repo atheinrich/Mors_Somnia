@@ -82,15 +82,17 @@
 "objectives":
 [
     {
-        "obj_id":      "kill_Kyrio",
+        "obj_id":      "greet_Kyrio",
         "event_id":    "entity_dialogue",
         "description": "Talk to Kyrio.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kyrio",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kyrio",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -101,15 +103,17 @@
         ]
     },
     {
-        "obj_id":      "kill_Kapno",
+        "obj_id":      "greet_Kapno",
         "event_id":    "entity_dialogue",
         "description": "Talk to Kapno.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kapno",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kapno",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -120,15 +124,17 @@
         ]
     },
     {
-        "obj_id":      "kill_Erasti",
+        "obj_id":      "greet_Erasti",
         "event_id":    "entity_dialogue",
         "description": "Talk to Erasti.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Erasti",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Erasti",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -139,15 +145,17 @@
         ]
     },
     {
-        "obj_id":      "kill_Merci",
+        "obj_id":      "greet_Merci",
         "event_id":    "entity_dialogue",
         "description": "Talk to Merci.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Merci",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Merci",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -158,15 +166,17 @@
         ]
     },
     {
-        "obj_id":      "kill_Oxi",
+        "obj_id":      "greet_Oxi",
         "event_id":    "entity_dialogue",
         "description": "Talk to Oxi.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Oxi",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Oxi",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -177,15 +187,17 @@
         ]
     },
     {
-        "obj_id":      "kill_Aya",
+        "obj_id":      "greet_Aya",
         "event_id":    "entity_dialogue",
         "description": "Talk to Aya.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Aya",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Aya",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -196,15 +208,17 @@
         ]
     },
     {
-        "obj_id":      "kill_Zung",
+        "obj_id":      "greet_Zung",
         "event_id":    "entity_dialogue",
         "description": "Talk to Zung.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Zung",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Zung",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -215,15 +229,17 @@
         ]
     },
     {
-        "obj_id":      "kill_Lilao",
+        "obj_id":      "greet_Lilao",
         "event_id":    "entity_dialogue",
         "description": "Talk to Lilao.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Lilao",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Lilao",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {

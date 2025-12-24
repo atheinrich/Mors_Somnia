@@ -31,49 +31,7 @@
 [
     {
         "event_id":    "unlock_dialogue",
-        "ent_id":      "Kyrio",
-        "dialogue_id": "quest_greet_the_town",
-        "owner_id":    "greet_the_town"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Kapno",
-        "dialogue_id": "quest_greet_the_town",
-        "owner_id":    "greet_the_town"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Erasti",
-        "dialogue_id": "quest_greet_the_town",
-        "owner_id":    "greet_the_town"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Merci",
-        "dialogue_id": "quest_greet_the_town",
-        "owner_id":    "greet_the_town"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Oxi",
-        "dialogue_id": "quest_greet_the_town",
-        "owner_id":    "greet_the_town"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Aya",
-        "dialogue_id": "quest_greet_the_town",
-        "owner_id":    "greet_the_town"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Zung",
-        "dialogue_id": "quest_greet_the_town",
-        "owner_id":    "greet_the_town"
-    },
-    {
-        "event_id":    "unlock_dialogue",
-        "ent_id":      "Lilao",
+        "ent_id":      ["Kyrio", "Kapno", "Erasti", "Merci", "Oxi", "Aya", "Zung", "Lilao"],
         "dialogue_id": "quest_greet_the_town",
         "owner_id":    "greet_the_town"
     }
@@ -87,11 +45,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Kyrio.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kyrio",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kyrio",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -106,11 +66,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Kapno.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Kapno",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Kapno",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -125,11 +87,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Erasti.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Erasti",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Erasti",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -144,11 +108,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Merci.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Merci",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Merci",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -163,11 +129,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Oxi.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Oxi",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Oxi",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -182,11 +150,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Aya.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Aya",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Aya",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -201,11 +171,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Zung.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Zung",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Zung",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
@@ -220,11 +192,13 @@
         "event_id":    "entity_dialogue",
         "description": "Talk to Lilao.",
         "conditions":
-        {
-            "ent_id":        "player",
-            "target_ent_id": "Lilao",
-            "dialogue_id":   "quest_greet_the_town"
-        },
+        [
+            {
+                "ent_id":        "player",
+                "target_ent_id": "Lilao",
+                "dialogue_id":   "quest_greet_the_town"
+            }
+        ],
         "on_complete":
         [
             {
