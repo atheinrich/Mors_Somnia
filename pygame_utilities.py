@@ -249,6 +249,58 @@ class Pygame:
         self.map_height        = 480 * 2
         self.tile_map_width    = int(self.map_width/self.tile_width)
         self.tile_map_height   = int(self.map_height/self.tile_height)
+        self.fullscreen        = False
+
+    def toggle_windowed(self, toggle=True):
+        if toggle:
+            self.windowed = not self.windowed
+
+        if self.windowed:
+            pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
+        else:
+            pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
+
+    def toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
+
+        if self.fullscreen:
+            self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
+            self.screen_width, self.screen_height = self.screen.get_size()
+
+        else:
+            self.screen_width  = 640
+            self.screen_height = 480
+            self.toggle_windowed(toggle=False)
+
+    def blit_to_screen(self, surface, apply_fx=None):
+        """ Scales the given surface to fit the screen while preserving aspect ratio,
+            then centers it and optionally applies a display effect.
+
+            Parameters:
+            - surface: pygame.Surface to blit.
+            - apply_fx: function(surface) -> surface, optional effect to apply before blitting.
+            - fill_screen: if True, fills the screen with black before blit.
+        """
+
+        # Apply effect if provided
+        if apply_fx:
+            surface = apply_fx(surface)
+
+        # Compute scale preserving aspect ratio
+        scale = min(
+            self.screen_width  / surface.get_width(),
+            self.screen_height / surface.get_height()
+        )
+        scaled_w = int(surface.get_width() * scale)
+        scaled_h = int(surface.get_height() * scale)
+
+        # Compute offsets to center
+        x = (self.screen_width - scaled_w) // 2
+        y = (self.screen_height - scaled_h) // 2
+
+        # Scale and blit
+        scaled_surface = pygame.transform.scale(surface, (scaled_w, scaled_h))
+        self.screen.blit(scaled_surface, (x, y))
 
     # HUD tools
     def textwrap(self, text, width):

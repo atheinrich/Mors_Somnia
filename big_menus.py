@@ -132,6 +132,8 @@ class MainMenu:
                 # Adjust window
                 elif event.key in pyg.key_INFO:
                     self.key_INFO()
+                elif event.key in pyg.key_GUI:
+                    self.key_GUI()
                 
                 elif event.key in pyg.key_ENTER:
                     
@@ -222,14 +224,10 @@ class MainMenu:
         self.choice = (self.choice + 1) % len(self.choices)
     
     def key_INFO(self):
-        pyg = session.pyg
+        session.pyg.toggle_windowed()
 
-        if pyg.windowed:
-            pygame.display.set_mode((pyg.screen_width, pyg.screen_height), pygame.NOFRAME)
-            pyg.windowed = False
-        else:
-            pygame.display.set_mode((pyg.screen_width, pyg.screen_height))
-            pyg.windowed = True
+    def key_GUI(self):
+        session.pyg.toggle_fullscreen()
 
     def key_BACK(self):
         pyg = session.pyg

@@ -1,7 +1,7 @@
 {
 "dig_tunnel": {
     "name":          "dig tunnel",
-    "trigger":       "on_blocked"
+    "trigger":       "on_move"
     },
 
 "jug_of_water": {

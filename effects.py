@@ -118,33 +118,28 @@ class EffectsSystem:
         pyg = session.pyg
         ent = effect_obj.owner
 
-        if not kwargs.get('on_toggle'):
-            x  = kwargs.get('x')
-            y  = kwargs.get('y')
-            dX = kwargs.get('dX')
-            dY = kwargs.get('dY')
+        # Look for reasons not to activate
+        if kwargs.get('on_toggle'):
+            return
 
-            if ent.X >= 64 and ent.Y >= 64:
+        elif ent.img_IDs[1] != ent.direction:
+            return
 
-                # Dig
-                if not ent.env.map[x][y].unbreakable:
-                    ent.env.map[x][y].blocked     = False
-                    ent.env.map[x][y].unbreakable = False
-                    ent.env.map[x][y].img_IDs     = ent.env.floor_img_IDs
-                    session.movement.move(ent, dX, dY)
-                
-                    # Decrease condition
-                    if effect_obj.item.uses <= 100:
-                        effect_obj.item.uses -= 1
+        # Dig
+        tile = ent.env.map[kwargs.get('x')][kwargs.get('y')]
+        if tile.blocked and not tile.unbreakable:
+            tile.blocked     = False
+            tile.unbreakable = False
+            tile.img_IDs     = ent.env.floor_img_IDs
+        
+            # Decrease condition
+            if effect_obj.item.uses <= 100:
+                effect_obj.item.uses -= 1
 
-                    # Break item
-                    if effect_obj.item.uses <= 0:
-                        pyg.update_gui(f"Broken {effect_obj.item.name}!", color=pyg.dark_gray)
-                        session.items.destroy(effect_obj.item)
-                
-                # Do not dig
-                #else:
-                #    pyg.update_gui("You strike the barrier but cannot break it.", pyg.dark_gray)
+            # Break item
+            if effect_obj.item.uses <= 0:
+                pyg.update_gui(f"Broken {effect_obj.item.name}!", color=pyg.dark_gray)
+                session.items.destroy(effect_obj.item)
 
     # On render
     @register("lamp")

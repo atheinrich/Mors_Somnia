@@ -248,33 +248,24 @@ def rendering():
     session.img.render()
     for (surface, pos) in pyg.display_queue:
         pyg.display.blit(surface, pos)
-    display = pygame.transform.scale(
-        pyg.display, (pyg.screen_width, pyg.screen_height))
-    
-    ## Apply effects
-    if session.player_obj.ent.env.area.display_fx:
-        display = session.player_obj.ent.env.area.display_fx(display)
-
-    pyg.screen.blit(display, (0, 0))
+    pyg.blit_to_screen(
+        surface  = pyg.display,
+        apply_fx = session.player_obj.ent.env.area.display_fx)
 
     #########################################################
     # Render HUD (messages, time, health, stamina)
     ## Toggle with pyg.hud_state in ['on', 'off']
     render_hud()
     for (surface, pos) in pyg.hud_queue:
-        pyg.overlays.blit(surface, pos)
-    hud = pygame.transform.scale(
-        pyg.hud, (pyg.screen_width, pyg.screen_height))
-    pyg.screen.blit(hud, (0, 0))
+        pyg.hud.blit(surface, pos)
+    pyg.blit_to_screen(pyg.hud)
 
     #########################################################
     # Render overlays (menus)
     ## Toggle with pyg.overlay_state
     for (surface, pos) in pyg.overlay_queue:
         pyg.overlays.blit(surface, pos)
-    overlays = pygame.transform.scale(
-        pyg.overlays, (pyg.screen_width, pyg.screen_height))
-    pyg.screen.blit(overlays, (0, 0))
+    pyg.blit_to_screen(pyg.overlays)
 
     #########################################################
     # Render fade and intertitles; run background functions
@@ -282,9 +273,7 @@ def rendering():
     pyg.update_fade()
     for (surface, pos) in pyg.fade_queue:
         pyg.fade.blit(surface, pos)
-    fade = pygame.transform.scale(
-        pyg.fade, (pyg.screen_width, pyg.screen_height))
-    pyg.screen.blit(fade, (0, 0))
+    pyg.blit_to_screen(pyg.fade)
 
     #########################################################
     # Prepare for next frame
@@ -295,6 +284,7 @@ def rendering():
     pyg.hud.fill((0, 0, 0, 0))
     pyg.overlays.fill((0, 0, 0, 0))
     pyg.fade.fill((0, 0, 0, 0))
+    pyg.screen.fill((0, 0, 0, 0))
 
     pyg.display_queue = []
     pyg.hud_queue     = []

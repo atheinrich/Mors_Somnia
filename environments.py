@@ -793,37 +793,39 @@ class Environments:
 
     def build_bitworld(self, area):
         from pygame_utilities import bw_binary
-        current_level = session.player_obj.ent.env.name
 
-        area.envs.areas['bitworld'] = copy.deepcopy(area.envs.areas['overworld'])
-        
-        area.envs.areas['bitworld'].name       = 'bitworld'
-        area.envs.areas['bitworld'].permadeath = False
-        area.envs.areas['bitworld'].last_env   = None
+        # Reset area
+        self.areas['bitworld'] = Area(name='bitworld', envs=self, permadeath=False)
+        current_env            = session.player_obj.ent.env
+        self.last_env          = current_env
+        self.display_fx        = bw_binary
 
-        area.envs.areas['bitworld'].questlog   = {}
+        # Copy current level
+        area = self.areas['bitworld']
+        area.levels[current_env.name] = copy.deepcopy(current_env)
+
+        # Remove weather
+        env = area[current_env.name]
+        env.weather.cloudy    = False
+        env.weather.clouds    = []
+        env.weather.light_set = env.weather.alpha_hours[4]
+        env.camera            = Camera(session.player_obj.ent)
+
+        # Remove player to avoid duplication
+        x, y = session.player_obj.ent.get_pos()
+        #session.player_obj.ent.tile = env.map[x][y]
+        env.map[x][y].ent = None
+        for ent in env.ents:
+            if ent.ent_id == 'player':
+                env.ents.remove(ent)
+
+            # Make all entities aggressive
+            else:
+                ent.role       = 'enemy'
+                ent.aggression = 5
+
+        # Test quests
         session.questlogs.load_quest('kill_the_town', area)
-
-        area.envs.areas['bitworld'].display_fx = bw_binary
-
-        for env in area.envs.areas['bitworld']:
-            env.weather.cloudy    = False
-            env.weather.clouds    = []
-            env.weather.light_set = env.weather.alpha_hours[4]
-            env.camera = Camera(session.player_obj.ent)
-
-            if env.name == current_level:
-                x, y = session.player_obj.ent.get_pos()
-                session.player_obj.ent.tile = env.map[x][y]
-
-                # Update environment
-                env.map[x][y].ent = None
-                for ent in env.ents:
-                    if ent.name == 'player':
-                        env.ents.remove(ent)
-                    else:
-                        ent.role       = 'enemy'
-                        ent.aggression = 5
 
     def build_hallucination(self, area, lvl_num=0):
         """ Generates the overworld environment. """
@@ -1028,6 +1030,7 @@ class Area:
         elif name[:4] == 'cave':      env = self.envs.build_cave(self,    lvl_num)
 
         if env:
+            print(env.name, (len(env.map), len(env.map[0])))
             self.levels[name] = env
 
     def __getitem__(self, key):
@@ -1093,9 +1096,9 @@ class Environment:
         self.map = []
         X_range  = [0, self.size * pyg.screen_width]
         Y_range  = [0, self.size * pyg.screen_height]
-        for X in range(X_range[0], X_range[1]+1, pyg.tile_width):
+        for X in range(X_range[0], X_range[1], pyg.tile_width):
             row = [] 
-            for Y in range(Y_range[0], Y_range[1]+1, pyg.tile_height):
+            for Y in range(Y_range[0], Y_range[1], pyg.tile_height):
 
                 tile               = create_tile(img_IDs[1])
                 tile.env           = self
@@ -2357,7 +2360,7 @@ def place_objects(env, items, entities):
         for x in range(len(env.map)):
             
             # Check that the space is not already occupied
-            if not is_blocked(env, [x, y]):
+            if not is_blocked(env.map[x][y]):
 
                 ## Randomly select and place an item
                 item_selection = random.choice(items)

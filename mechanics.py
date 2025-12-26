@@ -534,72 +534,83 @@ class MovementSystem:
         
         pyg = session.pyg
 
-        #########################################################
         # Orientation
-        ## Determine direction
         if   dY > 0: ent.direction = 'front'
         elif dY < 0: ent.direction = 'back'
         elif dX < 0: ent.direction = 'left'
         elif dX > 0: ent.direction = 'right'
         
+        # New position in tile units
+        x = int((ent.X + dX)/pyg.tile_width)
+        y = int((ent.Y + dY)/pyg.tile_height)
+        map = ent.env.map
+
+        # Activate an effect
+        if ent.active_effects:
+            for effect in ent.active_effects.values():
+                if effect.trigger == 'on_move':
+                    effect.activate(x=x, y=y, dX=dX, dY=dY)
+                    break
+        
+        #########################################################
+        # Look for reasons not to move
+        success = True
+
         ## Change orientation before moving
         if ent.img_IDs[1] != ent.direction:
             ent.img_IDs[1] = ent.direction
+            success = False
 
-        #########################################################
-        # Move to new position
-        else:
+        ## Check for the edge of the map
+        elif (x==0) or (x==len(map)-1) or (y==0) or (y==len(map[0])-1):
+            success = False
+        
+        # Verify the tile is available
+        elif is_blocked(map[x][y]):
+            success = False
+        
+        # Check if the entity has biome restrictions
+        elif map[x][y].biome not in session.img.biomes[ent.habitat]:
+            success = False
 
-            # Find new position in tile units
-            x = int((ent.X + dX)/pyg.tile_width)
-            y = int((ent.Y + dY)/pyg.tile_height)
-                
-            #########################################################
-            # Move forward in allowed biome
-            if (not is_blocked(ent.env, [x, y])) and (ent.env.map[x][y].biome in session.img.biomes[ent.habitat]):
-                    
-                    # Prevent non-player entities from standing in entryways
-                    if (ent.name != "player") and (ent.env.map[x][y].item):
-                        if ent.env.map[x][y].item.img_IDs[0] in session.img.other['stairs']:
-                            return
-                    
-                    # Player-specific
-                    elif ent.name == 'player':
-                        ent.env.player_coordinates = [x, y]
-                        check_tile(x, y)
-
-                        # Check stamina
-                        if (session.effects.movement_speed_toggle == 1) and (ent.stamina > 0):
-                            ent.stamina -= 1/2
-                            pyg.update_gui()
-
-                    # Move player and update map
-                    ent.prev_tile              = ent.env.map[int(ent.X/pyg.tile_width)][int(ent.Y/pyg.tile_height)]
-                    ent.X                      += dX
-                    ent.Y                      += dY
-                    ent.tile.ent               = None
-                    ent.env.map[x][y].ent      = ent
-                    ent.tile                   = ent.env.map[x][y]
-
-                    session.bus.emit(
-                        event_id = 'tile_occupied',
-                        ent_id   = ent.ent_id,
-                        tile_id  = ent.tile.img_IDs[1])
-                
-            #########################################################
-            # Interact with an entity
-            elif ent.env.map[x][y].ent:
-                session.interact.interact(ent, ent.env.map[x][y].ent)
+        # Prevent non-player entities from standing in entryways
+        elif (ent.ent_id != 'player') and (map[x][y].item):
+            if map[x][y].item.img_IDs[0] in session.img.other['stairs']:
+                success = False
             
-            # Activate an effect
-            else:
-                if ent.active_effects:
-                    for effect in ent.active_effects.values():
-                        if effect.trigger == 'on_blocked':
-                            effect.activate(x=x, y=y, dX=dX, dY=dY)
-                            break
+        #########################################################
+        # Move forward
+        if success:
+            
+            # Player-specific
+            if ent.name == 'player':
+                ent.env.player_coordinates = [x, y]
+                check_tile(x, y)
 
-        ent.env.camera.update() # omit this if you want to modulate when the camera focuses on the player
+                # Check stamina
+                if (session.effects.movement_speed_toggle == 1) and (ent.stamina > 0):
+                    ent.stamina -= 0.5
+                    pyg.update_gui()
+
+            # Move entity and update map
+            ent.X         += dX
+            ent.Y         += dY
+            ent.prev_tile = map[int(ent.X/pyg.tile_width)][int(ent.Y/pyg.tile_height)]
+            ent.tile.ent  = None
+            ent.tile      = map[x][y]
+            ent.tile.ent  = ent
+
+            session.bus.emit(
+                event_id = 'tile_occupied',
+                ent_id   = ent.ent_id,
+                tile_id  = ent.tile.img_IDs[1])
+            
+        #########################################################
+        # Interact with an entity
+        elif map[x][y].ent:
+            session.interact.interact(ent, map[x][y].ent)
+
+        ent.env.camera.update()
 
     def ai(self, ent):
         """ Preset movements. """
@@ -1252,12 +1263,9 @@ def check_tile(x, y, ent=None, startup=False):
                     if spot not in prev_tile.room.walls_list:
                         spot.img_IDs = prev_tile.room.roof_img_IDs
 
-def is_blocked(env=None, loc=None, tile=None):
+def is_blocked(tile):
     """ Checks for barriers. """
     
-    # Check by location
-    if env: tile = env.map[loc[0]][loc[1]]
-
     # Check for barriers
     if tile.blocked:
         return True
@@ -1266,11 +1274,6 @@ def is_blocked(env=None, loc=None, tile=None):
     if tile.ent: 
         return True
     
-    # Triggers message for hidden passages
-    if tile.unbreakable:
-        pygame.event.clear()
-        return True
-
     return False
 
 ########################################################################################################################################################
