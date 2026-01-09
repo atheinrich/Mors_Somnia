@@ -458,6 +458,9 @@ class PlayGarden:
                     pygame.quit()
                     sys.exit()
 
+                elif event.type == pygame.VIDEORESIZE:
+                    pyg.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
         #########################################################
         # Move AI controlled entities
         if not pyg.pause:
@@ -1209,17 +1212,27 @@ def get_vicinity(obj):
     """
 
     pyg = session.pyg
+    map = session.player_obj.ent.env.map
 
     (x, y) = obj.X//pyg.tile_width, obj.Y//pyg.tile_width
+    
     obj.vicinity = {
-        'top middle'    : session.player_obj.ent.env.map[x][y-1],
-        'top right'     : session.player_obj.ent.env.map[x+1][y-1],
-        'right'         : session.player_obj.ent.env.map[x+1][y],
-        'bottom right'  : session.player_obj.ent.env.map[x+1][y+1],
-        'bottom middle' : session.player_obj.ent.env.map[x][y+1],
-        'bottom left'   : session.player_obj.ent.env.map[x-1][y+1],
-        'middle left'   : session.player_obj.ent.env.map[x-1][y],
-        'top left'      : session.player_obj.ent.env.map[x-1][y-1]}
+        'top middle'    : (x,   y-1),
+        'top right'     : (x+1, y-1),
+        'right'         : (x+1, y),
+        'bottom right'  : (x+1, y+1),
+        'bottom middle' : (x,   y+1),
+        'bottom left'   : (x-1, y+1),
+        'middle left'   : (x-1, y),
+        'top left'      : (x-1, y-1)}
+    
+    for key, val in obj.vicinity.items():
+        x, y = val[0], val[1]
+        if (x >= 0) and (x < len(map)) and (y >= 0) and (y < len(map[0])):
+            obj.vicinity[key] = map[x][y]
+        else:
+            obj.vicinity[key] = None
+    
     return obj.vicinity
 
 def check_tile(x, y, ent=None, startup=False):
@@ -1234,14 +1247,17 @@ def check_tile(x, y, ent=None, startup=False):
     # Reveal a square around the player
     for u in range(x-1, x+2):
         for v in range(y-1, y+2):
-            ent.env.map[u][v].hidden = False
+            if (u < len(ent.env.map)) and (v < len(ent.env.map[0])):
+                ent.env.map[u][v].hidden = False
     
-    # Reveal a hidden room
+    # Reveal room and hide roof
     if tile.room:
         
+        # Reveal room
         if tile.room.hidden:
             tile.room.hidden = False
-            for room_tile in tile.room.tiles_list:
+            for loc in tile.room.tile_locs:
+                room_tile = ent.env.map[loc[0]][loc[1]]
                 room_tile.hidden = False
         
         # Check if the player enters or leaves a room
@@ -1250,18 +1266,18 @@ def check_tile(x, y, ent=None, startup=False):
                 
                 # Hide the roof if the player enters a room
                 if tile.room and tile.room.roof_img_IDs:
-                    for spot in tile.room.tiles_list:
-                        if spot not in tile.room.walls_list:
-                            spot.img_IDs = tile.room.floor_img_IDs
+                    for loc in tile.room.floor_locs:
+                        room_tile = ent.env.map[loc[0]][loc[1]]
+                        room_tile.img_IDs = tile.room.floor_img_IDs
     
-    # Reveal the roof if the player leaves the room
+    # Reveal roof if the player leaves the room
     if ent.prev_tile:
         prev_tile = ent.prev_tile
         if prev_tile.room and not tile.room:
             if prev_tile.room.roof_img_IDs:
-                for spot in prev_tile.room.tiles_list:
-                    if spot not in prev_tile.room.walls_list:
-                        spot.img_IDs = prev_tile.room.roof_img_IDs
+                for loc in prev_tile.room.floor_locs:
+                    room_tile = ent.env.map[loc[0]][loc[1]]
+                    room_tile.img_IDs = prev_tile.room.roof_img_IDs
 
 def is_blocked(tile):
     """ Checks for barriers. """

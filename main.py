@@ -274,6 +274,7 @@ def rendering():
     for (surface, pos) in pyg.fade_queue:
         pyg.fade.blit(surface, pos)
     pyg.blit_to_screen(pyg.fade)
+    pyg.final_rescale()
 
     #########################################################
     # Prepare for next frame

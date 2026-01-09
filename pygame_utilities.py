@@ -122,6 +122,20 @@ class Pygame:
         self.fade_alpha    = 255
 
     # Gameplay settings and shorthand
+    def set_graphics(self):
+        
+        #########################################################
+        # Graphics parameters
+        self.screen_width      = 640 # 20 tiles
+        self.screen_height     = 480 # 15 tiles
+        self.tile_width        = 32
+        self.tile_height       = 32
+        self.map_width         = 640 * 2
+        self.map_height        = 480 * 2
+        self.tile_map_width    = int(self.map_width/self.tile_width)
+        self.tile_map_height   = int(self.map_height/self.tile_height)
+        self.fullscreen        = False
+
     def set_controls(self, controls):
         
         #########################################################
@@ -237,20 +251,7 @@ class Pygame:
         self.colors    = [self.black, self.dark_gray, self.gray, self.white,
                           self.red, self.orange, self.yellow, self.green, self.blue, self.violet]
 
-    def set_graphics(self):
-        
-        #########################################################
-        # Graphics parameters
-        self.screen_width      = 640 # 20 tiles
-        self.screen_height     = 480 # 15 tiles
-        self.tile_width        = 32
-        self.tile_height       = 32
-        self.map_width         = 640 * 2
-        self.map_height        = 480 * 2
-        self.tile_map_width    = int(self.map_width/self.tile_width)
-        self.tile_map_height   = int(self.map_height/self.tile_height)
-        self.fullscreen        = False
-
+    # Windows
     def toggle_windowed(self, toggle=True):
         if toggle:
             self.windowed = not self.windowed
@@ -301,6 +302,12 @@ class Pygame:
         # Scale and blit
         scaled_surface = pygame.transform.scale(surface, (scaled_w, scaled_h))
         self.screen.blit(scaled_surface, (x, y))
+
+    def final_rescale(self):
+
+        win_w, win_h = self.screen.get_size()
+        scaled_surface = pygame.transform.smoothscale(self.screen, (win_w, win_h))
+        self.screen.blit(scaled_surface, (0, 0))
 
     # HUD tools
     def textwrap(self, text, width):
