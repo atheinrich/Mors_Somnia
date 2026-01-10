@@ -212,7 +212,7 @@ class Environments:
             name          = 'home',
             lvl_num       = 0,
             size          = 5,
-            soundtrack    = ['home'],
+            soundtrack    = ['overworld_1'],
             img_IDs       = ['walls', 'gray'],
             floor_img_IDs = ['floors', 'green_floor'],
             wall_img_IDs  = ['walls', 'gray'],
@@ -319,10 +319,10 @@ class Environments:
             lvl_num       = 0,
             size          = 10,
             soundtrack    = [
-                'overworld 1',
-                'overworld 2',
-                'overworld 3',
-                'overworld 4'],
+                'overworld_1',
+                'overworld_1',
+                'overworld_1',
+                'overworld_1'],
             img_IDs       = ['floors', 'grass3'],
             floor_img_IDs = ['floors', 'grass3'],
             wall_img_IDs  = ['walls', 'gray'],
@@ -579,7 +579,7 @@ class Environments:
             name          = 'cave',
             lvl_num       = lvl_num,
             size          = 1,
-            soundtrack    = [f'dungeon {lvl_num}'],
+            soundtrack    = ['overworld_1'],
             img_IDs       = ['walls',  'dark_red'],
             floor_img_IDs = ['floors', 'dirt1'],
             wall_img_IDs  = ['walls',  'dark_red'],
@@ -669,7 +669,6 @@ class Environments:
         place_object(stairs, [x, y], env)
 
         # Generate stairs in the last room
-        (x, y) = env.rooms[-1].center()
         if lvl_num == 1:
             stairs = create_item('overworld_entrance')
             stairs.img_IDs = ['stairs', 'ladder_up']
@@ -690,7 +689,7 @@ class Environments:
             name          = 'dungeon',
             lvl_num       = lvl_num,
             size          = 2 * (1 + lvl_num//3),
-            soundtrack    = [f'dungeon {lvl_num}'],
+            soundtrack    = [f'dungeon_{lvl_num}'],
             img_IDs       = ['walls', 'gray'],
             floor_img_IDs = ['floors', 'dark_green_floor'],
             wall_img_IDs  = ['walls', 'gray'],
@@ -837,15 +836,17 @@ class Environments:
         ###############################################################
         ## Initialize environment
         if not lvl_num:
-            if not self.areas['hallucination'].levels: lvl_num = 1
-            else:                                      lvl_num = 1 + self.areas['hallucination'][-1].lvl_num        
+            if not self.areas['hallucination'].levels:
+                lvl_num = 1
+            else:
+                lvl_num = 1 + self.areas['hallucination'][-1].lvl_num        
         
         env = Environment(
             envs          = self,
             name          = 'hallucination',
             lvl_num       = lvl_num,
             size          = 3,
-            soundtrack    = [f'hallucination {lvl_num}'],
+            soundtrack    = [f'hallucination_{lvl_num}'],
             img_IDs       = ['walls',  'gold'],
             floor_img_IDs = ['floors', 'green_floor'],
             wall_img_IDs  = ['walls',  'gold'],
@@ -1201,7 +1202,7 @@ class Environment:
             
             # Get bounds of the area to check
             boundary_locs = set((tile.X//32, tile.Y//32) for tile in connected.keys())
-            plan, x_1, y_1, width, height = self._create_text_room(boundary_locs)
+            plan, x_1, y_1, _, _ = self._create_text_room(boundary_locs)
         
             room = Room(
                 name          = 'placed',
@@ -1257,7 +1258,7 @@ class Environment:
                     if (neighbor not in visited) and (neighbor not in queue):
                         queue.append(neighbor)
             
-            return connected
+        return connected
     
     def _has_closed_boundary(self, graph):
         """ Returns True if the provided dictionary of connected tiles yields a closed boundary.
@@ -1314,18 +1315,23 @@ class Environment:
         width  = max(loc[0] for loc in boundary_locs) - min(loc[0] for loc in boundary_locs)
         height = max(loc[1] for loc in boundary_locs) - min(loc[1] for loc in boundary_locs)
 
-        x_range = [0, width]
-        y_range = [0, height]
+        x_range = [0, width+1]
+        y_range = [0, height+1]
 
         # Initialize containers
-        plan = [' ' * width for _ in height]
+        plan = [list(' ' * (width+1)) for _ in range(height+1)]
 
         # Set walls
         for y in range(y_range[0], y_range[1]):
-            plan.append([])
             for x in range(x_range[0], x_range[1]):
-                if (x, y) in boundary_locs:
+                x_rel, y_rel = x + x_1, y + y_1
+                if (x_rel, y_rel) in boundary_locs:
                     plan[y][x] = '-'
+                else:
+                    print((x_rel, y_rel))
+
+        # Freeze to strings if needed
+        plan = [''.join(row) for row in plan]
         
         return plan, x_1, y_1, width, height
 
@@ -1515,7 +1521,7 @@ class Room:
 
         if width:      locs = self.from_size(x_1, y_1, width, height)
         elif plan:     locs = self.from_plan(x_1, y_1, plan)
-        elif boundary: locs = self.from_boundary(x_1, y_1, plan)
+        elif boundary: locs = self.from_boundary(x_1, y_1, boundary)
         
         self.tile_locs  = locs[0]
         self.wall_locs  = locs[1]
@@ -1719,6 +1725,10 @@ class Room:
                     # Handle edges
                     if plan[y_rel][x_rel] in ['-', '|']:
                         wall_locs.append((x, y))
+                        
+                        # Update properties
+                        tile.blocked     = True
+                        tile.unbreakable = self.unbreakable
 
                     ############################################
                     # Handle bulk
@@ -1986,7 +1996,8 @@ class Tile:
         return image, (X, Y)
 
     def __eq__(self, other):
-        return (self.X == other.X) and (self.Y == other.Y)
+        if other is not None:
+            return (self.X == other.X) and (self.Y == other.Y)
 
     def __hash__(self):
         return hash((self.X, self.Y))

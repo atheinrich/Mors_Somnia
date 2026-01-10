@@ -134,7 +134,6 @@ class PlayerData:
         return envs
 
     def finalize_player_ent(self):
-        from mechanics import place_player
 
         # Create and equip items
         self._finalize_entity()
@@ -142,11 +141,8 @@ class PlayerData:
         # Add additional environments
         self._finalize_environments()
 
-        place_player(
-            ent = self.ent,
-            env = self.envs.areas['overworld']['home'],
-            loc = self.envs.areas['overworld']['home'].center)
-    
+        session.player_obj.envs.areas['overworld'].last_env = self.envs.areas['overworld']['home']
+
     def _finalize_entity(self):
 
         # Shovel
@@ -613,15 +609,19 @@ class Discoveries:
         from environments import create_tile
         from entities import create_entity
 
+        # Item
         try:
             obj = create_item(object_ID)
             self.discoveries[obj.img_IDs[0]].append(obj)
         
         except:
+
+            # Tile
             try:
                 obj = create_tile(object_ID)
                 self.discoveries[obj.img_IDs[0]].append(obj)
             
+            # Entity
             except:
                 obj = create_entity(object_ID)
                 self.discoveries['entities'].append(obj)
@@ -641,6 +641,12 @@ class Discoveries:
 
     def items(self):
         return self.discoveries.items()
+    
+    def keys(self):
+        return self.discoveries.keys()
+
+    def values(self):
+        return self.discoveries.values()
 
 ########################################################################################################################################################
 # Tools

@@ -1059,23 +1059,22 @@ class Audio:
         
         # Define song titles
         self.dict = {
-            'home':              "Data/.Music/menu.mp3",
-            'menu':              "Data/.Music/menu.mp3",
-            'overworld 1':       "Data/.Music/overworld_1.mp3",
-            'overworld 2':       "Data/.Music/overworld_2.mp3",
-            'overworld 3':       "Data/.Music/overworld_3.wav",
-            'overworld 4':       "Data/.Music/overworld_4.mp3",
-            'dungeon 1':         "Data/.Music/dungeon_1.wav",
-            'dungeon 2':         "Data/.Music/dungeon_2.mp3",
-            'dungeon 3':         "Data/.Music/dungeon_3.wav",
-            'dungeon 4':         "Data/.Music/dungeon_4.mp3",
-            'dungeon 5':         "Data/.Music/dungeon_5.mp3",
-            'dungeon 6':         "Data/.Music/dungeon_6.mp3",
-            'hallucination 1':   "Data/.Music/dungeon_1.wav",
-            'hallucination 2':   "Data/.Music/dungeon_2.mp3",
-            'hallucination 3':   "Data/.Music/dungeon_3.wav",
-            'hallucination 4':   "Data/.Music/dungeon_4.mp3",
-            'hallucination 5':   "Data/.Music/dungeon_5.mp3"}
+            'menu':              "Data/.Music/menu.wav",
+            'overworld_1':       "Data/.Music/overworld_1.wav",
+            'overworld_2':       "Data/.Music/overworld_2.wav",
+            'overworld_3':       "Data/.Music/overworld_3.wav",
+            'overworld_4':       "Data/.Music/overworld_4.mp3",
+            'dungeon_1':         "Data/.Music/dungeon_1.wav",
+            'dungeon_2':         "Data/.Music/dungeon_2.mp3",
+            'dungeon_3':         "Data/.Music/dungeon_3.wav",
+            'dungeon_4':         "Data/.Music/dungeon_4.mp3",
+            'dungeon_5':         "Data/.Music/dungeon_5.mp3",
+            'dungeon_6':         "Data/.Music/dungeon_6.mp3",
+            'hallucination_1':   "Data/.Music/dungeon_1.wav",
+            'hallucination_2':   "Data/.Music/dungeon_2.mp3",
+            'hallucination_3':   "Data/.Music/dungeon_3.wav",
+            'hallucination_4':   "Data/.Music/dungeon_4.mp3",
+            'hallucination_5':   "Data/.Music/dungeon_5.mp3"}
         
         self.load_speech()
         

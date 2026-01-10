@@ -46,13 +46,14 @@ def background_fade():
     background_surface.fill((0, 0, 0, 50))
     return background_surface
 
-def find_visible(inv):
+def find_visible(inv, check_hidden=True):
     """ Rebuilds a dictionary of visible inventory items, grouped by category. """
 
     inventory_dicts = {}
 
     for category, items in inv.items():
-        visible_items = [item for item in items if not item.hidden]
+        if check_hidden: visible_items = [item for item in items if not item.hidden]
+        else:            visible_items = [item for item in items if item]
         if visible_items:
             inventory_dicts[category] = visible_items
 
@@ -261,15 +262,13 @@ class ColumnMenu:
         # Update entity and select inventory
         if data.col_id in ['inv', 'dev']:
             data.ent = session.player_obj.ent
-            if data.col_id == 'inv':
-                data.inv = session.player_obj.ent.inventory
-            else:
-                data.inv = session.player_obj.ent.discoveries
-        else:
-            data.inv = data.ent.inventory
+            if data.col_id == 'inv': data.inv = session.player_obj.ent.inventory
+            else:                    data.inv = session.player_obj.ent.discoveries
+        else:                        data.inv = data.ent.inventory
         
-        # Update inventory cache
-        inventory_dicts = find_visible(data.inv)
+        # Remove empty categories (and hidden items for inventory and exchange)
+        check_hidden    = False if (data.col_id == 'dev') else True
+        inventory_dicts = find_visible(data.inv, check_hidden)
         data.categories = list(inventory_dicts.keys())
 
         # Normalize the current category to the number of categories with visible items

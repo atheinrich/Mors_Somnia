@@ -38,8 +38,6 @@ class PlayGame:
 
         #########################################################
         # Initialize
-        active_effects()
-
         ## Reset from last death
         if (not ent.dead) and self.death_checked:
             self.death_checked = False
@@ -70,13 +68,6 @@ class PlayGame:
                             self.key_RIGHT()
 
                         #########################################################
-                        # Activate objects below
-                        elif event.key in pyg.key_ENTER:
-                            self.key_ENTER()
-                        elif event.key in pyg.key_PERIOD:
-                            self.key_PERIOD()
-                        
-                        #########################################################
                         # Enter combo sequence
                         elif event.key in pyg.key_HOLD:
                             self.key_HOLD()
@@ -96,8 +87,15 @@ class PlayGame:
                     if not ent.dead:
                         
                         #########################################################
+                        # Activate objects below
+                        if event.key in pyg.key_ENTER:
+                            self.key_ENTER()
+                        elif event.key in pyg.key_PERIOD:
+                            self.key_PERIOD()
+                        
+                        #########################################################
                         # Adjust speed
-                        if event.key in pyg.key_SPEED:
+                        elif event.key in pyg.key_SPEED:
                             self.key_SPEED()
 
                         #########################################################
@@ -180,7 +178,10 @@ class PlayGame:
             pygame.event.clear()
             
             # Check if an item is under the player
-            if ent.tile.item:
+            if ent.tile.item is not None:
+                print(ent.tile.item)
+                print(ent.tile.item.name)
+
                 tile = ent.tile
                 item = tile.item
                 
@@ -217,7 +218,8 @@ class PlayGame:
                 
                 #########################################################
                 # Items
-                else: session.items.pick_up(ent, ent.tile.item)
+                else:
+                    session.items.pick_up(ent, item)
 
     def key_PERIOD(self):
         
@@ -957,7 +959,13 @@ class InteractionSystem:
                 self.attack_target(ent, target)        
     
     def attack_target(self, ent, target):
-        """ Calculates and applies attack damage. Used for player and entities. """
+        """ Calculates and applies attack damage. Used for player and entities.
+        
+            Parameters
+            ----------
+            ent    : entity instance; the one attacking
+            target : entity instance; the one being attacked
+        """
         
         pyg = session.pyg
         msg = None
@@ -984,12 +992,13 @@ class InteractionSystem:
                         # Regular attack
                         else:
                             msg = ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points."
-                            self.take_damage(target, damage)
+                            self.take_damage(ent, target, damage)
                     
-                    # Regular attack
                     else:
                         msg = ent.name.capitalize() + " strikes " + target.name + " for " + str(damage) + " hit points."
-                        self.take_damage(target, damage)
+                        self.take_damage(ent, target, damage)
+                
+                # Do nothing
                 else:
                     msg = ent.name.capitalize() + " strikes " + target.name + " but it has no effect!"
         
@@ -997,30 +1006,26 @@ class InteractionSystem:
         if msg and (ent.role == 'player') or (target.role == 'player'):
             pyg.update_gui(msg, pyg.red)
 
-        return
-
-    def take_damage(self, ent, damage):
+    def take_damage(self, ent, target, damage):
         """ Applies damage if possible. """
+    
+        # Apply damage
+        target.hp -= damage
         
-        if damage > 0:
+        # Damage animation
+        session.img.flash_over(target)
+        
+        # Check for death
+        if target.hp <= 0:
+            target.hp = 0
+            session.interact.death(target)
             
-            # Apply damage
-            ent.hp -= damage
-            
-            # Damage animation
-            session.img.flash_over(ent)
-            
-            # Check for death
-            if ent.hp <= 0:
-                ent.hp = 0
-                session.interact.death(ent)
-                
-                # Gain experience
-                if ent != session.player_obj.ent:
-                    session.player_obj.ent.exp += ent.exp
-                    check_level_up()
-                else:
-                    session.pyg.update_gui()
+            # Gain experience
+            if ent.role == 'player':
+                session.player_obj.ent.exp += ent.exp
+                check_level_up()
+            else:
+                session.pyg.update_gui()
 
     def death(self, ent):
         
@@ -1294,49 +1299,9 @@ def is_blocked(tile):
 
 ########################################################################################################################################################
 # Other
-def active_effects():
-    """ Applies effects from items and equipment. Runs constantly. 
-    
-    ent = session.player_obj.ent
-
-    # Check for equipment
-    if ent.equipment['dominant hand']:     hand_1 = session.player_obj.ent.equipment['dominant hand']
-    else:                                  hand_1 = None
-    if ent.equipment['non-dominant hand']: hand_2 = session.player_obj.ent.equipment['non-dominant hand']
-    else:                                  hand_2 = None
-    
-    # Apply dominant hand function
-    if hand_1:
-        if hand_1.name == 'super shovel': ent.super_dig = True
-        else:                             ent.super_dig = False
-    
-    # Apply non-dominant hand function
-    if hand_2:
-        if hand_2.effect.name == 'lamp':
-            hand_2.effect.effect_fn(hand_2) """
-    pass
-
 def check_level_up():
     """ Checks if the player's experience is enough to level-up. """
     
-    pyg = session.pyg
-
-    level_up_exp = session.effects.level_up_base + session.player_obj.ent.rank * session.effects.level_up_factor
-    if session.player_obj.ent.exp >= level_up_exp:
-        session.player_obj.ent.rank += 1
-        session.player_obj.ent.exp -= level_up_exp
-        
-        notification = [
-            "You feel stronger.",
-            "Flow state!",
-            "Resilience flows through you."]
-        pyg.update_gui(random.choice(notification), pyg.gray)
-
-        session.player_obj.ent.rank += 1
-        session.player_obj.ent.max_hp += 20
-        session.player_obj.ent.hp += 20
-        session.player_obj.ent.attack += 1
-        session.player_obj.ent.defense += 1
-        pyg.update_gui()
+    print('The player gained experience, but this has not been implemented.')
 
 ########################################################################################################################################################
