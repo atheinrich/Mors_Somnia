@@ -2,6 +2,9 @@
 # Local mechanics
 # Contains core gameplay mechanisms, then routes special actions to other modules.
 #
+# MovementSystem usage (session.movement):
+# - move: move entity, face new direction, activate effects, or interact with another entity
+#
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -59,26 +62,26 @@ class PlayGame:
                         #########################################################
                         # Move player
                         if event.key in pyg.key_UP:
-                            self.key_UP()
+                            self._key_UP()
                         elif event.key in pyg.key_DOWN:
-                            self.key_DOWN()
+                            self._key_DOWN()
                         elif event.key in pyg.key_LEFT:
-                            self.key_LEFT()
+                            self._key_LEFT()
                         elif event.key in pyg.key_RIGHT:
-                            self.key_RIGHT()
+                            self._key_RIGHT()
 
                         #########################################################
                         # Enter combo sequence
                         elif event.key in pyg.key_HOLD:
-                            self.key_HOLD()
+                            self._key_HOLD()
                             return
             
                         #########################################################
                         # Zoom camera
                         elif event.key in pyg.key_PLUS:
-                            self.key_PLUS()
+                            self._key_PLUS()
                         elif event.key in pyg.key_MINUS:
-                            self.key_MINUS()
+                            self._key_MINUS()
                         
                         print((ent.X, ent.Y))
 
@@ -89,45 +92,45 @@ class PlayGame:
                         #########################################################
                         # Activate objects below
                         if event.key in pyg.key_ENTER:
-                            self.key_ENTER()
+                            self._key_ENTER()
                         elif event.key in pyg.key_PERIOD:
-                            self.key_PERIOD()
+                            self._key_PERIOD()
                         
                         #########################################################
                         # Adjust speed
                         elif event.key in pyg.key_SPEED:
-                            self.key_SPEED()
+                            self._key_SPEED()
 
                         #########################################################
                         # Open side menu
                         elif event.key in pyg.key_INV:
-                            self.key_INV()
+                            self._key_INV()
                             return
                         elif event.key in pyg.key_DEV:
-                            self.key_DEV()
+                            self._key_DEV()
                             return
 
                     #########################################################
                     # View stats
                     if event.key in pyg.key_INFO:
-                        self.key_INFO()
+                        self._key_INFO()
                         return
                         
                     #########################################################
                     # Open questlog
                     elif event.key in pyg.key_QUEST:
-                        self.key_QUEST()
+                        self._key_QUEST()
                         return
                     
                     #########################################################
                     # Toggle GUI
                     elif event.key in pyg.key_GUI:
-                        self.key_GUI()
+                        self._key_GUI()
                         
                     #########################################################
                     # Open main menu
                     elif event.key in pyg.key_BACK:
-                        self.key_BACK()
+                        self._key_BACK()
                         return
 
                 # Quit
@@ -138,7 +141,7 @@ class PlayGame:
             #########################################################
             # Handle player death
             if ent.dead:
-                self.handle_death()
+                self._handle_death()
 
         #########################################################
         # Move AI controlled entities
@@ -156,20 +159,20 @@ class PlayGame:
         if not pyg.overlay_state: pyg.update_gui()
 
     # Navigation
-    def key_UP(self):
+    def _key_UP(self):
         session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
-    def key_DOWN(self):
+    def _key_DOWN(self):
         session.movement.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
-    def key_LEFT(self):
+    def _key_LEFT(self):
         session.movement.move(session.player_obj.ent, -session.pyg.tile_width, 0)
 
-    def key_RIGHT(self):
+    def _key_RIGHT(self):
         session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
     # Action
-    def key_ENTER(self):
+    def _key_ENTER(self):
         pyg = session.pyg
         ent = session.player_obj.ent
 
@@ -179,8 +182,6 @@ class PlayGame:
             
             # Check if an item is under the player
             if ent.tile.item is not None:
-                print(ent.tile.item)
-                print(ent.tile.item.name)
 
                 tile = ent.tile
                 item = tile.item
@@ -188,7 +189,6 @@ class PlayGame:
                 #########################################################
                 # Effects (doors)
                 if item.effect:
-                    print('-------------')
                     if (item.effect.trigger == 'on_use') and (not item.movable):
                         item.effect.activate()
 
@@ -202,7 +202,7 @@ class PlayGame:
                 else:
                     session.items.pick_up(ent, item)
 
-    def key_PERIOD(self):
+    def _key_PERIOD(self):
         
         #########################################################
         # Move down a level
@@ -226,36 +226,36 @@ class PlayGame:
                             env = env,
                             loc = env.player_coordinates)
 
-    def key_SPEED(self):
+    def _key_SPEED(self):
         session.effects.movement_speed()
 
-    def key_BACK(self):
+    def _key_BACK(self):
         pyg = session.pyg
 
         pyg.overlay_state = 'menu'
         pyg.hud_state     = 'off'
 
     # Menus
-    def key_HOLD(self):
+    def _key_HOLD(self):
         session.pyg.overlay_state = 'hold'
 
-    def key_INFO(self):
+    def _key_INFO(self):
         session.pyg.overlay_state = 'stats'
 
-    def key_INV(self):
+    def _key_INV(self):
         session.pyg.overlay_state = 'inv'
 
-    def key_DEV(self):
+    def _key_DEV(self):
         session.pyg.overlay_state = 'dev'
 
-    def key_QUEST(self):
+    def _key_QUEST(self):
         pyg = session.pyg
 
         pyg.overlay_state = 'questlog'
         pyg.hud_state     = 'off'
 
     # GUI
-    def key_GUI(self):
+    def _key_GUI(self):
         
         pyg = session.pyg
 
@@ -285,14 +285,14 @@ class PlayGame:
             pyg.gui_toggle = True
             pyg.msg_toggle = False
 
-    def key_PLUS(self):
+    def _key_PLUS(self):
         session.player_obj.ent.env.camera.zoom_in()
 
-    def key_MINUS(self):
+    def _key_MINUS(self):
         session.player_obj.ent.env.camera.zoom_out()
 
     # Tools
-    def handle_death(self):
+    def _handle_death(self):
         """ Overwrite save files for permadeath or revive the player. """
 
         pyg = session.pyg
@@ -321,13 +321,13 @@ class PlayGame:
                 text = "???"
 
             pyg.add_intertitle(text)
-            pyg.fn_queue.append([self.revive_player,  {}])
+            pyg.fn_queue.append([self._revive_player,  {}])
             pyg.fade_delay = 500
             pyg.fade_state = 'out'
 
             ent.dead = False
 
-    def revive_player(self):
+    def _revive_player(self):
         pyg = session.pyg
         ent = session.player_obj.ent
 
@@ -384,23 +384,23 @@ class PlayGarden:
                         #########################################################
                         # Move player
                         if event.key in pyg.key_UP:
-                            self.key_UP()
+                            self._key_UP()
                         elif event.key in pyg.key_DOWN:
-                            self.key_DOWN()
+                            self._key_DOWN()
                         elif event.key in pyg.key_LEFT:
-                            self.key_LEFT()
+                            self._key_LEFT()
                         elif event.key in pyg.key_RIGHT:
-                            self.key_RIGHT()
+                            self._key_RIGHT()
 
                         #########################################################
                         # Activate objects below
                         elif event.key in pyg.key_ENTER:
-                            self.key_ENTER()
+                            self._key_ENTER()
                         
                         #########################################################
                         # Enter combo sequence
                         elif event.key in pyg.key_HOLD:
-                            self.key_HOLD()
+                            self._key_HOLD()
                             return
 
                         print((ent.X, ent.Y))
@@ -412,28 +412,28 @@ class PlayGarden:
                         #########################################################
                         # Open side menu
                         if event.key in pyg.key_INV:
-                            self.key_INV()
+                            self._key_INV()
                             return
                         elif event.key in pyg.key_DEV:
-                            self.key_DEV()
+                            self._key_DEV()
                             return
 
                     #########################################################
                     # View stats
                     if event.key in pyg.key_INFO:
-                        self.key_INFO()
+                        self._key_INFO()
                         return
                     
                     #########################################################
                     # Open questlog
                     elif event.key in pyg.key_QUEST:
-                        self.key_QUEST()
+                        self._key_QUEST()
                         return
                     
                     #########################################################
                     # Open main menu
                     elif event.key in pyg.key_BACK:
-                        self.key_BACK()
+                        self._key_BACK()
                         return
 
                 # Quit
@@ -460,45 +460,45 @@ class PlayGarden:
         pass
 
     # Navigation
-    def key_UP(self):
+    def _key_UP(self):
         session.movement.move(session.player_obj.ent, 0, -session.pyg.tile_height)
 
-    def key_DOWN(self):
+    def _key_DOWN(self):
         session.movement.move(session.player_obj.ent, 0, session.pyg.tile_height)
 
-    def key_LEFT(self):
+    def _key_LEFT(self):
         session.movement.move(session.player_obj.ent, -session.pyg.tile_width, 0)
 
-    def key_RIGHT(self):
+    def _key_RIGHT(self):
         session.movement.move(session.player_obj.ent, session.pyg.tile_width, 0)
 
     # Action
-    def key_ENTER(self):
+    def _key_ENTER(self):
         ent = session.player_obj.ent
 
         if ent.tile.item:
             session.items.pick_up(ent, ent.tile.item)
 
-    def key_BACK(self):
+    def _key_BACK(self):
         pyg = session.pyg
 
         pyg.overlay_state = 'menu'
         pyg.hud_state     = 'off'
 
     # Menus
-    def key_HOLD(self):
+    def _key_HOLD(self):
         session.pyg.overlay_state = 'hold'
 
-    def key_INFO(self):
+    def _key_INFO(self):
         session.pyg.overlay_state = 'stats'
 
-    def key_INV(self):
+    def _key_INV(self):
         session.pyg.overlay_state = 'inv'
 
-    def key_DEV(self):
+    def _key_DEV(self):
         session.pyg.overlay_state = 'dev'
 
-    def key_QUEST(self):
+    def _key_QUEST(self):
         pyg = session.pyg
 
         pyg.overlay_state = 'questlog'
@@ -519,6 +519,7 @@ class MovementSystem:
             - digging """
         
         pyg = session.pyg
+        map = ent.env.map
 
         # Orientation
         if   dY > 0: ent.direction = 'front'
@@ -529,44 +530,11 @@ class MovementSystem:
         # New position in tile units
         x = int((ent.X + dX)/pyg.tile_width)
         y = int((ent.Y + dY)/pyg.tile_height)
-        map = ent.env.map
 
-        # Activate an effect
-        if ent.active_effects:
-            for effect in ent.active_effects.values():
-                if effect.trigger == 'on_move':
-                    effect.activate(x=x, y=y, dX=dX, dY=dY)
-                    break
-        
-        #########################################################
-        # Look for reasons not to move
-        success = True
+        self._effect_on_move(ent, x, y, dX, dY)
 
-        ## Change orientation before moving
-        if ent.img_IDs[1] != ent.direction:
-            ent.img_IDs[1] = ent.direction
-            success = False
-
-        ## Check for the edge of the map
-        elif (x==0) or (x==len(map)-1) or (y==0) or (y==len(map[0])-1):
-            success = False
-        
-        # Verify the tile is available
-        elif is_blocked(map[x][y]):
-            success = False
-        
-        # Check if the entity has biome restrictions
-        elif map[x][y].biome not in session.img.biomes[ent.habitat]:
-            success = False
-
-        # Prevent non-player entities from standing in entryways
-        elif (ent.ent_id != 'player') and (map[x][y].item):
-            if map[x][y].item.img_IDs[0] in session.img.other['stairs']:
-                success = False
-            
-        #########################################################
         # Move forward
-        if success:
+        if self._movement_allowed(ent, x, y):
             
             # Player-specific
             if ent.name == 'player':
@@ -591,12 +559,46 @@ class MovementSystem:
                 ent_id   = ent.ent_id,
                 tile_id  = ent.tile.img_IDs[1])
             
-        #########################################################
         # Interact with an entity
         elif map[x][y].ent:
             session.interact.interact(ent, map[x][y].ent)
 
         ent.env.camera.update()
+
+    def _effect_on_move(self, ent, x, y, dX, dY):
+        if ent.active_effects:
+            for effect in ent.active_effects.values():
+                if effect.trigger == 'on_move':
+                    effect.activate(x=x, y=y, dX=dX, dY=dY)
+                    break
+
+    def _movement_allowed(self, ent, x, y):
+        map = ent.env.map
+        success = True
+
+        ## Change orientation before moving
+        if ent.img_IDs[1] != ent.direction:
+            ent.img_IDs[1] = ent.direction
+            success = False
+
+        ## Check for the edge of the map
+        elif (x==0) or (x==len(map)-1) or (y==0) or (y==len(map[0])-1):
+            success = False
+        
+        # Verify the tile is available
+        elif is_blocked(map[x][y]):
+            success = False
+        
+        # Check if the entity has biome restrictions
+        elif map[x][y].biome not in session.img.biomes[ent.habitat]:
+            success = False
+
+        # Prevent non-player entities from standing in entryways
+        elif (ent.ent_id != 'player') and (map[x][y].item):
+            if map[x][y].item.img_IDs[0] in session.img.other['stairs']:
+                success = False
+        
+        return success
 
     def ai(self, ent):
         """ Preset movements. """
@@ -647,7 +649,7 @@ class MovementSystem:
                     # Idle if not following or aggressive
                     else:
                         if ent.role != 'player':
-                            self.idle(ent)
+                            self._idle(ent)
                 
                 #########################################################
                 # Continue a prescribed pattern
@@ -657,7 +659,7 @@ class MovementSystem:
                     ent.motions_log.remove(loc)
 
     # Preset sequence
-    def idle(self, ent):
+    def _idle(self, ent):
         """ Randomly walk around. """
         
         pyg = session.pyg
@@ -741,39 +743,7 @@ class MovementSystem:
             # Move to the nearest location
             if distance_list:
                 dX_total, dY_total = min(distance_list, key=lambda p: p[0]**2 + p[1]**2)
-
-                if dX_total: sign_dX = int(dX_total / abs(dX_total))
-                if dY_total: sign_dY = int(dY_total / abs(dY_total))
-
-                # Construct a path
-                while dX_total or dY_total:
-                    
-                    # Move left or right
-                    if dX_total and not dY_total:
-                        dX = 32 * sign_dX
-                        dY = 0
-                    
-                    # Move up or down
-                    elif dY_total and not dX_total:
-                        dX = 0
-                        dY = 32 * sign_dY
-                    
-                    # Pick a random direction
-                    else:
-
-                        # Move left or right
-                        if random.randint(0, 1):
-                            dX = 32 * sign_dX
-                            dY = 0
-
-                        # Move up or down
-                        else:
-                            dX = 0
-                            dY = 32 * sign_dY
-                    
-                    motions_log.append([dX, dY])
-                    dX_total -= dX
-                    dY_total -= dY
+                motions_log = self.build_path(dX_total, dY_total)
                                         
             # Send directions to entity
             ent.motions_log = motions_log
@@ -821,31 +791,10 @@ class MovementSystem:
                             if not ent.env.map[x][y].item.occupied:
                                 ent.env.map[x][y].item.occupied = True
                                 
-                                # Construct a path
-                                dX       = int(x*32) - ent.X
-                                dY       = int(y*32) - ent.Y
-                                distance = (dX ** 2 + dY ** 2)**(1/2)
-                                while distance > 0:
-                                    
-                                    if dX and not dY:
-                                        dX = round(dX/distance) * pyg.tile_width
-                                        dY = 0
-                                    
-                                    elif dY and not dX:
-                                        dX = 0
-                                        dY = round(dX/distance) * pyg.tile_width
-                                    
-                                    elif dX and dY:
-                                        if random.randint(0, 1):
-                                            dX = round(dX/distance) * pyg.tile_width
-                                            dY = 0
-                                        else:
-                                            dX = 0
-                                            dY = round(dY/distance) * pyg.tile_width
-                                    
-                                    motions_log.append([dX, dY])
-                                    motions_log.append([dX, dY])
-                                    distance -= 32
+                                dX = int(x*32) - ent.X
+                                dY = int(y*32) - ent.Y
+
+                                motions_log = self.build_path(dX, dY)
             
             # Send directions to entity
             ent.motions_log = motions_log
@@ -876,6 +825,46 @@ class MovementSystem:
         
         # Send directions to entity
         ent.motions_log = motions_log
+
+    def build_path(self, dX_total, dY_total):
+        step = session.pyg.tile_width
+        motions_log = []
+
+        # Find total number of steps in each direction
+        if dX_total: sign_dX = int(dX_total / abs(dX_total))
+        else:        sign_dX = 0
+
+        if dY_total: sign_dY = int(dY_total / abs(dY_total))
+        else:        sign_dY = 0
+
+        # Make one step in each direction until destination is reached
+        while dX_total or dY_total:
+
+            # Only horizontal movement left
+            if dX_total and not dY_total:
+                dX = step * sign_dX
+                dY = 0
+
+            # Only vertical movement left
+            elif dY_total and not dX_total:
+                dX = 0
+                dY = step * sign_dY
+
+            # Both directions available
+            else:
+                if random.randint(0, 1):
+                    dX = step * sign_dX
+                    dY = 0
+                else:
+                    dX = 0
+                    dY = step * sign_dY
+
+            motions_log.append([dX, dY])
+
+            dX_total -= dX
+            dY_total -= dY
+
+        return motions_log
 
     # Utility
     def distance_to(self, ent, other):

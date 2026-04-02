@@ -135,7 +135,7 @@ class AbilitiesSystem:
         if target:
             image = session.img.dict['bubbles']['heart_bubble']
             session.img.flash_above(target, image)
-            session.img.flash_on(target, session.img.dict[target.img_IDs[0]][target.img_IDs[1]])
+            session.img.flash_flicker(target, session.img.dict[target.img_IDs[0]][target.img_IDs[1]])
             
             if owner.discoveries['entities'].values():
                 for names in owner.discoveries['entities'].values():
@@ -215,7 +215,7 @@ class AbilitiesSystem:
             else:
                 image = session.img.dict[ability_obj.img_IDs[0]][ability_obj.img_IDs[1]]
             
-            session.img.vicinity_flash(owner, image)
+            session.img.flash_vicinity(owner, image)
             
             # Apply attack to enemies
             for tile in get_vicinity(owner).values():
@@ -282,7 +282,7 @@ class AbilitiesSystem:
 
         # Activate animation
         image = session.img.dict['decor']['bones']
-        session.img.vicinity_flash(owner, image)
+        session.img.flash_vicinity(owner, image)
         
         # Kill player
         session.interact.death(owner)

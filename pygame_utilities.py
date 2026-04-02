@@ -1,6 +1,25 @@
 ########################################################################################################################################################
 # Utilities
 #
+# Pygame usage (session.pyg):
+# - update_gui: push text to message bar.
+# - add_intertitle: push text to black overlay.
+# - fn_queue: add background function and attributes for black overlay.
+# - fade_state: trigger black overlay.
+#
+# EventBus usage (session.bus):
+# - subscribe: add function to be called.
+# - emit: set attributes to send to subscribers upon event occurance.
+#
+# Images usage (session.img):
+# - average: detect colors on the screen.
+# - flash_over: briefly render an image on an entity.
+# - flash_flicker: briefly render an image twice on an entity.
+# - flash_above: briefly render an image above an entity.
+# - flash_vicinity: briefly render an image around an entity.
+#
+# Audio usage (session.aud):
+# - play_speech: play dialogue audio
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -41,17 +60,17 @@ class Pygame:
 
         #########################################################
         # Shorthand and gameplay parameters
-        self.set_graphics()
+        self._set_graphics()
         self.set_controls('numpad 1')
-        self.set_colors()
+        self._set_colors()
         
         #########################################################
         # Screens
-        self.init_screen()
-        self.init_display()
-        self.init_hud()
-        self.init_overlay()
-        self.init_fade()
+        self._init_screen()
+        self._init_display()
+        self._init_hud()
+        self._init_overlay()
+        self._init_fade()
 
         #########################################################
         # Utility
@@ -63,7 +82,7 @@ class Pygame:
         session.bus.subscribe('emit_message', self.update_gui)
         
     # Screens
-    def init_screen(self):
+    def _init_screen(self):
         """ Final window that everything is shown on. """
         
         self.screen   = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.NOFRAME)
@@ -72,14 +91,14 @@ class Pygame:
         self.minifont = pygame.font.SysFont('segoeuisymbol', 14, bold=True)
         self.clock    = pygame.time.Clock()
 
-    def init_display(self):
+    def _init_display(self):
         """ World pieces, like environment tiles and entities. """
         
         self.display       = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
         self.game_state    = 'startup'
         self.display_queue = []
 
-    def init_hud(self):
+    def _init_hud(self):
         """ Status bars, time, and messages/dialogue. """
         
         self.hud       = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
@@ -98,14 +117,14 @@ class Pygame:
         self.msg_width   = int(self.screen_width / 6)
         self.msg_history = {}
 
-    def init_overlay(self):
+    def _init_overlay(self):
         """ Menus and action bars. """
         
         self.overlays      = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
         self.overlay_state = 'menu'
         self.overlay_queue = []
 
-    def init_fade(self):
+    def _init_fade(self):
         """ Black surface of variable opacity, overlaid text, and background functions. """
         
         self.fade          = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
@@ -122,7 +141,7 @@ class Pygame:
         self.fade_alpha    = 255
 
     # Gameplay settings and shorthand
-    def set_graphics(self):
+    def _set_graphics(self):
         
         #########################################################
         # Graphics parameters
@@ -234,7 +253,7 @@ class Pygame:
         # Categories
         self.key_movement = self.key_UP + self.key_DOWN + self.key_LEFT + self.key_RIGHT
 
-    def set_colors(self):
+    def _set_colors(self):
         
         #########################################################
         # Define shorthand
@@ -563,37 +582,36 @@ class Images:
         pyg = session.pyg
 
         # Create entity dictionary
-        self.ent, self.ent_data, skin_options = self.load_entities(flipped)
+        self.ent, self.ent_data, skin_options = self._load_entities(flipped)
         self.skin_options  = skin_options
         
         # Create equipment dictionary
-        self.equip, self.equip_names, equipment_options = self.load_equipment(flipped)
+        self.equip, self.equip_names, equipment_options = self._load_equipment(flipped)
         self.hair_options  = equipment_options['hair']
         self.face_options  = equipment_options['face']
         self.chest_options = equipment_options['chest']
         self.armor_names   = equipment_options['armor']
         
         # Create other dictionary
-        self.other, self.other_names = self.load_other(flipped)
-        self.other_alt, _            = self.load_other(flipped, alt=True)
+        self.other, self.other_names = self._load_other(flipped)
+        self.other_alt, _            = self._load_other(flipped, alt=True)
         
         # Create combined dictionary
         self.dict = self.ent | self.equip | self.other
         
-        self.big = self.big_img()
+        self.big = self._big_img()
 
         # Assign tiles to biomes
-        self.biomes = self.load_biomes()
+        self.biomes = self._load_biomes()
 
-        self.impact_image      = self.get_impact_image()
+        self.impact_image      = self._get_impact_image()
         self.impact_images     = []
         self.impact_image_pos  = []
-        self.impact            = False        
         self.blank_surface     = pygame.Surface((pyg.tile_width, pyg.tile_height)).convert()
         self.blank_surface.set_colorkey(self.blank_surface.get_at((0,0)))
         self.render_log = []
 
-    def import_tiles(self, filename, flipped=False, effects=None):
+    def _import_tiles(self, filename, flipped=False, effects=None):
         """ Converts an image to a pygame image, cuts it into tiles, then returns a matrix of tiles. """
         
         pyg = session.pyg
@@ -643,12 +661,12 @@ class Images:
         
         return tile_matrix
 
-    def load_entities(self, flipped):
+    def _load_entities(self, flipped):
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
         
         # Import tiles
         path       = find_path(f'Data/.Images/tileset_ent.png')
-        ent_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
+        ent_matrix = self._import_tiles(path, flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
         entity_options = ['front', 'back', 'left', 'right']
@@ -676,12 +694,12 @@ class Images:
 
         return ent_images, ent_data, skin_options
 
-    def load_equipment(self, flipped):
+    def _load_equipment(self, flipped):
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
 
         # Import tiles
         path         = find_path(f'Data/.Images/tileset_equip.png')
-        equip_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
+        equip_matrix = self._import_tiles(path, flipped=flipped, effects=['posterize'])
         
         # Define tile names and options
         equip_options = ['dropped', 'front', 'back', 'left', 'right']
@@ -720,7 +738,7 @@ class Images:
 
         return equip, equip_names, equipment_options
         
-    def load_other(self, flipped=False, alt=False):
+    def _load_other(self, flipped=False, alt=False):
         """ Imports tiles, defines tile names, creates image dictionary, and provides image count. """
         
         # Choose tileset
@@ -728,7 +746,7 @@ class Images:
         else:   path = find_path(f'Data/.Images/tileset_other.png')
         
         # Import tiles
-        other_matrix = self.import_tiles(path, flipped=flipped, effects=['posterize'])
+        other_matrix = self._import_tiles(path, flipped=flipped, effects=['posterize'])
 
         # Identify character creation options
         img_other_dict = copy.deepcopy(img_dicts['img_other'])
@@ -766,14 +784,14 @@ class Images:
 
         return other, other_names
 
-    def big_img(self):
+    def _big_img(self):
     
         # Import tiles
         path = find_path(f'Data/.Images/logo.png')
-        big  = self.import_tiles(path, flipped=False, effects=['posterize'])
+        big  = self._import_tiles(path, flipped=False, effects=['posterize'])
         return big
 
-    def load_biomes(self):
+    def _load_biomes(self):
         
         biomes = {}
 
@@ -893,7 +911,7 @@ class Images:
         return pygame.transform.grayscale(image)
 
     # Animations
-    def get_impact_image(self):
+    def _get_impact_image(self):
         pyg = session.pyg
 
         color = (230, 230, 230)
@@ -913,12 +931,10 @@ class Images:
         self.impact_image.blit(image, (X, Y))
         return self.impact_image
 
-    def flash_over(self, ent):
+    def flash_over(self, ent, image=None):
         """ Death animation. """
         
-        self.impact = True
-        
-        image     = self.impact_image
+        if image is None: image = self.impact_image
         x         = lambda: ent.X - session.player_obj.ent.env.camera.X
         y         = lambda: ent.Y - session.player_obj.ent.env.camera.Y
         image_pos = (x, y)
@@ -927,12 +943,11 @@ class Images:
         last_time = time.time()
         self.render_log.append([image, image_pos, duration, last_time, delay])
 
-    def vicinity_flash(self, ent, image):
+    def flash_vicinity(self, ent, image):
         """ Death animation. """
 
         from mechanics import get_vicinity
         
-        self.impact = True
         vicinity_list = list(get_vicinity(ent).values())
         for i in range(len(vicinity_list)):
             
@@ -963,8 +978,6 @@ class Images:
 
         shift = 32 - self.ent_data[ent.img_IDs[0]]['height']
         
-        self.impact = True
-        
         image     = image
         x         = lambda: ent.X - session.player_obj.ent.env.camera.X
         y         = lambda: ent.Y - pyg.tile_height - session.player_obj.ent.env.camera.Y + shift
@@ -982,10 +995,8 @@ class Images:
         last_time = time.time()
         self.render_log.append([image, image_pos, duration, last_time, delay])
 
-    def flash_on(self, ent, image):
+    def flash_flicker(self, ent, image):
         """ Death animation. """
-        
-        self.impact = True
         
         image     = image
         x         = lambda: ent.X - session.player_obj.ent.env.camera.X
@@ -1076,7 +1087,7 @@ class Audio:
             'hallucination_4':   "Data/.Music/dungeon_4.mp3",
             'hallucination_5':   "Data/.Music/dungeon_5.mp3"}
         
-        self.load_speech()
+        self._load_speech()
         
         # Initialize parameters
         self.current_track = None
@@ -1164,7 +1175,7 @@ class Audio:
             pygame.mixer.music.unpause()
             self.paused = False
 
-    def load_speech(self):
+    def _load_speech(self):
         
         self.sound_map = {}
 

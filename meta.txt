@@ -1,18 +1,54 @@
 ####################################################################################
+# Quick reference
+####################################################################################
+
+####################################################################################
 # Events
 ## Makes action (usually emitted by a quest)
-'complete_quest'   # mark quest as complete and skip all remaining objectives
-'load_quest'       # load a quest by ID
-'unlock_dialogue'  # add or queues dialogue for a given entity
-'emit_dialogue'    # manually trigger an entity's dialogue
-'release_dialogue' # remove all queued dialogue for a given entity and quest
-'drop_item'        # removes an item from an entity's inventory and places it nearby
+complete_quest   # mark quest as complete and skip all remaining objectives
+load_quest       # load a quest by ID
+unlock_dialogue  # add or queues dialogue for a given entity
+emit_dialogue    # manually trigger an entity's dialogue
+release_dialogue # remove all queued dialogue for a given entity and quest
+drop_item        # removes an item from an entity's inventory and places it nearby
 
 ## Notifies of action (usually detected by a quest)
-'entity_dialogue'  # an entity with dialogue has been spoken to by the player
-'item_placed'      # an item has been placed by the player from the catalog
-'item_used'        # at item has been used by the player from the inventory
-'tile_occupied'    # an entity has occupied a tile
+entity_dialogue  # an entity with dialogue has been spoken to by the player
+item_placed      # an item has been placed by the player from the catalog
+item_used        # at item has been used by the player from the inventory
+tile_occupied    # an entity has occupied a tile
+
+## Emitted attributes (values given to the listener)
+event_id         # the event that occurred
+ent_id           # the entity that triggered the event
+target_ent_id    # an entity interacted with
+dialogue_id      # identifies text to be released by the target
+item_id          # an item to be created or activated
+tile_id          # a tile category
+
+####################################################################################
+# Effects
+## Manual activation (on_use)
+InventoryMenu.key_ENTER   # activates selected item
+ItemSystem.use            # checks for effect and trigger
+Effect.activate           # locates effect function
+EffectsSystem.<effect_id> # runs effect function
+
+## Active effects (on_move)
+PlayGame.<direction>      # moves player
+MovementSystem.move       # checks for effect and trigger
+Effect.activate           # locates effect function
+EffectsSystem.<effect_id> # runs effect function
+
+## Passive effects (on_render)
+rendering                 # calls all screen rendering
+render_display            # checks for effect and trigger
+Effect.activate           # locates effect function
+EffectsSystem.<effect_id> # runs effect function
+
+####################################################################################
+# Movement
+## Motions log
 
 ####################################################################################
 # TO-DO

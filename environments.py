@@ -1986,16 +1986,17 @@ class Tile:
         
         # Load tile
         if self.img_ID_timer:
-            if (time.time() // self.img_ID_timer) % self.img_ID_timer == 0: image = session.img.other_alt[self.img_IDs[0]][self.img_IDs[1]]
-            else:                                             image = session.img.other[self.img_IDs[0]][self.img_IDs[1]]
-        else:                                                 image = session.img.other[self.img_IDs[0]][self.img_IDs[1]]
+            time_diff = (time.time() // self.img_ID_timer) % self.img_ID_timer
+            if time_diff == 0:                      image = session.img.other_alt[self.img_IDs[0]][self.img_IDs[1]]
+            else:                                   image = session.img.other[self.img_IDs[0]][self.img_IDs[1]]
+        else:                                       image = session.img.other[self.img_IDs[0]][self.img_IDs[1]]
 
         ## (Optional) Add shift effect
         if self.img_IDs[0] != 'roofs':
-            if self.img_IDs[1] != 'wood':                   image = session.img.shift(image, [abs(self.rand_X), abs(self.rand_Y)])
+            if self.img_IDs[1] != 'wood':           image = session.img.shift(image, [abs(self.rand_X), abs(self.rand_Y)])
                 
         ## (Optional) Apply static effect
-        if self.biome in session.img.biomes['sea']:           image = session.img.static(image, offset=20, rate=100)
+        if self.biome in session.img.biomes['sea']: image = session.img.static(image, offset=20, rate=100)
         
         # Return result for rendering
         return image, (X, Y)

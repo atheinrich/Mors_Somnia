@@ -4,6 +4,12 @@
 #
 # Like abilities, effects are owned by entities and items.
 # Unlike abilities, effects can be also be owned by tiles and have various trigger mechanisms.
+#
+# Usage:
+# - Add effect actions in EffectsSystem, then set the effect ID with the decorator.
+# - Add the effect ID to the Databases folder.
+# - To give items default effects: add the effect ID in the Items folder.
+# - To give a single item an effect: item.effect = session.effects.create_effect(owner, effect_id, item).
 ########################################################################################################################################################
 
 ########################################################################################################################################################
