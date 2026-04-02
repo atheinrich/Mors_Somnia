@@ -289,6 +289,17 @@ class EffectsSystem:
         """ Creates a new dungeon system and its first level. Overwrites any previous system.
             Activated via on_use in items.
         """
+        pyg = session.pyg
+
+        text = "Your hands tremble as the ground shudders in tune... something is wrong."
+        pyg.add_intertitle(text)
+        pyg.fn_queue.append([session.effects.enter_dungeon_queue, {}])
+        pyg.fade_state = 'out'
+
+    def enter_dungeon_queue(self, effect_obj=None, **kwargs):
+        """ Creates a new dungeon system and its first level. Overwrites any previous system.
+            Activated via on_use in items.
+        """
 
         envs = session.player_obj.envs
 
@@ -452,7 +463,6 @@ class EffectsSystem:
             envs.add_area('hallucination')
             envs.areas['hallucination'].add_level('hallucination')
             pyg.overlay_state = None
-            envs.build_hallucination_level()
 
         ## Enter the first hallucination
         if ent.env.name != 'hallucination':
@@ -508,7 +518,48 @@ class EffectsSystem:
             loc = envs.areas['bitworld']['overworld'].player_coordinates)
         
         session.overlay_state = None
-    
+
+    @register("enter_dream")
+    def enter_dream(self, effect_obj):
+        """ Randomly creates or enters a dream environment. Activated via on_use in items."""
+
+        # Locate tile of bed
+        ent = session.player_obj.ent
+        pyg = session.pyg
+
+        # Check if player is in the overworld
+        success = False
+        if ent.env.area.name == 'overworld':
+
+            # Check if it is the player's bed
+            if ent.tile.placed or (ent.env.name == 'home'):
+                
+                # Go to sleep if it's not daytime
+                sleep_times = [0, 1, 2, 3, 12, 13, 14, 15]
+                
+                if ent.env.env_time in sleep_times: success = True
+                
+                else: pyg.update_gui("Time to face the day.", pyg.dark_gray)
+            
+            # No sleeping in owned beds
+            else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
+        
+        else:
+            pyg.update_gui("Now is not the time for rest.", pyg.dark_gray)
+        
+        # Enter dream
+        if success:
+            ent.env.env_time = random.choice([4, 5, 6])
+
+            # Randomly select a location from the set {dungeon, hallucination}
+            loc_fns  = [self.enter_dungeon_queue, self.enter_hallucination_queue]
+            selected = random.choice(loc_fns)
+
+            # Create and enter
+            pyg.add_intertitle("The evening dims to night... sleep trustly follows.")
+            pyg.fn_queue.append([selected, {}])
+            pyg.fade_state = 'out'
+
     # Item effects
     @register("entity_eat")
     def entity_eat(self, effect_obj=None, target=None):

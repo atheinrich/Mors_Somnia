@@ -188,31 +188,12 @@ class PlayGame:
                 #########################################################
                 # Effects (doors)
                 if item.effect:
+                    print('-------------')
                     if (item.effect.trigger == 'on_use') and (not item.movable):
                         item.effect.activate()
 
-                #########################################################
-                # Furniture
-                ## Bed
-                if tile.item.item_id in ['red_bed', 'purple_bed']:
-                    
-                    # Check if it is the player's bed
-                    if tile.room:
-                        if tile.room.name == 'home room':
-                            
-                            # Go to sleep if it's not daytime
-                            if ent.env.env_time in [1, 2, 7, 8]:
-                                ent.env.env_time = (ent.env.env_time + 3) % 8
-                                session.effects.descend_dungeon(text="The evening dims to night... sleep trustly follows.")
-                            else: pyg.update_gui("Time to face the day.", pyg.dark_gray)
-                        
-                        # No sleeping in owned beds
-                        else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
-                    
-                    else: pyg.update_gui("This is not your bed.", pyg.dark_gray)
-                
                 ## Chair
-                elif tile.item.item_id in ['red_chair_left', 'red_chair_right']:
+                if tile.item.item_id in ['red_chair_left', 'red_chair_right']:
                     ent.env.weather.set_day_and_time(increment=True)
                     pyg.update_gui("You sit down to rest for a while.", pyg.dark_gray)
                 

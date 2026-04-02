@@ -1,12 +1,14 @@
 {
 "purple_bed": {
     "name":    "purple bed",
-    "img_IDs": ["furniture", "purple_bed"]
+    "img_IDs": ["furniture", "purple_bed"],
+    "effect_id": "enter_dream"
     },
 
 "red_bed": {
     "name":    "red bed",
-    "img_IDs": ["furniture", "red_bed"]
+    "img_IDs": ["furniture", "red_bed"],
+    "effect_id": "enter_dream"
     },
 
 "shelf_left": {

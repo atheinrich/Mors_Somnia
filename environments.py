@@ -277,6 +277,7 @@ class Environments:
         x, y = center[0]+10, center[1]+9
         item = create_item('blood_sword')
         place_object(item, [x, y], env)
+
         x, y = center[0]+5, center[1]+10
         item = create_item('iron_shield')
         place_object(item, [x, y], env)
@@ -785,12 +786,14 @@ class Environments:
         # Generate stairs in the last room
         stairs = create_item('descend_dungeon')
         place_object(stairs, [x, y], env)
+        env.stairs['descend'] = stairs
 
         # Generate acending stairs under player
         if lvl_num != 1:
             (x, y) = env.rooms[-1].center()
             stairs = create_item('ascend_dungeon')
             place_object(stairs, [x, y], env)
+            env.stairs['ascend'] = stairs
 
         return env
 
@@ -1030,13 +1033,14 @@ class Area:
         self.display_fx = None
 
     def add_level(self, name, lvl_num=None):
-        if name       == 'womb':      env = self.envs.build_womb(self)
-        elif name     == 'garden':    env = self.envs.build_garden(self)
-        elif name     == 'home':      env = self.envs.build_home(self)
-        elif name     == 'overworld': env = self.envs.build_overworld(self)
-        elif name     == 'bitworld':  env = self.envs.build_bitworld(self)
-        elif name[:7] == 'dungeon':   env = self.envs.build_dungeon(self, lvl_num)
-        elif name[:4] == 'cave':      env = self.envs.build_cave(self,    lvl_num)
+        if name       == 'womb':          env = self.envs.build_womb(self)
+        elif name     == 'garden':        env = self.envs.build_garden(self)
+        elif name     == 'home':          env = self.envs.build_home(self)
+        elif name     == 'overworld':     env = self.envs.build_overworld(self)
+        elif name     == 'bitworld':      env = self.envs.build_bitworld(self)
+        elif name[:7] == 'dungeon':       env = self.envs.build_dungeon(self, lvl_num)
+        elif name[:4] == 'cave':          env = self.envs.build_cave(self,    lvl_num)
+        elif name     == 'hallucination': env = self.envs.build_hallucination(self)
 
         if env:
             self.levels[name] = env
@@ -1076,7 +1080,7 @@ class Environment:
 
             # Transient details
             env_date           : int; day of the week; should move to Area
-            env_time           : int; time of the day; should move to Area
+            env_time           : int; time of the day; should move to Area; 8 is midday
             player_coordinates : list of int; coordinates of last occupied tile by player in this environment
             center             : list of int; coordinates of the center of this environment
 
@@ -1103,6 +1107,7 @@ class Environment:
         self.env_date           = kwargs.get('env_date', 1)
         self.env_time           = kwargs.get('env_time', 6)
         self.camera             = None
+        self.stairs             = {}
 
     def generate_map(self):
         """ Creates a list of lists with individual entries as tile instances. """

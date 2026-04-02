@@ -83,5 +83,10 @@
 "mysterious_note": {
     "name":          "mysterious note",
     "trigger":       "on_use"
+    },
+
+"enter_dream": {
+    "name":          "enter dream",
+    "trigger":       "on_use"
     }
 }
