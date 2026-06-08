@@ -168,11 +168,18 @@ class EffectsSystem:
         pyg = session.pyg
 
         if not kwargs.get('on_toggle'):
+            from mechanics import get_vicinity
 
-            # Update tile
+            # Update tile to water
             tile           = effect_obj.owner.tile
             tile.img_IDs = ['floors', 'water']
             tile.biome     = 'water'
+
+            # Update vicinity to sand
+            for tile in get_vicinity(tile).values():
+                if (tile.biome != 'water') and (tile.img_IDs[1] != 'sand1'):
+                    tile.img_IDs = ['floors', 'sand1']
+                    tile.biome   = 'desert'
 
             # Update effect
             effect_obj.item.uses -= 1

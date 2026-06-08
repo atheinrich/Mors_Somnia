@@ -285,7 +285,7 @@ class AbilitiesSystem:
         session.img.flash_vicinity(owner, image)
         
         # Kill player
-        session.interact.death(owner)
+        session.interact.ent_death(owner)
         return
 
 _abilities = AbilitiesSystem(_registry)

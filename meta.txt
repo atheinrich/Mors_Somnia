@@ -4,6 +4,10 @@
 
 ####################################################################################
 # Events
+## Subscriptions
+Dialogue         # assigns listeners once at startup; states saved in player_obj
+ItemSystem       # assigns listeners once at startup; IDs on per-case basis
+
 ## Makes action (usually emitted by a quest)
 complete_quest   # mark quest as complete and skip all remaining objectives
 load_quest       # load a quest by ID
@@ -45,10 +49,6 @@ rendering                 # calls all screen rendering
 render_display            # checks for effect and trigger
 Effect.activate           # locates effect function
 EffectsSystem.<effect_id> # runs effect function
-
-####################################################################################
-# Movement
-## Motions log
 
 ####################################################################################
 # TO-DO

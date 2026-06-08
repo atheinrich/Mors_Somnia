@@ -5,6 +5,10 @@
 # MovementSystem usage (session.movement):
 # - move: move entity, face new direction, activate effects, or interact with another entity
 #
+# General usage:
+# - place_player: move player to a new location, remove from current location, and update map and time
+# - get_vicinity: return a dict of tiles in the vicinity of an entity
+# - is_blocked: return whether a tile is blocked for movement
 ########################################################################################################################################################
 
 ########################################################################################################################################################
@@ -561,7 +565,7 @@ class MovementSystem:
             
         # Interact with an entity
         elif map[x][y].ent:
-            session.interact.interact(ent, map[x][y].ent)
+            session.interact.interact_with_target(ent, map[x][y].ent)
 
         ent.env.camera.update()
 
@@ -759,13 +763,8 @@ class MovementSystem:
         
             env = session.player_obj.envs.areas['underworld']['garden']
 
-            if env.pet_moods['anger']:
-                env.pet_moods['anger'] -= 1
-                image = session.img.dict['bubbles']['water_bubble']
-            
-            else:
-                env.pet_moods['boredom'] += 1
-                image = session.img.dict['bubbles']['dots_bubble']
+            session.stats_obj.pet_moods['anger'] -= 1
+            image = session.img.dict['bubbles']['water_bubble']
             
         session.img.flash_above(ent, image)
 
@@ -883,8 +882,14 @@ class MovementSystem:
 
 class InteractionSystem:
 
-    def interact(self, ent, target):
-        """ Routes the interaction to the proper channel based on entities and location. """
+    def interact_with_target(self, ent, target):
+        """ Routes the interaction to the proper channel based on entities and location.
+        
+            Trade menu: player -> NPC with active trade
+            Dialogue: player -> NPC with dialogue
+            Attack: player -> aggressive target or any entity
+            Flee: player -> fearful target
+        """
 
         # Player specific
         if ent.role == 'player':
@@ -988,7 +993,7 @@ class InteractionSystem:
         # Check for death
         if target.hp <= 0:
             target.hp = 0
-            session.interact.death(target)
+            session.interact.ent_death(target)
             
             # Gain experience
             if ent.role == 'player':
@@ -997,7 +1002,7 @@ class InteractionSystem:
             else:
                 session.pyg.update_gui()
 
-    def death(self, ent):
+    def ent_death(self, ent):
         
         pyg = session.pyg
 
@@ -1064,7 +1069,7 @@ class PetsSystem:
     def update(self):
         """ Decreases happiness over time, sets mood to current highest stat, handles mood effects, and updates stat display. """
         
-        pet_moods = session.player_obj.ent.env.pet_moods
+        pet_moods = session.stats_obj.pet_moods
 
         #######################################################
         # Change stats

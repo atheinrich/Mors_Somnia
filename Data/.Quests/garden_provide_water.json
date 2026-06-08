@@ -31,7 +31,7 @@
         "conditions":
         [
             {
-                "item_id": "jug of water",
+                "item_id": "jug_of_water",
                 "ent_id": "player"
             }
         ]
